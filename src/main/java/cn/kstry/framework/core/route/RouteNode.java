@@ -87,7 +87,7 @@ public class RouteNode {
 
     public RouteNode cloneRouteNode() {
         RouteNode routeNode = new RouteNode();
-        BeanUtils.copyProperties(this, routeNode, "mapNode", "inflectionPointList");
+        BeanUtils.copyProperties(this, routeNode, "mapNode", "inflectionPointList", "interruptTimeSlot");
         return routeNode;
     }
 

@@ -1,6 +1,6 @@
 package cn.kstry.framework.test.demo.entity;
 
-import cn.kstry.framework.core.route.DynamicRouteTable;
+import cn.kstry.framework.core.facade.DynamicRouteTable;
 
 /**
  * @author lykan

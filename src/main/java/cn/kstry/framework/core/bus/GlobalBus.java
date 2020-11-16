@@ -22,7 +22,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.route.DynamicRouteTable;
+import cn.kstry.framework.core.facade.DynamicRouteTable;
 import cn.kstry.framework.core.route.RouteNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;

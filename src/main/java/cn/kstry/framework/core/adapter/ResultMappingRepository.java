@@ -22,6 +22,7 @@ import org.apache.commons.collections4.MapUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author lykan
@@ -31,7 +32,7 @@ public class ResultMappingRepository {
     /**
      * node task 映射表
      */
-    private final Map<RouteNode, Map<RouteNode, Map<String, String>>> globalRouteNodeMappingMap = new HashMap<>();
+    private final Map<RouteNode, Map<RouteNode, Map<String, String>>> globalRouteNodeMappingMap = new ConcurrentHashMap<>();
 
     public Map<String, String> getTaskResultMapping(RouteNode fromNode, RouteNode toNode) {
         if (fromNode == null || toNode == null) {

@@ -24,6 +24,7 @@ import cn.kstry.framework.core.util.LocateBehavior;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +37,7 @@ public class GlobalMap {
     /**
      * 整个业务地图的始发点列表
      */
-    private final Map<String, MapNode> firstMapNodes = new HashMap<>();
+    private final Map<String, MapNode> firstMapNodes = new ConcurrentHashMap<>();
 
     /**
      * mapping 映射表
@@ -67,18 +68,20 @@ public class GlobalMap {
     public static class MapNode {
 
         /**
-         * 接下来，可以允许被执行的 MpaNode
+         * 当前节点中保存的接下来，可以允许被执行的 MpaNode
          */
         private final List<MapNode> nextMapNodeList = new ArrayList<>();
 
+        /**
+         * 前一个 MapNode
+         */
         private MapNode prevMapNode;
 
         /**
          * 具体参与控制程序执行的路由 Node
+         * MapNode 与 RouteNode 一一对应
          */
         private final RouteNode routeNode;
-
-        private List<String> mappingNameList;
 
         public MapNode(RouteNode routeNode) {
             AssertUtil.notNull(routeNode);
@@ -120,14 +123,6 @@ public class GlobalMap {
 
         private void setPrevMapNode(MapNode prevMapNode) {
             this.prevMapNode = prevMapNode;
-        }
-
-        public List<String> getMappingNameList() {
-            return mappingNameList;
-        }
-
-        public void setMappingNameList(List<String> mappingNameList) {
-            this.mappingNameList = mappingNameList;
         }
 
         public List<MapNode> getNextMapNodeList() {

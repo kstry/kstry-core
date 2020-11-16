@@ -99,7 +99,7 @@ public class ConfigResolver {
             nextMapNodeList.forEach(n -> getNextMapping(n, n.getNextMapNodeList(), mappingMap, true));
         }
 
-        List<String> mappingNameList = mapNode.getMappingNameList();
+        List<String> mappingNameList = ((MapNodeAdapterForConfigResolver) mapNode).getMappingNameList();
         if (CollectionUtils.isEmpty(mappingNameList)) {
             return;
         }
@@ -161,7 +161,7 @@ public class ConfigResolver {
     private GlobalMap.MapNode parsePlanningNodeItem(TaskRouteConfig.MapPlanningNodeItem planningNodeItem) {
         RouteNode routeNode = routeNodeMap.get(planningNodeItem.getNodeName());
         AssertUtil.notNull(routeNode);
-        GlobalMap.MapNode mapNode = new GlobalMap.MapNode(routeNode.cloneRouteNode());
+        MapNodeAdapterForConfigResolver mapNode = new MapNodeAdapterForConfigResolver(routeNode.cloneRouteNode());
         mapNode.setMappingNameList(planningNodeItem.getMapping());
         mapNode.getRouteNode().setInterruptTimeSlot(BooleanUtils.isTrue(planningNodeItem.getInterruptTimeSlot()));
         if (MapUtils.isEmpty(planningNodeItem.getRouteMap())) {
@@ -281,6 +281,25 @@ public class ConfigResolver {
         } catch (Exception e) {
             KstryException.throwException(e);
             return null;
+        }
+    }
+
+    private static class MapNodeAdapterForConfigResolver extends GlobalMap.MapNode {
+        public MapNodeAdapterForConfigResolver(RouteNode routeNode) {
+            super(routeNode);
+        }
+
+        /**
+         * 保存映射名称列表
+         */
+        private List<String> mappingNameList;
+
+        public List<String> getMappingNameList() {
+            return mappingNameList;
+        }
+
+        public void setMappingNameList(List<String> mappingNameList) {
+            this.mappingNameList = mappingNameList;
         }
     }
 }

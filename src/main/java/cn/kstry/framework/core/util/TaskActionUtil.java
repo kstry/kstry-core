@@ -31,7 +31,7 @@ import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.DynamicRouteTable;
+import cn.kstry.framework.core.facade.DynamicRouteTable;
 import cn.kstry.framework.core.route.GlobalMap;
 import cn.kstry.framework.core.route.RouteNode;
 import cn.kstry.framework.core.route.TaskRouter;
@@ -175,22 +175,19 @@ public class TaskActionUtil {
      * @param router router
      */
     public static void reRouteNodeMap(TaskRouter router) {
-        GlobalBus globalBus = GlobalUtil.notNull(router.getGlobalBus());
-        DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
-        if (dynamicRouteTable == null) {
-            return;
-        }
-
         if (!router.nextRouteNodeIgnoreTimeSlot().isPresent()) {
             return;
         }
         RouteNode routeNode = GlobalUtil.notEmpty(router.currentRouteNode());
         GlobalMap.MapNode mapNode = GlobalUtil.notNull(routeNode.getMapNode());
 
-
         if (mapNode.nextMapNodeSize() <= 1 && CollectionUtils.isEmpty(router.nextRouteNodeIgnoreTimeSlot().get().getInflectionPointList())) {
             return;
         }
+
+        GlobalBus globalBus = GlobalUtil.notNull(router.getGlobalBus());
+        DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
+        AssertUtil.notNull(dynamicRouteTable);
         router.reRouteNodeMap(node -> matchRouteNode(node, dynamicRouteTable));
     }
 
