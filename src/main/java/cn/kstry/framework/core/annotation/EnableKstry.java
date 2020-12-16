@@ -42,4 +42,10 @@ public @interface EnableKstry {
      * story engine 名字
      */
     String storyEngineName() default "";
+
+    /**
+     * @return 配置文件路径
+     */
+    String configPath() default "TaskRouteConfig.json";
 }
+

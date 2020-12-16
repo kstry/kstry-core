@@ -1,4 +1,4 @@
-package cn.kstry.framework.test.demo.facade;
+package cn.kstry.framework.test.demo.hongbao.facade;
 
 public class CreateHongBao2Response extends CreateHongBaoResponse {
 

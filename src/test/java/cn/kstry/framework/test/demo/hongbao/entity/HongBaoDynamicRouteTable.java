@@ -1,4 +1,4 @@
-package cn.kstry.framework.test.demo.entity;
+package cn.kstry.framework.test.demo.hongbao.entity;
 
 import cn.kstry.framework.core.facade.DynamicRouteTable;
 

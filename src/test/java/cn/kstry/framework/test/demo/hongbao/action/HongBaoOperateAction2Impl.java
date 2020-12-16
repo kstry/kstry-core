@@ -1,9 +1,9 @@
-package cn.kstry.framework.test.demo.action;
+package cn.kstry.framework.test.demo.hongbao.action;
 
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
-import cn.kstry.framework.test.demo.facade.CreateHongBao2Response;
-import cn.kstry.framework.test.demo.facade.CreateHongBaoRequest;
+import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBao2Response;
+import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoRequest;
 import org.springframework.stereotype.Component;
 
 @Component

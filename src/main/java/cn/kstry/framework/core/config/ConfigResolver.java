@@ -50,17 +50,17 @@ import java.util.Optional;
  */
 public class ConfigResolver {
 
-    private static final String TASK_ROUTE_CONFIG_NAME = "TaskRouteConfig.json";
+    private String taskRouteConfigName;
 
-    private final TaskRouteConfig taskRouteConfig;
+    private TaskRouteConfig taskRouteConfig;
 
-    private final Map<String, RouteNode> routeNodeMap;
+    private Map<String, RouteNode> routeNodeMap;
 
-    private final Map<String, Map<String, String>> resultMappingConfig;
+    private Map<String, Map<String, String>> resultMappingConfig;
 
     private Map<String, GlobalMap.MapNode> mapPlanning;
 
-    public ConfigResolver() {
+    public void init() {
         this.taskRouteConfig = parseTaskRouteConfig();
         this.routeNodeMap = parseRouteNodeMap();
         this.resultMappingConfig = parseResultMappingConfig();
@@ -267,7 +267,7 @@ public class ConfigResolver {
     @SuppressWarnings("all")
     private TaskRouteConfig parseTaskRouteConfig() {
         try {
-            URL resource = ConfigResolver.class.getClassLoader().getResource(TASK_ROUTE_CONFIG_NAME);
+            URL resource = ConfigResolver.class.getClassLoader().getResource(getTaskRouteConfigName());
             AssertUtil.notNull(resource);
             Path path = Paths.get(resource.toURI());
             AssertUtil.notNull(path);
@@ -301,5 +301,16 @@ public class ConfigResolver {
         public void setMappingNameList(List<String> mappingNameList) {
             this.mappingNameList = mappingNameList;
         }
+    }
+
+    public String getTaskRouteConfigName() {
+        if (StringUtils.isBlank(this.taskRouteConfigName)) {
+            this.taskRouteConfigName = "TaskRouteConfig.json";
+        }
+        return this.taskRouteConfigName;
+    }
+
+    public void setTaskRouteConfigName(String taskRouteConfigName) {
+        this.taskRouteConfigName = taskRouteConfigName;
     }
 }

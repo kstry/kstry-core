@@ -1,10 +1,10 @@
-package cn.kstry.framework.test.demo;
+package cn.kstry.framework.test.demo.hongbao;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.test.demo.entity.StoryRequest;
-import cn.kstry.framework.test.demo.facade.RobHongBaoResponse;
+import cn.kstry.framework.test.demo.hongbao.entity.StoryRequest;
+import cn.kstry.framework.test.demo.hongbao.facade.RobHongBaoResponse;
 import com.alibaba.fastjson.JSON;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ComponentScan;

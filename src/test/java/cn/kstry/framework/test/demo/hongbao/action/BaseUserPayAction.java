@@ -1,11 +1,11 @@
-package cn.kstry.framework.test.demo.action;
+package cn.kstry.framework.test.demo.hongbao.action;
 
 import cn.kstry.framework.core.facade.RouteMapResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.route.RouteTaskAction;
-import cn.kstry.framework.test.demo.UserPayRole;
-import cn.kstry.framework.test.demo.facade.UserPayRequest;
-import cn.kstry.framework.test.demo.facade.UserPayResponse;
+import cn.kstry.framework.test.demo.hongbao.UserPayRole;
+import cn.kstry.framework.test.demo.hongbao.facade.UserPayRequest;
+import cn.kstry.framework.test.demo.hongbao.facade.UserPayResponse;
 
 
 public abstract class BaseUserPayAction extends RouteTaskAction implements UserPayAction {

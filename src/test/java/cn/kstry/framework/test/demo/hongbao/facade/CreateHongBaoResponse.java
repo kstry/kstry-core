@@ -1,7 +1,7 @@
-package cn.kstry.framework.test.demo.facade;
+package cn.kstry.framework.test.demo.hongbao.facade;
 
 import cn.kstry.framework.core.facade.TaskResponseBox;
-import cn.kstry.framework.test.demo.entity.HongBao;
+import cn.kstry.framework.test.demo.hongbao.entity.HongBao;
 
 public class CreateHongBaoResponse extends TaskResponseBox {
 

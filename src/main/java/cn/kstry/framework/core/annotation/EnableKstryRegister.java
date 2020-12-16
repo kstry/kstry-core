@@ -20,6 +20,7 @@ package cn.kstry.framework.core.annotation;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -38,6 +39,8 @@ import java.util.List;
  */
 public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
 
+    private static String kstryConfigPath;
+
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, @NonNull BeanDefinitionRegistry registry) {
 
@@ -46,6 +49,11 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
 
         List<Object> storyEngineNameList = enableKstryAnnotation.get("storyEngineName");
         AssertUtil.oneSize(storyEngineNameList, ExceptionEnum.INVALID_SYSTEM_PARAMS);
+
+        List<Object> kstryConfigPathList = enableKstryAnnotation.get("configPath");
+        if (CollectionUtils.isNotEmpty(kstryConfigPathList)) {
+            EnableKstryRegister.kstryConfigPath = String.valueOf(kstryConfigPathList.get(0));
+        }
 
         String storyEngineName = "storyEngine";
         if (StringUtils.isNotBlank(String.valueOf(storyEngineNameList.get(0)))) {
@@ -56,5 +64,9 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
         beanDefinition.setScope(BeanDefinition.SCOPE_SINGLETON);
         beanDefinition.setLazyInit(false);
         registry.registerBeanDefinition(storyEngineName, beanDefinition);
+    }
+
+    public static String getKstryConfigPath() {
+        return kstryConfigPath;
     }
 }

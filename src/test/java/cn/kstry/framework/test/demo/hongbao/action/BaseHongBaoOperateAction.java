@@ -1,18 +1,17 @@
-package cn.kstry.framework.test.demo.action;
+package cn.kstry.framework.test.demo.hongbao.action;
 
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.route.RouteTaskAction;
-import cn.kstry.framework.test.demo.HongBaoOperatorRole;
-import cn.kstry.framework.test.demo.facade.CreateHongBaoRequest;
-import cn.kstry.framework.test.demo.facade.CreateHongBaoResponse;
-import cn.kstry.framework.test.demo.facade.RobHongBaoRequest;
-import cn.kstry.framework.test.demo.facade.RobHongBaoResponse;
-import cn.kstry.framework.test.demo.facade.RobHongBaoTaskPipelinePort;
-import cn.kstry.framework.test.demo.facade.UpdateHongBaoStatusForPaySuccessRequest;
-import cn.kstry.framework.test.demo.facade.UpdateHongBaoStatusForPaySuccessResponse;
+import cn.kstry.framework.test.demo.hongbao.HongBaoOperatorRole;
+import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoRequest;
+import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoResponse;
+import cn.kstry.framework.test.demo.hongbao.facade.RobHongBaoRequest;
+import cn.kstry.framework.test.demo.hongbao.facade.RobHongBaoResponse;
+import cn.kstry.framework.test.demo.hongbao.facade.UpdateHongBaoStatusForPaySuccessRequest;
+import cn.kstry.framework.test.demo.hongbao.facade.UpdateHongBaoStatusForPaySuccessResponse;
 
 
 public abstract class BaseHongBaoOperateAction extends RouteTaskAction implements HongBaoOperateAction {

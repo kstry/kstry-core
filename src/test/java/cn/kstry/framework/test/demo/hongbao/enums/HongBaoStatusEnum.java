@@ -1,4 +1,4 @@
-package cn.kstry.framework.test.demo.enums;
+package cn.kstry.framework.test.demo.hongbao.enums;
 
 /**
  * @author lykan

@@ -1,6 +1,6 @@
-package cn.kstry.framework.test.demo.entity;
+package cn.kstry.framework.test.demo.hongbao.entity;
 
-import cn.kstry.framework.test.demo.enums.HongBaoStatusEnum;
+import cn.kstry.framework.test.demo.hongbao.enums.HongBaoStatusEnum;
 
 import java.util.Date;
 
