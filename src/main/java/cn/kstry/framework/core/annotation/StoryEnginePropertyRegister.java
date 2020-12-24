@@ -28,10 +28,10 @@ import cn.kstry.framework.core.route.GlobalMap;
 import cn.kstry.framework.core.route.RouteNode;
 import cn.kstry.framework.core.route.RouteTaskAction;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ProxyUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.MapUtils;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -60,8 +60,8 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskActionComponent.class);
         List<AnnotationTaskActionProxy> annotationTaskActionList = beansWithAnnotation.values().stream().map(o -> {
             Class<?> targetClass = o.getClass();
-            if (isProxyObject(o)) {
-                targetClass = AopUtils.getTargetClass(o);
+            if (ProxyUtil.isProxyObject(o)) {
+                targetClass = ProxyUtil.getTargetClass(o);
             }
             TaskActionComponent taskActionComponent = targetClass.getAnnotation(TaskActionComponent.class);
             String taskActionName = taskActionComponent.taskActionName();
@@ -168,14 +168,11 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         @Override
         public Map<String, TaskActionMethod> getActionMethodMap() {
-            return getTaskActionMethodMap(this.taskAction.getClass());
+            Class<?> targetClass = this.taskAction.getClass();
+            if (ProxyUtil.isProxyObject(this.taskAction)) {
+                targetClass = ProxyUtil.getTargetClass(this.taskAction);
+            }
+            return getTaskActionMethodMap(targetClass);
         }
-    }
-
-    private boolean isProxyObject(Object o) {
-        if (o == null) {
-            return false;
-        }
-        return AopUtils.isAopProxy(o) || AopUtils.isCglibProxy(o) || AopUtils.isJdkDynamicProxy(o);
     }
 }

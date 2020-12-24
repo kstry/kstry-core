@@ -26,6 +26,7 @@ import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -83,7 +84,11 @@ public abstract class RouteTaskAction implements TaskAction {
 
     @Override
     public Map<String, TaskActionMethod> getActionMethodMap() {
-        return getTaskActionMethodMap(this.getClass());
+        Class<?> targetClass = this.getClass();
+        if (ProxyUtil.isProxyObject(this)) {
+            targetClass = ProxyUtil.getTargetClass(this);
+        }
+        return getTaskActionMethodMap(targetClass);
     }
 
     @SuppressWarnings("unchecked")
