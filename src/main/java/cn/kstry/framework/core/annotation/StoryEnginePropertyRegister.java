@@ -59,10 +59,11 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskActionComponent.class);
         List<AnnotationTaskActionProxy> annotationTaskActionList = beansWithAnnotation.values().stream().map(o -> {
-            while (isProxyObject(o)) {
-                o = AopUtils.getTargetClass(o);
+            Class<?> targetClass = o.getClass();
+            if (isProxyObject(o)) {
+                targetClass = AopUtils.getTargetClass(o);
             }
-            TaskActionComponent taskActionComponent = o.getClass().getAnnotation(TaskActionComponent.class);
+            TaskActionComponent taskActionComponent = targetClass.getAnnotation(TaskActionComponent.class);
             String taskActionName = taskActionComponent.taskActionName();
             ComponentTypeEnum componentTypeEnum = taskActionComponent.taskActionTypeEnum();
             Class<? extends TaskActionOperatorRole> operatorRoleClass = taskActionComponent.operatorRoleClass();
