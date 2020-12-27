@@ -33,7 +33,7 @@ public class KstryException extends RuntimeException {
      */
     private final ExceptionEnum errorCodeEnum;
 
-    private String errorCode;
+    private final String errorCode;
 
     public KstryException(String code, String desc) {
         super(StringUtils.isBlank(desc) ? "System Error!" : desc);
@@ -42,17 +42,23 @@ public class KstryException extends RuntimeException {
     }
 
     public KstryException(ExceptionEnum errorCode) {
-        super(errorCode.getCode() + ": " + errorCode.getDesc());
+        super(errorCode.getExceptionCode() + ": " + errorCode.getDesc());
         this.errorCodeEnum = errorCode;
+        this.errorCode = errorCode.getExceptionCode();
     }
 
     public KstryException(Throwable cause) {
-        super(cause);
+        super(cause.getMessage(), cause);
         this.errorCodeEnum = ExceptionEnum.SYSTEM_ERROR;
+        this.errorCode = this.errorCodeEnum.getExceptionCode();
     }
 
     public ExceptionEnum getErrorCodeEnum() {
         return this.errorCodeEnum;
+    }
+
+    public String getErrorCode() {
+        return this.errorCode;
     }
 
     public static void throwException(ExceptionEnum exceptionEnum) {
