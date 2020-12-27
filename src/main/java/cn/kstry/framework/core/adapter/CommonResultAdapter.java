@@ -61,6 +61,7 @@ public class CommonResultAdapter extends RouteTaskAction implements ResultAdapte
             taskResultMapping.forEach((k, v) -> PARSER.parseExpression(k).setValue(standardContext, PARSER.parseExpression(v).getValue(standardContext)));
 
             TaskPipelinePort<Object> result = new TaskPipelinePortBox<>();
+            result.setSuccess(true);
             result.setTaskRequest(taskRequest);
             return result;
         } catch (Exception e) {
