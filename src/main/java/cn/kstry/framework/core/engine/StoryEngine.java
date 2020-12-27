@@ -69,6 +69,9 @@ public class StoryEngine {
 
                 taskRequest = TaskActionUtil.getNextRequest(taskRequest, taskRouter, globalMap.getResultMappingRepository(), globalBus, taskGroup);
                 Object o = TaskActionUtil.invokeTarget(taskRequest, routeNode, actionOperator);
+                if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
+                    return (TaskResponse<T>) o;
+                }
 
                 ComponentTypeEnum componentEnum = routeNode.getComponentTypeEnum();
                 if (componentEnum != ComponentTypeEnum.TIME_SLOT) {

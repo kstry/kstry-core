@@ -62,7 +62,9 @@ public class TaskTimeSlot extends RouteTaskAction implements TaskTimeSlotAction 
                 taskRequest = TaskActionUtil.getNextRequest(taskRequest, router, resultMappingRepository, globalBus, taskGroup);
 
                 Object o = TaskActionUtil.invokeTarget(taskRequest, routeNode, actionOperator);
-
+                if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
+                    return (TaskResponse<?>) o;
+                }
                 TaskActionUtil.saveTaskResultToGlobalBus(globalBus, routeNode, (TaskResponse<Object>) o);
                 TaskActionUtil.reRouteNodeMap(router);
                 taskRequest = o;
