@@ -146,7 +146,7 @@ public enum ExceptionEnum {
         return desc;
     }
 
-    public String getExceptionInfo() {
-        return getTypeEnum().name() + "[" + getCode() + "]: " + getDesc();
+    public String getExceptionCode() {
+        return getTypeEnum().name() + "-" + getCode();
     }
 }

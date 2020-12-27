@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.exception;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * 异常
  *
@@ -29,27 +31,35 @@ public class KstryException extends RuntimeException {
     /**
      * 异常信息枚举
      */
-    private final ExceptionEnum errorCode;
+    private final ExceptionEnum errorCodeEnum;
+
+    private String errorCode;
+
+    public KstryException(String code, String desc) {
+        super(StringUtils.isBlank(desc) ? "System Error!" : desc);
+        this.errorCode = code;
+        this.errorCodeEnum = null;
+    }
 
     public KstryException(ExceptionEnum errorCode) {
-        super(errorCode.getExceptionInfo());
-        this.errorCode = errorCode;
+        super(errorCode.getCode() + ": " + errorCode.getDesc());
+        this.errorCodeEnum = errorCode;
     }
 
     public KstryException(Throwable cause) {
         super(cause);
-        this.errorCode = ExceptionEnum.SYSTEM_ERROR;
+        this.errorCodeEnum = ExceptionEnum.SYSTEM_ERROR;
     }
 
-    public ExceptionEnum getErrorCode() {
-        return errorCode;
+    public ExceptionEnum getErrorCodeEnum() {
+        return this.errorCodeEnum;
     }
 
     public static void throwException(ExceptionEnum exceptionEnum) {
         throw new KstryException(exceptionEnum);
     }
 
-    public static void throwException(Exception e) {
+    public static void throwException(Throwable e) {
         throw new KstryException(e);
     }
 }
