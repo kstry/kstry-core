@@ -67,6 +67,11 @@ public enum ExceptionEnum {
     CONFIGURATION_PARSE_FAILURE(ComponentTypeEnum.GLOBAL, "0008", "Configuration file parsing failure!"),
 
     /**
+     * 参数错误
+     */
+    PARAMS_ERROR(ComponentTypeEnum.GLOBAL, "0009", "params error!"),
+
+    /**
      * 上一个任务的返回值需匹配下一个任务的入参
      */
     REQUEST_NOT_MATCHED(ComponentTypeEnum.TASK, "0001", "The return value type cannot be matched with the next task's request!"),
@@ -147,6 +152,6 @@ public enum ExceptionEnum {
     }
 
     public String getExceptionCode() {
-        return getTypeEnum().name() + "-" + getCode();
+        return "K" + (100 + getTypeEnum().getType()) + getCode();
     }
 }

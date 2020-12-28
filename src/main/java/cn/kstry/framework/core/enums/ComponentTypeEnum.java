@@ -90,4 +90,8 @@ public enum ComponentTypeEnum {
     }
 
     final int type;
+
+    public int getType() {
+        return type;
+    }
 }
