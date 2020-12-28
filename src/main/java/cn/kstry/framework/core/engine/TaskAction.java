@@ -1,7 +1,7 @@
 package cn.kstry.framework.core.engine;
 /*
  *
- *  *  Copyright (c) 2020-2020, Lykan (jiashuomeng@gmail.com).
+ *  *  Copyright (c) 2020-2021, Lykan (jiashuomeng@gmail.com).
  *  *  <p>
  *  *  Licensed under the GNU Lesser General Public License 3.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
