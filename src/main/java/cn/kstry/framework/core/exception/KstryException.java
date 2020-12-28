@@ -28,33 +28,21 @@ public class KstryException extends RuntimeException {
 
     private static final long serialVersionUID = 331496378583084864L;
 
-    /**
-     * 异常信息枚举
-     */
-    private final ExceptionEnum errorCodeEnum;
-
     private final String errorCode;
 
     public KstryException(String code, String desc) {
         super(StringUtils.isBlank(desc) ? "System Error!" : desc);
         this.errorCode = code;
-        this.errorCodeEnum = null;
     }
 
-    public KstryException(ExceptionEnum errorCode) {
-        super(errorCode.getExceptionCode() + ": " + errorCode.getDesc());
-        this.errorCodeEnum = errorCode;
-        this.errorCode = errorCode.getExceptionCode();
+    public KstryException(ExceptionEnum errorCodeEnum) {
+        super(errorCodeEnum.getDesc());
+        this.errorCode = errorCodeEnum.getExceptionCode();
     }
 
     public KstryException(Throwable cause) {
         super(cause.getMessage(), cause);
-        this.errorCodeEnum = ExceptionEnum.SYSTEM_ERROR;
-        this.errorCode = this.errorCodeEnum.getExceptionCode();
-    }
-
-    public ExceptionEnum getErrorCodeEnum() {
-        return this.errorCodeEnum;
+        this.errorCode = ExceptionEnum.SYSTEM_ERROR.getExceptionCode();
     }
 
     public String getErrorCode() {

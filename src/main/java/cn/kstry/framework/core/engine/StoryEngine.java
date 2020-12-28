@@ -33,6 +33,8 @@ import cn.kstry.framework.core.util.TaskActionUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,7 +95,17 @@ public class StoryEngine {
             BeanUtils.copyProperties(resultResponse, response);
             return response;
         } catch (Exception e) {
-            KstryException.throwException(e);
+            Throwable exception = e;
+            if (exception instanceof UndeclaredThrowableException) {
+                exception = ((UndeclaredThrowableException) exception).getUndeclaredThrowable();
+            }
+            if (exception instanceof InvocationTargetException) {
+                exception = ((InvocationTargetException) exception).getTargetException();
+            }
+            if (exception instanceof KstryException) {
+                throw (KstryException) exception;
+            }
+            KstryException.throwException(exception);
             return null;
         }
     }
