@@ -121,4 +121,14 @@ public class TaskResponseBox<T> implements TaskResponse<T> {
         result.setResult(buildTarget);
         return result;
     }
+
+    public static <E> TaskResponse<E> buildError(String code, String desc) {
+        AssertUtil.notBlank(code);
+        TaskResponseBox<E> result = new TaskResponseBox<>();
+        result.setResultCode(code);
+        result.setResultDesc(desc);
+        result.setSuccess(false);
+        result.setResult(null);
+        return result;
+    }
 }
