@@ -101,11 +101,11 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             }
 
             routeNodeMap.values().forEach(node -> node.setRequestClass(TaskActionUtil.getRouteNodeRequestClass(taskActionList, node)));
-            Map<String, GlobalMap.MapNode> mapPlanning = configResolver.initMapPlanning();
-            if (MapUtils.isEmpty(mapPlanning)) {
+            Map<String, GlobalMap.MapNode> storyDefinition = configResolver.initStoryDefinition();
+            if (MapUtils.isEmpty(storyDefinition)) {
                 return;
             }
-            mapPlanning.forEach(globalMap::addFirstMapNode);
+            storyDefinition.forEach(globalMap::addFirstMapNode);
 
             ResultMappingRepository resultMappingRepository = new ResultMappingRepository();
             resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());

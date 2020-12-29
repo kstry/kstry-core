@@ -38,7 +38,7 @@ public class TaskRouteConfig {
     /**
      * 线路 路由 规划
      */
-    private Map<String, List<MapPlanningNodeItem>> mapPlanning;
+    private Map<String, List<StoryDefinitionNodeItem>> storyDefinition;
 
     public Map<String, String> getNodeDefinition() {
         return nodeDefinition;
@@ -56,15 +56,15 @@ public class TaskRouteConfig {
         this.resultMapping = resultMapping;
     }
 
-    public Map<String, List<MapPlanningNodeItem>> getMapPlanning() {
-        return mapPlanning;
+    public Map<String, List<StoryDefinitionNodeItem>> getStoryDefinition() {
+        return storyDefinition;
     }
 
-    public void setMapPlanning(Map<String, List<MapPlanningNodeItem>> mapPlanning) {
-        this.mapPlanning = mapPlanning;
+    public void setStoryDefinition(Map<String, List<StoryDefinitionNodeItem>> storyDefinition) {
+        this.storyDefinition = storyDefinition;
     }
 
-    public static class MapPlanningNodeItem {
+    public static class StoryDefinitionNodeItem {
 
         private String nodeName;
 
@@ -72,7 +72,7 @@ public class TaskRouteConfig {
 
         private Map<String, Map<String, String>> routeStrategy;
 
-        private Map<String, List<MapPlanningNodeItem>> routeMap;
+        private Map<String, List<StoryDefinitionNodeItem>> routeMap;
 
         /**
          * 中断 timeSlot
@@ -103,11 +103,11 @@ public class TaskRouteConfig {
             this.routeStrategy = routeStrategy;
         }
 
-        public Map<String, List<MapPlanningNodeItem>> getRouteMap() {
+        public Map<String, List<StoryDefinitionNodeItem>> getRouteMap() {
             return routeMap;
         }
 
-        public void setRouteMap(Map<String, List<MapPlanningNodeItem>> routeMap) {
+        public void setRouteMap(Map<String, List<StoryDefinitionNodeItem>> routeMap) {
             this.routeMap = routeMap;
         }
 

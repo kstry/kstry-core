@@ -58,7 +58,7 @@ public class ConfigResolver {
 
     private Map<String, Map<String, String>> resultMappingConfig;
 
-    private Map<String, GlobalMap.MapNode> mapPlanning;
+    private Map<String, GlobalMap.MapNode> storyDefinition;
 
     public void init() {
         this.taskRouteConfig = parseTaskRouteConfig();
@@ -66,9 +66,9 @@ public class ConfigResolver {
         this.resultMappingConfig = parseResultMappingConfig();
     }
 
-    public Map<String, GlobalMap.MapNode> initMapPlanning() {
-        this.mapPlanning = parseMapPlanning();
-        return this.mapPlanning;
+    public Map<String, GlobalMap.MapNode> initStoryDefinition() {
+        this.storyDefinition = parseStoryDefinition();
+        return this.storyDefinition;
     }
 
     public Map<String, RouteNode> getRouteNodeMap() {
@@ -80,12 +80,12 @@ public class ConfigResolver {
     }
 
     private Map<RouteNode, Map<RouteNode, Map<String, String>>> parseRouteNodeMappingMap() {
-        AssertUtil.notNull(this.mapPlanning);
-        if (MapUtils.isEmpty(this.mapPlanning)) {
+        AssertUtil.notNull(this.storyDefinition);
+        if (MapUtils.isEmpty(this.storyDefinition)) {
             return new HashMap<>();
         }
         Map<RouteNode, Map<RouteNode, Map<String, String>>> mappingMap = new HashMap<>();
-        this.mapPlanning.values().forEach(mapNode -> getNextMapping(mapNode, mapNode.getNextMapNodeList(), mappingMap, true));
+        this.storyDefinition.values().forEach(mapNode -> getNextMapping(mapNode, mapNode.getNextMapNodeList(), mappingMap, true));
         return mappingMap;
     }
 
@@ -135,30 +135,30 @@ public class ConfigResolver {
         }
     }
 
-    private Map<String, GlobalMap.MapNode> parseMapPlanning() {
-        Map<String, List<TaskRouteConfig.MapPlanningNodeItem>> mapPlanning = taskRouteConfig.getMapPlanning();
-        if (MapUtils.isEmpty(mapPlanning)) {
+    private Map<String, GlobalMap.MapNode> parseStoryDefinition() {
+        Map<String, List<TaskRouteConfig.StoryDefinitionNodeItem>> storyDefinition = taskRouteConfig.getStoryDefinition();
+        if (MapUtils.isEmpty(storyDefinition)) {
             return new HashMap<>();
         }
 
-        Map<String, GlobalMap.MapNode> mapPlanningResult = new HashMap<>();
-        mapPlanning.forEach((k, v) -> {
+        Map<String, GlobalMap.MapNode> storyDefinitionResult = new HashMap<>();
+        storyDefinition.forEach((k, v) -> {
             GlobalMap.MapNode next = null;
-            for (TaskRouteConfig.MapPlanningNodeItem item : v) {
+            for (TaskRouteConfig.StoryDefinitionNodeItem item : v) {
                 GlobalMap.MapNode n = parsePlanningNodeItem(item);
                 if (next == null) {
                     next = n;
-                    mapPlanningResult.put(k, next);
+                    storyDefinitionResult.put(k, next);
                     continue;
                 }
                 next.addNextMapNode(n);
                 next = n;
             }
         });
-        return mapPlanningResult;
+        return storyDefinitionResult;
     }
 
-    private GlobalMap.MapNode parsePlanningNodeItem(TaskRouteConfig.MapPlanningNodeItem planningNodeItem) {
+    private GlobalMap.MapNode parsePlanningNodeItem(TaskRouteConfig.StoryDefinitionNodeItem planningNodeItem) {
         RouteNode routeNode = routeNodeMap.get(planningNodeItem.getNodeName());
         AssertUtil.notNull(routeNode);
         MapNodeAdapterForConfigResolver mapNode = new MapNodeAdapterForConfigResolver(routeNode.cloneRouteNode());
@@ -168,11 +168,11 @@ public class ConfigResolver {
             return mapNode;
         }
 
-        Map<String, List<TaskRouteConfig.MapPlanningNodeItem>> routeMap = planningNodeItem.getRouteMap();
+        Map<String, List<TaskRouteConfig.StoryDefinitionNodeItem>> routeMap = planningNodeItem.getRouteMap();
         routeMap.forEach((kIn, vIn) -> {
             GlobalMap.MapNode next = null;
             List<TaskRouterInflectionPoint> inflectionPointList = getInflectionPoints(planningNodeItem, kIn);
-            for (TaskRouteConfig.MapPlanningNodeItem item : vIn) {
+            for (TaskRouteConfig.StoryDefinitionNodeItem item : vIn) {
                 GlobalMap.MapNode mapNodeIn = parsePlanningNodeItem(item);
                 if (next == null) {
                     next = mapNodeIn;
@@ -224,7 +224,7 @@ public class ConfigResolver {
         return mapping;
     }
 
-    private List<TaskRouterInflectionPoint> getInflectionPoints(TaskRouteConfig.MapPlanningNodeItem planningNodeItem, String strategyKey) {
+    private List<TaskRouterInflectionPoint> getInflectionPoints(TaskRouteConfig.StoryDefinitionNodeItem planningNodeItem, String strategyKey) {
         Map<String, Map<String, String>> routeStrategy = planningNodeItem.getRouteStrategy();
         AssertUtil.notEmpty(routeStrategy);
         Map<String, String> strategyMap = routeStrategy.get(strategyKey);
