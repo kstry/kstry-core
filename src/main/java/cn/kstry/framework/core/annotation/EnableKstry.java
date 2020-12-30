@@ -46,6 +46,6 @@ public @interface EnableKstry {
     /**
      * @return 配置文件路径
      */
-    String configPath() default "TaskRouteConfig.json";
+    String configPath() default "task-route-config.json";
 }
 

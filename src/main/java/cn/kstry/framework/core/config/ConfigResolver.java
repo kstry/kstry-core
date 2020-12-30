@@ -305,7 +305,7 @@ public class ConfigResolver {
 
     public String getTaskRouteConfigName() {
         if (StringUtils.isBlank(this.taskRouteConfigName)) {
-            this.taskRouteConfigName = "TaskRouteConfig.json";
+            this.taskRouteConfigName = "task-route-config.json";
         }
         return this.taskRouteConfigName;
     }
