@@ -25,17 +25,10 @@ import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.facade.RouteMapResponse;
-import cn.kstry.framework.core.facade.TaskPipelinePort;
-import cn.kstry.framework.core.facade.TaskRequest;
-import cn.kstry.framework.core.facade.TaskResponse;
+import cn.kstry.framework.core.facade.*;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.facade.DynamicRouteTable;
-import cn.kstry.framework.core.route.GlobalMap;
-import cn.kstry.framework.core.route.RouteNode;
-import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
+import cn.kstry.framework.core.route.*;
 import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -141,7 +134,7 @@ public class TaskActionUtil {
      */
     public static TaskActionOperatorRole getTaskActionOperator(TaskRouter router, List<TaskAction> taskGroup) {
         TaskAction taskAction = TaskActionUtil.getNextTaskAction(taskGroup, router);
-        TaskActionOperatorRole actionOperator = taskAction.getTaskActionOperator();
+        TaskActionOperatorRole actionOperator = ((RouteTaskAction)taskAction).getTaskActionOperator();
         if (actionOperator == null) {
             actionOperator = TaskOperatorCreator.getTaskOperator(taskAction);
         }
@@ -191,7 +184,7 @@ public class TaskActionUtil {
         router.reRouteNodeMap(node -> matchRouteNode(node, dynamicRouteTable));
     }
 
-    public static Class<? extends TaskRequest> getRouteNodeRequestClass(List<TaskAction> taskActionList, RouteNode routeNode) {
+    public static TaskActionMethod getTaskActionMethod(List<TaskAction> taskActionList, RouteNode routeNode) {
         AssertUtil.notNull(routeNode);
         AssertUtil.notEmpty(taskActionList);
 
@@ -206,10 +199,10 @@ public class TaskActionUtil {
         }).collect(Collectors.toList());
         AssertUtil.oneSize(collect, ExceptionEnum.MUST_ONE_TASK_ACTION);
 
-        TaskAction taskAction = collect.get(0);
+        RouteTaskAction taskAction = (RouteTaskAction) collect.get(0);
         TaskActionMethod taskActionMethod = taskAction.getActionMethodMap().get(routeNode.getActionName());
         AssertUtil.notNull(taskActionMethod);
-        return taskActionMethod.getRequestClass();
+        return taskActionMethod;
     }
 
     private static boolean matchRouteNode(RouteNode node, DynamicRouteTable dynamicRouteTable) {

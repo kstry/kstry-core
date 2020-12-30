@@ -16,11 +16,10 @@ package cn.kstry.framework.core.engine;
  *  * limitations under the License.
  *
  */
+
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.route.TaskRouter;
-
-import java.util.Map;
 
 /**
  * Task 最上层功能定义，具备以下功能：
@@ -55,26 +54,7 @@ public interface TaskAction {
     ComponentTypeEnum getTaskActionTypeEnum();
 
     /**
-     * 获取 Task Operator
-     *
-     * @return Task Operator
-     */
-    TaskActionOperatorRole getTaskActionOperator();
-
-    /**
-     * 设置  Task Operator
-     *
-     * @param taskOperator Task Operator
-     */
-    void setTaskActionOperator(TaskActionOperatorRole taskOperator);
-
-    /**
      * 获取 Task Action 操作者的 角色类
      */
     Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass();
-
-    /**
-     * 获取 TaskAction 中被代理 Method 的集合
-     */
-    Map<String, TaskActionMethod> getActionMethodMap();
 }

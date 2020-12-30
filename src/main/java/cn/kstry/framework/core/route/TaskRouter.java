@@ -144,11 +144,6 @@ public class TaskRouter {
         return beforeInvokeRouteNodeOptional;
     }
 
-    @Override
-    public String toString() {
-        return JSON.toJSONString(currentRouteNode().map(RouteNode::getNodeName).orElse("INIT"));
-    }
-
     public GlobalBus getGlobalBus() {
         return globalBus;
     }
@@ -157,4 +152,10 @@ public class TaskRouter {
         AssertUtil.notNull(globalBus);
         this.globalBus = globalBus;
     }
+
+    @Override
+    public String toString() {
+        return JSON.toJSONString(currentRouteNode().map(RouteNode::getNodeName).orElse("INIT"));
+    }
+
 }

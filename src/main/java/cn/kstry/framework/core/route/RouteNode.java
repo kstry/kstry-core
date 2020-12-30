@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
+import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -49,9 +50,9 @@ public class RouteNode {
     private ComponentTypeEnum componentTypeEnum;
 
     /**
-     * 节点执行，请求类型
+     * 节点执行，目标方法属性
      */
-    private Class<? extends TaskRequest> requestClass;
+    private TaskActionMethod taskActionMethod;
 
     /**
      * 全局地图的一个节点
@@ -119,11 +120,17 @@ public class RouteNode {
     }
 
     public Class<? extends TaskRequest> getRequestClass() {
-        return requestClass;
+        AssertUtil.notNull(taskActionMethod);
+        return taskActionMethod.getRequestClass();
     }
 
-    public void setRequestClass(Class<? extends TaskRequest> requestClass) {
-        this.requestClass = requestClass;
+    public void setTaskActionMethod(TaskActionMethod taskActionMethod) {
+        AssertUtil.notNull(taskActionMethod);
+        this.taskActionMethod = taskActionMethod;
+    }
+
+    public TaskActionMethod getTaskActionMethod() {
+        return taskActionMethod;
     }
 
     public GlobalMap.MapNode getMapNode() {

@@ -28,6 +28,7 @@ import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Method;
@@ -67,80 +68,74 @@ public abstract class RouteTaskAction implements TaskAction {
     }
 
     @Override
-    public TaskActionOperatorRole getTaskActionOperator() {
-        return this.taskActionOperator;
-    }
-
-    @Override
-    public void setTaskActionOperator(TaskActionOperatorRole taskActionOperator) {
-        this.taskActionOperator = taskActionOperator;
-    }
-
-    @Override
     public Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass() {
         KstryException.throwException(ExceptionEnum.NEED_CONFIRM_NECESSARY_METHODS);
         return null;
     }
 
-    @Override
     public Map<String, TaskActionMethod> getActionMethodMap() {
-        Class<?> targetClass = this.getClass();
-        if (ProxyUtil.isProxyObject(this)) {
-            targetClass = ProxyUtil.getTargetClass(this);
-        }
+        Class<?> targetClass = ProxyUtil.noneProxyClass(this);
         return getTaskActionMethodMap(targetClass);
     }
 
     @SuppressWarnings("unchecked")
     protected Map<String, TaskActionMethod> getTaskActionMethodMap(Class<?> targetClass) {
         AssertUtil.notNull(targetClass);
-
-        if (this.taskActionMethodMap != null) {
+        if (MapUtils.isNotEmpty(this.taskActionMethodMap)) {
             return this.taskActionMethodMap;
         }
 
-        synchronized (this) {
-            if (this.taskActionMethodMap != null) {
-                return this.taskActionMethodMap;
-            }
-            Method[] methods = targetClass.getMethods();
-            HashMap<String, TaskActionMethod> taskActionMethodHashMap = Maps.newHashMap();
-            if (ArrayUtils.isEmpty(methods)) {
-                return taskActionMethodHashMap;
-            }
-
-            for (Method method : methods) {
-                Class<?> declaringClass = method.getDeclaringClass();
-                if (!TaskAction.class.isAssignableFrom(declaringClass) && declaringClass.getAnnotation(TaskActionComponent.class) == null) {
-                    continue;
-                }
-
-                Class<? extends TaskRequest> requestClass = null;
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                if (ArrayUtils.isNotEmpty(parameterTypes)) {
-                    if (parameterTypes.length != 1) {
-                        continue;
-                    }
-                    if (!TaskRequest.class.isAssignableFrom(parameterTypes[0])) {
-                        continue;
-                    }
-                    requestClass = (Class<? extends TaskRequest>) parameterTypes[0];
-                }
-                Class<?> returnClass = method.getReturnType();
-                if (!"void".equals(returnClass.getName()) && !TaskResponse.class.isAssignableFrom(returnClass)) {
-                    continue;
-                }
-
-                TaskActionMethod taskActionMethod = new TaskActionMethod();
-                taskActionMethod.setMethodName(method.getName());
-                taskActionMethod.setRequestClass(requestClass);
-                taskActionMethod.setReturnClass((Class<? extends TaskResponse<?>>) method.getReturnType());
-                taskActionMethod.setClassName(method.getDeclaringClass().getName());
-                AssertUtil.isNull(taskActionMethodHashMap.get(method.getName()), ExceptionEnum.NOT_ALLOWED_OVERLOADS);
-                taskActionMethodHashMap.put(method.getName(), taskActionMethod);
-            }
-            this.taskActionMethodMap = taskActionMethodHashMap;
+        Method[] methods = targetClass.getMethods();
+        HashMap<String, TaskActionMethod> taskActionMethodHashMap = Maps.newHashMap();
+        if (ArrayUtils.isEmpty(methods)) {
             return taskActionMethodHashMap;
         }
+
+        for (Method method : methods) {
+            Class<?> declaringClass = method.getDeclaringClass();
+            if (!TaskAction.class.isAssignableFrom(declaringClass) && declaringClass.getAnnotation(TaskActionComponent.class) == null) {
+                continue;
+            }
+
+            Class<? extends TaskRequest> requestClass = null;
+            Class<?>[] parameterTypes = method.getParameterTypes();
+
+            // 入参要求：如果有参数，要求只有一个，并且实现 TaskRequest
+            if (ArrayUtils.isNotEmpty(parameterTypes)) {
+                if (parameterTypes.length != 1) {
+                    continue;
+                }
+                if (!TaskRequest.class.isAssignableFrom(parameterTypes[0])) {
+                    continue;
+                }
+                requestClass = (Class<? extends TaskRequest>) parameterTypes[0];
+            }
+
+            // 出参要求：无参 或 实现 TaskResponse
+            Class<?> returnClass = method.getReturnType();
+            if (!"void".equals(returnClass.getName()) && !TaskResponse.class.isAssignableFrom(returnClass)) {
+                continue;
+            }
+
+            TaskActionMethod taskActionMethod = new TaskActionMethod();
+            taskActionMethod.setMethodName(method.getName());
+            taskActionMethod.setRequestClass(requestClass);
+            taskActionMethod.setReturnClass((Class<? extends TaskResponse<?>>) returnClass);
+            taskActionMethod.setClassName(method.getDeclaringClass().getName());
+
+            // 不允许方法重载
+            AssertUtil.isNull(taskActionMethodHashMap.get(method.getName()), ExceptionEnum.NOT_ALLOWED_OVERLOADS);
+            taskActionMethodHashMap.put(method.getName(), taskActionMethod);
+            this.taskActionMethodMap = taskActionMethodHashMap;
+        }
+        return taskActionMethodHashMap;
+    }
+
+    public TaskActionOperatorRole getTaskActionOperator() {
+        return this.taskActionOperator;
+    }
+
+    public void setTaskActionOperator(TaskActionOperatorRole taskActionOperator) {
+        this.taskActionOperator = taskActionOperator;
     }
 }

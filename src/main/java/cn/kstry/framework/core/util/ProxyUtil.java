@@ -31,7 +31,13 @@ public class ProxyUtil {
         return AopUtils.isAopProxy(o) || AopUtils.isCglibProxy(o) || AopUtils.isJdkDynamicProxy(o);
     }
 
-    public static Class<?> getTargetClass(Object candidate) {
+    public static Class<?> noneProxyClass(Object candidate) {
+        if (candidate == null) {
+            return null;
+        }
+        if (!ProxyUtil.isProxyObject(candidate)) {
+            return candidate.getClass();
+        }
         return AopUtils.getTargetClass(candidate);
     }
 }

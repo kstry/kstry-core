@@ -19,6 +19,7 @@ package cn.kstry.framework.core.operator;
 
 import cn.kstry.framework.core.annotation.StoryEnginePropertyRegister;
 import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.route.RouteTaskAction;
 import cn.kstry.framework.core.util.AssertUtil;
 
 import java.lang.reflect.InvocationHandler;
@@ -42,7 +43,7 @@ public class TaskOperatorProxy implements InvocationHandler {
 
     public void setTaskOperator(TaskActionOperatorRole taskOperator) {
         AssertUtil.notNull(workRouteAction);
-        this.workRouteAction.setTaskActionOperator(taskOperator);
+        ((RouteTaskAction) this.workRouteAction).setTaskActionOperator(taskOperator);
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

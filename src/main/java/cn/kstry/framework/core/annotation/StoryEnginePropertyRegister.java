@@ -59,10 +59,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskActionComponent.class);
         List<AnnotationTaskActionProxy> annotationTaskActionList = beansWithAnnotation.values().stream().map(o -> {
-            Class<?> targetClass = o.getClass();
-            if (ProxyUtil.isProxyObject(o)) {
-                targetClass = ProxyUtil.getTargetClass(o);
-            }
+            Class<?> targetClass = ProxyUtil.noneProxyClass(o);
             TaskActionComponent taskActionComponent = targetClass.getAnnotation(TaskActionComponent.class);
             String taskActionName = taskActionComponent.taskActionName();
             ComponentTypeEnum componentTypeEnum = taskActionComponent.taskActionTypeEnum();
@@ -74,8 +71,8 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
             AnnotationTaskActionProxy annotationTaskActionProxy = new AnnotationTaskActionProxy(o);
             annotationTaskActionProxy.setTaskActionName(taskActionName);
-            annotationTaskActionProxy.setComponentTypeEnum(componentTypeEnum);
-            annotationTaskActionProxy.setOperatorRoleClass(operatorRoleClass);
+            annotationTaskActionProxy.setTaskActionTypeEnum(componentTypeEnum);
+            annotationTaskActionProxy.setTaskActionOperatorRoleClass(operatorRoleClass);
             return annotationTaskActionProxy;
         }).collect(Collectors.toList());
         taskActionList.addAll(annotationTaskActionList);
@@ -92,26 +89,25 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         AssertUtil.notEmpty(configResolverMap);
 
         GlobalMap globalMap = new GlobalMap();
-        configResolverMap.values().forEach(configResolver -> {
-            configResolver.setTaskRouteConfigName(EnableKstryRegister.getKstryConfigPath());
-            configResolver.init();
-            Map<String, RouteNode> routeNodeMap = configResolver.getRouteNodeMap();
-            if (MapUtils.isEmpty(routeNodeMap)) {
-                return;
-            }
+        ConfigResolver configResolver = configResolverMap.values().iterator().next();
 
-            routeNodeMap.values().forEach(node -> node.setRequestClass(TaskActionUtil.getRouteNodeRequestClass(taskActionList, node)));
-            Map<String, GlobalMap.MapNode> storyDefinition = configResolver.initStoryDefinition();
-            if (MapUtils.isEmpty(storyDefinition)) {
-                return;
-            }
-            storyDefinition.forEach(globalMap::addFirstMapNode);
+        configResolver.setTaskRouteConfigName(EnableKstryRegister.getKstryConfigPath());
+        configResolver.initNodeAndMapping();
+        Map<String, RouteNode> routeNodeMap = configResolver.getRouteNodeMap();
+        if (MapUtils.isEmpty(routeNodeMap)) {
+            return globalMap;
+        }
 
-            ResultMappingRepository resultMappingRepository = new ResultMappingRepository();
-            resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());
-            globalMap.setResultMappingRepository(resultMappingRepository);
-        });
+        routeNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(taskActionList, node)));
+        Map<String, GlobalMap.MapNode> storyDefinition = configResolver.initStoryDefinition();
+        if (MapUtils.isEmpty(storyDefinition)) {
+            return globalMap;
+        }
+        storyDefinition.forEach(globalMap::addFirstMapNode);
 
+        ResultMappingRepository resultMappingRepository = new ResultMappingRepository();
+        resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());
+        globalMap.setResultMappingRepository(resultMappingRepository);
         return globalMap;
     }
 
@@ -147,17 +143,13 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             this.taskActionName = taskActionName;
         }
 
-        public void setComponentTypeEnum(ComponentTypeEnum componentTypeEnum) {
-            this.componentTypeEnum = componentTypeEnum;
-        }
-
         @Override
         public ComponentTypeEnum getTaskActionTypeEnum() {
             return componentTypeEnum;
         }
 
-        public void setOperatorRoleClass(Class<? extends TaskActionOperatorRole> operatorRoleClass) {
-            this.operatorRoleClass = operatorRoleClass;
+        public void setTaskActionTypeEnum(ComponentTypeEnum componentTypeEnum) {
+            this.componentTypeEnum = componentTypeEnum;
         }
 
         @Override
@@ -166,13 +158,14 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             return this.operatorRoleClass;
         }
 
+        public void setTaskActionOperatorRoleClass(Class<? extends TaskActionOperatorRole> operatorRoleClass) {
+            this.operatorRoleClass = operatorRoleClass;
+        }
+
         @Override
         public Map<String, TaskActionMethod> getActionMethodMap() {
-            Class<?> targetClass = this.taskAction.getClass();
-            if (ProxyUtil.isProxyObject(this.taskAction)) {
-                targetClass = ProxyUtil.getTargetClass(this.taskAction);
-            }
-            return getTaskActionMethodMap(targetClass);
+            Class<?> targetClass = ProxyUtil.noneProxyClass(this.taskAction);
+            return super.getTaskActionMethodMap(targetClass);
         }
     }
 }

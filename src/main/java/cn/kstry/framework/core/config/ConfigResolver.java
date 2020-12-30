@@ -28,7 +28,6 @@ import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -39,11 +38,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author lykan
@@ -60,7 +55,7 @@ public class ConfigResolver {
 
     private Map<String, GlobalMap.MapNode> storyDefinition;
 
-    public void init() {
+    public void initNodeAndMapping() {
         this.taskRouteConfig = parseTaskRouteConfig();
         this.routeNodeMap = parseRouteNodeMap();
         this.resultMappingConfig = parseResultMappingConfig();
@@ -248,7 +243,9 @@ public class ConfigResolver {
     private Map<String, RouteNode> parseRouteNodeMap() {
         Map<String, RouteNode> routeNodeMap = new HashMap<>();
         Map<String, String> nodeDefinition = taskRouteConfig.getNodeDefinition();
-        AssertUtil.notEmpty(nodeDefinition);
+        if (MapUtils.isEmpty(nodeDefinition)) {
+            return routeNodeMap;
+        }
         nodeDefinition.forEach((k, v) -> {
             AssertUtil.anyNotBlank(k, v);
             String[] property = v.split("-");
@@ -264,7 +261,6 @@ public class ConfigResolver {
         return routeNodeMap;
     }
 
-    @SuppressWarnings("all")
     private TaskRouteConfig parseTaskRouteConfig() {
         try {
             URL resource = ConfigResolver.class.getClassLoader().getResource(getTaskRouteConfigName());
@@ -275,7 +271,6 @@ public class ConfigResolver {
             StringBuilder sb = new StringBuilder();
             Files.lines(path).forEach(sb::append);
             TaskRouteConfig taskRouteConfig = JSON.parseObject(sb.toString(), TaskRouteConfig.class);
-            JSONObject jsonObject = JSON.parseObject(sb.toString());
             AssertUtil.notNull(taskRouteConfig);
             return taskRouteConfig;
         } catch (Exception e) {
