@@ -75,7 +75,7 @@ public class TaskTimeSlot extends RouteTaskAction implements TaskTimeSlotAction 
             }
             return GlobalUtil.transfer(taskRequest, TaskResponse.class).orElse(null);
         } catch (Exception e) {
-            KstryException.throwException(e);
+            TaskActionUtil.throwException(e);
             return null;
         }
     }

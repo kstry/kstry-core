@@ -54,6 +54,9 @@ public class KstryException extends RuntimeException {
     }
 
     public static void throwException(Throwable e) {
+        if (e instanceof KstryException) {
+            throw (KstryException) e;
+        }
         throw new KstryException(e);
     }
 }

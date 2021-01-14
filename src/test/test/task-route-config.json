@@ -32,7 +32,7 @@
       ],
       "routeStrategy": {
         "ROUTE_1": {
-          "source-equals": "2f"
+          "invoke-source-equals": "2f"
         }
       },
       "routeMap": {
@@ -42,10 +42,10 @@
           "nodeName": "NODE_7",
           "routeStrategy": {
             "ROUTE_2": {
-              "source-equals": "2f"
+              "invoke-source-equals": "2f"
             },
             "ROUTE_3": {
-              "source-equals": "22f"
+              "invoke-source-equals": "22f"
             }
           },
           "routeMap": {

@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
+import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.util.InflectionPointCalculate;
 
 /**
@@ -35,6 +36,11 @@ public class TaskRouterInflectionPoint {
      * 预期值
      */
     private String expectedValue;
+
+    /**
+     * 拐点 类型
+     */
+    private InflectionPointTypeEnum inflectionPointTypeEnum;
 
     /**
      * 匹配策略
@@ -63,5 +69,13 @@ public class TaskRouterInflectionPoint {
 
     public void setMatchingStrategy(InflectionPointCalculate matchingStrategy) {
         this.matchingStrategy = matchingStrategy;
+    }
+
+    public InflectionPointTypeEnum getInflectionPointTypeEnum() {
+        return inflectionPointTypeEnum;
+    }
+
+    public void setInflectionPointTypeEnum(InflectionPointTypeEnum inflectionPointTypeEnum) {
+        this.inflectionPointTypeEnum = inflectionPointTypeEnum;
     }
 }

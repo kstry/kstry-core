@@ -28,6 +28,8 @@ import cn.kstry.framework.core.route.RouteTaskAction;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -41,6 +43,8 @@ import static cn.kstry.framework.core.bus.GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KE
  * @author lykan
  */
 public class CommonResultAdapter extends RouteTaskAction implements ResultAdapterRole {
+
+    private static final Logger logger = LoggerFactory.getLogger(CommonResultAdapter.class);
 
     /**
      * SpEL 表达式解析器
@@ -58,8 +62,13 @@ public class CommonResultAdapter extends RouteTaskAction implements ResultAdapte
 
             RouteNode fromRouteNode = router.beforeInvokeRouteNodeIgnoreTimeSlot().orElse(DEFAULT_GLOBAL_BUS_PARAMS_KEY);
             Map<String, String> taskResultMapping = request.getResultMappingRepository().getTaskResultMapping(fromRouteNode, nextInvokeRouteNode);
-            taskResultMapping.forEach((k, v) -> PARSER.parseExpression(k).setValue(standardContext, PARSER.parseExpression(v).getValue(standardContext)));
-
+            taskResultMapping.forEach((k, v) -> {
+                try {
+                    PARSER.parseExpression(k).setValue(standardContext, PARSER.parseExpression(v).getValue(standardContext));
+                } catch (Exception e) {
+                    logger.warn("result adapter parse expression error! k:{}, v:{}", k, v, e);
+                }
+            });
             TaskPipelinePort<Object> result = new TaskPipelinePortBox<>();
             result.setSuccess(true);
             result.setTaskRequest(taskRequest);

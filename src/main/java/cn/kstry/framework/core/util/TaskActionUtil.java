@@ -23,6 +23,7 @@ import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.engine.TaskAction;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.*;
@@ -37,7 +38,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -181,7 +184,7 @@ public class TaskActionUtil {
         GlobalBus globalBus = GlobalUtil.notNull(router.getGlobalBus());
         DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
         AssertUtil.notNull(dynamicRouteTable);
-        router.reRouteNodeMap(node -> matchRouteNode(node, dynamicRouteTable));
+        router.reRouteNodeMap(dynamicRouteTable, node -> matchRouteNode(node.getInflectionPointList(), dynamicRouteTable));
     }
 
     public static TaskActionMethod getTaskActionMethod(List<TaskAction> taskActionList, RouteNode routeNode) {
@@ -205,8 +208,21 @@ public class TaskActionUtil {
         return taskActionMethod;
     }
 
-    private static boolean matchRouteNode(RouteNode node, DynamicRouteTable dynamicRouteTable) {
-        List<TaskRouterInflectionPoint> inflectionPointList = node.getInflectionPointList();
+    public static void throwException(Exception e) {
+        Throwable exception = e;
+        if (exception instanceof UndeclaredThrowableException) {
+            exception = ((UndeclaredThrowableException) exception).getUndeclaredThrowable();
+        }
+        if (exception instanceof InvocationTargetException) {
+            exception = ((InvocationTargetException) exception).getTargetException();
+        }
+        if (exception instanceof KstryException) {
+            throw (KstryException) exception;
+        }
+        KstryException.throwException(exception);
+    }
+
+    public static boolean matchRouteNode(List<TaskRouterInflectionPoint> inflectionPointList, DynamicRouteTable dynamicRouteTable) {
         if (CollectionUtils.isEmpty(inflectionPointList)) {
             return false;
         }
@@ -214,6 +230,10 @@ public class TaskActionUtil {
         boolean flag = true;
         try {
             for (TaskRouterInflectionPoint inflectionPoint : inflectionPointList) {
+                if (inflectionPoint.getInflectionPointTypeEnum() != InflectionPointTypeEnum.INVOKE) {
+                    continue;
+                }
+
                 AssertUtil.notBlank(inflectionPoint.getFieldName());
                 AssertUtil.anyNotNull(inflectionPoint.getExpectedValue(), inflectionPoint.getMatchingStrategy());
 

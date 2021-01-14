@@ -20,6 +20,7 @@ package cn.kstry.framework.core.config;
 import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.enums.CalculateEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.route.GlobalMap;
@@ -229,12 +230,13 @@ public class ConfigResolver {
         strategyMap.forEach((k, v) -> {
             AssertUtil.anyNotBlank(k, v);
             String[] splitKeyArray = k.split("-");
-            AssertUtil.isTrue(splitKeyArray.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
+            AssertUtil.isTrue(splitKeyArray.length == 3, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
 
             TaskRouterInflectionPoint inflectionPoint = new TaskRouterInflectionPoint();
+            inflectionPoint.setInflectionPointTypeEnum(GlobalUtil.notEmpty(InflectionPointTypeEnum.getInflectionPointTypeEnum(splitKeyArray[0])));
             inflectionPoint.setExpectedValue(v);
-            inflectionPoint.setFieldName(splitKeyArray[0]);
-            inflectionPoint.setMatchingStrategy(GlobalUtil.notEmpty(CalculateEnum.getCalculateEnumByName(splitKeyArray[1])).getExpression());
+            inflectionPoint.setFieldName(splitKeyArray[1]);
+            inflectionPoint.setMatchingStrategy(GlobalUtil.notEmpty(CalculateEnum.getCalculateEnumByName(splitKeyArray[2])).getExpression());
             inflectionPointList.add(inflectionPoint);
         });
         return inflectionPointList;
