@@ -26,10 +26,18 @@ import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.facade.*;
+import cn.kstry.framework.core.facade.DynamicRouteTable;
+import cn.kstry.framework.core.facade.RouteMapResponse;
+import cn.kstry.framework.core.facade.TaskPipelinePort;
+import cn.kstry.framework.core.facade.TaskRequest;
+import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.*;
+import cn.kstry.framework.core.route.GlobalMap;
+import cn.kstry.framework.core.route.RouteNode;
+import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.route.TaskRouter;
+import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -176,15 +184,31 @@ public class TaskActionUtil {
         }
         RouteNode routeNode = GlobalUtil.notEmpty(router.currentRouteNode());
         GlobalMap.MapNode mapNode = GlobalUtil.notNull(routeNode.getMapNode());
-
-        if (mapNode.nextMapNodeSize() <= 1 && CollectionUtils.isEmpty(router.nextRouteNodeIgnoreTimeSlot().get().getInflectionPointList())) {
+        List<TaskRouterInflectionPoint> inflectionPointList = router.nextRouteNodeIgnoreTimeSlot().get().getInflectionPointList();
+        if (CollectionUtils.isEmpty(inflectionPointList) || mapNode.nextMapNodeSize() == 0) {
             return;
         }
 
         GlobalBus globalBus = GlobalUtil.notNull(router.getGlobalBus());
         DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
         AssertUtil.notNull(dynamicRouteTable);
-        router.reRouteNodeMap(dynamicRouteTable, node -> matchRouteNode(node.getInflectionPointList(), dynamicRouteTable));
+        router.reRouteNodeMap(node -> matchRouteNode(node.getInflectionPointList(), dynamicRouteTable, InflectionPointTypeEnum.INVOKE));
+
+        Optional<RouteNode> nextRouteNode = router.nextRouteNodeIgnoreTimeSlot();
+        if (!nextRouteNode.isPresent() || CollectionUtils.isEmpty(nextRouteNode.get().getInflectionPointList())) {
+            return;
+        }
+
+        if (nextRouteNode.get().getInflectionPointList().stream().noneMatch(point -> point.getInflectionPointTypeEnum() == InflectionPointTypeEnum.CONDITION)) {
+            return;
+        }
+
+        if (TaskActionUtil.matchRouteNode(nextRouteNode.get().getInflectionPointList(), dynamicRouteTable, InflectionPointTypeEnum.CONDITION)) {
+            return;
+        }
+
+        router.skipRouteNode();
+        reRouteNodeMap(router);
     }
 
     public static TaskActionMethod getTaskActionMethod(List<TaskAction> taskActionList, RouteNode routeNode) {
@@ -222,7 +246,9 @@ public class TaskActionUtil {
         KstryException.throwException(exception);
     }
 
-    public static boolean matchRouteNode(List<TaskRouterInflectionPoint> inflectionPointList, DynamicRouteTable dynamicRouteTable) {
+    public static boolean matchRouteNode(List<TaskRouterInflectionPoint> inflectionPointList, DynamicRouteTable dynamicRouteTable,
+                                         InflectionPointTypeEnum inflectionPointTypeEnum) {
+        AssertUtil.notNull(inflectionPointTypeEnum);
         if (CollectionUtils.isEmpty(inflectionPointList)) {
             return false;
         }
@@ -230,7 +256,7 @@ public class TaskActionUtil {
         boolean flag = true;
         try {
             for (TaskRouterInflectionPoint inflectionPoint : inflectionPointList) {
-                if (inflectionPoint.getInflectionPointTypeEnum() != InflectionPointTypeEnum.INVOKE) {
+                if (inflectionPoint.getInflectionPointTypeEnum() != inflectionPointTypeEnum) {
                     continue;
                 }
 

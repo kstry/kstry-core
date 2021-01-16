@@ -42,7 +42,8 @@
           "nodeName": "NODE_7",
           "routeStrategy": {
             "ROUTE_2": {
-              "invoke-source-equals": "2f"
+              "invoke-source-equals": "2f",
+              "condition-source-equals": "3f"
             },
             "ROUTE_3": {
               "invoke-source-equals": "22f"

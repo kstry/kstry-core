@@ -43,7 +43,7 @@ public enum InflectionPointTypeEnum {
         }
 
         for (InflectionPointTypeEnum e : InflectionPointTypeEnum.values()) {
-            if (Objects.equals(e.name(), type)) {
+            if (Objects.equals(e.name().toUpperCase(), type.toUpperCase())) {
                 return Optional.of(e);
             }
         }

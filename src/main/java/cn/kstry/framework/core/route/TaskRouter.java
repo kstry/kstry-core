@@ -60,7 +60,7 @@ public class TaskRouter {
         }
     }
 
-    public void reRouteNodeMap(DynamicRouteTable dynamicRouteTable, LocateBehavior<RouteNode> locateBehavior) {
+    public void reRouteNodeMap(LocateBehavior<RouteNode> locateBehavior) {
         AssertUtil.notNull(locateBehavior);
 
         LinkedList<RouteNode> reToInvokeRouteNodeList = new LinkedList<>();
@@ -79,17 +79,6 @@ public class TaskRouter {
 
         toInvokeRouteNodeList.clear();
         toInvokeRouteNodeList.addAll(reToInvokeRouteNodeList);
-
-        List<TaskRouterInflectionPoint> inflectionPointList = nextNode.getRouteNode().getInflectionPointList();
-        inflectionPointList = inflectionPointList.stream()
-                .filter(point -> point.getInflectionPointTypeEnum() == InflectionPointTypeEnum.CONDITION)
-                .collect(Collectors.toList());
-
-        if (CollectionUtils.isNotEmpty(inflectionPointList) && !TaskActionUtil.matchRouteNode(inflectionPointList, dynamicRouteTable)) {
-            invokeRouteNode()
-            return Optional.of(resultList.get(0));
-        }
-
     }
 
     public Optional<RouteNode> invokeRouteNode() {
@@ -98,6 +87,14 @@ public class TaskRouter {
         }
         RouteNode node = toInvokeRouteNodeList.pollFirst();
         alreadyInvokeRouteNodeList.offerLast(node);
+        return Optional.ofNullable(node);
+    }
+
+    public Optional<RouteNode> skipRouteNode() {
+        if (CollectionUtils.isEmpty(toInvokeRouteNodeList)) {
+            return Optional.empty();
+        }
+        RouteNode node = toInvokeRouteNodeList.pollFirst();
         return Optional.ofNullable(node);
     }
 
