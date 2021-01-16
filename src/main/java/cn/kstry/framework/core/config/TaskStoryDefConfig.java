@@ -17,88 +17,57 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.enums.CalculateEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.util.AssertUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.annotation.JSONField;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * 定义 & 解析配置文件
+ * 定义 & 获取配置信息
  *
  * @author lykan
  */
-public class TaskStoryDefConfig {
+public interface TaskStoryDefConfig {
 
-    public static final String STORY_DEF = "story_def";
+    String STORY_DEF = "story_def";
 
-    public static final String ROUTE_STRATEGY_DEF = "route_strategy_def";
+    String ROUTE_STRATEGY_DEF = "route_strategy_def";
 
-    public static final String REQUEST_MAPPING_DEF = "request_mapping_def";
+    String REQUEST_MAPPING_DEF = "request_mapping_def";
 
-    public static final String NODE_DEF = "node_def";
+    String NODE_DEF = "node_def";
 
-    @JSONField(name = STORY_DEF)
-    private StoryDef<String, StoryDefItem<StoryDefItemConfig>> storyDef;
+    /**
+     * 获取 story 定义
+     */
+    StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef();
 
-    @JSONField(name = ROUTE_STRATEGY_DEF)
-    private RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> routeStrategyDef;
+    /**
+     * 获取路由策略
+     */
+    RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> getRouteStrategyDef();
 
-    @JSONField(name = REQUEST_MAPPING_DEF)
-    private RequestMappingDef<String, RequestMappingDefItem<String, String>> requestMappingDef;
+    /**
+     * 获取参数映射规则
+     */
+    RequestMappingDef<String, RequestMappingDefItem<String, String>> getRequestMappingDef();
 
-    @JSONField(name = NODE_DEF)
-    private NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> nodeDef;
+    /**
+     * 获取 node 定义
+     */
+    NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> getNodeDef();
 
-    public StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef() {
-        return storyDef;
-    }
-
-    public void setStoryDef(StoryDef<String, StoryDefItem<StoryDefItemConfig>> storyDef) {
-        this.storyDef = storyDef;
-    }
-
-    public RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> getRouteStrategyDef() {
-        return routeStrategyDef;
-    }
-
-    public void setRouteStrategyDef(RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> routeStrategyDef) {
-        this.routeStrategyDef = routeStrategyDef;
-    }
-
-    public RequestMappingDef<String, RequestMappingDefItem<String, String>> getRequestMappingDef() {
-        return requestMappingDef;
-    }
-
-    public void setRequestMappingDef(RequestMappingDef<String, RequestMappingDefItem<String, String>> requestMappingDef) {
-        this.requestMappingDef = requestMappingDef;
-    }
-
-    public NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> getNodeDef() {
-        return nodeDef;
-    }
-
-    public void setNodeDef(NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> nodeDef) {
-        this.nodeDef = nodeDef;
-    }
-
-    public static class StoryDef<String, StoryDefItem> extends HashMap<String, StoryDefItem> {
+    class StoryDef<String, StoryDefItem> extends HashMap<String, StoryDefItem> {
 
     }
 
-    public static class StoryDefItem<StoryDefItemConfig> extends ArrayList<StoryDefItemConfig> {
+    class StoryDefItem<StoryDefItemConfig> extends ArrayList<StoryDefItemConfig> {
 
     }
 
-    public static class StoryDefItemConfig {
+    class StoryDefItemConfig {
 
         /**
          * 执行 NODE 名称
@@ -143,15 +112,15 @@ public class TaskStoryDefConfig {
         }
     }
 
-    public static class RouteStrategyDef<String, RouteStrategyDefItem> extends HashMap<String, RouteStrategyDefItem> {
+    class RouteStrategyDef<String, RouteStrategyDefItem> extends HashMap<String, RouteStrategyDefItem> {
 
     }
 
-    public static class RouteStrategyDefItem<RouteStrategyDefItemConfig> extends ArrayList<RouteStrategyDefItemConfig> {
+    class RouteStrategyDefItem<RouteStrategyDefItemConfig> extends ArrayList<RouteStrategyDefItemConfig> {
 
     }
 
-    public static class RouteStrategyDefItemConfig {
+    class RouteStrategyDefItemConfig {
 
         /**
          * 下一个，待执行的 story 列表
@@ -196,15 +165,15 @@ public class TaskStoryDefConfig {
         }
     }
 
-    public static class NodeDef<String, NodeDefItem> extends HashMap<String, NodeDefItem> {
+    class NodeDef<String, NodeDefItem> extends HashMap<String, NodeDefItem> {
 
     }
 
-    public static class NodeDefItem<String, NodeDefItemConfig> extends HashMap<String, NodeDefItemConfig> {
+    class NodeDefItem<String, NodeDefItemConfig> extends HashMap<String, NodeDefItemConfig> {
 
     }
 
-    public static class NodeDefItemConfig {
+    class NodeDefItemConfig {
 
         /**
          * @see ComponentTypeEnum
@@ -233,201 +202,11 @@ public class TaskStoryDefConfig {
         }
     }
 
-    public static class RequestMappingDef<String, RequestMappingDefItem> extends HashMap<String, RequestMappingDefItem> {
+    class RequestMappingDef<String, RequestMappingDefItem> extends HashMap<String, RequestMappingDefItem> {
 
     }
 
-    public static class RequestMappingDefItem<String, String0> extends HashMap<String, String0> {
+    class RequestMappingDefItem<String, String0> extends HashMap<String, String0> {
 
-    }
-
-    public static TaskStoryDefConfig parseTaskStoryConfig(String configStr) {
-        AssertUtil.notBlank(configStr, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file blank!");
-        Map<String, String> configMap = JSON.parseObject(configStr, new TypeReference<HashMap<String, String>>() {
-        });
-
-        TaskStoryDefConfig config = new TaskStoryDefConfig();
-        if (StringUtils.isNotBlank(configMap.get(NODE_DEF))) {
-            config.setNodeDef(JSON.parseObject(configMap.get(NODE_DEF),
-                    new TypeReference<NodeDef<String, NodeDefItem<String, NodeDefItemConfig>>>() {
-                    })
-            );
-            checkNodeDef(config);
-        }
-
-        if (StringUtils.isNotBlank(configMap.get(REQUEST_MAPPING_DEF))) {
-            config.setRequestMappingDef(JSON.parseObject(configMap.get(REQUEST_MAPPING_DEF),
-                    new TypeReference<RequestMappingDef<String, RequestMappingDefItem<String, String>>>() {
-                    })
-            );
-            checkRequestMappingDef(config);
-        }
-
-        if (StringUtils.isNotBlank(configMap.get(STORY_DEF))) {
-            config.setStoryDef(JSON.parseObject(configMap.get(STORY_DEF),
-                    new TypeReference<StoryDef<String, StoryDefItem<StoryDefItemConfig>>>() {
-                    })
-            );
-            checkStoryDef(config);
-        }
-
-        if (StringUtils.isNotBlank(configMap.get(ROUTE_STRATEGY_DEF))) {
-            config.setRouteStrategyDef(JSON.parseObject(configMap.get(ROUTE_STRATEGY_DEF),
-                    new TypeReference<RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>>>() {
-                    })
-            );
-            checkRouteStrategyDef(config);
-        }
-        return config;
-    }
-
-
-    private static void checkRouteStrategyDef(TaskStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getRouteStrategyDef())) {
-            return;
-        }
-
-        // NodeDef 为空时，RouteStrategyDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getNodeDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but route strategy not empty!");
-
-        // StoryDef 为空时，RouteStrategyDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getStoryDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def is empty but route strategy not empty!");
-
-        List<String> storyNameList = MapUtils.isEmpty(config.getStoryDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStoryDef().keySet());
-        for (String k : config.getRouteStrategyDef().keySet()) {
-            AssertUtil.notBlank(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def strategy key is blank!");
-
-            RouteStrategyDefItem<RouteStrategyDefItemConfig> v = config.getRouteStrategyDef().get(k);
-            if (CollectionUtils.isEmpty(v)) {
-                continue;
-            }
-            v.forEach(strategy -> {
-                AssertUtil.notBlank(strategy.getNextStory(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def 'next_story' is blank!");
-                AssertUtil.isTrue(storyNameList.contains(strategy.getNextStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                        "config route_strategy_def 'next_story' is error! next_story:%s", strategy.getNextStory());
-                if (MapUtils.isNotEmpty(strategy.getFilterStrategy())) {
-                    strategy.getFilterStrategy().keySet().forEach(kName -> {
-                        AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def filter_strategy key is blank!");
-                        String[] split = kName.split("-");
-                        AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config route_strategy_def filter_strategy key error! filter_strategy:%s", kName);
-                        AssertUtil.isTrue(CalculateEnum.getCalculateEnumByName(split[0]).isPresent(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config route_strategy_def filter_strategy key error! filter_strategy:%s", kName);
-                    });
-                }
-
-                if (MapUtils.isNotEmpty(strategy.getMatchStrategy())) {
-                    strategy.getMatchStrategy().keySet().forEach(kName -> {
-                        AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def match_strategy key is blank!");
-                        String[] split = kName.split("-");
-                        AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config route_strategy_def match_strategy key error! match_strategy:%s", kName);
-                        AssertUtil.isTrue(CalculateEnum.getCalculateEnumByName(split[0]).isPresent(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config route_strategy_def match_strategy key error! match_strategy:%s", kName);
-                    });
-                }
-            });
-        }
-
-        for (StoryDefItem<StoryDefItemConfig> nodeList : config.getStoryDef().values()) {
-            for (StoryDefItemConfig node : nodeList) {
-                if (StringUtils.isNotBlank(node.getRouteStrategy())) {
-                    String strategy = node.getRouteStrategy();
-                    AssertUtil.notNull(config.getRouteStrategyDef().get(strategy),
-                            ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def 'route_strategy' error! route_strategy:%s", strategy);
-                }
-            }
-        }
-    }
-
-    private static void checkStoryDef(TaskStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getStoryDef())) {
-            return;
-        }
-
-        // NodeDef 为空时，StoryDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getNodeDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but story def not empty!");
-
-        List<String> nodeNameList = new ArrayList<>();
-        for (NodeDefItem<String, NodeDefItemConfig> stringNodeDefItemConfigNodeDefItem : config.getNodeDef().values()) {
-            nodeNameList.addAll(stringNodeDefItemConfigNodeDefItem.keySet());
-        }
-        List<String> mappingNameList = MapUtils.isEmpty(config.getRequestMappingDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getRequestMappingDef().keySet());
-        for (String k : config.getStoryDef().keySet()) {
-            AssertUtil.notBlank(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def story key is blank!");
-
-            StoryDefItem<StoryDefItemConfig> v = config.getStoryDef().get(k);
-            if (CollectionUtils.isEmpty(v)) {
-                continue;
-            }
-            v.forEach(storyItem -> {
-                AssertUtil.isTrue(StringUtils.isNotBlank(storyItem.getNodeName()) || StringUtils.isNotBlank(storyItem.getRouteStrategy()),
-                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def node_name is blank!");
-                if (StringUtils.isNotBlank(storyItem.getNodeName())) {
-                    AssertUtil.isTrue(nodeNameList.contains(storyItem.getNodeName()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config story_def node_name is error! node_name:%s", storyItem.getNodeName());
-                }
-                if (StringUtils.isNotBlank(storyItem.getRequestMapping())) {
-                    AssertUtil.isTrue(mappingNameList.contains(storyItem.getRequestMapping()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config story_def request_mapping is error! request_mapping:%s", storyItem.getRequestMapping());
-                }
-            });
-        }
-    }
-
-    private static void checkRequestMappingDef(TaskStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getRequestMappingDef())) {
-            return;
-        }
-
-        // NodeDef 为空时，RequestMappingDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getNodeDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but request mapping not empty!");
-
-        List<String> nodeNameList = new ArrayList<>();
-        for (NodeDefItem<String, NodeDefItemConfig> stringNodeDefItemConfigNodeDefItem : config.getNodeDef().values()) {
-            nodeNameList.addAll(stringNodeDefItemConfigNodeDefItem.keySet());
-        }
-        for (String k : config.getRequestMappingDef().keySet()) {
-            AssertUtil.notBlank(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping key is blank!");
-
-            RequestMappingDefItem<String, String> v = config.getRequestMappingDef().get(k);
-            if (MapUtils.isEmpty(v)) {
-                continue;
-            }
-            v.forEach((kIn, vIn) -> {
-                AssertUtil.notBlank(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping item key is blank!");
-                AssertUtil.notBlank(vIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping item value is blank!");
-
-                boolean checkVin = vIn.startsWith("DEFAULT") || vIn.startsWith("#data") || nodeNameList.stream().anyMatch(vIn::startsWith);
-                AssertUtil.isTrue(checkVin, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping item value error! value:%s", vIn);
-            });
-        }
-    }
-
-    private static void checkNodeDef(TaskStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getNodeDef())) {
-            return;
-        }
-
-        List<String> nodeNameList = new ArrayList<>();
-        for (String k : config.getNodeDef().keySet()) {
-            AssertUtil.notBlank(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def group key is blank!");
-
-            NodeDefItem<String, NodeDefItemConfig> v = config.getNodeDef().get(k);
-            if (MapUtils.isEmpty(v)) {
-                continue;
-            }
-
-            v.forEach((kIn, vIn) -> {
-                AssertUtil.notBlank(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def node key is blank!");
-                AssertUtil.notBlank(vIn.getMethod(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'method' is blank!");
-                AssertUtil.notBlank(vIn.getType(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'type' is blank!");
-                AssertUtil.isTrue(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getType()).isPresent(),
-                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'type' error! type:%s", vIn.getType());
-                nodeNameList.add(kIn);
-            });
-        }
-        AssertUtil.isTrue(nodeNameList.size() == new HashSet<>(nodeNameList).size(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                "config node_def node name duplicate definition!");
     }
 }
