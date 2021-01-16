@@ -19,12 +19,14 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -48,10 +50,11 @@ public class AssertUtil {
     /**
      * 判断条件为 true
      */
-    public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum) {
-        if (BooleanUtils.isNotTrue(flag)) {
-            KstryException.throwException(exceptionEnum);
+    public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, String... desc) {
+        if (BooleanUtils.isTrue(flag)) {
+            return;
         }
+        throwCustomException(exceptionEnum, desc);
     }
 
     /**
@@ -89,17 +92,6 @@ public class AssertUtil {
     }
 
     /**
-     * 不允许为空
-     *
-     * @param object obj
-     */
-    public static void notNull(Object object, ExceptionEnum exceptionEnum) {
-        if (object == null) {
-            KstryException.throwException(exceptionEnum);
-        }
-    }
-
-    /**
      * 必须为空
      */
     public static void isNull(Object object, ExceptionEnum exceptionEnum) {
@@ -115,6 +107,28 @@ public class AssertUtil {
         if (StringUtils.isBlank(str)) {
             KstryException.throwException(ExceptionEnum.NOT_ALLOW_EMPTY);
         }
+    }
+
+    /**
+     * 不允许为空
+     *
+     * @param object obj
+     */
+    public static void notNull(Object object, ExceptionEnum exceptionEnum, String... desc) {
+        if (object == null) {
+            throwCustomException(exceptionEnum, desc);
+        }
+    }
+
+    public static void notBlank(String str, ExceptionEnum exceptionEnum, String... desc) {
+        if (exceptionEnum == null) {
+            notBlank(str);
+            return;
+        }
+        if (StringUtils.isNotBlank(str)) {
+            return;
+        }
+        throwCustomException(exceptionEnum, desc);
     }
 
     public static void anyNotBlank(String... strArray) {
@@ -136,5 +150,17 @@ public class AssertUtil {
         if (MapUtils.isEmpty(map)) {
             KstryException.throwException(ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
         }
+    }
+
+    private static void throwCustomException(ExceptionEnum exceptionEnum, String[] desc) {
+        String exDesc = exceptionEnum.getDesc();
+        if (desc != null && desc.length == 1) {
+            exDesc = desc[0];
+        } else if (desc != null && desc.length > 1) {
+            LinkedList<String> params = Lists.newLinkedList(Lists.newArrayList(desc));
+            params.pollFirst();
+            exDesc = String.format(desc[0], params.toArray());
+        }
+        KstryException.throwException(exceptionEnum.getExceptionCode(), exDesc);
     }
 }

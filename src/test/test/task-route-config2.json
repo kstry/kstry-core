@@ -1,0 +1,109 @@
+{
+  "story_def": {
+    "robHongBao": [
+      {
+        "node_name": "NODE_4"
+      },
+      {
+        "node_name": "NODE_5",
+        "request_mapping": "MAPPING_3"
+      },
+      {
+        "node_name": "NODE_1",
+        "request_mapping": "MAPPING_1"
+      },
+      {
+        "node_name": "NODE_2",
+        "request_mapping": "MAPPING_2"
+      },
+      {
+        "route_strategy": "STRATEGY_1"
+      }
+    ],
+    "robHongBao1": [
+      {
+        "node_name": "NODE_3",
+        "request_mapping": "MAPPING_2",
+        "route_strategy": "STRATEGY_2"
+      }
+    ],
+    "robHongBao2": [
+      {
+        "node_name": "NODE_3"
+      },
+      {
+        "node_name": "NODE_3"
+      }
+    ],
+    "robHongBao3": [
+      {
+        "node_name": "NODE_4"
+      }
+    ]
+  },
+  "route_strategy_def": {
+    "STRATEGY_1": [
+      {
+        "next_story": "robHongBao1",
+        "match_strategy": {
+          "equals-source": "2f"
+        }
+      }
+    ],
+    "STRATEGY_2": [
+      {
+        "next_story": "robHongBao2",
+        "match_strategy": {
+          "equals-source": "2f"
+        },
+        "filter_strategy": {
+          "equals-source": "3f"
+        }
+      },
+      {
+        "next_story": "robHongBao3",
+        "match_strategy": {
+          "equals-source": "3f"
+        }
+      }
+    ]
+  },
+  "request_mapping_def": {
+    "MAPPING_1": {
+      "count": "DEFAULT['count']",
+      "fullMoney": "#data['money']['payMoney']"
+    },
+    "MAPPING_2": {
+      "hongBaoId": "NODE_5['hongBao']['id']"
+    },
+    "MAPPING_3": {
+      "payMoney": "DEFAULT['money']"
+    }
+  },
+  "node_def": {
+    "HONGBAO_OPERATE_ACTION": {
+      "NODE_1": {
+        "type": "TASK",
+        "method": "createHongBao"
+      },
+      "NODE_2": {
+        "type": "TASK",
+        "method": "updateHongBaoStatusForPaySuccess"
+      },
+      "NODE_3": {
+        "type": "TASK",
+        "method": "robHongBao"
+      }
+    },
+    "USER_PAY_ACTION": {
+      "NODE_4": {
+        "type": "TASK",
+        "method": "first"
+      },
+      "NODE_5": {
+        "type": "TASK",
+        "method": "pay"
+      }
+    }
+  }
+}

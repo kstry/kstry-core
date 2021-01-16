@@ -53,6 +53,6 @@ public enum CalculateEnum {
         if (StringUtils.isBlank(name)) {
             return Optional.empty();
         }
-        return Stream.of(CalculateEnum.values()).filter(e -> Objects.equals(e.getName(), name)).findFirst();
+        return Stream.of(CalculateEnum.values()).filter(e -> Objects.equals(e.getName().toUpperCase(), name.trim().toUpperCase())).findFirst();
     }
 }

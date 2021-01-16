@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ComponentScan(basePackageClasses = Bootstrap.class)
-@EnableKstry(storyEngineName = "hongBaoStoryEngine")
+@EnableKstry(storyEngineName = "hongBaoStoryEngine", configPath = "task-route-config2.json")
 public class Bootstrap {
 
     public static void main(String[] args) {

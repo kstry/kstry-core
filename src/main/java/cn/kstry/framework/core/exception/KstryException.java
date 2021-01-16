@@ -53,6 +53,10 @@ public class KstryException extends RuntimeException {
         throw new KstryException(exceptionEnum);
     }
 
+    public static void throwException(String code, String desc) {
+        throw new KstryException(code, desc);
+    }
+
     public static void throwException(Throwable e) {
         if (e instanceof KstryException) {
             throw (KstryException) e;

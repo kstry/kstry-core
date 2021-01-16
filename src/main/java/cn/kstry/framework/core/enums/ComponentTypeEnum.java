@@ -82,7 +82,7 @@ public enum ComponentTypeEnum {
 
         for (ComponentTypeEnum e : ComponentTypeEnum.values()) {
 
-            if (Objects.equals(e.name(), name)) {
+            if (Objects.equals(e.name().toUpperCase(), name.trim().toUpperCase())) {
                 return Optional.of(e);
             }
         }

@@ -272,6 +272,7 @@ public class ConfigResolver {
 
             StringBuilder sb = new StringBuilder();
             Files.lines(path).forEach(sb::append);
+            TaskStoryDefConfig taskStoryDefConfig = TaskStoryDefConfig.parseTaskStoryConfig(sb.toString());
             TaskRouteConfig taskRouteConfig = JSON.parseObject(sb.toString(), TaskRouteConfig.class);
             AssertUtil.notNull(taskRouteConfig);
             return taskRouteConfig;
