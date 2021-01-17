@@ -91,19 +91,18 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         GlobalMap globalMap = new GlobalMap();
         ConfigResolver configResolver = configResolverMap.values().iterator().next();
 
-        configResolver.setTaskRouteConfigName(EnableKstryRegister.getKstryConfigPath());
-        configResolver.initNodeAndMapping();
+        configResolver.initNodeAndMapping(EnableKstryRegister.getKstryConfigPath());
         Map<String, RouteNode> routeNodeMap = configResolver.getRouteNodeMap();
         if (MapUtils.isEmpty(routeNodeMap)) {
             return globalMap;
         }
 
         routeNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(taskActionList, node)));
-        Map<String, GlobalMap.MapNode> storyDefinition = configResolver.initStoryDefinition();
+        Map<String, List<GlobalMap.MapNode>> storyDefinition = configResolver.initStoryDefinition();
         if (MapUtils.isEmpty(storyDefinition)) {
             return globalMap;
         }
-        storyDefinition.forEach(globalMap::addFirstMapNode);
+//        storyDefinition.forEach(globalMap::addFirstMapNode);
 
         ResultMappingRepository resultMappingRepository = new ResultMappingRepository();
         resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());

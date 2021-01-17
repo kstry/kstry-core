@@ -17,53 +17,46 @@
  */
 package cn.kstry.framework.core.config;
 
+import cn.kstry.framework.core.adapter.RequestMappingGroup;
 import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.enums.CalculateEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.route.GlobalMap;
 import cn.kstry.framework.core.route.RouteNode;
 import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author lykan
  */
 public class ConfigResolver {
 
-    private String taskRouteConfigName;
-
-    private TaskRouteConfig taskRouteConfig;
+    private TaskStoryDefConfig taskStoryDefConfig;
 
     private Map<String, RouteNode> routeNodeMap;
 
-    private Map<String, Map<String, String>> resultMappingConfig;
+    private Map<String, RequestMappingGroup> mappingGroupMap;
 
-    private Map<String, GlobalMap.MapNode> storyDefinition;
+    private Map<String, List<GlobalMap.MapNode>> storyDefinition;
 
-    public void initNodeAndMapping() {
-        this.taskRouteConfig = parseTaskRouteConfig();
+    public void initNodeAndMapping(String taskStoryConfigName) {
+        this.taskStoryDefConfig = FileTaskStoryDefConfig.parseTaskStoryConfig(getTaskStoryConfigName(taskStoryConfigName));
         this.routeNodeMap = parseRouteNodeMap();
-        this.resultMappingConfig = parseResultMappingConfig();
+        this.mappingGroupMap = parseMappingGroupMap();
     }
 
-    public Map<String, GlobalMap.MapNode> initStoryDefinition() {
-        this.storyDefinition = parseStoryDefinition();
+    public Map<String, List<GlobalMap.MapNode>> initStoryDefinition() {
+        this.storyDefinition = parseStoryDef();
         return this.storyDefinition;
     }
 
@@ -81,7 +74,7 @@ public class ConfigResolver {
             return new HashMap<>();
         }
         Map<RouteNode, Map<RouteNode, Map<String, String>>> mappingMap = new HashMap<>();
-        this.storyDefinition.values().forEach(mapNode -> getNextMapping(mapNode, mapNode.getNextMapNodeList(), mappingMap, true));
+//        this.storyDefinition.values().forEach(mapNode -> getNextMapping(mapNode, mapNode.getNextMapNodeList(), mappingMap, true));
         return mappingMap;
     }
 
@@ -95,7 +88,7 @@ public class ConfigResolver {
             nextMapNodeList.forEach(n -> getNextMapping(n, n.getNextMapNodeList(), mappingMap, true));
         }
 
-        List<String> mappingNameList = ((MapNodeAdapterForConfigResolver) mapNode).getMappingNameList();
+        List<String> mappingNameList = null;
         if (CollectionUtils.isEmpty(mappingNameList)) {
             return;
         }
@@ -107,7 +100,7 @@ public class ConfigResolver {
             }
 
             for (String mappingName : mappingNameList) {
-                Map<String, String> mappingMapIn = resultMappingConfig.get(mappingName);
+                Map<String, String> mappingMapIn = null;
                 AssertUtil.notEmpty(mappingMapIn);
 
                 GlobalMap.MapNode beforeNode = mapNode.getPrevMapNode() == null ? new GlobalMap.MapNode(GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY) : mapNode.getPrevMapNode();
@@ -131,93 +124,174 @@ public class ConfigResolver {
         }
     }
 
-    private Map<String, GlobalMap.MapNode> parseStoryDefinition() {
-        Map<String, List<TaskRouteConfig.StoryDefinitionNodeItem>> storyDefinition = taskRouteConfig.getStoryDefinition();
-        if (MapUtils.isEmpty(storyDefinition)) {
-            return new HashMap<>();
+    private Map<String, List<GlobalMap.MapNode>> parseStoryDef() {
+        TaskStoryDefConfig.StoryDef<String, TaskStoryDefConfig.StoryDefItem<TaskStoryDefConfig.StoryDefItemConfig>> storyDef = taskStoryDefConfig.getStoryDef();
+        Map<String, List<GlobalMap.MapNode>> storyNodeMap = new HashMap<>();
+        if (MapUtils.isEmpty(storyDef)) {
+            return storyNodeMap;
         }
 
-        Map<String, GlobalMap.MapNode> storyDefinitionResult = new HashMap<>();
-        storyDefinition.forEach((k, v) -> {
-            GlobalMap.MapNode next = null;
-            for (TaskRouteConfig.StoryDefinitionNodeItem item : v) {
-                GlobalMap.MapNode n = parsePlanningNodeItem(item);
-                if (next == null) {
-                    next = n;
-                    storyDefinitionResult.put(k, next);
-                    continue;
-                }
-                next.addNextMapNode(n);
-                next = n;
-            }
-        });
-        return storyDefinitionResult;
-    }
-
-    private GlobalMap.MapNode parsePlanningNodeItem(TaskRouteConfig.StoryDefinitionNodeItem planningNodeItem) {
-        RouteNode routeNode = routeNodeMap.get(planningNodeItem.getNodeName());
-        AssertUtil.notNull(routeNode);
-        MapNodeAdapterForConfigResolver mapNode = new MapNodeAdapterForConfigResolver(routeNode.cloneRouteNode());
-        mapNode.setMappingNameList(planningNodeItem.getMapping());
-        mapNode.getRouteNode().setInterruptTimeSlot(BooleanUtils.isTrue(planningNodeItem.getInterruptTimeSlot()));
-        if (MapUtils.isEmpty(planningNodeItem.getRouteMap())) {
-            return mapNode;
-        }
-
-        Map<String, List<TaskRouteConfig.StoryDefinitionNodeItem>> routeMap = planningNodeItem.getRouteMap();
-        routeMap.forEach((kIn, vIn) -> {
-            GlobalMap.MapNode next = null;
-            List<TaskRouterInflectionPoint> inflectionPointList = getInflectionPoints(planningNodeItem, kIn);
-            for (TaskRouteConfig.StoryDefinitionNodeItem item : vIn) {
-                GlobalMap.MapNode mapNodeIn = parsePlanningNodeItem(item);
-                if (next == null) {
-                    next = mapNodeIn;
-                    mapNodeIn.getRouteNode().setInflectionPointList(inflectionPointList);
-                    mapNode.addNextMapNode(mapNodeIn);
-                    continue;
-                }
-                next.addNextMapNode(mapNodeIn);
-                next = mapNodeIn;
-            }
-        });
-        return mapNode;
-    }
-
-    private Map<String, Map<String, String>> parseResultMappingConfig() {
-        Map<String, Map<String, String>> resultMapping = taskRouteConfig.getResultMapping();
-        Map<String, Map<String, String>> mapping = new HashMap<>();
-        if (MapUtils.isEmpty(resultMapping)) {
-            return mapping;
-        }
-
-        resultMapping.forEach((k, v) -> {
-            AssertUtil.notBlank(k);
-            if (MapUtils.isEmpty(v)) {
+        Map<String, List<MapNodeAdapterForConfigResolver>> storyNodeAdaptorMap = new HashMap<>();
+        storyDef.keySet().forEach(key -> {
+            TaskStoryDefConfig.StoryDefItem<TaskStoryDefConfig.StoryDefItemConfig> value = storyDef.get(key);
+            if (CollectionUtils.isEmpty(value)) {
                 return;
             }
-            Map<String, String> fieldMapping = new HashMap<>();
-            v.forEach((kIn, vIn) -> {
-                AssertUtil.anyNotBlank(kIn, vIn);
-                if (vIn.startsWith("#")) {
-                    fieldMapping.put(kIn, vIn);
-                    return;
+
+            List<MapNodeAdapterForConfigResolver> mapNodeAdapterList = new ArrayList<>();
+            for (TaskStoryDefConfig.StoryDefItemConfig item : value) {
+                MapNodeAdapterForConfigResolver mapNodeAdapter = new MapNodeAdapterForConfigResolver();
+                if (StringUtils.isNotBlank(item.getNodeName())) {
+                    RouteNode routeNode = this.routeNodeMap.get(item.getNodeName());
+                    AssertUtil.notNull(routeNode);
+                    GlobalMap.MapNode mapNode = new GlobalMap.MapNode(routeNode.cloneRouteNode());
+                    mapNodeAdapter.setMapNode(mapNode);
                 }
-                if (vIn.toUpperCase().startsWith("DEFAULT")) {
-                    fieldMapping.put(kIn, "#" + GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY.identityStr() + vIn.substring(7));
-                    return;
+
+                if (StringUtils.isNotEmpty(item.getRequestMapping()) && mapNodeAdapter.getMapNode() != null) {
+                    RequestMappingGroup mappingGroup = this.mappingGroupMap.get(item.getRequestMapping());
+                    AssertUtil.notNull(mappingGroup);
+                    mapNodeAdapter.getMapNode().getRouteNode().setRequestMappingGroup(mappingGroup);
                 }
-                if (vIn.toUpperCase().startsWith("NODE_")) {
-                    int index = vIn.toUpperCase().replaceAll("^NODE_\\d+", StringUtils.EMPTY).length();
-                    RouteNode routeNode = routeNodeMap.get(vIn.substring(0, vIn.length() - index));
-                    AssertUtil.notNull(routeNode, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
-                    fieldMapping.put(kIn, "#" + routeNode.identityStr() + vIn.substring(vIn.length() - index));
-                    return;
+
+                if (MapUtils.isNotEmpty(taskStoryDefConfig.getRouteStrategyDef()) && StringUtils.isNotBlank(item.getRouteStrategy())) {
+                    TaskStoryDefConfig.RouteStrategyDefItem<TaskStoryDefConfig.RouteStrategyDefItemConfig> routeStrategy =
+                            taskStoryDefConfig.getRouteStrategyDef().get(item.getRouteStrategy());
+                    AssertUtil.notNull(routeStrategy);
+                    mapNodeAdapter.setRouteStrategy(routeStrategy);
                 }
-                KstryException.throwException(ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
-            });
-            mapping.put(k, fieldMapping);
+                mapNodeAdapterList.add(mapNodeAdapter);
+            }
+            storyNodeAdaptorMap.put(key, mapNodeAdapterList);
         });
-        return mapping;
+
+        storyNodeAdaptorMap.forEach((k, v) -> {
+            if (CollectionUtils.isEmpty(v)) {
+                return;
+            }
+
+            GlobalMap.MapNode beforeMapNode = null;
+            for (MapNodeAdapterForConfigResolver mapNodeAdapter : v) {
+                if (CollectionUtils.isNotEmpty(mapNodeAdapter.getRouteStrategy()) && mapNodeAdapter.getRouteStrategy().stream().anyMatch(s -> MapUtils.isNotEmpty(s.getFilterStrategy()))) {
+                    GlobalMap.MapNode mapNode = mapNodeAdapter.getMapNode();
+                    AssertUtil.notNull(mapNode);
+
+                    List<TaskRouterInflectionPoint> filterInflectionPointList = mapNodeAdapter.getRouteStrategy().stream()
+                            .filter(s -> MapUtils.isNotEmpty(s.getFilterStrategy()))
+                            .map(TaskStoryDefConfig.RouteStrategyDefItemConfig::getFilterStrategy)
+                            .flatMap(s -> getInflectionPointStrategy(s, InflectionPointTypeEnum.CONDITION).stream())
+                            .collect(Collectors.toList());
+                    mapNode.getRouteNode().setFilterInflectionPointList(filterInflectionPointList);
+                }
+                if (CollectionUtils.isEmpty(mapNodeAdapter.getRouteStrategy()) || mapNodeAdapter.getRouteStrategy().stream().noneMatch(s -> MapUtils.isNotEmpty(s.getMatchStrategy()))) {
+                    AssertUtil.notNull(mapNodeAdapter.getMapNode());
+                    if (beforeMapNode == null) {
+                        beforeMapNode = mapNodeAdapter.getMapNode();
+                        storyNodeMap.put(k, Lists.newArrayList(mapNodeAdapter.getMapNode()));
+                        continue;
+                    }
+                    beforeMapNode.addNextMapNode(mapNodeAdapter.getMapNode());
+                    beforeMapNode = mapNodeAdapter.getMapNode();
+                    continue;
+                }
+
+                mapNodeAdapter.getRouteStrategy().stream().filter(s -> StringUtils.isNotBlank(s.getNextStory())).forEach(config ->{
+                    List<MapNodeAdapterForConfigResolver> mapNodeAdapterForConfigResolvers = storyNodeAdaptorMap.get(config.getNextStory());
+
+                });
+            }
+        });
+        return storyNodeMap;
+    }
+
+    private List<TaskRouterInflectionPoint> getInflectionPointStrategy(Map<String, String> strategy, InflectionPointTypeEnum inflectionPointTypeEnum) {
+        AssertUtil.notNull(inflectionPointTypeEnum);
+        List<TaskRouterInflectionPoint> inflectionPointList = new ArrayList<>();
+        if (MapUtils.isEmpty(strategy)) {
+            return inflectionPointList;
+        }
+
+        strategy.forEach((k, v) -> {
+            AssertUtil.anyNotBlank(k, v);
+            String[] splitKeyArray = k.split("-");
+            AssertUtil.isTrue(splitKeyArray.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
+
+            TaskRouterInflectionPoint inflectionPoint = new TaskRouterInflectionPoint();
+            inflectionPoint.setInflectionPointTypeEnum(inflectionPointTypeEnum);
+            inflectionPoint.setExpectedValue(v);
+            inflectionPoint.setFieldName(splitKeyArray[1]);
+            inflectionPoint.setMatchingStrategy(GlobalUtil.notEmpty(CalculateEnum.getCalculateEnumByName(splitKeyArray[0])).getExpression());
+            inflectionPointList.add(inflectionPoint);
+        });
+        return inflectionPointList;
+    }
+
+//    private GlobalMap.MapNode parsePlanningNodeItem(TaskRouteConfig.StoryDefinitionNodeItem planningNodeItem) {
+//        RouteNode routeNode = routeNodeMap.get(planningNodeItem.getNodeName());
+//        AssertUtil.notNull(routeNode);
+//        MapNodeAdapterForConfigResolver mapNode = new MapNodeAdapterForConfigResolver(routeNode.cloneRouteNode());
+//        mapNode.setMappingNameList(planningNodeItem.getMapping());
+//        mapNode.getRouteNode().setInterruptTimeSlot(BooleanUtils.isTrue(planningNodeItem.getInterruptTimeSlot()));
+//        if (MapUtils.isEmpty(planningNodeItem.getRouteMap())) {
+//            return mapNode;
+//        }
+//
+//        Map<String, List<TaskRouteConfig.StoryDefinitionNodeItem>> routeMap = planningNodeItem.getRouteMap();
+//        routeMap.forEach((kIn, vIn) -> {
+//            GlobalMap.MapNode next = null;
+//            List<TaskRouterInflectionPoint> inflectionPointList = getInflectionPoints(planningNodeItem, kIn);
+//            for (TaskRouteConfig.StoryDefinitionNodeItem item : vIn) {
+//                GlobalMap.MapNode mapNodeIn = parsePlanningNodeItem(item);
+//                if (next == null) {
+//                    next = mapNodeIn;
+//                    mapNodeIn.getRouteNode().setInflectionPointList(inflectionPointList);
+//                    mapNode.addNextMapNode(mapNodeIn);
+//                    continue;
+//                }
+//                next.addNextMapNode(mapNodeIn);
+//                next = mapNodeIn;
+//            }
+//        });
+//        return mapNode;
+//    }
+
+    private Map<String, RequestMappingGroup> parseMappingGroupMap() {
+
+        Map<String, RequestMappingGroup> mappingGroupMap = new HashMap<>();
+        TaskStoryDefConfig.RequestMappingDef<String, TaskStoryDefConfig.RequestMappingDefItem<String, String>> requestMappingDef = taskStoryDefConfig.getRequestMappingDef();
+        if (MapUtils.isEmpty(requestMappingDef)) {
+            return mappingGroupMap;
+        }
+
+        requestMappingDef.keySet().forEach(key -> {
+            TaskStoryDefConfig.RequestMappingDefItem<String, String> value = requestMappingDef.get(key);
+            if (MapUtils.isEmpty(value)) {
+                return;
+            }
+
+            List<RequestMappingGroup.RequestMappingItem> mappingItemList = new ArrayList<>();
+            value.forEach((kIn, vIn) -> {
+                if (vIn.toUpperCase().startsWith("DEFAULT['")) {
+                    vIn = "#" + GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY.identityStr() + vIn.substring(7);
+                }
+                if (!vIn.startsWith("#")) {
+                    String nodeName = vIn.substring(0, vIn.indexOf("["));
+                    RouteNode routeNode = this.routeNodeMap.get(nodeName);
+                    AssertUtil.notNull(routeNode, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
+                    vIn = "#" + routeNode.identityStr() + vIn.replaceFirst("^" + nodeName, StringUtils.EMPTY);
+                }
+
+                RequestMappingGroup.RequestMappingItem item = new RequestMappingGroup.RequestMappingItem();
+                item.setSource(kIn);
+                item.setTarget(vIn);
+                mappingItemList.add(item);
+            });
+            RequestMappingGroup mappingGroup = new RequestMappingGroup();
+            mappingGroup.setMappingItemList(mappingItemList);
+            mappingGroupMap.put(key, mappingGroup);
+        });
+
+        return mappingGroupMap;
     }
 
     private List<TaskRouterInflectionPoint> getInflectionPoints(TaskRouteConfig.StoryDefinitionNodeItem planningNodeItem, String strategyKey) {
@@ -244,71 +318,57 @@ public class ConfigResolver {
 
     private Map<String, RouteNode> parseRouteNodeMap() {
         Map<String, RouteNode> routeNodeMap = new HashMap<>();
-        Map<String, String> nodeDefinition = taskRouteConfig.getNodeDefinition();
-        if (MapUtils.isEmpty(nodeDefinition)) {
+        TaskStoryDefConfig.NodeDef<String, TaskStoryDefConfig.NodeDefItem<String, TaskStoryDefConfig.NodeDefItemConfig>> nodeDef = taskStoryDefConfig.getNodeDef();
+        if (MapUtils.isEmpty(nodeDef)) {
             return routeNodeMap;
         }
-        nodeDefinition.forEach((k, v) -> {
-            AssertUtil.anyNotBlank(k, v);
-            String[] property = v.split("-");
-            AssertUtil.isTrue(property.length == 3, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
-            ComponentTypeEnum componentTypeEnum = GlobalUtil.notEmpty(ComponentTypeEnum.getComponentTypeEnumByName(property[0]));
 
-            RouteNode routeNode = new RouteNode();
-            routeNode.setActionName(property[2]);
-            routeNode.setComponentTypeEnum(componentTypeEnum);
-            routeNode.setNodeName(property[1]);
-            routeNodeMap.put(k, routeNode);
+        nodeDef.keySet().forEach(key -> {
+            TaskStoryDefConfig.NodeDefItem<String, TaskStoryDefConfig.NodeDefItemConfig> value = nodeDef.get(key);
+            if (MapUtils.isEmpty(value)) {
+                return;
+            }
+            value.forEach((kIn, vIn) -> {
+                RouteNode routeNode = new RouteNode();
+                routeNode.setActionName(vIn.getMethod());
+                routeNode.setComponentTypeEnum(GlobalUtil.notEmpty(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getType())));
+                routeNode.setNodeName(key);
+                routeNodeMap.put(kIn, routeNode);
+            });
         });
         return routeNodeMap;
     }
 
-    private TaskRouteConfig parseTaskRouteConfig() {
-        try {
-            URL resource = ConfigResolver.class.getClassLoader().getResource(getTaskRouteConfigName());
-            AssertUtil.notNull(resource);
-            Path path = Paths.get(resource.toURI());
-            AssertUtil.notNull(path);
+    /**
+     * 解析 MapNode 时使用的辅助包装类
+     */
+    private static class MapNodeAdapterForConfigResolver {
 
-            StringBuilder sb = new StringBuilder();
-            Files.lines(path).forEach(sb::append);
-            TaskStoryDefConfig taskStoryDefConfig = FileTaskStoryDefConfig.parseTaskStoryConfig(sb.toString());
-            TaskRouteConfig taskRouteConfig = JSON.parseObject(sb.toString(), TaskRouteConfig.class);
-            AssertUtil.notNull(taskRouteConfig);
-            return taskRouteConfig;
-        } catch (Exception e) {
-            KstryException.throwException(e);
-            return null;
+        private GlobalMap.MapNode mapNode;
+
+        private TaskStoryDefConfig.RouteStrategyDefItem<TaskStoryDefConfig.RouteStrategyDefItemConfig> routeStrategy;
+
+        public GlobalMap.MapNode getMapNode() {
+            return mapNode;
+        }
+
+        public void setMapNode(GlobalMap.MapNode mapNode) {
+            this.mapNode = mapNode;
+        }
+
+        public TaskStoryDefConfig.RouteStrategyDefItem<TaskStoryDefConfig.RouteStrategyDefItemConfig> getRouteStrategy() {
+            return routeStrategy;
+        }
+
+        public void setRouteStrategy(TaskStoryDefConfig.RouteStrategyDefItem<TaskStoryDefConfig.RouteStrategyDefItemConfig> routeStrategy) {
+            this.routeStrategy = routeStrategy;
         }
     }
 
-    private static class MapNodeAdapterForConfigResolver extends GlobalMap.MapNode {
-        public MapNodeAdapterForConfigResolver(RouteNode routeNode) {
-            super(routeNode);
+    public String getTaskStoryConfigName(String taskStoryConfigName) {
+        if (StringUtils.isBlank(taskStoryConfigName)) {
+            return "task-story-config.json";
         }
-
-        /**
-         * 保存映射名称列表
-         */
-        private List<String> mappingNameList;
-
-        public List<String> getMappingNameList() {
-            return mappingNameList;
-        }
-
-        public void setMappingNameList(List<String> mappingNameList) {
-            this.mappingNameList = mappingNameList;
-        }
-    }
-
-    public String getTaskRouteConfigName() {
-        if (StringUtils.isBlank(this.taskRouteConfigName)) {
-            this.taskRouteConfigName = "task-route-config.json";
-        }
-        return this.taskRouteConfigName;
-    }
-
-    public void setTaskRouteConfigName(String taskRouteConfigName) {
-        this.taskRouteConfigName = taskRouteConfigName;
+        return taskStoryConfigName;
     }
 }

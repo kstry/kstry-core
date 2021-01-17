@@ -18,12 +18,10 @@
 package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
-import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.facade.DynamicRouteTable;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.LocateBehavior;
-import cn.kstry.framework.core.util.TaskActionUtil;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
@@ -43,7 +41,7 @@ public class GlobalMap {
     /**
      * 整个业务地图的始发点列表
      */
-    private final Map<String, MapNode> firstMapNodes = new ConcurrentHashMap<>();
+    private final Map<String, List<MapNode>> FIRST_MAP_NODES = new ConcurrentHashMap<>();
 
     /**
      * mapping 映射表
@@ -53,14 +51,22 @@ public class GlobalMap {
     public void addFirstMapNode(String actionName, MapNode mapNode) {
         AssertUtil.notNull(mapNode);
         AssertUtil.notBlank(actionName);
-        firstMapNodes.put(actionName, mapNode);
+
+        List<MapNode> mapNodeList = FIRST_MAP_NODES.get(actionName);
+        if (CollectionUtils.isEmpty(mapNodeList)) {
+            mapNodeList = Lists.newArrayList();
+        }
+        if (mapNodeList.contains(mapNode)) {
+            return;
+        }
+        mapNodeList.add(mapNode);
     }
 
     public MapNode locateFirstMapNode(String actionName) {
-        AssertUtil.notBlank(actionName);
-        MapNode mapNode = firstMapNodes.get(actionName);
-        AssertUtil.notNull(mapNode);
-        return mapNode;
+//        AssertUtil.notBlank(actionName);
+//        MapNode mapNode = firstMapNodes.get(actionName);
+//        AssertUtil.notNull(mapNode);
+        return null;
     }
 
     public ResultMappingRepository getResultMappingRepository() {
@@ -97,6 +103,9 @@ public class GlobalMap {
 
         public void addNextMapNode(MapNode mapNode) {
             AssertUtil.notNull(mapNode);
+            if (nextMapNodeList.contains(mapNode)) {
+                return;
+            }
             nextMapNodeList.add(mapNode);
             mapNode.setPrevMapNode(this);
         }
@@ -127,10 +136,6 @@ public class GlobalMap {
             return prevMapNode;
         }
 
-        private void setPrevMapNode(MapNode prevMapNode) {
-            this.prevMapNode = prevMapNode;
-        }
-
         public List<MapNode> getNextMapNodeList() {
             return nextMapNodeList;
         }
@@ -141,5 +146,10 @@ public class GlobalMap {
             }
             return this.nextMapNodeList.size();
         }
+
+        private void setPrevMapNode(MapNode prevMapNode) {
+            this.prevMapNode = prevMapNode;
+        }
+
     }
 }

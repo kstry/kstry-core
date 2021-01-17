@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
+import cn.kstry.framework.core.adapter.RequestMappingGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskRequest;
@@ -65,9 +66,19 @@ public class RouteNode {
     private List<TaskRouterInflectionPoint> inflectionPointList;
 
     /**
+     * 匹配失败，跳过该节点
+     */
+    private List<TaskRouterInflectionPoint> filterInflectionPointList;
+
+    /**
      * 中断 timeSlot
      */
     private Boolean interruptTimeSlot;
+
+    /**
+     * 请求入参 解析映射表
+     */
+    private RequestMappingGroup requestMappingGroup;
 
     public RouteNode() {
     }
@@ -88,7 +99,7 @@ public class RouteNode {
 
     public RouteNode cloneRouteNode() {
         RouteNode routeNode = new RouteNode();
-        BeanUtils.copyProperties(this, routeNode, "mapNode", "inflectionPointList", "interruptTimeSlot");
+        BeanUtils.copyProperties(this, routeNode, "mapNode", "inflectionPointList", "filterInflectionPointList", "interruptTimeSlot", "requestMappingGroup");
         return routeNode;
     }
 
@@ -156,6 +167,22 @@ public class RouteNode {
 
     public void setInterruptTimeSlot(Boolean interruptTimeSlot) {
         this.interruptTimeSlot = interruptTimeSlot;
+    }
+
+    public RequestMappingGroup getRequestMappingGroup() {
+        return requestMappingGroup;
+    }
+
+    public void setRequestMappingGroup(RequestMappingGroup requestMappingGroup) {
+        this.requestMappingGroup = requestMappingGroup;
+    }
+
+    public List<TaskRouterInflectionPoint> getFilterInflectionPointList() {
+        return filterInflectionPointList;
+    }
+
+    public void setFilterInflectionPointList(List<TaskRouterInflectionPoint> filterInflectionPointList) {
+        this.filterInflectionPointList = filterInflectionPointList;
     }
 
     @Override

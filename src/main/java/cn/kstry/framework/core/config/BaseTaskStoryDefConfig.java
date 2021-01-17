@@ -104,9 +104,10 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
                 continue;
             }
             v.forEach(strategy -> {
-                AssertUtil.notBlank(strategy.getNextStory(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def 'next_story' is blank!");
-                AssertUtil.isTrue(storyNameList.contains(strategy.getNextStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                        "config route_strategy_def 'next_story' is error! next_story:%s", strategy.getNextStory());
+                if (StringUtils.isNotBlank(strategy.getNextStory())) {
+                    AssertUtil.isTrue(storyNameList.contains(strategy.getNextStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "config route_strategy_def 'next_story' is error! next_story:%s", strategy.getNextStory());
+                }
                 if (MapUtils.isNotEmpty(strategy.getFilterStrategy())) {
                     strategy.getFilterStrategy().keySet().forEach(kName -> {
                         AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def filter_strategy key is blank!");
@@ -200,7 +201,7 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
                 AssertUtil.notBlank(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping item key is blank!");
                 AssertUtil.notBlank(vIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping item value is blank!");
 
-                boolean checkVin = vIn.startsWith("DEFAULT") || vIn.startsWith("#data") || nodeNameList.stream().anyMatch(vIn::startsWith);
+                boolean checkVin = REQUEST_MAPPING_KEYWORD.stream().anyMatch(vIn::startsWith) || nodeNameList.stream().anyMatch(vIn::startsWith);
                 AssertUtil.isTrue(checkVin, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config request_mapping_def mapping item value error! value:%s", vIn);
             });
         }

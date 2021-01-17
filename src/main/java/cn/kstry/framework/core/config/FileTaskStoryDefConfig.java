@@ -18,20 +18,47 @@
 package cn.kstry.framework.core.config;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 文件的形式，解析出配置文件
+ *
  * @author lykan
  */
-public class FileTaskStoryDefConfig extends BaseTaskStoryDefConfig {
+public class FileTaskStoryDefConfig extends BaseTaskStoryDefConfig implements TaskStoryDefConfig {
 
-    public static TaskStoryDefConfig parseTaskStoryConfig(String configStr) {
+    @SuppressWarnings("ConstantConditions")
+    public static TaskStoryDefConfig parseTaskStoryConfig(String taskRouteConfigName) {
+        AssertUtil.notBlank(taskRouteConfigName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file name blank!");
+        try {
+            URL resource = FileTaskStoryDefConfig.class.getClassLoader().getResource(taskRouteConfigName);
+            AssertUtil.notNull(resource, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", taskRouteConfigName);
+
+            Path path = Paths.get(resource.toURI());
+            AssertUtil.notNull(path, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", taskRouteConfigName);
+
+            StringBuilder sb = new StringBuilder();
+            Files.lines(path).forEach(sb::append);
+
+            return FileTaskStoryDefConfig.doParseTaskStoryConfig(sb.toString());
+        } catch (Exception e) {
+            KstryException.throwException(e);
+            return null;
+        }
+    }
+
+    private static TaskStoryDefConfig doParseTaskStoryConfig(String configStr) {
         AssertUtil.notBlank(configStr, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file blank!");
         Map<String, String> configMap = JSON.parseObject(configStr, new TypeReference<HashMap<String, String>>() {
         });

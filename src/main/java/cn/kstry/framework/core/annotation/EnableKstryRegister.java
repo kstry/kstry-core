@@ -42,6 +42,7 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
     private static String kstryConfigPath;
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, @NonNull BeanDefinitionRegistry registry) {
 
         MultiValueMap<String, Object> enableKstryAnnotation = importingClassMetadata.getAllAnnotationAttributes("cn.kstry.framework.core.annotation.EnableKstry");
