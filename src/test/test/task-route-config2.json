@@ -2,50 +2,51 @@
   "story_def": {
     "robHongBao": [
       {
-        "node_name": "NODE_4"
+        "event_node": "NODE_4"
       },
       {
-        "node_name": "NODE_5",
+        "event_node": "NODE_5",
         "request_mapping": "MAPPING_3"
       },
       {
-        "node_name": "NODE_1",
+        "event_node": "NODE_1",
         "request_mapping": "MAPPING_1"
       },
       {
-        "node_name": "NODE_2",
+        "event_node": "NODE_2",
         "request_mapping": "MAPPING_2"
       },
       {
-        "route_strategy": "STRATEGY_1"
+        "strategy": "STRATEGY_1"
       }
     ],
     "robHongBao1": [
       {
-        "node_name": "NODE_3",
+        "event_node": "NODE_3",
         "request_mapping": "MAPPING_2",
-        "route_strategy": "STRATEGY_2"
+        "strategy": "STRATEGY_2"
       }
     ],
     "robHongBao2": [
       {
-        "node_name": "NODE_3"
+        "event_node": "NODE_3"
       },
       {
-        "node_name": "NODE_3"
+        "event_node": "NODE_3"
       }
     ],
     "robHongBao3": [
       {
-        "node_name": "NODE_4"
+        "event_node": "NODE_4"
       }
     ]
   },
-  "route_strategy_def": {
+  "strategy_def": {
     "STRATEGY_1": [
       {
         "next_story": "robHongBao1",
-        "match_strategy": {
+        "strategy_type": "match",
+        "strategy": {
           "equals-source": "2f"
         }
       }
@@ -53,16 +54,21 @@
     "STRATEGY_2": [
       {
         "next_story": "robHongBao2",
-        "match_strategy": {
+        "strategy_type": "match",
+        "strategy": {
           "equals-source": "2f"
-        },
-        "filter_strategy": {
-          "equals-source": "3f"
         }
       },
       {
         "next_story": "robHongBao3",
-        "match_strategy": {
+        "strategy_type": "match",
+        "strategy": {
+          "equals-source": "3f"
+        }
+      },
+      {
+        "strategy_type": "filter",
+        "strategy": {
           "equals-source": "3f"
         }
       }
@@ -80,29 +86,29 @@
       "payMoney": "DEFAULT['money']"
     }
   },
-  "node_def": {
+  "event_def": {
     "HONGBAO_OPERATE_ACTION": {
       "NODE_1": {
-        "type": "TASK",
-        "method": "createHongBao"
+        "event_type": "TASK",
+        "event_action": "createHongBao"
       },
       "NODE_2": {
-        "type": "TASK",
-        "method": "updateHongBaoStatusForPaySuccess"
+        "event_type": "TASK",
+        "event_action": "updateHongBaoStatusForPaySuccess"
       },
       "NODE_3": {
-        "type": "TASK",
-        "method": "robHongBao"
+        "event_type": "TASK",
+        "event_action": "robHongBao"
       }
     },
     "USER_PAY_ACTION": {
       "NODE_4": {
-        "type": "TASK",
-        "method": "first"
+        "event_type": "TASK",
+        "event_action": "first"
       },
       "NODE_5": {
-        "type": "TASK",
-        "method": "pay"
+        "event_type": "TASK",
+        "event_action": "pay"
       }
     }
   }

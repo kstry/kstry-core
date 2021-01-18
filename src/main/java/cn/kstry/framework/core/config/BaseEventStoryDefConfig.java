@@ -19,6 +19,7 @@ package cn.kstry.framework.core.config;
 
 import cn.kstry.framework.core.enums.CalculateEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -34,19 +35,19 @@ import java.util.List;
 /**
  * @author lykan
  */
-public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
+public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
 
     @JSONField(name = STORY_DEF)
     private StoryDef<String, StoryDefItem<StoryDefItemConfig>> storyDef;
 
-    @JSONField(name = ROUTE_STRATEGY_DEF)
-    private RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> routeStrategyDef;
+    @JSONField(name = STRATEGY_DEF)
+    private RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> routeStrategyDef;
 
     @JSONField(name = REQUEST_MAPPING_DEF)
     private RequestMappingDef<String, RequestMappingDefItem<String, String>> requestMappingDef;
 
-    @JSONField(name = NODE_DEF)
-    private NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> nodeDef;
+    @JSONField(name = EVENT_DEF)
+    private EventDef<String, EventDefItem<String, EventDefItemConfig>> eventDef;
 
     @Override
     public StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef() {
@@ -54,7 +55,7 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
     }
 
     @Override
-    public RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> getRouteStrategyDef() {
+    public RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> getStrategyDef() {
         return routeStrategyDef;
     }
 
@@ -64,15 +65,15 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
     }
 
     @Override
-    public NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> getNodeDef() {
-        return nodeDef;
+    public EventDef<String, EventDefItem<String, EventDefItemConfig>> getEventDef() {
+        return eventDef;
     }
 
     protected void setStoryDef(StoryDef<String, StoryDefItem<StoryDefItemConfig>> storyDef) {
         this.storyDef = storyDef;
     }
 
-    protected void setRouteStrategyDef(RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> routeStrategyDef) {
+    protected void setRouteStrategyDef(RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> routeStrategyDef) {
         this.routeStrategyDef = routeStrategyDef;
     }
 
@@ -80,26 +81,26 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
         this.requestMappingDef = requestMappingDef;
     }
 
-    protected void setNodeDef(NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> nodeDef) {
-        this.nodeDef = nodeDef;
+    protected void setEventDef(EventDef<String, EventDefItem<String, EventDefItemConfig>> eventDef) {
+        this.eventDef = eventDef;
     }
 
-    protected static void checkRouteStrategyDef(TaskStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getRouteStrategyDef())) {
+    protected static void checkRouteStrategyDef(EventStoryDefConfig config) {
+        if (MapUtils.isEmpty(config.getStrategyDef())) {
             return;
         }
 
         // NodeDef 为空时，RouteStrategyDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getNodeDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but route strategy not empty!");
+        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getEventDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but route strategy not empty!");
 
         // StoryDef 为空时，RouteStrategyDef 不允许出现
         AssertUtil.isTrue(MapUtils.isNotEmpty(config.getStoryDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def is empty but route strategy not empty!");
 
         List<String> storyNameList = MapUtils.isEmpty(config.getStoryDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStoryDef().keySet());
-        for (String k : config.getRouteStrategyDef().keySet()) {
+        for (String k : config.getStrategyDef().keySet()) {
             AssertUtil.notBlank(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def strategy key is blank!");
 
-            RouteStrategyDefItem<RouteStrategyDefItemConfig> v = config.getRouteStrategyDef().get(k);
+            StrategyDefItem<StrategyDefItemConfig> v = config.getStrategyDef().get(k);
             if (CollectionUtils.isEmpty(v)) {
                 continue;
             }
@@ -108,8 +109,8 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
                     AssertUtil.isTrue(storyNameList.contains(strategy.getNextStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                             "config route_strategy_def 'next_story' is error! next_story:%s", strategy.getNextStory());
                 }
-                if (MapUtils.isNotEmpty(strategy.getFilterStrategy())) {
-                    strategy.getFilterStrategy().keySet().forEach(kName -> {
+                if (StrategyTypeEnum.isType(strategy.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(strategy.getStrategy())) {
+                    strategy.getStrategy().keySet().forEach(kName -> {
                         AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def filter_strategy key is blank!");
                         String[] split = kName.split("-");
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
@@ -119,8 +120,8 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
                     });
                 }
 
-                if (MapUtils.isNotEmpty(strategy.getMatchStrategy())) {
-                    strategy.getMatchStrategy().keySet().forEach(kName -> {
+                if (StrategyTypeEnum.isType(strategy.getStrategyType(), StrategyTypeEnum.MATCH) && MapUtils.isNotEmpty(strategy.getStrategy())) {
+                    strategy.getStrategy().keySet().forEach(kName -> {
                         AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config route_strategy_def match_strategy key is blank!");
                         String[] split = kName.split("-");
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
@@ -134,25 +135,25 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
 
         for (StoryDefItem<StoryDefItemConfig> nodeList : config.getStoryDef().values()) {
             for (StoryDefItemConfig node : nodeList) {
-                if (StringUtils.isNotBlank(node.getRouteStrategy())) {
-                    String strategy = node.getRouteStrategy();
-                    AssertUtil.notNull(config.getRouteStrategyDef().get(strategy),
+                if (StringUtils.isNotBlank(node.getStrategy())) {
+                    String strategy = node.getStrategy();
+                    AssertUtil.notNull(config.getStrategyDef().get(strategy),
                             ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def 'route_strategy' error! route_strategy:%s", strategy);
                 }
             }
         }
     }
 
-    protected static void checkStoryDef(TaskStoryDefConfig config) {
+    protected static void checkStoryDef(EventStoryDefConfig config) {
         if (MapUtils.isEmpty(config.getStoryDef())) {
             return;
         }
 
         // NodeDef 为空时，StoryDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getNodeDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but story def not empty!");
+        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getEventDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but story def not empty!");
 
         List<String> nodeNameList = new ArrayList<>();
-        for (NodeDefItem<String, NodeDefItemConfig> stringNodeDefItemConfigNodeDefItem : config.getNodeDef().values()) {
+        for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigNodeDefItem : config.getEventDef().values()) {
             nodeNameList.addAll(stringNodeDefItemConfigNodeDefItem.keySet());
         }
         List<String> mappingNameList = MapUtils.isEmpty(config.getRequestMappingDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getRequestMappingDef().keySet());
@@ -164,11 +165,11 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
                 continue;
             }
             v.forEach(storyItem -> {
-                AssertUtil.isTrue(StringUtils.isNotBlank(storyItem.getNodeName()) || StringUtils.isNotBlank(storyItem.getRouteStrategy()),
+                AssertUtil.isTrue(StringUtils.isNotBlank(storyItem.getEventNode()) || StringUtils.isNotBlank(storyItem.getStrategy()),
                         ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config story_def node_name is blank!");
-                if (StringUtils.isNotBlank(storyItem.getNodeName())) {
-                    AssertUtil.isTrue(nodeNameList.contains(storyItem.getNodeName()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config story_def node_name is error! node_name:%s", storyItem.getNodeName());
+                if (StringUtils.isNotBlank(storyItem.getEventNode())) {
+                    AssertUtil.isTrue(nodeNameList.contains(storyItem.getEventNode()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "config story_def node_name is error! node_name:%s", storyItem.getEventNode());
                 }
                 if (StringUtils.isNotBlank(storyItem.getRequestMapping())) {
                     AssertUtil.isTrue(mappingNameList.contains(storyItem.getRequestMapping()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
@@ -178,16 +179,16 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
         }
     }
 
-    protected static void checkRequestMappingDef(TaskStoryDefConfig config) {
+    protected static void checkRequestMappingDef(EventStoryDefConfig config) {
         if (MapUtils.isEmpty(config.getRequestMappingDef())) {
             return;
         }
 
         // NodeDef 为空时，RequestMappingDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getNodeDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but request mapping not empty!");
+        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getEventDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def is empty but request mapping not empty!");
 
         List<String> nodeNameList = new ArrayList<>();
-        for (NodeDefItem<String, NodeDefItemConfig> stringNodeDefItemConfigNodeDefItem : config.getNodeDef().values()) {
+        for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigNodeDefItem : config.getEventDef().values()) {
             nodeNameList.addAll(stringNodeDefItemConfigNodeDefItem.keySet());
         }
         for (String k : config.getRequestMappingDef().keySet()) {
@@ -207,26 +208,26 @@ public abstract class BaseTaskStoryDefConfig implements TaskStoryDefConfig {
         }
     }
 
-    protected static void checkNodeDef(TaskStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getNodeDef())) {
+    protected static void checkNodeDef(EventStoryDefConfig config) {
+        if (MapUtils.isEmpty(config.getEventDef())) {
             return;
         }
 
         List<String> nodeNameList = new ArrayList<>();
-        for (String k : config.getNodeDef().keySet()) {
+        for (String k : config.getEventDef().keySet()) {
             AssertUtil.notBlank(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def group key is blank!");
 
-            NodeDefItem<String, NodeDefItemConfig> v = config.getNodeDef().get(k);
+            EventDefItem<String, EventDefItemConfig> v = config.getEventDef().get(k);
             if (MapUtils.isEmpty(v)) {
                 continue;
             }
 
             v.forEach((kIn, vIn) -> {
                 AssertUtil.notBlank(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def node key is blank!");
-                AssertUtil.notBlank(vIn.getMethod(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'method' is blank!");
-                AssertUtil.notBlank(vIn.getType(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'type' is blank!");
-                AssertUtil.isTrue(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getType()).isPresent(),
-                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'type' error! type:%s", vIn.getType());
+                AssertUtil.notBlank(vIn.getEventAction(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'method' is blank!");
+                AssertUtil.notBlank(vIn.getEventType(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'type' is blank!");
+                AssertUtil.isTrue(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType()).isPresent(),
+                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config node_def 'type' error! type:%s", vIn.getEventType());
                 nodeNameList.add(kIn);
             });
         }

@@ -98,14 +98,14 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         }
 
         routeNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(taskActionList, node)));
-        Map<String, List<GlobalMap.MapNode>> storyDefinition = configResolver.initStoryDefinition();
+        Map<String, List<GlobalMap.MapNode>> storyDefinition = configResolver.parseStoryDef();
         if (MapUtils.isEmpty(storyDefinition)) {
             return globalMap;
         }
 //        storyDefinition.forEach(globalMap::addFirstMapNode);
 
         ResultMappingRepository resultMappingRepository = new ResultMappingRepository();
-        resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());
+//        resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());
         globalMap.setResultMappingRepository(resultMappingRepository);
         return globalMap;
     }

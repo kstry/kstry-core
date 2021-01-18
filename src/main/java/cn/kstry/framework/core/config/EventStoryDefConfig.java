@@ -31,15 +31,27 @@ import java.util.Map;
  *
  * @author lykan
  */
-public interface TaskStoryDefConfig {
+public interface EventStoryDefConfig {
 
+    /**
+     * 事件故事定义 Key
+     */
     String STORY_DEF = "story_def";
 
-    String ROUTE_STRATEGY_DEF = "route_strategy_def";
+    /**
+     * 事件定义 Key
+     */
+    String EVENT_DEF = "event_def";
 
+    /**
+     * 策略定义 Key
+     */
+    String STRATEGY_DEF = "strategy_def";
+
+    /**
+     * 请求参数映射定义 Key
+     */
     String REQUEST_MAPPING_DEF = "request_mapping_def";
-
-    String NODE_DEF = "node_def";
 
     /**
      * request mapping 中允许出现的关键字
@@ -52,9 +64,9 @@ public interface TaskStoryDefConfig {
     StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef();
 
     /**
-     * 获取路由策略
+     * 获取策略
      */
-    RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>> getRouteStrategyDef();
+    RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> getStrategyDef();
 
     /**
      * 获取参数映射规则
@@ -62,9 +74,9 @@ public interface TaskStoryDefConfig {
     RequestMappingDef<String, RequestMappingDefItem<String, String>> getRequestMappingDef();
 
     /**
-     * 获取 node 定义
+     * 获取 Event 定义
      */
-    NodeDef<String, NodeDefItem<String, NodeDefItemConfig>> getNodeDef();
+    EventDef<String, EventDefItem<String, EventDefItemConfig>> getEventDef();
 
     class StoryDef<String, StoryDefItem> extends HashMap<String, StoryDefItem> {
 
@@ -77,10 +89,10 @@ public interface TaskStoryDefConfig {
     class StoryDefItemConfig {
 
         /**
-         * 执行 NODE 名称
+         * 执行 事件 NODE 名称
          */
-        @JSONField(name = "node_name")
-        private String nodeName;
+        @JSONField(name = "event_node")
+        private String eventNode;
 
         /**
          * 请求映射规则
@@ -89,17 +101,17 @@ public interface TaskStoryDefConfig {
         private String requestMapping;
 
         /**
-         * 匹配规则
+         * 规则
          */
-        @JSONField(name = "route_strategy")
-        private String routeStrategy;
+        @JSONField(name = "strategy")
+        private String strategy;
 
-        public String getNodeName() {
-            return nodeName;
+        public String getEventNode() {
+            return eventNode;
         }
 
-        public void setNodeName(String nodeName) {
-            this.nodeName = nodeName;
+        public void setEventNode(String eventNode) {
+            this.eventNode = eventNode;
         }
 
         public String getRequestMapping() {
@@ -110,42 +122,44 @@ public interface TaskStoryDefConfig {
             this.requestMapping = requestMapping;
         }
 
-        public String getRouteStrategy() {
-            return routeStrategy;
+        public String getStrategy() {
+            return strategy;
         }
 
-        public void setRouteStrategy(String routeStrategy) {
-            this.routeStrategy = routeStrategy;
+        public void setStrategy(String strategy) {
+            this.strategy = strategy;
         }
     }
 
-    class RouteStrategyDef<String, RouteStrategyDefItem> extends HashMap<String, RouteStrategyDefItem> {
+    class RouteStrategyDef<String, StrategyDefItem> extends HashMap<String, StrategyDefItem> {
 
     }
 
-    class RouteStrategyDefItem<RouteStrategyDefItemConfig> extends ArrayList<RouteStrategyDefItemConfig> {
+    class StrategyDefItem<StrategyDefItemConfig> extends ArrayList<StrategyDefItemConfig> {
 
     }
 
-    class RouteStrategyDefItemConfig {
+    class StrategyDefItemConfig {
 
         /**
-         * 下一个，待执行的 story 列表
+         * 下一个，待执行的 Story
          */
         @JSONField(name = "next_story")
         private String nextStory;
 
         /**
-         * 全部匹配，执行该 item 指定的 story
+         * 策略类型
+         *
+         * @see cn.kstry.framework.core.enums.StrategyTypeEnum
          */
-        @JSONField(name = "match_strategy")
-        private Map<String, String> matchStrategy;
+        @JSONField(name = "strategy_type")
+        private String strategyType;
 
         /**
-         * 全部匹配，执行该 item 指定的 story，否则跳过该 item 指定的 story
+         * 策略规则集
          */
-        @JSONField(name = "filter_strategy")
-        private Map<String, String> filterStrategy;
+        @JSONField(name = "strategy")
+        private Map<String, String> strategy;
 
         public String getNextStory() {
             return nextStory;
@@ -155,57 +169,61 @@ public interface TaskStoryDefConfig {
             this.nextStory = nextStory;
         }
 
-        public Map<String, String> getMatchStrategy() {
-            return matchStrategy;
+        public String getStrategyType() {
+            return strategyType;
         }
 
-        public void setMatchStrategy(Map<String, String> matchStrategy) {
-            this.matchStrategy = matchStrategy;
+        public void setStrategyType(String strategyType) {
+            this.strategyType = strategyType;
         }
 
-        public Map<String, String> getFilterStrategy() {
-            return filterStrategy;
+        public Map<String, String> getStrategy() {
+            return strategy;
         }
 
-        public void setFilterStrategy(Map<String, String> filterStrategy) {
-            this.filterStrategy = filterStrategy;
+        public void setStrategy(Map<String, String> strategy) {
+            this.strategy = strategy;
         }
     }
 
-    class NodeDef<String, NodeDefItem> extends HashMap<String, NodeDefItem> {
+    class EventDef<String, EventDefItem> extends HashMap<String, EventDefItem> {
 
     }
 
-    class NodeDefItem<String, NodeDefItemConfig> extends HashMap<String, NodeDefItemConfig> {
+    class EventDefItem<String, EventDefItemConfig> extends HashMap<String, EventDefItemConfig> {
 
     }
 
-    class NodeDefItemConfig {
+    class EventDefItemConfig {
 
         /**
+         * Event Type
+         *
          * @see ComponentTypeEnum
          */
-        private String type;
+        @JSONField(name = "event_type")
+        private String eventType;
 
         /**
-         * Node Task 对应的方法
+         * Event Action
          */
-        private String method;
+        @JSONField(name = "event_action")
+        private String eventAction;
 
-        public String getType() {
-            return type;
+        public String getEventType() {
+            return eventType;
         }
 
-        public void setType(String type) {
-            this.type = type;
+        public void setEventType(String eventType) {
+            this.eventType = eventType;
         }
 
-        public String getMethod() {
-            return method;
+        public String getEventAction() {
+            return eventAction;
         }
 
-        public void setMethod(String method) {
-            this.method = method;
+        public void setEventAction(String eventAction) {
+            this.eventAction = eventAction;
         }
     }
 

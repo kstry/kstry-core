@@ -36,13 +36,13 @@ import java.util.Map;
  *
  * @author lykan
  */
-public class FileTaskStoryDefConfig extends BaseTaskStoryDefConfig implements TaskStoryDefConfig {
+public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements EventStoryDefConfig {
 
     @SuppressWarnings("ConstantConditions")
-    public static TaskStoryDefConfig parseTaskStoryConfig(String taskRouteConfigName) {
+    public static EventStoryDefConfig parseTaskStoryConfig(String taskRouteConfigName) {
         AssertUtil.notBlank(taskRouteConfigName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file name blank!");
         try {
-            URL resource = FileTaskStoryDefConfig.class.getClassLoader().getResource(taskRouteConfigName);
+            URL resource = FileEventStoryDefConfig.class.getClassLoader().getResource(taskRouteConfigName);
             AssertUtil.notNull(resource, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", taskRouteConfigName);
 
             Path path = Paths.get(resource.toURI());
@@ -51,22 +51,22 @@ public class FileTaskStoryDefConfig extends BaseTaskStoryDefConfig implements Ta
             StringBuilder sb = new StringBuilder();
             Files.lines(path).forEach(sb::append);
 
-            return FileTaskStoryDefConfig.doParseTaskStoryConfig(sb.toString());
+            return FileEventStoryDefConfig.doParseTaskStoryConfig(sb.toString());
         } catch (Exception e) {
             KstryException.throwException(e);
             return null;
         }
     }
 
-    private static TaskStoryDefConfig doParseTaskStoryConfig(String configStr) {
+    private static EventStoryDefConfig doParseTaskStoryConfig(String configStr) {
         AssertUtil.notBlank(configStr, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file blank!");
         Map<String, String> configMap = JSON.parseObject(configStr, new TypeReference<HashMap<String, String>>() {
         });
 
-        FileTaskStoryDefConfig config = new FileTaskStoryDefConfig();
-        if (StringUtils.isNotBlank(configMap.get(NODE_DEF))) {
-            config.setNodeDef(JSON.parseObject(configMap.get(NODE_DEF),
-                    new TypeReference<NodeDef<String, NodeDefItem<String, NodeDefItemConfig>>>() {
+        FileEventStoryDefConfig config = new FileEventStoryDefConfig();
+        if (StringUtils.isNotBlank(configMap.get(EVENT_DEF))) {
+            config.setEventDef(JSON.parseObject(configMap.get(EVENT_DEF),
+                    new TypeReference<EventDef<String, EventDefItem<String, EventDefItemConfig>>>() {
                     })
             );
             checkNodeDef(config);
@@ -88,9 +88,9 @@ public class FileTaskStoryDefConfig extends BaseTaskStoryDefConfig implements Ta
             checkStoryDef(config);
         }
 
-        if (StringUtils.isNotBlank(configMap.get(ROUTE_STRATEGY_DEF))) {
-            config.setRouteStrategyDef(JSON.parseObject(configMap.get(ROUTE_STRATEGY_DEF),
-                    new TypeReference<RouteStrategyDef<String, RouteStrategyDefItem<RouteStrategyDefItemConfig>>>() {
+        if (StringUtils.isNotBlank(configMap.get(STRATEGY_DEF))) {
+            config.setRouteStrategyDef(JSON.parseObject(configMap.get(STRATEGY_DEF),
+                    new TypeReference<RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>>>() {
                     })
             );
             checkRouteStrategyDef(config);
