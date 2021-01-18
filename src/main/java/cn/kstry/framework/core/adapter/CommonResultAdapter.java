@@ -44,7 +44,7 @@ import static cn.kstry.framework.core.bus.GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KE
  */
 public class CommonResultAdapter extends RouteTaskAction implements ResultAdapterRole {
 
-    private static final Logger logger = LoggerFactory.getLogger(CommonResultAdapter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonResultAdapter.class);
 
     /**
      * SpEL 表达式解析器
@@ -66,7 +66,7 @@ public class CommonResultAdapter extends RouteTaskAction implements ResultAdapte
                 try {
                     PARSER.parseExpression(k).setValue(standardContext, PARSER.parseExpression(v).getValue(standardContext));
                 } catch (Exception e) {
-                    logger.warn("result adapter parse expression error! k:{}, v:{}", k, v, e);
+                    LOGGER.warn("result adapter parse expression error! k:{}, v:{}", k, v, e);
                 }
             });
             TaskPipelinePort<Object> result = new TaskPipelinePortBox<>();

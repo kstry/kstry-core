@@ -19,13 +19,21 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
  * @author lykan
  */
 public class GlobalUtil {
+
+    private static final List<Character> VALID_FIELD_CHARACTER_LIST = Lists.newArrayList(
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 
     @SuppressWarnings("all")
     public static <T> T notEmpty(Optional<T> optional) {
@@ -52,5 +60,18 @@ public class GlobalUtil {
 
     public static <T> T transferNotEmpty(Object source, Class<T> targetClass) {
         return notEmpty(transfer(source, targetClass));
+    }
+
+    public static boolean isValidField(String fieldStr) {
+        if (StringUtils.isBlank(fieldStr)) {
+            return false;
+        }
+
+        for (Character c : fieldStr.toCharArray()) {
+            if (!VALID_FIELD_CHARACTER_LIST.contains(c)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

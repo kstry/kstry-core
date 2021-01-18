@@ -27,7 +27,7 @@
     </appender>
 
     <logger name="cn.kstry" additivity="false">
-        <level value="INFO"/>
+        <level value="DEBUG"/>
         <appender-ref ref="BUSINESS"/>
         <appender-ref ref="_CONSOLE"/>
     </logger>

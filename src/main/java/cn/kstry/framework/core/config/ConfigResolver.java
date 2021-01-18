@@ -52,8 +52,8 @@ public class ConfigResolver {
 
     private Map<String, RequestMappingGroup> mappingGroupMap;
 
-    public void initNodeAndMapping(String taskStoryConfigName) {
-        this.eventStoryDefConfig = FileEventStoryDefConfig.parseTaskStoryConfig(getTaskStoryConfigName(taskStoryConfigName));
+    public void initNodeAndMapping(String eventStoryConfigName) {
+        this.eventStoryDefConfig = FileEventStoryDefConfig.parseEventStoryConfig(getEventStoryConfigName(eventStoryConfigName));
         this.routeNodeMap = parseRouteNodeMap();
         this.mappingGroupMap = parseMappingGroupMap();
     }
@@ -209,6 +209,9 @@ public class ConfigResolver {
         requestMappingDef.keySet().forEach(key -> {
             EventStoryDefConfig.RequestMappingDefItem<String, String> value = requestMappingDef.get(key);
             if (MapUtils.isEmpty(value)) {
+                RequestMappingGroup mappingGroup = new RequestMappingGroup();
+                mappingGroup.setMappingItemList(Lists.newArrayList());
+                mappingGroupMap.put(key, mappingGroup);
                 return;
             }
 
@@ -237,11 +240,11 @@ public class ConfigResolver {
         return mappingGroupMap;
     }
 
-    public String getTaskStoryConfigName(String taskStoryConfigName) {
-        if (StringUtils.isBlank(taskStoryConfigName)) {
-            return "task-story-config.json";
+    public String getEventStoryConfigName(String eventStoryConfigName) {
+        if (StringUtils.isBlank(eventStoryConfigName)) {
+            return "event-story-config.json";
         }
-        return taskStoryConfigName;
+        return eventStoryConfigName;
     }
 
     private Map<String, RouteNode> parseRouteNodeMap() {

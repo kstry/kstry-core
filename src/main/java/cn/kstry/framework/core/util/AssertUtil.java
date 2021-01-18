@@ -58,6 +58,13 @@ public class AssertUtil {
     }
 
     /**
+     * 断言：有效字段
+     */
+    public static void isValidField(String field, ExceptionEnum exceptionEnum, String... desc) {
+        isTrue(GlobalUtil.isValidField(field), exceptionEnum, desc);
+    }
+
+    /**
      * 判断条件为 equals
      */
     public static void equals(Object left, Object right, ExceptionEnum exceptionEnum) {

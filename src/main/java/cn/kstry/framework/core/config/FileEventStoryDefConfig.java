@@ -23,6 +23,8 @@ import cn.kstry.framework.core.util.AssertUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -38,28 +40,31 @@ import java.util.Map;
  */
 public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements EventStoryDefConfig {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileEventStoryDefConfig.class);
+
     @SuppressWarnings("ConstantConditions")
-    public static EventStoryDefConfig parseTaskStoryConfig(String taskRouteConfigName) {
-        AssertUtil.notBlank(taskRouteConfigName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file name blank!");
+    public static EventStoryDefConfig parseEventStoryConfig(String eventStoryConfigName) {
+        AssertUtil.notBlank(eventStoryConfigName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file name blank!");
         try {
-            URL resource = FileEventStoryDefConfig.class.getClassLoader().getResource(taskRouteConfigName);
-            AssertUtil.notNull(resource, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", taskRouteConfigName);
+            URL resource = FileEventStoryDefConfig.class.getClassLoader().getResource(eventStoryConfigName);
+            AssertUtil.notNull(resource, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", eventStoryConfigName);
 
             Path path = Paths.get(resource.toURI());
-            AssertUtil.notNull(path, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", taskRouteConfigName);
+            AssertUtil.notNull(path, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", eventStoryConfigName);
 
             StringBuilder sb = new StringBuilder();
             Files.lines(path).forEach(sb::append);
 
-            return FileEventStoryDefConfig.doParseTaskStoryConfig(sb.toString());
+            return FileEventStoryDefConfig.doParseEventStoryConfig(sb.toString());
         } catch (Exception e) {
             KstryException.throwException(e);
             return null;
         }
     }
 
-    private static EventStoryDefConfig doParseTaskStoryConfig(String configStr) {
+    private static EventStoryDefConfig doParseEventStoryConfig(String configStr) {
         AssertUtil.notBlank(configStr, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file blank!");
+        LOGGER.debug("use event story config file content:{}", configStr);
         Map<String, String> configMap = JSON.parseObject(configStr, new TypeReference<HashMap<String, String>>() {
         });
 
@@ -69,7 +74,7 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                     new TypeReference<EventDef<String, EventDefItem<String, EventDefItemConfig>>>() {
                     })
             );
-            checkNodeDef(config);
+            checkEventDef(config);
         }
 
         if (StringUtils.isNotBlank(configMap.get(REQUEST_MAPPING_DEF))) {
@@ -89,11 +94,11 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
         }
 
         if (StringUtils.isNotBlank(configMap.get(STRATEGY_DEF))) {
-            config.setRouteStrategyDef(JSON.parseObject(configMap.get(STRATEGY_DEF),
-                    new TypeReference<RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>>>() {
+            config.setStrategyDef(JSON.parseObject(configMap.get(STRATEGY_DEF),
+                    new TypeReference<StrategyDef<String, StrategyDefItem<StrategyDefItemConfig>>>() {
                     })
             );
-            checkRouteStrategyDef(config);
+            checkStrategyDef(config);
         }
         return config;
     }

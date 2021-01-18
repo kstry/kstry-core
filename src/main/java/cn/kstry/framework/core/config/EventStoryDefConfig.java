@@ -66,7 +66,7 @@ public interface EventStoryDefConfig {
     /**
      * 获取策略
      */
-    RouteStrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> getStrategyDef();
+    StrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> getStrategyDef();
 
     /**
      * 获取参数映射规则
@@ -131,7 +131,7 @@ public interface EventStoryDefConfig {
         }
     }
 
-    class RouteStrategyDef<String, StrategyDefItem> extends HashMap<String, StrategyDefItem> {
+    class StrategyDef<String, StrategyDefItem> extends HashMap<String, StrategyDefItem> {
 
     }
 
