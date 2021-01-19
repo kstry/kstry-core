@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.annotation;
 
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import org.springframework.stereotype.Component;
@@ -28,13 +29,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 实现 cn.kstry.framework.core.engine.EventGroup 定义的功能
+ *
  * @author lykan
+ * @see EventGroup
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Component
 @Documented
-public @interface TaskActionComponent {
+public @interface EventGroupComponent {
 
     /**
      * 继承 @Component
@@ -42,17 +46,17 @@ public @interface TaskActionComponent {
     String value() default "";
 
     /**
-     * task action name
+     * event action group name
      */
-    String taskActionName();
+    String eventGroupName();
 
     /**
-     * task action component type
+     * event action group component type
      */
-    ComponentTypeEnum taskActionTypeEnum();
+    ComponentTypeEnum eventGroupTypeEnum();
 
     /**
-     * Operator 用来实际执行 TaskAction，获取 Operator 的角色类
+     * Operator 用来实际执行 EventActionGroup 中定义的 Event，获取 Operator 的角色类
      */
     Class<? extends TaskActionOperatorRole> operatorRoleClass();
 }

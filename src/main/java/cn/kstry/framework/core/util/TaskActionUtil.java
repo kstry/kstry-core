@@ -20,7 +20,7 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.adapter.ResultAdapterRequest;
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.bus.GlobalBus;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
@@ -33,12 +33,13 @@ import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.GlobalMap;
-import cn.kstry.framework.core.route.RouteNode;
-import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.RouteEventGroup;
+import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -64,8 +65,8 @@ public class TaskActionUtil {
     /**
      * 将 Task 执行的结果保存在 globalBus 中
      */
-    public static void saveTaskResultToGlobalBus(GlobalBus globalBus, RouteNode routeNode, TaskResponse<Object> o) {
-        ComponentTypeEnum componentEnum = routeNode.getComponentTypeEnum();
+    public static void saveTaskResultToGlobalBus(GlobalBus globalBus, TaskNode taskNode, TaskResponse<Object> o) {
+        ComponentTypeEnum componentEnum = taskNode.getEventGroupTypeEnum();
         if (componentEnum == ComponentTypeEnum.TIME_SLOT) {
             return;
         }
@@ -81,27 +82,27 @@ public class TaskActionUtil {
             TaskRequest taskRequest = GlobalUtil.transferNotEmpty(o, TaskPipelinePort.class).getTaskRequest();
             AssertUtil.notNull(taskRequest, ExceptionEnum.MAPPING_RESULT_ERROR);
             AssertUtil.isNull(GlobalUtil.transferNotEmpty(o, TaskPipelinePort.class).getResult(), ExceptionEnum.MAPPING_RESULT_ERROR);
-            globalBus.addMappingResult(routeNode, taskRequest);
+            globalBus.addMappingResult(taskNode, taskRequest);
             return;
         }
         if (o == null) {
             return;
         }
-        globalBus.addNodeResult(routeNode, o);
+        globalBus.addNodeResult(taskNode, o);
     }
 
     /**
      * 获取下一个 task 请求的 request
      */
-    public static Object getNextRequest(Object taskRequest, TaskRouter router, ResultMappingRepository resultMappingRepository, GlobalBus globalBus, List<TaskAction> taskGroup) throws InstantiationException,
+    public static Object getNextRequest(Object taskRequest, TaskRouter router, ResultMappingRepository resultMappingRepository, GlobalBus globalBus, List<EventGroup> taskGroup) throws InstantiationException,
             IllegalAccessException {
-        RouteNode routeNode = GlobalUtil.notEmpty(router.currentRouteNode());
-        Class<? extends TaskRequest> currentRequestClass = routeNode.getRequestClass();
+        TaskNode taskNode = GlobalUtil.notEmpty(router.currentRouteNode());
+        Class<? extends TaskRequest> currentRequestClass = taskNode.getRequestClass();
         if (currentRequestClass == null) {
             return null;
         }
 
-        if (routeNode.getComponentTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
+        if (taskNode.getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
             TimeSlotInvokeRequest timeSlotInvokeRequest = new TimeSlotInvokeRequest();
             timeSlotInvokeRequest.setGlobalBus(globalBus);
             timeSlotInvokeRequest.setTaskGroup(taskGroup);
@@ -111,7 +112,7 @@ public class TaskActionUtil {
 
         TaskRequest nextRequestInstance = currentRequestClass.newInstance();
         if (nextRequestInstance instanceof ResultAdapterRequest) {
-            AssertUtil.isTrue(routeNode.getComponentTypeEnum() == ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
+            AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() == ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
             ResultAdapterRequest adapterRequest = (ResultAdapterRequest) nextRequestInstance;
             adapterRequest.setGlobalBus(globalBus);
             adapterRequest.setTaskGroup(taskGroup);
@@ -120,12 +121,12 @@ public class TaskActionUtil {
             fillResultInfo(taskRequest, adapterRequest);
             return adapterRequest;
         } else {
-            AssertUtil.isTrue(routeNode.getComponentTypeEnum() != ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
+            AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() != ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
         }
 
         // MAPPING 返回的结果直接被赋值给下一个任务
-        Optional<RouteNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNodeIgnoreTimeSlot();
-        if (beforeInvokeRouteNodeOptional.isPresent() && beforeInvokeRouteNodeOptional.get().getComponentTypeEnum() == ComponentTypeEnum.MAPPING) {
+        Optional<TaskNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNodeIgnoreTimeSlot();
+        if (beforeInvokeRouteNodeOptional.isPresent() && beforeInvokeRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.MAPPING) {
             return globalBus.getRequestByRouteNode(beforeInvokeRouteNodeOptional.get());
         }
 
@@ -143,11 +144,11 @@ public class TaskActionUtil {
     /**
      * 获取执行 task 的 operator，该 operator 一定是从 role 中派生而来
      */
-    public static TaskActionOperatorRole getTaskActionOperator(TaskRouter router, List<TaskAction> taskGroup) {
-        TaskAction taskAction = TaskActionUtil.getNextTaskAction(taskGroup, router);
-        TaskActionOperatorRole actionOperator = ((RouteTaskAction)taskAction).getTaskActionOperator();
+    public static TaskActionOperatorRole getTaskActionOperator(TaskRouter router, List<EventGroup> taskGroup) {
+        EventGroup eventActionGroup = TaskActionUtil.getNextTaskAction(taskGroup, router);
+        TaskActionOperatorRole actionOperator = ((RouteEventGroup) eventActionGroup).getTaskActionOperator();
         if (actionOperator == null) {
-            actionOperator = TaskOperatorCreator.getTaskOperator(taskAction);
+            actionOperator = TaskOperatorCreator.getTaskOperator(eventActionGroup);
         }
         return actionOperator;
     }
@@ -156,17 +157,17 @@ public class TaskActionUtil {
      * 执行目标方法
      *
      * @param taskRequest    task request
-     * @param routeNode      route node
+     * @param taskNode      route node
      * @param actionOperator action operator
      * @return target result
      */
-    public static Object invokeTarget(Object taskRequest, RouteNode routeNode, TaskActionOperatorRole actionOperator) throws NoSuchMethodException {
+    public static Object invokeTarget(Object taskRequest, TaskNode taskNode, TaskActionOperatorRole actionOperator) throws NoSuchMethodException {
         Object o;
-        if (routeNode.getRequestClass() == null) {
-            Method method = actionOperator.getClass().getMethod(routeNode.getActionName());
+        if (taskNode.getRequestClass() == null) {
+            Method method = actionOperator.getClass().getMethod(taskNode.getActionName());
             o = ReflectionUtils.invokeMethod(method, actionOperator);
         } else {
-            Method method = actionOperator.getClass().getMethod(routeNode.getActionName(), routeNode.getRequestClass());
+            Method method = actionOperator.getClass().getMethod(taskNode.getActionName(), taskNode.getRequestClass());
             o = ReflectionUtils.invokeMethod(method, actionOperator, taskRequest);
         }
         AssertUtil.isTrue(o == null || o instanceof TaskResponse, ExceptionEnum.TASK_RESULT_TYPE_ERROR);
@@ -182,8 +183,8 @@ public class TaskActionUtil {
         if (!router.nextRouteNodeIgnoreTimeSlot().isPresent()) {
             return;
         }
-        RouteNode routeNode = GlobalUtil.notEmpty(router.currentRouteNode());
-        GlobalMap.MapNode mapNode = GlobalUtil.notNull(routeNode.getMapNode());
+        TaskNode taskNode = GlobalUtil.notEmpty(router.currentRouteNode());
+        EventNode mapNode = GlobalUtil.notNull(taskNode.getMapNode());
         List<TaskRouterInflectionPoint> inflectionPointList = router.nextRouteNodeIgnoreTimeSlot().get().getInflectionPointList();
         if (CollectionUtils.isEmpty(inflectionPointList) || mapNode.nextMapNodeSize() == 0) {
             return;
@@ -194,7 +195,7 @@ public class TaskActionUtil {
         AssertUtil.notNull(dynamicRouteTable);
         router.reRouteNodeMap(node -> matchRouteNode(node.getInflectionPointList(), dynamicRouteTable, InflectionPointTypeEnum.INVOKE));
 
-        Optional<RouteNode> nextRouteNode = router.nextRouteNodeIgnoreTimeSlot();
+        Optional<TaskNode> nextRouteNode = router.nextRouteNodeIgnoreTimeSlot();
         if (!nextRouteNode.isPresent() || CollectionUtils.isEmpty(nextRouteNode.get().getInflectionPointList())) {
             return;
         }
@@ -211,24 +212,25 @@ public class TaskActionUtil {
         reRouteNodeMap(router);
     }
 
-    public static TaskActionMethod getTaskActionMethod(List<TaskAction> taskActionList, RouteNode routeNode) {
-        AssertUtil.notNull(routeNode);
-        AssertUtil.notEmpty(taskActionList);
+    public static TaskActionMethod getTaskActionMethod(List<EventGroup> eventGroupList, TaskNode taskNode) {
+        AssertUtil.notNull(taskNode);
+        AssertUtil.notEmpty(eventGroupList);
 
-        List<TaskAction> collect = taskActionList.stream().filter(taskAction -> {
-            if (StringUtils.isBlank(routeNode.getNodeName())) {
+        List<EventGroup> collect = eventGroupList.stream().filter(taskAction -> {
+            if (StringUtils.isBlank(taskNode.getEventGroupName())) {
                 return false;
             }
-            if (!Objects.equals(taskAction.getTaskActionName(), routeNode.getNodeName())) {
+            if (!Objects.equals(taskAction.getEventGroupName(), taskNode.getEventGroupName())) {
                 return false;
             }
-            return taskAction.getTaskActionTypeEnum() == routeNode.getComponentTypeEnum();
+            return taskAction.getEventGroupTypeEnum() == taskNode.getEventGroupTypeEnum();
         }).collect(Collectors.toList());
-        AssertUtil.oneSize(collect, ExceptionEnum.MUST_ONE_TASK_ACTION);
+        AssertUtil.oneSize(collect, ExceptionEnum.MUST_ONE_TASK_ACTION, "There is one and only one event_group allowed to be matched! taskNode:%s", taskNode);
 
-        RouteTaskAction taskAction = (RouteTaskAction) collect.get(0);
-        TaskActionMethod taskActionMethod = taskAction.getActionMethodMap().get(routeNode.getActionName());
-        AssertUtil.notNull(taskActionMethod);
+        RouteEventGroup routeEventGroup = (RouteEventGroup) collect.get(0);
+        TaskActionMethod taskActionMethod = routeEventGroup.getActionMethodMap().get(taskNode.getActionName());
+        AssertUtil.notNull(taskActionMethod, ExceptionEnum.MUST_ONE_TASK_ACTION,
+                "There is one and only one event_action allowed to be matched! taskNode:%s", taskNode);
         return taskActionMethod;
     }
 
@@ -307,11 +309,11 @@ public class TaskActionUtil {
      * @param router    非空
      * @return 下一个将要被执行的 TaskAction 有且仅有一个
      */
-    private static TaskAction getNextTaskAction(List<TaskAction> taskGroup, TaskRouter router) {
+    private static EventGroup getNextTaskAction(List<EventGroup> taskGroup, TaskRouter router) {
         AssertUtil.notEmpty(taskGroup);
-        List<TaskAction> taskActionList = taskGroup.stream().filter(s -> s.route(router)).collect(Collectors.toList());
-        AssertUtil.oneSize(taskActionList, ExceptionEnum.MUST_ONE_TASK_ACTION);
-        return taskActionList.get(0);
+        List<EventGroup> eventActionGroupList = taskGroup.stream().filter(s -> s.route(router)).collect(Collectors.toList());
+        AssertUtil.oneSize(eventActionGroupList, ExceptionEnum.MUST_ONE_TASK_ACTION);
+        return eventActionGroupList.get(0);
     }
 
     @SuppressWarnings("all")

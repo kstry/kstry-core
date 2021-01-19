@@ -46,7 +46,7 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, @NonNull BeanDefinitionRegistry registry) {
 
         MultiValueMap<String, Object> enableKstryAnnotation = importingClassMetadata.getAllAnnotationAttributes("cn.kstry.framework.core.annotation.EnableKstry");
-        AssertUtil.notNull(enableKstryAnnotation);
+        AssertUtil.notNull(enableKstryAnnotation, ExceptionEnum.NOT_ALLOW_EMPTY, "The class modified by @EnableKstry is not allowed to be empty");
 
         List<Object> storyEngineNameList = enableKstryAnnotation.get("storyEngineName");
         AssertUtil.oneSize(storyEngineNameList, ExceptionEnum.INVALID_SYSTEM_PARAMS);

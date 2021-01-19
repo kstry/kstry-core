@@ -24,7 +24,7 @@ import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.route.GlobalMap;
-import cn.kstry.framework.core.route.RouteNode;
+import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -37,14 +37,14 @@ import java.util.Optional;
 
 public class StoryEngine {
 
-    private final List<TaskAction> taskGroup;
+    private final List<EventGroup> taskGroup;
 
     private final GlobalMap globalMap;
 
     public StoryEngine(@Qualifier("defaultGlobalMap") GlobalMap globalMap,
-                       @Qualifier("defaultTaskActionList") List<TaskAction> taskActionList) {
+                       @Qualifier("defaultEventGroupList") List<EventGroup> eventActionGroupList) {
         this.globalMap = globalMap;
-        this.taskGroup = taskActionList;
+        this.taskGroup = eventActionGroupList;
     }
 
     /**
@@ -61,20 +61,20 @@ public class StoryEngine {
         globalBus.setDefaultParams(request);
         try {
             Object taskRequest = null;
-            for (Optional<RouteNode> nodeOptional = taskRouter.invokeRouteNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeRouteNode()) {
-                RouteNode routeNode = nodeOptional.get();
+            for (Optional<TaskNode> nodeOptional = taskRouter.invokeRouteNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeRouteNode()) {
+                TaskNode taskNode = nodeOptional.get();
 
                 TaskActionOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
 
                 taskRequest = TaskActionUtil.getNextRequest(taskRequest, taskRouter, globalMap.getResultMappingRepository(), globalBus, taskGroup);
-                Object o = TaskActionUtil.invokeTarget(taskRequest, routeNode, actionOperator);
+                Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
                     return (TaskResponse<T>) o;
                 }
 
-                ComponentTypeEnum componentEnum = routeNode.getComponentTypeEnum();
+                ComponentTypeEnum componentEnum = taskNode.getEventGroupTypeEnum();
                 if (componentEnum != ComponentTypeEnum.TIME_SLOT) {
-                    TaskActionUtil.saveTaskResultToGlobalBus(globalBus, routeNode, (TaskResponse<Object>) o);
+                    TaskActionUtil.saveTaskResultToGlobalBus(globalBus, taskNode, (TaskResponse<Object>) o);
                 }
                 TaskActionUtil.reRouteNodeMap(taskRouter);
 

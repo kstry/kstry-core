@@ -33,7 +33,7 @@ import java.util.Objects;
  *
  * @author lykan
  */
-public class RouteNode {
+public class TaskNode {
 
     /**
      * task方法名
@@ -43,12 +43,12 @@ public class RouteNode {
     /**
      * 节点名称
      */
-    private String nodeName;
+    private String eventGroupName;
 
     /**
      * 组件的类型
      */
-    private ComponentTypeEnum componentTypeEnum;
+    private ComponentTypeEnum eventGroupTypeEnum;
 
     /**
      * 节点执行，目标方法属性
@@ -56,9 +56,14 @@ public class RouteNode {
     private TaskActionMethod taskActionMethod;
 
     /**
+     * 请求入参 解析映射表
+     */
+    private RequestMappingGroup requestMappingGroup;
+
+    /**
      * 全局地图的一个节点
      */
-    private GlobalMap.MapNode mapNode;
+    private EventNode mapNode;
 
     /**
      * 拐点匹配列表。 定义表达式、预期值、匹配字段
@@ -75,32 +80,27 @@ public class RouteNode {
      */
     private Boolean interruptTimeSlot;
 
-    /**
-     * 请求入参 解析映射表
-     */
-    private RequestMappingGroup requestMappingGroup;
-
-    public RouteNode() {
+    public TaskNode() {
     }
 
-    public RouteNode(String actionName, String nodeName, ComponentTypeEnum componentTypeEnum) {
+    public TaskNode(String actionName, String eventGroupName, ComponentTypeEnum eventGroupTypeEnum) {
         this.actionName = actionName;
-        this.nodeName = nodeName;
-        this.componentTypeEnum = componentTypeEnum;
+        this.eventGroupName = eventGroupName;
+        this.eventGroupTypeEnum = eventGroupTypeEnum;
     }
 
     public String identity() {
-        return this.componentTypeEnum.name() + "-" + this.nodeName + "-" + this.actionName;
+        return this.eventGroupTypeEnum.name() + "-" + this.eventGroupName + "-" + this.actionName;
     }
 
     public String identityStr() {
         return identity().replace("-", StringUtils.EMPTY).replace("_", StringUtils.EMPTY);
     }
 
-    public RouteNode cloneRouteNode() {
-        RouteNode routeNode = new RouteNode();
-        BeanUtils.copyProperties(this, routeNode, "mapNode", "inflectionPointList", "filterInflectionPointList", "interruptTimeSlot", "requestMappingGroup");
-        return routeNode;
+    public TaskNode cloneRouteNode() {
+        TaskNode taskNode = new TaskNode();
+        BeanUtils.copyProperties(this, taskNode, "mapNode", "inflectionPointList", "filterInflectionPointList", "interruptTimeSlot", "requestMappingGroup");
+        return taskNode;
     }
 
     public String getActionName() {
@@ -112,26 +112,28 @@ public class RouteNode {
         this.actionName = actionName;
     }
 
-    public String getNodeName() {
-        return nodeName;
+    public String getEventGroupName() {
+        return eventGroupName;
     }
 
-    public void setNodeName(String nodeName) {
-        AssertUtil.notBlank(nodeName);
-        this.nodeName = nodeName;
+    public void setEventGroupName(String eventGroupName) {
+        AssertUtil.notBlank(eventGroupName);
+        this.eventGroupName = eventGroupName;
     }
 
-    public ComponentTypeEnum getComponentTypeEnum() {
-        return componentTypeEnum;
+    public ComponentTypeEnum getEventGroupTypeEnum() {
+        return eventGroupTypeEnum;
     }
 
-    public void setComponentTypeEnum(ComponentTypeEnum componentTypeEnum) {
-        AssertUtil.notNull(componentTypeEnum);
-        this.componentTypeEnum = componentTypeEnum;
+    public void setEventGroupTypeEnum(ComponentTypeEnum eventGroupTypeEnum) {
+        AssertUtil.notNull(eventGroupTypeEnum);
+        this.eventGroupTypeEnum = eventGroupTypeEnum;
     }
 
     public Class<? extends TaskRequest> getRequestClass() {
-        AssertUtil.notNull(taskActionMethod);
+        if (taskActionMethod == null) {
+            return null;
+        }
         return taskActionMethod.getRequestClass();
     }
 
@@ -144,11 +146,11 @@ public class RouteNode {
         return taskActionMethod;
     }
 
-    public GlobalMap.MapNode getMapNode() {
+    public EventNode getMapNode() {
         return mapNode;
     }
 
-    public void setMapNode(GlobalMap.MapNode mapNode) {
+    public void setMapNode(EventNode mapNode) {
         AssertUtil.notNull(mapNode);
         this.mapNode = mapNode;
     }
@@ -189,15 +191,15 @@ public class RouteNode {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        RouteNode routeNode = (RouteNode) o;
-        return Objects.equals(actionName, routeNode.actionName) &&
-                Objects.equals(nodeName, routeNode.nodeName) &&
-                componentTypeEnum == routeNode.componentTypeEnum;
+        TaskNode taskNode = (TaskNode) o;
+        return Objects.equals(actionName, taskNode.actionName) &&
+                Objects.equals(eventGroupName, taskNode.eventGroupName) &&
+                eventGroupTypeEnum == taskNode.eventGroupTypeEnum;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(actionName, nodeName, componentTypeEnum);
+        return Objects.hash(actionName, eventGroupName, eventGroupTypeEnum);
     }
 
     @Override

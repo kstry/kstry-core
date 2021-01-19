@@ -19,14 +19,13 @@ package cn.kstry.framework.core.timeslot;
 
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.bus.GlobalBus;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
-import cn.kstry.framework.core.route.RouteNode;
-import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.route.TaskNode;
+import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -39,7 +38,7 @@ import java.util.Optional;
 /**
  * @author lykan
  */
-public class TaskTimeSlot extends RouteTaskAction implements TaskTimeSlotAction {
+public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperatorRole {
 
     @Override
     @SuppressWarnings("unchecked")
@@ -47,29 +46,29 @@ public class TaskTimeSlot extends RouteTaskAction implements TaskTimeSlotAction 
 
         GlobalBus globalBus = request.getGlobalBus();
         TaskRouter router = globalBus.getRouter();
-        List<TaskAction> taskGroup = request.getTaskGroup();
+        List<EventGroup> taskGroup = request.getTaskGroup();
         ResultMappingRepository resultMappingRepository = request.getResultMappingRepository();
 
         Object taskRequest = getFirstRequest(globalBus, router);
         try {
-            for (Optional<RouteNode> nodeOptional = router.invokeRouteNode(); nodeOptional.isPresent(); nodeOptional = router.invokeRouteNode()) {
-                RouteNode routeNode = nodeOptional.get();
+            for (Optional<TaskNode> nodeOptional = router.invokeRouteNode(); nodeOptional.isPresent(); nodeOptional = router.invokeRouteNode()) {
+                TaskNode taskNode = nodeOptional.get();
 
                 // 不支持 slot 里嵌套 slot 的情况
-                AssertUtil.isTrue(routeNode.getComponentTypeEnum() != ComponentTypeEnum.TIME_SLOT, ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED);
+                AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() != ComponentTypeEnum.TIME_SLOT, ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED);
 
                 TaskActionOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(router, taskGroup);
                 taskRequest = TaskActionUtil.getNextRequest(taskRequest, router, resultMappingRepository, globalBus, taskGroup);
 
-                Object o = TaskActionUtil.invokeTarget(taskRequest, routeNode, actionOperator);
+                Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
                     return (TaskResponse<?>) o;
                 }
-                TaskActionUtil.saveTaskResultToGlobalBus(globalBus, routeNode, (TaskResponse<Object>) o);
+                TaskActionUtil.saveTaskResultToGlobalBus(globalBus, taskNode, (TaskResponse<Object>) o);
                 TaskActionUtil.reRouteNodeMap(router);
                 taskRequest = o;
 
-                if (BooleanUtils.isTrue(routeNode.getInterruptTimeSlot())) {
+                if (BooleanUtils.isTrue(taskNode.getInterruptTimeSlot())) {
                     break;
                 }
             }
@@ -84,25 +83,25 @@ public class TaskTimeSlot extends RouteTaskAction implements TaskTimeSlotAction 
      * 获取 TimeSlot 中首个 Task 执行的参数，从 StoryEngine 中传入
      */
     private Object getFirstRequest(GlobalBus globalBus, TaskRouter router) {
-        Optional<RouteNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNode();
+        Optional<TaskNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNode();
         if (!beforeInvokeRouteNodeOptional.isPresent()) {
             return null;
         }
 
-        RouteNode beforeInvokeRouteNode = beforeInvokeRouteNodeOptional.get();
-        if (beforeInvokeRouteNode.getComponentTypeEnum() != ComponentTypeEnum.MAPPING) {
-            return globalBus.getResultByRouteNode(beforeInvokeRouteNode);
+        TaskNode beforeInvokeTaskNode = beforeInvokeRouteNodeOptional.get();
+        if (beforeInvokeTaskNode.getEventGroupTypeEnum() != ComponentTypeEnum.MAPPING) {
+            return globalBus.getResultByRouteNode(beforeInvokeTaskNode);
         }
         return null;
     }
 
     @Override
-    public String getTaskActionName() {
+    public String getEventGroupName() {
         return KSTRY_TIME_SLOT_TASK_NAME;
     }
 
     @Override
-    public ComponentTypeEnum getTaskActionTypeEnum() {
+    public ComponentTypeEnum getEventGroupTypeEnum() {
         return ComponentTypeEnum.TIME_SLOT;
     }
 

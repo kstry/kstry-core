@@ -84,7 +84,7 @@ public enum ExceptionEnum {
     /**
      * Task 被重复定义
      */
-    TASK_IDENTIFY_DUPLICATE_DEFINITION(ComponentTypeEnum.TASK, "0003", "Task duplication of definitions is not allowed!"),
+    TASK_IDENTIFY_DUPLICATE_DEFINITION(ComponentTypeEnum.TASK, "0003", "event group duplication of definitions is not allowed!"),
 
     /**
      * Task 中不允许出现方法重载

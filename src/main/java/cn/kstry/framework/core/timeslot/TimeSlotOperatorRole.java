@@ -22,7 +22,7 @@ import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 /**
  * @author lykan
  */
-public interface TimeSlotOperatorRole extends TaskActionOperatorRole, TaskTimeSlotAction {
+public interface TimeSlotOperatorRole extends TaskActionOperatorRole, TimeSlotEventGroup {
 
 
 }

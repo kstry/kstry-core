@@ -23,7 +23,7 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.DynamicRouteTable;
-import cn.kstry.framework.core.route.RouteNode;
+import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 
@@ -39,22 +39,22 @@ public class GlobalBus {
      */
     private final TaskRouter router;
 
-    public static final RouteNode DEFAULT_GLOBAL_BUS_PARAMS_KEY = new RouteNode("BASE", "DEFAULT_GLOBAL_BUS_PARAMS_NODE", ComponentTypeEnum.GROUP);
+    public static final TaskNode DEFAULT_GLOBAL_BUS_PARAMS_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_PARAMS_NODE", ComponentTypeEnum.GROUP);
 
     /**
      * 执行链路中，所有 task 的 response
      */
-    private final Map<RouteNode, TaskResponse<?>> globalResponse = new ConcurrentHashMap<>();
+    private final Map<TaskNode, TaskResponse<?>> globalResponse = new ConcurrentHashMap<>();
 
     /**
      * 执行链路中，所有 task 的 globalRequest
      */
-    private final Map<RouteNode, TaskRequest> globalRequest = new ConcurrentHashMap<>();
+    private final Map<TaskNode, TaskRequest> globalRequest = new ConcurrentHashMap<>();
 
     /**
      * 全局流转的参数
      */
-    private final Map<RouteNode, Object> globalParams = new ConcurrentHashMap<>();
+    private final Map<TaskNode, Object> globalParams = new ConcurrentHashMap<>();
 
     /**
      * 动态路由表
@@ -69,7 +69,7 @@ public class GlobalBus {
         router.setGlobalBus(this);
     }
 
-    public void addNodeResult(RouteNode node, TaskResponse<?> result) {
+    public void addNodeResult(TaskNode node, TaskResponse<?> result) {
         AssertUtil.anyNotNull(node, result);
         try {
             globalResponse.put(node, result);
@@ -78,7 +78,7 @@ public class GlobalBus {
         }
     }
 
-    public void addMappingResult(RouteNode node, TaskRequest request) {
+    public void addMappingResult(TaskNode node, TaskRequest request) {
         AssertUtil.anyNotNull(node, request);
         try {
             globalRequest.put(node, request);
@@ -87,11 +87,11 @@ public class GlobalBus {
         }
     }
 
-    public TaskRequest getRequestByRouteNode(RouteNode node) {
+    public TaskRequest getRequestByRouteNode(TaskNode node) {
         return globalRequest.get(node);
     }
 
-    public TaskResponse<?> getResultByRouteNode(RouteNode node) {
+    public TaskResponse<?> getResultByRouteNode(TaskNode node) {
         return globalResponse.get(node);
     }
 
@@ -102,11 +102,11 @@ public class GlobalBus {
         globalParams.put(DEFAULT_GLOBAL_BUS_PARAMS_KEY, object);
     }
 
-    public void doParamsConsumer(BiConsumer<RouteNode, Object> consumer) {
+    public void doParamsConsumer(BiConsumer<TaskNode, Object> consumer) {
         globalParams.forEach(consumer);
     }
 
-    public void doResponseConsumer(BiConsumer<RouteNode, TaskResponse<?>> consumer) {
+    public void doResponseConsumer(BiConsumer<TaskNode, TaskResponse<?>> consumer) {
         globalResponse.forEach(consumer);
     }
 

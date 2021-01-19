@@ -195,14 +195,14 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                     AssertUtil.notBlank(strategy.getNextStory(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                             "config `strategy_def` `next_story` must exit when strategy_type=MATCH");
                 }
-                if (MapUtils.isNotEmpty(strategy.getStrategy())) {
-                    strategy.getStrategy().keySet().forEach(kName -> {
-                        AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `strategy_def` `strategy` key is blank!");
+                if (MapUtils.isNotEmpty(strategy.getRuleSet())) {
+                    strategy.getRuleSet().keySet().forEach(kName -> {
+                        AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `strategy_def` `rule_set` key is blank!");
                         String[] split = kName.split("-");
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config `strategy_def` `strategy` key error! strategy:%s", kName);
+                                "config `strategy_def` `rule_set` key error! rule_set:%s", kName);
                         AssertUtil.isTrue(CalculateEnum.getCalculateEnumByName(split[0]).isPresent(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config `strategy_def` `strategy` key error! strategy:%s", kName);
+                                "config `strategy_def` `rule_set` key error! rule_set:%s", kName);
                     });
                 }
             });

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class HongBaoOperateActionImpl extends BaseHongBaoOperateAction implements HongBaoOperateAction {
+public class HongBaoOperateActionGroupImpl extends BaseHongBaoOperateActionGroup implements HongBaoOperateGroup {
 
     /**
      * mock hongBao DB
@@ -128,7 +128,7 @@ public class HongBaoOperateActionImpl extends BaseHongBaoOperateAction implement
     }
 
     @Override
-    public String getTaskActionName() {
+    public String getEventGroupName() {
         return "HONGBAO_OPERATE_ACTION";
     }
 }

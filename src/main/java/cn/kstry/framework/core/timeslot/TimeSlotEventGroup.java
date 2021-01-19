@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.timeslot;
 
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.facade.TaskResponse;
 
 /**
@@ -25,7 +25,7 @@ import cn.kstry.framework.core.facade.TaskResponse;
  *
  * @author lykan
  */
-public interface TaskTimeSlotAction extends TaskAction {
+public interface TimeSlotEventGroup extends EventGroup {
 
     /**
      * time slot task name

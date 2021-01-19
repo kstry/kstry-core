@@ -18,7 +18,7 @@
 package cn.kstry.framework.test.demo.dingyi;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
-import cn.kstry.framework.core.annotation.TaskActionComponent;
+import cn.kstry.framework.core.annotation.EventGroupComponent;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
@@ -34,12 +34,12 @@ import org.springframework.context.annotation.Configuration;
 @EnableKstry(storyEngineName = "storyEngine", configPath = "ding-yi.json")
 public class Bootstrap {
 
-    @TaskActionComponent(taskActionName = "AA", taskActionTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = ARole.class)
+    @EventGroupComponent(eventGroupName = "AA", eventGroupTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = ARole.class)
     public class A {
 
     }
 
-    @TaskActionComponent(taskActionName = "AA", taskActionTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = ARole.class)
+    @EventGroupComponent(eventGroupName = "AA", eventGroupTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = ARole.class)
     public class B {
 
     }

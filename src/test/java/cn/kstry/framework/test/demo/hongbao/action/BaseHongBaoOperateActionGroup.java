@@ -4,7 +4,7 @@ import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
-import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.test.demo.hongbao.HongBaoOperatorRole;
 import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoRequest;
 import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoResponse;
@@ -14,7 +14,7 @@ import cn.kstry.framework.test.demo.hongbao.facade.UpdateHongBaoStatusForPaySucc
 import cn.kstry.framework.test.demo.hongbao.facade.UpdateHongBaoStatusForPaySuccessResponse;
 
 
-public abstract class BaseHongBaoOperateAction extends RouteTaskAction implements HongBaoOperateAction {
+public abstract class BaseHongBaoOperateActionGroup extends RouteEventGroup implements HongBaoOperateGroup {
 
     @Override
     public TaskResponse<? extends CreateHongBaoResponse> createHongBao(CreateHongBaoRequest request) {
@@ -32,7 +32,7 @@ public abstract class BaseHongBaoOperateAction extends RouteTaskAction implement
     }
 
     @Override
-    public ComponentTypeEnum getTaskActionTypeEnum() {
+    public ComponentTypeEnum getEventGroupTypeEnum() {
         return ComponentTypeEnum.TASK;
     }
 

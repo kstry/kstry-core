@@ -19,6 +19,7 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -26,7 +27,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,16 +42,16 @@ public class AssertUtil {
      *
      * @param collection 集合
      */
-    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum) {
+    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
         if (CollectionUtils.isEmpty(collection) || collection.size() != 1) {
-            KstryException.throwException(exceptionEnum);
+            throwCustomException(exceptionEnum, desc);
         }
     }
 
     /**
      * 判断条件为 true
      */
-    public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, String... desc) {
+    public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, Object... desc) {
         if (BooleanUtils.isTrue(flag)) {
             return;
         }
@@ -60,19 +61,19 @@ public class AssertUtil {
     /**
      * 断言：有效字段
      */
-    public static void isValidField(String field, ExceptionEnum exceptionEnum, String... desc) {
+    public static void isValidField(String field, ExceptionEnum exceptionEnum, Object... desc) {
         isTrue(GlobalUtil.isValidField(field), exceptionEnum, desc);
     }
 
     /**
      * 判断条件为 equals
      */
-    public static void equals(Object left, Object right, ExceptionEnum exceptionEnum) {
+    public static void equals(Object left, Object right, ExceptionEnum exceptionEnum, Object... desc) {
         if (left == null) {
-            AssertUtil.isNull(right, exceptionEnum);
+            AssertUtil.isNull(right, exceptionEnum, desc);
             return;
         }
-        AssertUtil.isTrue(left.equals(right), exceptionEnum);
+        AssertUtil.isTrue(left.equals(right), exceptionEnum, desc);
     }
 
     /**
@@ -101,8 +102,19 @@ public class AssertUtil {
     /**
      * 必须为空
      */
-    public static void isNull(Object object, ExceptionEnum exceptionEnum) {
-        isTrue(object == null, exceptionEnum);
+    public static void isNull(Object object, ExceptionEnum exceptionEnum, Object... desc) {
+        isTrue(object == null, exceptionEnum, desc);
+    }
+
+    /**
+     * 不允许为空
+     *
+     * @param object obj
+     */
+    public static void notNull(Object object, ExceptionEnum exceptionEnum, Object... desc) {
+        if (object == null) {
+            throwCustomException(exceptionEnum, desc);
+        }
     }
 
     /**
@@ -116,18 +128,7 @@ public class AssertUtil {
         }
     }
 
-    /**
-     * 不允许为空
-     *
-     * @param object obj
-     */
-    public static void notNull(Object object, ExceptionEnum exceptionEnum, String... desc) {
-        if (object == null) {
-            throwCustomException(exceptionEnum, desc);
-        }
-    }
-
-    public static void notBlank(String str, ExceptionEnum exceptionEnum, String... desc) {
+    public static void notBlank(String str, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
             notBlank(str);
             return;
@@ -159,15 +160,25 @@ public class AssertUtil {
         }
     }
 
-    private static void throwCustomException(ExceptionEnum exceptionEnum, String[] desc) {
+    private static void throwCustomException(ExceptionEnum exceptionEnum, Object[] desc) {
         String exDesc = exceptionEnum.getDesc();
-        if (desc != null && desc.length == 1) {
-            exDesc = desc[0];
-        } else if (desc != null && desc.length > 1) {
-            LinkedList<String> params = Lists.newLinkedList(Lists.newArrayList(desc));
-            params.pollFirst();
-            exDesc = String.format(desc[0], params.toArray());
+        if (desc == null || desc.length == 0 || !(desc[0] instanceof String)) {
+            KstryException.throwException(exceptionEnum.getExceptionCode(), exDesc);
         }
-        KstryException.throwException(exceptionEnum.getExceptionCode(), exDesc);
+
+        if (desc.length == 1) {
+            exDesc = (String) desc[0];
+            KstryException.throwException(exceptionEnum.getExceptionCode(), exDesc);
+        }
+
+        List<String> params = Lists.newLinkedList();
+        for (int i = 1; i < desc.length; i++) {
+            if (desc[i] instanceof String) {
+                params.add((String) desc[i]);
+                continue;
+            }
+            params.add(JSON.toJSONString(desc[i]));
+        }
+        KstryException.throwException(exceptionEnum.getExceptionCode(), String.format((String) desc[0], params.toArray()));
     }
 }

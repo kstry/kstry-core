@@ -3,7 +3,7 @@ package cn.kstry.framework.test.demo.hongbao.action;
 
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoRequest;
 import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoResponse;
 import cn.kstry.framework.test.demo.hongbao.facade.RobHongBaoRequest;
@@ -14,7 +14,7 @@ import cn.kstry.framework.test.demo.hongbao.facade.UpdateHongBaoStatusForPaySucc
 /**
  * 红包可以操作的动作
  */
-public interface HongBaoOperateAction extends TaskAction {
+public interface HongBaoOperateGroup extends EventGroup {
 
     /**
      * 创建红包

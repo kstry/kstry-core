@@ -18,8 +18,8 @@
 package cn.kstry.framework.core.operator;
 
 import cn.kstry.framework.core.annotation.StoryEnginePropertyRegister;
-import cn.kstry.framework.core.engine.TaskAction;
-import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.util.AssertUtil;
 
 import java.lang.reflect.InvocationHandler;
@@ -35,21 +35,21 @@ public class TaskOperatorProxy implements InvocationHandler {
     /**
      * 实际参加工作的 action
      */
-    private final TaskAction workRouteAction;
+    private final EventGroup workRouteAction;
 
-    public TaskOperatorProxy(TaskAction taskAction) {
-        this.workRouteAction = taskAction;
+    public TaskOperatorProxy(EventGroup eventActionGroup) {
+        this.workRouteAction = eventActionGroup;
     }
 
     public void setTaskOperator(TaskActionOperatorRole taskOperator) {
         AssertUtil.notNull(workRouteAction);
-        ((RouteTaskAction) this.workRouteAction).setTaskActionOperator(taskOperator);
+        ((RouteEventGroup) this.workRouteAction).setTaskActionOperator(taskOperator);
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object action = this.workRouteAction;
-        if (action instanceof StoryEnginePropertyRegister.AnnotationTaskActionProxy) {
-            action = ((StoryEnginePropertyRegister.AnnotationTaskActionProxy) action).getTaskAction();
+        if (action instanceof StoryEnginePropertyRegister.AnnotationEventGroupProxy) {
+            action = ((StoryEnginePropertyRegister.AnnotationEventGroupProxy) action).getEventGroup();
         }
         AssertUtil.notNull(action);
         return method.invoke(action, args);

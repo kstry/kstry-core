@@ -46,7 +46,7 @@
       {
         "next_story": "robHongBao1",
         "strategy_type": "match",
-        "strategy": {
+        "rule_set": {
           "equals-source": "2f"
         }
       }
@@ -55,20 +55,20 @@
       {
         "next_story": "robHongBao2",
         "strategy_type": "match",
-        "strategy": {
+        "rule_set": {
           "equals-source": "2f"
         }
       },
       {
         "next_story": "robHongBao3",
         "strategy_type": "match",
-        "strategy": {
+        "rule_set": {
           "equals-source": "3f"
         }
       },
       {
         "strategy_type": "filter",
-        "strategy": {
+        "rule_set": {
           "equals-source": "3f"
         }
       }

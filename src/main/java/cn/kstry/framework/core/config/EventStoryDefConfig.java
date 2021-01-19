@@ -158,8 +158,8 @@ public interface EventStoryDefConfig {
         /**
          * 策略规则集
          */
-        @JSONField(name = "strategy")
-        private Map<String, String> strategy;
+        @JSONField(name = "rule_set")
+        private Map<String, String> ruleSet;
 
         public String getNextStory() {
             return nextStory;
@@ -177,12 +177,12 @@ public interface EventStoryDefConfig {
             this.strategyType = strategyType;
         }
 
-        public Map<String, String> getStrategy() {
-            return strategy;
+        public Map<String, String> getRuleSet() {
+            return ruleSet;
         }
 
-        public void setStrategy(Map<String, String> strategy) {
-            this.strategy = strategy;
+        public void setRuleSet(Map<String, String> ruleSet) {
+            this.ruleSet = ruleSet;
         }
     }
 

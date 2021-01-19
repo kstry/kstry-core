@@ -1,7 +1,7 @@
 package cn.kstry.framework.test.demo.hongbao.action;
 
 
-import cn.kstry.framework.core.annotation.TaskActionComponent;
+import cn.kstry.framework.core.annotation.EventGroupComponent;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.RouteMapResponse;
 import cn.kstry.framework.core.facade.RouteMapResponseBox;
@@ -12,7 +12,7 @@ import cn.kstry.framework.test.demo.hongbao.facade.UserPayResponse;
 import com.alibaba.fastjson.JSON;
 import org.springframework.util.Assert;
 
-@TaskActionComponent(taskActionName = "USER_PAY_ACTION", taskActionTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = UserPayRole.class)
+@EventGroupComponent(eventGroupName = "USER_PAY_ACTION", eventGroupTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = UserPayRole.class)
 public class UserPayActionImpl implements UserPayAction {
 
     @Override

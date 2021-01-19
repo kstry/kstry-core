@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.adapter;
 
-import cn.kstry.framework.core.route.RouteNode;
+import cn.kstry.framework.core.route.TaskNode;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.HashMap;
@@ -32,14 +32,14 @@ public class ResultMappingRepository {
     /**
      * node task 映射表
      */
-    private final Map<RouteNode, Map<RouteNode, Map<String, String>>> globalRouteNodeMappingMap = new ConcurrentHashMap<>();
+    private final Map<TaskNode, Map<TaskNode, Map<String, String>>> globalRouteNodeMappingMap = new ConcurrentHashMap<>();
 
-    public Map<String, String> getTaskResultMapping(RouteNode fromNode, RouteNode toNode) {
+    public Map<String, String> getTaskResultMapping(TaskNode fromNode, TaskNode toNode) {
         if (fromNode == null || toNode == null) {
             return new HashMap<>();
         }
 
-        Map<RouteNode, Map<String, String>> fromRouteNodeMappingMap = globalRouteNodeMappingMap.get(toNode);
+        Map<TaskNode, Map<String, String>> fromRouteNodeMappingMap = globalRouteNodeMappingMap.get(toNode);
         if (MapUtils.isEmpty(fromRouteNodeMappingMap)) {
             return new HashMap<>();
         }
@@ -48,7 +48,7 @@ public class ResultMappingRepository {
         return MapUtils.isEmpty(routeNodeMappingMap) ? new HashMap<>() : routeNodeMappingMap;
     }
 
-    public void putMap(Map<RouteNode, Map<RouteNode, Map<String, String>>> map) {
+    public void putMap(Map<TaskNode, Map<TaskNode, Map<String, String>>> map) {
         this.globalRouteNodeMappingMap.putAll(map);
     }
 }

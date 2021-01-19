@@ -22,36 +22,33 @@ import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.route.TaskRouter;
 
 /**
- * Task 最上层功能定义，具备以下功能：
- * - 路由
- * - 获取 Task 执行的 Operator
- * - Task 身份识别
+ * 定义一组相关的 Event
  *
  * @author lykan
  */
-public interface TaskAction {
+public interface EventGroup {
 
     /**
-     * Task 路由
+     * 路由，选择最终承接任务执行的事件组
      *
      * @param router 路由器
-     * @return Task 是否允许被执行
+     * @return 是否承接成功
      */
     boolean route(TaskRouter router);
 
     /**
-     * 获取 Task 名称
+     * 获取 EventGroup 名称
      *
-     * @return Task 名称
+     * @return EventGroup 名称
      */
-    String getTaskActionName();
+    String getEventGroupName();
 
     /**
-     * 获取 Task 类型
+     * 获取 EventGroup 类型
      *
      * @return 类型
      */
-    ComponentTypeEnum getTaskActionTypeEnum();
+    ComponentTypeEnum getEventGroupTypeEnum();
 
     /**
      * 获取 Task Action 操作者的 角色类

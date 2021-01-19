@@ -19,17 +19,20 @@ package cn.kstry.framework.core.config;
 
 import cn.kstry.framework.core.adapter.RequestMappingGroup;
 import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.CalculateEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.route.GlobalMap;
-import cn.kstry.framework.core.route.RouteNode;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.TaskActionUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,44 +51,60 @@ public class ConfigResolver {
 
     private EventStoryDefConfig eventStoryDefConfig;
 
-    private Map<String, RouteNode> routeNodeMap;
+    private Map<String, TaskNode> taskNodeMap;
 
     private Map<String, RequestMappingGroup> mappingGroupMap;
 
-    public void initNodeAndMapping(String eventStoryConfigName) {
+    public Map<String, List<EventNode>> getStoryMapNode(List<EventGroup> eventGroupList, String eventStoryConfigName) {
+
+        if (CollectionUtils.isEmpty(eventGroupList)) {
+            return Maps.newHashMap();
+        }
+
+        // 解析配置文件
         this.eventStoryDefConfig = FileEventStoryDefConfig.parseEventStoryConfig(getEventStoryConfigName(eventStoryConfigName));
-        this.routeNodeMap = parseRouteNodeMap();
+        AssertUtil.notNull(this.eventStoryDefConfig);
+
+        // 根据 event_def 初始化 task_node(task_node 是 event_node 在执行时的叫法，event_node 是静态定义) 定义
+        this.taskNodeMap = parseTaskNodeMap();
+        if (MapUtils.isEmpty(this.taskNodeMap)) {
+            return Maps.newHashMap();
+        }
+
+        // 为 event_node 设置 TaskActionMethod
+        taskNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(eventGroupList, node)));
+
+        // 根据 request_mapping_def 初始化 参数映射规则表
         this.mappingGroupMap = parseMappingGroupMap();
+
+        // 根据 event_story 初始化 story 的 MapNode（事件故事）
+        return parseStoryDef();
     }
 
-    public Map<String, RouteNode> getRouteNodeMap() {
-        return this.routeNodeMap;
-    }
-
-    public Map<String, List<GlobalMap.MapNode>> parseStoryDef() {
+    private Map<String, List<EventNode>> parseStoryDef() {
         EventStoryDefConfig.StoryDef<String, EventStoryDefConfig.StoryDefItem<EventStoryDefConfig.StoryDefItemConfig>> storyDef = eventStoryDefConfig.getStoryDef();
-        Map<String, List<GlobalMap.MapNode>> storyNodeMap = new HashMap<>();
+        Map<String, List<EventNode>> storyNodeMap = new HashMap<>();
         if (MapUtils.isEmpty(storyDef)) {
             return storyNodeMap;
         }
 
-        Map<String, List<RouteNodeAgentForConfigResolver>> storyNodeAdaptorMap = new HashMap<>();
+        Map<String, List<TaskNodeProxyForConfigResolver>> storyNodeAdaptorMap = new HashMap<>();
         storyDef.keySet().forEach(key -> {
             EventStoryDefConfig.StoryDefItem<EventStoryDefConfig.StoryDefItemConfig> value = storyDef.get(key);
             if (CollectionUtils.isEmpty(value)) {
                 return;
             }
 
-            List<RouteNodeAgentForConfigResolver> mapNodeAdapterList = new ArrayList<>();
+            List<TaskNodeProxyForConfigResolver> mapNodeAdapterList = new ArrayList<>();
             for (EventStoryDefConfig.StoryDefItemConfig item : value) {
-                RouteNodeAgentForConfigResolver mapNodeAgent = new RouteNodeAgentForConfigResolver();
+                TaskNodeProxyForConfigResolver mapNodeAgent = new TaskNodeProxyForConfigResolver();
                 if (StringUtils.isNotBlank(item.getEventNode())) {
-                    RouteNode routeNode = this.routeNodeMap.get(item.getEventNode());
-                    AssertUtil.notNull(routeNode);
-                    mapNodeAgent.setRouteNode(routeNode);
+                    TaskNode taskNode = this.taskNodeMap.get(item.getEventNode());
+                    AssertUtil.notNull(taskNode);
+                    mapNodeAgent.setTaskNode(taskNode);
                 }
 
-                if (StringUtils.isNotEmpty(item.getRequestMapping()) && mapNodeAgent.getRouteNode() != null) {
+                if (StringUtils.isNotEmpty(item.getRequestMapping()) && mapNodeAgent.getTaskNode() != null) {
                     RequestMappingGroup mappingGroup = this.mappingGroupMap.get(item.getRequestMapping());
                     AssertUtil.notNull(mappingGroup);
                     mapNodeAgent.setRequestMappingGroup(mappingGroup);
@@ -105,18 +124,18 @@ public class ConfigResolver {
         LinkedList<ParseStoryNodeTaskItem> taskStack = new LinkedList<>();
         storyNodeAdaptorMap.forEach((k, v) -> {
 
-            List<GlobalMap.MapNode> firstMapNodeList = new ArrayList<>();
+            List<EventNode> firstMapNodeList = new ArrayList<>();
 
             taskStack.push(new ParseStoryNodeTaskItem(v, null, null));
             for (ParseStoryNodeTaskItem taskItem = taskStack.poll(); taskItem != null && CollectionUtils.isNotEmpty(taskItem.getNodeDefQueue()); taskItem = taskStack.poll()) {
 
-                GlobalMap.MapNode beforeMapNode = taskItem.getBeforeMapNode();
+                EventNode beforeMapNode = taskItem.getBeforeMapNode();
                 List<TaskRouterInflectionPoint> matchInflectionPointList = taskItem.getMatchInflectionPointList();
-                for (RouteNodeAgentForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
-                    if (MapUtils.isEmpty(nodeAgent.getNextRouteNodeInflectionPointMap()) || nodeAgent.getRouteNode() != null) {
-                        GlobalMap.MapNode mapNode = nodeAgent.buildMapNode();
+                for (TaskNodeProxyForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
+                    if (MapUtils.isEmpty(nodeAgent.getNextRouteNodeInflectionPointMap()) || nodeAgent.getTaskNode() != null) {
+                        EventNode mapNode = nodeAgent.buildMapNode();
                         if (matchInflectionPointList != null) {
-                            mapNode.getRouteNode().setInflectionPointList(matchInflectionPointList);
+                            mapNode.getTaskNode().setInflectionPointList(matchInflectionPointList);
                             matchInflectionPointList = null;
                         }
 
@@ -136,7 +155,7 @@ public class ConfigResolver {
                         continue;
                     }
 
-                    GlobalMap.MapNode finalBeforeMapNode = beforeMapNode;
+                    EventNode finalBeforeMapNode = beforeMapNode;
                     Map<String, List<TaskRouterInflectionPoint>> nextInflectionPointMap = nodeAgent.getNextRouteNodeInflectionPointMap();
                     nextInflectionPointMap.forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), finalBeforeMapNode, vIn)));
                 }
@@ -147,16 +166,16 @@ public class ConfigResolver {
         return storyNodeMap;
     }
 
-    private void parseRouteStrategyForRouteNodeAgent(RouteNodeAgentForConfigResolver mapNodeAgent,
+    private void parseRouteStrategyForRouteNodeAgent(TaskNodeProxyForConfigResolver mapNodeAgent,
                                                      EventStoryDefConfig.StrategyDefItem<EventStoryDefConfig.StrategyDefItemConfig> routeStrategy) {
         if (CollectionUtils.isEmpty(routeStrategy)) {
             return;
         }
 
-        if (mapNodeAgent.getRouteNode() != null && routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER))) {
+        if (mapNodeAgent.getTaskNode() != null && routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER))) {
             List<TaskRouterInflectionPoint> filterInflectionPointList = routeStrategy.stream()
-                    .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(s.getStrategy()))
-                    .map(EventStoryDefConfig.StrategyDefItemConfig::getStrategy)
+                    .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(s.getRuleSet()))
+                    .map(EventStoryDefConfig.StrategyDefItemConfig::getRuleSet)
                     .flatMap(s -> getInflectionPointStrategy(s, InflectionPointTypeEnum.CONDITION).stream())
                     .collect(Collectors.toList());
             mapNodeAgent.setFilterInflectionPointList(filterInflectionPointList);
@@ -165,12 +184,12 @@ public class ConfigResolver {
         if (routeStrategy.stream().anyMatch(s -> StringUtils.isNotBlank(s.getNextStory()))) {
             Map<String, List<TaskRouterInflectionPoint>> nextRouteNodeInflectionPointMap = new HashMap<>();
             routeStrategy.stream().filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH) && StringUtils.isNotBlank(s.getNextStory())).forEach(config -> {
-                if (MapUtils.isEmpty(config.getStrategy())) {
+                if (MapUtils.isEmpty(config.getRuleSet())) {
                     nextRouteNodeInflectionPointMap.put(config.getNextStory(), Lists.newArrayList());
                     return;
                 }
 
-                nextRouteNodeInflectionPointMap.put(config.getNextStory(), getInflectionPointStrategy(config.getStrategy(), InflectionPointTypeEnum.INVOKE));
+                nextRouteNodeInflectionPointMap.put(config.getNextStory(), getInflectionPointStrategy(config.getRuleSet(), InflectionPointTypeEnum.INVOKE));
             });
             mapNodeAgent.setNextRouteNodeInflectionPointMap(nextRouteNodeInflectionPointMap);
         }
@@ -222,9 +241,9 @@ public class ConfigResolver {
                 }
                 if (!vIn.startsWith("#")) {
                     String nodeName = vIn.substring(0, vIn.indexOf("["));
-                    RouteNode routeNode = this.routeNodeMap.get(nodeName);
-                    AssertUtil.notNull(routeNode, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
-                    vIn = "#" + routeNode.identityStr() + vIn.replaceFirst("^" + nodeName, StringUtils.EMPTY);
+                    TaskNode taskNode = this.taskNodeMap.get(nodeName);
+                    AssertUtil.notNull(taskNode, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
+                    vIn = "#" + taskNode.identityStr() + vIn.replaceFirst("^" + nodeName, StringUtils.EMPTY);
                 }
 
                 RequestMappingGroup.RequestMappingItem item = new RequestMappingGroup.RequestMappingItem();
@@ -240,18 +259,11 @@ public class ConfigResolver {
         return mappingGroupMap;
     }
 
-    public String getEventStoryConfigName(String eventStoryConfigName) {
-        if (StringUtils.isBlank(eventStoryConfigName)) {
-            return "event-story-config.json";
-        }
-        return eventStoryConfigName;
-    }
-
-    private Map<String, RouteNode> parseRouteNodeMap() {
-        Map<String, RouteNode> routeNodeMap = new HashMap<>();
+    private Map<String, TaskNode> parseTaskNodeMap() {
+        Map<String, TaskNode> taskNodeMap = new HashMap<>();
         EventStoryDefConfig.EventDef<String, EventStoryDefConfig.EventDefItem<String, EventStoryDefConfig.EventDefItemConfig>> eventDef = eventStoryDefConfig.getEventDef();
         if (MapUtils.isEmpty(eventDef)) {
-            return routeNodeMap;
+            return taskNodeMap;
         }
 
         eventDef.keySet().forEach(key -> {
@@ -259,23 +271,31 @@ public class ConfigResolver {
             if (MapUtils.isEmpty(value)) {
                 return;
             }
+
             value.forEach((kIn, vIn) -> {
-                RouteNode routeNode = new RouteNode();
-                routeNode.setActionName(vIn.getEventAction());
-                routeNode.setComponentTypeEnum(GlobalUtil.notEmpty(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType())));
-                routeNode.setNodeName(key);
-                routeNodeMap.put(kIn, routeNode);
+                TaskNode taskNode = new TaskNode();
+                taskNode.setActionName(vIn.getEventAction());
+                taskNode.setEventGroupTypeEnum(GlobalUtil.notEmpty(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType())));
+                taskNode.setEventGroupName(key);
+                taskNodeMap.put(kIn, taskNode);
             });
         });
-        return routeNodeMap;
+        return taskNodeMap;
+    }
+
+    private String getEventStoryConfigName(String eventStoryConfigName) {
+        if (StringUtils.isBlank(eventStoryConfigName)) {
+            return "event-story-config.json";
+        }
+        return eventStoryConfigName;
     }
 
     /**
-     * 解析 MapNode 时使用的辅助包装类
+     * 解析 TaskNode 时使用的辅助包装类
      */
-    private static class RouteNodeAgentForConfigResolver {
+    private static class TaskNodeProxyForConfigResolver {
 
-        private RouteNode routeNode;
+        private TaskNode taskNode;
 
         private RequestMappingGroup requestMappingGroup;
 
@@ -283,22 +303,22 @@ public class ConfigResolver {
 
         private Map<String, List<TaskRouterInflectionPoint>> nextRouteNodeInflectionPointMap;
 
-        public RouteNode getRouteNode() {
-            return routeNode;
+        public TaskNode getTaskNode() {
+            return taskNode;
         }
 
-        public void setRouteNode(RouteNode routeNode) {
-            this.routeNode = routeNode;
+        public void setTaskNode(TaskNode taskNode) {
+            this.taskNode = taskNode;
         }
 
-        public GlobalMap.MapNode buildMapNode() {
-            if (getRouteNode() == null) {
+        public EventNode buildMapNode() {
+            if (getTaskNode() == null) {
                 return null;
             }
-            RouteNode routeNode = getRouteNode().cloneRouteNode();
-            routeNode.setFilterInflectionPointList(getFilterInflectionPointList());
-            routeNode.setRequestMappingGroup(getRequestMappingGroup());
-            return new GlobalMap.MapNode(routeNode);
+            TaskNode taskNode = getTaskNode().cloneRouteNode();
+            taskNode.setFilterInflectionPointList(getFilterInflectionPointList());
+            taskNode.setRequestMappingGroup(getRequestMappingGroup());
+            return new EventNode(taskNode);
         }
 
         public RequestMappingGroup getRequestMappingGroup() {
@@ -328,24 +348,24 @@ public class ConfigResolver {
 
     private static class ParseStoryNodeTaskItem {
 
-        private final GlobalMap.MapNode beforeMapNode;
+        private final EventNode beforeMapNode;
 
-        private final List<RouteNodeAgentForConfigResolver> nodeDefQueue;
+        private final List<TaskNodeProxyForConfigResolver> nodeDefQueue;
 
         private final List<TaskRouterInflectionPoint> matchInflectionPointList;
 
-        public ParseStoryNodeTaskItem(List<RouteNodeAgentForConfigResolver> nodeDefQueue, GlobalMap.MapNode beforeMapNode,
+        public ParseStoryNodeTaskItem(List<TaskNodeProxyForConfigResolver> nodeDefQueue, EventNode beforeMapNode,
                                       List<TaskRouterInflectionPoint> matchInflectionPointList) {
             this.nodeDefQueue = nodeDefQueue;
             this.beforeMapNode = beforeMapNode;
             this.matchInflectionPointList = matchInflectionPointList;
         }
 
-        public GlobalMap.MapNode getBeforeMapNode() {
+        public EventNode getBeforeMapNode() {
             return beforeMapNode;
         }
 
-        public List<RouteNodeAgentForConfigResolver> getNodeDefQueue() {
+        public List<TaskNodeProxyForConfigResolver> getNodeDefQueue() {
             return nodeDefQueue;
         }
 

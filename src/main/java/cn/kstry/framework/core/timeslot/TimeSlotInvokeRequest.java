@@ -20,7 +20,7 @@ package cn.kstry.framework.core.timeslot;
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.facade.TaskRequest;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class TimeSlotInvokeRequest implements TaskRequest {
     /**
      * 需要 time slot 执行的 task group
      */
-    private List<TaskAction> taskGroup;
+    private List<EventGroup> taskGroup;
 
     /**
      * 全局 bus
@@ -47,11 +47,11 @@ public class TimeSlotInvokeRequest implements TaskRequest {
 
     private ResultMappingRepository resultMappingRepository;
 
-    public List<TaskAction> getTaskGroup() {
+    public List<EventGroup> getTaskGroup() {
         return taskGroup;
     }
 
-    public void setTaskGroup(List<TaskAction> taskGroup) {
+    public void setTaskGroup(List<EventGroup> taskGroup) {
         this.taskGroup = taskGroup;
     }
 

@@ -17,8 +17,8 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.annotation.TaskActionComponent;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.annotation.EventGroupComponent;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -39,7 +39,7 @@ import java.util.Optional;
 /**
  * @author lykan
  */
-public abstract class RouteTaskAction implements TaskAction {
+public abstract class RouteEventGroup implements EventGroup {
 
     /**
      * Task Operator
@@ -55,14 +55,14 @@ public abstract class RouteTaskAction implements TaskAction {
     public boolean route(TaskRouter router) {
         AssertUtil.notNull(router);
 
-        Optional<RouteNode> routeNodeOptional = router.currentRouteNode();
+        Optional<TaskNode> routeNodeOptional = router.currentRouteNode();
         if (!routeNodeOptional.isPresent()) {
             return false;
         }
 
-        RouteNode routeNode = routeNodeOptional.get();
-        boolean nameEquals = routeNode.getNodeName().equals(getTaskActionName());
-        boolean enumEquals = getTaskActionTypeEnum() == routeNode.getComponentTypeEnum();
+        TaskNode taskNode = routeNodeOptional.get();
+        boolean nameEquals = taskNode.getEventGroupName().equals(getEventGroupName());
+        boolean enumEquals = getEventGroupTypeEnum() == taskNode.getEventGroupTypeEnum();
 
         return nameEquals && enumEquals;
     }
@@ -93,7 +93,7 @@ public abstract class RouteTaskAction implements TaskAction {
 
         for (Method method : methods) {
             Class<?> declaringClass = method.getDeclaringClass();
-            if (!TaskAction.class.isAssignableFrom(declaringClass) && declaringClass.getAnnotation(TaskActionComponent.class) == null) {
+            if (!EventGroup.class.isAssignableFrom(declaringClass) && declaringClass.getAnnotation(EventGroupComponent.class) == null) {
                 continue;
             }
 
@@ -124,7 +124,8 @@ public abstract class RouteTaskAction implements TaskAction {
             taskActionMethod.setClassName(method.getDeclaringClass().getName());
 
             // 不允许方法重载
-            AssertUtil.isNull(taskActionMethodHashMap.get(method.getName()), ExceptionEnum.NOT_ALLOWED_OVERLOADS);
+            AssertUtil.isNull(taskActionMethodHashMap.get(method.getName()), ExceptionEnum.NOT_ALLOWED_OVERLOADS,
+                    "Do not allow method(eventAction) overloading in EventGroup! methodName:%s", method.getName());
             taskActionMethodHashMap.put(method.getName(), taskActionMethod);
             this.taskActionMethodMap = taskActionMethodHashMap;
         }

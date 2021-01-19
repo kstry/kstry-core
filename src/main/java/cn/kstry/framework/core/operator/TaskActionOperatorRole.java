@@ -18,6 +18,8 @@
 package cn.kstry.framework.core.operator;
 
 /**
+ * 执行事件任务的角色
+ *
  * @author lykan
  */
 public interface TaskActionOperatorRole {

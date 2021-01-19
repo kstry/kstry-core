@@ -19,17 +19,16 @@ package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.config.ConfigResolver;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.GlobalMap;
-import cn.kstry.framework.core.route.RouteNode;
-import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
-import cn.kstry.framework.core.util.TaskActionUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.BeansException;
@@ -52,38 +51,38 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
-    @Bean("defaultTaskActionList")
-    public List<TaskAction> getTaskActions() {
-        Map<String, TaskAction> taskActionMap = applicationContext.getBeansOfType(TaskAction.class);
-        List<TaskAction> taskActionList = Lists.newArrayList(taskActionMap.values());
+    @Bean("defaultEventGroupList")
+    public List<EventGroup> getEventGroupList() {
+        Map<String, EventGroup> eventGroupMap = applicationContext.getBeansOfType(EventGroup.class);
+        List<EventGroup> eventGroupList = Lists.newArrayList(eventGroupMap.values());
 
-        Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskActionComponent.class);
-        List<AnnotationTaskActionProxy> annotationTaskActionList = beansWithAnnotation.values().stream().map(o -> {
+        Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(EventGroupComponent.class);
+        List<AnnotationEventGroupProxy> annotationEventGroupList = beansWithAnnotation.values().stream().map(o -> {
             Class<?> targetClass = ProxyUtil.noneProxyClass(o);
-            TaskActionComponent taskActionComponent = targetClass.getAnnotation(TaskActionComponent.class);
-            String taskActionName = taskActionComponent.taskActionName();
-            ComponentTypeEnum componentTypeEnum = taskActionComponent.taskActionTypeEnum();
-            Class<? extends TaskActionOperatorRole> operatorRoleClass = taskActionComponent.operatorRoleClass();
+            EventGroupComponent eventGroupComponent = targetClass.getAnnotation(EventGroupComponent.class);
+            String eventGroupName = eventGroupComponent.eventGroupName();
+            ComponentTypeEnum eventGroupTypeEnum = eventGroupComponent.eventGroupTypeEnum();
+            Class<? extends TaskActionOperatorRole> operatorRoleClass = eventGroupComponent.operatorRoleClass();
 
-            AssertUtil.notNull(componentTypeEnum);
-            AssertUtil.notBlank(taskActionName);
-            AssertUtil.notNull(operatorRoleClass);
+            AssertUtil.notNull(eventGroupTypeEnum, ExceptionEnum.NOT_ALLOW_EMPTY, "The eventGroupTypeEnum is not allowed to be empty!");
+            AssertUtil.notBlank(eventGroupName, ExceptionEnum.NOT_ALLOW_EMPTY, "The eventGroupName is not allowed to be empty!");
+            AssertUtil.notNull(operatorRoleClass, ExceptionEnum.NOT_ALLOW_EMPTY, "The operatorRoleClass is not allowed to be empty!");
 
-            AnnotationTaskActionProxy annotationTaskActionProxy = new AnnotationTaskActionProxy(o);
-            annotationTaskActionProxy.setTaskActionName(taskActionName);
-            annotationTaskActionProxy.setTaskActionTypeEnum(componentTypeEnum);
-            annotationTaskActionProxy.setTaskActionOperatorRoleClass(operatorRoleClass);
-            return annotationTaskActionProxy;
+            AnnotationEventGroupProxy annotationEventGroupProxy = new AnnotationEventGroupProxy(o);
+            annotationEventGroupProxy.setEventGroupName(eventGroupName);
+            annotationEventGroupProxy.setEventGroupTypeEnum(eventGroupTypeEnum);
+            annotationEventGroupProxy.setOperatorRoleClass(operatorRoleClass);
+            return annotationEventGroupProxy;
         }).collect(Collectors.toList());
-        taskActionList.addAll(annotationTaskActionList);
+        eventGroupList.addAll(annotationEventGroupList);
 
-        long actionCount = taskActionList.stream().map(a -> a.getTaskActionName() + "-" + a.getTaskActionTypeEnum()).distinct().count();
-        AssertUtil.equals((long) taskActionList.size(), actionCount, ExceptionEnum.TASK_IDENTIFY_DUPLICATE_DEFINITION);
-        return taskActionList;
+        long actionCount = eventGroupList.stream().map(a -> a.getEventGroupName() + "-" + a.getEventGroupTypeEnum()).distinct().count();
+        AssertUtil.equals((long) eventGroupList.size(), actionCount, ExceptionEnum.TASK_IDENTIFY_DUPLICATE_DEFINITION);
+        return eventGroupList;
     }
 
     @Bean("defaultGlobalMap")
-    public GlobalMap getGlobalMap(@Qualifier("defaultTaskActionList") List<TaskAction> taskActionList) {
+    public GlobalMap getGlobalMap(@Qualifier("defaultEventGroupList") List<EventGroup> eventGroupList) {
 
         Map<String, ConfigResolver> configResolverMap = applicationContext.getBeansOfType(ConfigResolver.class);
         AssertUtil.notEmpty(configResolverMap);
@@ -91,15 +90,8 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         GlobalMap globalMap = new GlobalMap();
         ConfigResolver configResolver = configResolverMap.values().iterator().next();
 
-        configResolver.initNodeAndMapping(EnableKstryRegister.getKstryConfigPath());
-        Map<String, RouteNode> routeNodeMap = configResolver.getRouteNodeMap();
-        if (MapUtils.isEmpty(routeNodeMap)) {
-            return globalMap;
-        }
-
-        routeNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(taskActionList, node)));
-        Map<String, List<GlobalMap.MapNode>> storyDefinition = configResolver.parseStoryDef();
-        if (MapUtils.isEmpty(storyDefinition)) {
+        Map<String, List<EventNode>> storyMapNode = configResolver.getStoryMapNode(eventGroupList, EnableKstryRegister.getKstryConfigPath());
+        if (MapUtils.isEmpty(storyMapNode)) {
             return globalMap;
         }
 //        storyDefinition.forEach(globalMap::addFirstMapNode);
@@ -115,55 +107,53 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
-    public static class AnnotationTaskActionProxy extends RouteTaskAction implements TaskAction {
+    public static class AnnotationEventGroupProxy extends RouteEventGroup implements EventGroup {
 
-        private String taskActionName;
+        private String eventGroupName;
 
-        private ComponentTypeEnum componentTypeEnum;
+        private ComponentTypeEnum eventGroupTypeEnum;
 
-        private final Object taskAction;
+        private final Object eventGroup;
 
         private Class<? extends TaskActionOperatorRole> operatorRoleClass;
 
-        public AnnotationTaskActionProxy(Object taskAction) {
-            this.taskAction = taskAction;
+        public AnnotationEventGroupProxy(Object eventGroup) {
+            this.eventGroup = eventGroup;
         }
 
-        public Object getTaskAction() {
-            return taskAction;
-        }
-
-        @Override
-        public String getTaskActionName() {
-            return taskActionName;
-        }
-
-        public void setTaskActionName(String taskActionName) {
-            this.taskActionName = taskActionName;
+        public Object getEventGroup() {
+            return eventGroup;
         }
 
         @Override
-        public ComponentTypeEnum getTaskActionTypeEnum() {
-            return componentTypeEnum;
+        public String getEventGroupName() {
+            return eventGroupName;
         }
 
-        public void setTaskActionTypeEnum(ComponentTypeEnum componentTypeEnum) {
-            this.componentTypeEnum = componentTypeEnum;
+        public void setEventGroupName(String eventGroupName) {
+            this.eventGroupName = eventGroupName;
         }
 
         @Override
-        public Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass() {
-            AssertUtil.notNull(this.operatorRoleClass);
-            return this.operatorRoleClass;
+        public ComponentTypeEnum getEventGroupTypeEnum() {
+            return eventGroupTypeEnum;
         }
 
-        public void setTaskActionOperatorRoleClass(Class<? extends TaskActionOperatorRole> operatorRoleClass) {
+        public void setEventGroupTypeEnum(ComponentTypeEnum eventGroupTypeEnum) {
+            this.eventGroupTypeEnum = eventGroupTypeEnum;
+        }
+
+        public Class<? extends TaskActionOperatorRole> getOperatorRoleClass() {
+            return operatorRoleClass;
+        }
+
+        public void setOperatorRoleClass(Class<? extends TaskActionOperatorRole> operatorRoleClass) {
             this.operatorRoleClass = operatorRoleClass;
         }
 
         @Override
         public Map<String, TaskActionMethod> getActionMethodMap() {
-            Class<?> targetClass = ProxyUtil.noneProxyClass(this.taskAction);
+            Class<?> targetClass = ProxyUtil.noneProxyClass(this.eventGroup);
             return super.getTaskActionMethodMap(targetClass);
         }
     }

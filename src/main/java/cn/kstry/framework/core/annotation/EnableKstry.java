@@ -18,7 +18,8 @@
 package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.adapter.CommonResultAdapter;
-import cn.kstry.framework.core.timeslot.TaskTimeSlot;
+import cn.kstry.framework.core.timeslot.TimeSlotComponent;
+import cn.kstry.framework.core.timeslot.TimeSlotEventGroup;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -35,7 +36,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({CommonResultAdapter.class, TaskTimeSlot.class, EnableKstryRegister.class, StoryEnginePropertyRegister.class})
+@Import({CommonResultAdapter.class, TimeSlotComponent.class, EnableKstryRegister.class, StoryEnginePropertyRegister.class})
 public @interface EnableKstry {
 
     /**

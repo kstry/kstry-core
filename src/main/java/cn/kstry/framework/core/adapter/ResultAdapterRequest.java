@@ -20,7 +20,7 @@ package cn.kstry.framework.core.adapter;
 import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.facade.TaskPipelinePort;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
-import cn.kstry.framework.core.engine.TaskAction;
+import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 
@@ -41,7 +41,7 @@ public class ResultAdapterRequest extends TaskPipelinePortBox<Object> implements
     /**
      * task group
      */
-    private List<TaskAction> taskGroup;
+    private List<EventGroup> taskGroup;
 
     /**
      * mapping repository
@@ -80,11 +80,11 @@ public class ResultAdapterRequest extends TaskPipelinePortBox<Object> implements
         this.resultMappingRepository = resultMappingRepository;
     }
 
-    public List<TaskAction> getTaskGroup() {
+    public List<EventGroup> getTaskGroup() {
         return taskGroup;
     }
 
-    public void setTaskGroup(List<TaskAction> taskGroup) {
+    public void setTaskGroup(List<EventGroup> taskGroup) {
         AssertUtil.notEmpty(taskGroup);
         this.taskGroup = taskGroup;
     }

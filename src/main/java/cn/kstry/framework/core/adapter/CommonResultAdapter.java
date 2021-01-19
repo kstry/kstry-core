@@ -23,8 +23,8 @@ import cn.kstry.framework.core.facade.TaskPipelinePort;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
-import cn.kstry.framework.core.route.RouteNode;
-import cn.kstry.framework.core.route.RouteTaskAction;
+import cn.kstry.framework.core.route.TaskNode;
+import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -42,7 +42,7 @@ import static cn.kstry.framework.core.bus.GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KE
 /**
  * @author lykan
  */
-public class CommonResultAdapter extends RouteTaskAction implements ResultAdapterRole {
+public class CommonResultAdapter extends RouteEventGroup implements ResultAdapterRole {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonResultAdapter.class);
 
@@ -55,13 +55,13 @@ public class CommonResultAdapter extends RouteTaskAction implements ResultAdapte
     public TaskPipelinePort<Object> mapping(ResultAdapterRequest request) {
         try {
             TaskRouter router = request.getRouter();
-            RouteNode nextInvokeRouteNode = GlobalUtil.notEmpty(router.nextRouteNodeIgnoreTimeSlot());
+            TaskNode nextInvokeTaskNode = GlobalUtil.notEmpty(router.nextRouteNodeIgnoreTimeSlot());
 
-            TaskRequest taskRequest = GlobalUtil.notNull(nextInvokeRouteNode.getRequestClass()).newInstance();
+            TaskRequest taskRequest = GlobalUtil.notNull(nextInvokeTaskNode.getRequestClass()).newInstance();
             EvaluationContext standardContext = getEvaluationContext(request, taskRequest);
 
-            RouteNode fromRouteNode = router.beforeInvokeRouteNodeIgnoreTimeSlot().orElse(DEFAULT_GLOBAL_BUS_PARAMS_KEY);
-            Map<String, String> taskResultMapping = request.getResultMappingRepository().getTaskResultMapping(fromRouteNode, nextInvokeRouteNode);
+            TaskNode fromTaskNode = router.beforeInvokeRouteNodeIgnoreTimeSlot().orElse(DEFAULT_GLOBAL_BUS_PARAMS_KEY);
+            Map<String, String> taskResultMapping = request.getResultMappingRepository().getTaskResultMapping(fromTaskNode, nextInvokeTaskNode);
             taskResultMapping.forEach((k, v) -> {
                 try {
                     PARSER.parseExpression(k).setValue(standardContext, PARSER.parseExpression(v).getValue(standardContext));
@@ -96,12 +96,12 @@ public class CommonResultAdapter extends RouteTaskAction implements ResultAdapte
     }
 
     @Override
-    public String getTaskActionName() {
+    public String getEventGroupName() {
         return COMMON_TASK_RESULT_MAPPING_TASK_KEY;
     }
 
     @Override
-    public ComponentTypeEnum getTaskActionTypeEnum() {
+    public ComponentTypeEnum getEventGroupTypeEnum() {
         return ComponentTypeEnum.MAPPING;
     }
 

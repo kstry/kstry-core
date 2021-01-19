@@ -7,7 +7,7 @@ import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoRequest;
 import org.springframework.stereotype.Component;
 
 @Component
-public class HongBaoOperateAction2Impl extends BaseHongBaoOperateAction implements HongBaoOperateAction {
+public class HongBaoOperateActionGroup2Impl extends BaseHongBaoOperateActionGroup implements HongBaoOperateGroup {
 
     @Override
     public TaskResponse<CreateHongBao2Response> createHongBao(CreateHongBaoRequest request) {
@@ -17,7 +17,7 @@ public class HongBaoOperateAction2Impl extends BaseHongBaoOperateAction implemen
     }
 
     @Override
-    public String getTaskActionName() {
+    public String getEventGroupName() {
         return "HONGBAO_OPERATE_ACTION2";
     }
 }
