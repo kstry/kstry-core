@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.route.calculate;
 
-import cn.kstry.framework.core.util.InflectionPointCalculate;
+import cn.kstry.framework.core.util.StrategyRuleCalculator;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.text.ParseException;
@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * @author lykan
  */
-public class EqualsCalculate implements InflectionPointCalculate {
+public class EqualsCalculator implements StrategyRuleCalculator {
 
     @Override
     public boolean calculate(Object source, Object expected) {

@@ -56,29 +56,9 @@ public class TaskNode {
     private TaskActionMethod taskActionMethod;
 
     /**
-     * 请求入参 解析映射表
+     * 事件节点 与 TaskNode 一一对应，TaskNode 是 EventNode 在执行期间的存在形式
      */
-    private RequestMappingGroup requestMappingGroup;
-
-    /**
-     * 全局地图的一个节点
-     */
-    private EventNode mapNode;
-
-    /**
-     * 拐点匹配列表。 定义表达式、预期值、匹配字段
-     */
-    private List<TaskRouterInflectionPoint> inflectionPointList;
-
-    /**
-     * 匹配失败，跳过该节点
-     */
-    private List<TaskRouterInflectionPoint> filterInflectionPointList;
-
-    /**
-     * 中断 timeSlot
-     */
-    private Boolean interruptTimeSlot;
+    private EventNode eventNode;
 
     public TaskNode() {
     }
@@ -97,9 +77,9 @@ public class TaskNode {
         return identity().replace("-", StringUtils.EMPTY).replace("_", StringUtils.EMPTY);
     }
 
-    public TaskNode cloneRouteNode() {
+    public TaskNode cloneTaskNode() {
         TaskNode taskNode = new TaskNode();
-        BeanUtils.copyProperties(this, taskNode, "mapNode", "inflectionPointList", "filterInflectionPointList", "interruptTimeSlot", "requestMappingGroup");
+        BeanUtils.copyProperties(this, taskNode, "eventNode");
         return taskNode;
     }
 
@@ -130,11 +110,8 @@ public class TaskNode {
         this.eventGroupTypeEnum = eventGroupTypeEnum;
     }
 
-    public Class<? extends TaskRequest> getRequestClass() {
-        if (taskActionMethod == null) {
-            return null;
-        }
-        return taskActionMethod.getRequestClass();
+    public TaskActionMethod getTaskActionMethod() {
+        return taskActionMethod;
     }
 
     public void setTaskActionMethod(TaskActionMethod taskActionMethod) {
@@ -142,49 +119,41 @@ public class TaskNode {
         this.taskActionMethod = taskActionMethod;
     }
 
-    public TaskActionMethod getTaskActionMethod() {
-        return taskActionMethod;
+    public EventNode getEventNode() {
+        return eventNode;
     }
 
-    public EventNode getMapNode() {
-        return mapNode;
+    public void setEventNode(EventNode eventNode) {
+        AssertUtil.notNull(eventNode);
+        this.eventNode = eventNode;
     }
 
-    public void setMapNode(EventNode mapNode) {
-        AssertUtil.notNull(mapNode);
-        this.mapNode = mapNode;
-    }
-
-    public List<TaskRouterInflectionPoint> getInflectionPointList() {
-        return inflectionPointList;
-    }
-
-    public void setInflectionPointList(List<TaskRouterInflectionPoint> inflectionPointList) {
-        this.inflectionPointList = inflectionPointList;
-    }
-
-    public Boolean getInterruptTimeSlot() {
-        return interruptTimeSlot;
-    }
-
-    public void setInterruptTimeSlot(Boolean interruptTimeSlot) {
-        this.interruptTimeSlot = interruptTimeSlot;
+    public Class<? extends TaskRequest> getRequestClass() {
+        if (taskActionMethod == null) {
+            return null;
+        }
+        return taskActionMethod.getRequestClass();
     }
 
     public RequestMappingGroup getRequestMappingGroup() {
-        return requestMappingGroup;
+        if (this.eventNode == null) {
+            return null;
+        }
+        return this.eventNode.getRequestMappingGroup();
     }
 
-    public void setRequestMappingGroup(RequestMappingGroup requestMappingGroup) {
-        this.requestMappingGroup = requestMappingGroup;
+    public List<StrategyRule> getFilterStrategyRuleList() {
+        if (this.eventNode == null) {
+            return null;
+        }
+        return this.eventNode.getFilterStrategyRuleList();
     }
 
-    public List<TaskRouterInflectionPoint> getFilterInflectionPointList() {
-        return filterInflectionPointList;
-    }
-
-    public void setFilterInflectionPointList(List<TaskRouterInflectionPoint> filterInflectionPointList) {
-        this.filterInflectionPointList = filterInflectionPointList;
+    public List<StrategyRule> getMatchStrategyRuleList() {
+        if (this.eventNode == null) {
+            return null;
+        }
+        return this.eventNode.getMatchStrategyRuleList();
     }
 
     @Override

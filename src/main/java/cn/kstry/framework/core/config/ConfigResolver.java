@@ -20,14 +20,13 @@ package cn.kstry.framework.core.config;
 import cn.kstry.framework.core.adapter.RequestMappingGroup;
 import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.engine.EventGroup;
-import cn.kstry.framework.core.enums.CalculateEnum;
+import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.StrategyRule;
 import cn.kstry.framework.core.route.TaskNode;
-import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -55,7 +54,7 @@ public class ConfigResolver {
 
     private Map<String, RequestMappingGroup> mappingGroupMap;
 
-    public Map<String, List<EventNode>> getStoryMapNode(List<EventGroup> eventGroupList, String eventStoryConfigName) {
+    public Map<String, List<EventNode>> getStoryEventNode(List<EventGroup> eventGroupList, String eventStoryConfigName) {
 
         if (CollectionUtils.isEmpty(eventGroupList)) {
             return Maps.newHashMap();
@@ -77,7 +76,7 @@ public class ConfigResolver {
         // 根据 request_mapping_def 初始化 参数映射规则表
         this.mappingGroupMap = parseMappingGroupMap();
 
-        // 根据 event_story 初始化 story 的 MapNode（事件故事）
+        // 根据 event_story 初始化 story 的 EventNode（事件故事）
         return parseStoryDef();
     }
 
@@ -88,118 +87,135 @@ public class ConfigResolver {
             return storyNodeMap;
         }
 
-        Map<String, List<TaskNodeProxyForConfigResolver>> storyNodeAdaptorMap = new HashMap<>();
+        Map<String, List<TaskNodeAgentForConfigResolver>> storyNodeAdaptorMap = new HashMap<>();
         storyDef.keySet().forEach(key -> {
             EventStoryDefConfig.StoryDefItem<EventStoryDefConfig.StoryDefItemConfig> value = storyDef.get(key);
             if (CollectionUtils.isEmpty(value)) {
                 return;
             }
 
-            List<TaskNodeProxyForConfigResolver> mapNodeAdapterList = new ArrayList<>();
+            List<TaskNodeAgentForConfigResolver> eventNodeAdapterList = new ArrayList<>();
             for (EventStoryDefConfig.StoryDefItemConfig item : value) {
-                TaskNodeProxyForConfigResolver mapNodeAgent = new TaskNodeProxyForConfigResolver();
+                TaskNodeAgentForConfigResolver eventNodeAgent = new TaskNodeAgentForConfigResolver();
                 if (StringUtils.isNotBlank(item.getEventNode())) {
                     TaskNode taskNode = this.taskNodeMap.get(item.getEventNode());
                     AssertUtil.notNull(taskNode);
-                    mapNodeAgent.setTaskNode(taskNode);
+                    eventNodeAgent.setTaskNode(taskNode);
                 }
 
-                if (StringUtils.isNotEmpty(item.getRequestMapping()) && mapNodeAgent.getTaskNode() != null) {
+                if (StringUtils.isNotEmpty(item.getRequestMapping())) {
                     RequestMappingGroup mappingGroup = this.mappingGroupMap.get(item.getRequestMapping());
                     AssertUtil.notNull(mappingGroup);
-                    mapNodeAgent.setRequestMappingGroup(mappingGroup);
+                    eventNodeAgent.setRequestMappingGroup(mappingGroup);
                 }
 
                 if (MapUtils.isNotEmpty(eventStoryDefConfig.getStrategyDef()) && StringUtils.isNotBlank(item.getStrategy())) {
                     EventStoryDefConfig.StrategyDefItem<EventStoryDefConfig.StrategyDefItemConfig> routeStrategy =
                             eventStoryDefConfig.getStrategyDef().get(item.getStrategy());
                     AssertUtil.notNull(routeStrategy);
-                    parseRouteStrategyForRouteNodeAgent(mapNodeAgent, routeStrategy);
+                    if (CollectionUtils.isEmpty(routeStrategy)) {
+                        continue;
+                    }
+                    if (parseStrategyInfoReturnInterruptFlag(eventNodeAgent, routeStrategy)) {
+                        eventNodeAdapterList.add(eventNodeAgent);
+                        break;
+                    }
                 }
-                mapNodeAdapterList.add(mapNodeAgent);
+                eventNodeAdapterList.add(eventNodeAgent);
             }
-            storyNodeAdaptorMap.put(key, mapNodeAdapterList);
+            storyNodeAdaptorMap.put(key, eventNodeAdapterList);
         });
 
         LinkedList<ParseStoryNodeTaskItem> taskStack = new LinkedList<>();
         storyNodeAdaptorMap.forEach((k, v) -> {
 
-            List<EventNode> firstMapNodeList = new ArrayList<>();
+            List<EventNode> firstEventNodeList = new ArrayList<>();
 
             taskStack.push(new ParseStoryNodeTaskItem(v, null, null));
             for (ParseStoryNodeTaskItem taskItem = taskStack.poll(); taskItem != null && CollectionUtils.isNotEmpty(taskItem.getNodeDefQueue()); taskItem = taskStack.poll()) {
 
-                EventNode beforeMapNode = taskItem.getBeforeMapNode();
-                List<TaskRouterInflectionPoint> matchInflectionPointList = taskItem.getMatchInflectionPointList();
-                for (TaskNodeProxyForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
-                    if (MapUtils.isEmpty(nodeAgent.getNextRouteNodeInflectionPointMap()) || nodeAgent.getTaskNode() != null) {
-                        EventNode mapNode = nodeAgent.buildMapNode();
-                        if (matchInflectionPointList != null) {
-                            mapNode.getTaskNode().setInflectionPointList(matchInflectionPointList);
-                            matchInflectionPointList = null;
+                EventNode beforeEventNode = taskItem.getBeforeEventNode();
+                List<StrategyRule> matchStrategyRuleList = taskItem.getStrategyRuleList();
+                for (TaskNodeAgentForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
+                    if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap()) || nodeAgent.getTaskNode() != null) {
+                        EventNode eventNode = nodeAgent.buildEventNode();
+                        if (matchStrategyRuleList != null) {
+                            eventNode.setMatchStrategyRuleList(matchStrategyRuleList);
+                            matchStrategyRuleList = null;
                         }
 
-                        if (beforeMapNode == null) {
-                            firstMapNodeList.add(mapNode);
+                        if (beforeEventNode == null) {
+                            firstEventNodeList.add(eventNode);
                         } else {
-                            beforeMapNode.addNextMapNode(mapNode);
+                            beforeEventNode.addNextEventNode(eventNode);
                         }
-                        beforeMapNode = mapNode;
-                        if (MapUtils.isEmpty(nodeAgent.getNextRouteNodeInflectionPointMap())) {
-                            continue;
-                        }
+                        beforeEventNode = eventNode;
                     }
-
-                    if (beforeMapNode == null) {
-                        nodeAgent.getNextRouteNodeInflectionPointMap().forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), null, vIn)));
+                    if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap())) {
                         continue;
                     }
 
-                    EventNode finalBeforeMapNode = beforeMapNode;
-                    Map<String, List<TaskRouterInflectionPoint>> nextInflectionPointMap = nodeAgent.getNextRouteNodeInflectionPointMap();
-                    nextInflectionPointMap.forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), finalBeforeMapNode, vIn)));
+                    if (beforeEventNode == null) {
+                        nodeAgent.getMatchStrategyRuleMap().forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), null, vIn)));
+                        break;
+                    }
+
+                    EventNode finalBeforeEventNode = beforeEventNode;
+                    Map<String, List<StrategyRule>> nextInflectionPointMap = nodeAgent.getMatchStrategyRuleMap();
+                    nextInflectionPointMap.forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), finalBeforeEventNode, vIn)));
+                    break;
                 }
             }
-            storyNodeMap.put(k, firstMapNodeList);
+            storyNodeMap.put(k, firstEventNodeList);
             taskStack.clear();
         });
         return storyNodeMap;
     }
 
-    private void parseRouteStrategyForRouteNodeAgent(TaskNodeProxyForConfigResolver mapNodeAgent,
-                                                     EventStoryDefConfig.StrategyDefItem<EventStoryDefConfig.StrategyDefItemConfig> routeStrategy) {
+    private boolean parseStrategyInfoReturnInterruptFlag(TaskNodeAgentForConfigResolver eventNodeAgent,
+                                                         EventStoryDefConfig.StrategyDefItem<EventStoryDefConfig.StrategyDefItemConfig> routeStrategy) {
         if (CollectionUtils.isEmpty(routeStrategy)) {
-            return;
+            return false;
         }
 
-        if (mapNodeAgent.getTaskNode() != null && routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER))) {
-            List<TaskRouterInflectionPoint> filterInflectionPointList = routeStrategy.stream()
+        if (routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER))) {
+            List<StrategyRule> filterInflectionPointList = routeStrategy.stream()
                     .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(s.getRuleSet()))
                     .map(EventStoryDefConfig.StrategyDefItemConfig::getRuleSet)
-                    .flatMap(s -> getInflectionPointStrategy(s, InflectionPointTypeEnum.CONDITION).stream())
+                    .flatMap(s -> getStrategyRuleList(s, StrategyTypeEnum.FILTER).stream())
                     .collect(Collectors.toList());
-            mapNodeAgent.setFilterInflectionPointList(filterInflectionPointList);
+            eventNodeAgent.setFilterStrategyRuleList(filterInflectionPointList);
+            if (eventNodeAgent.getTaskNode() == null) {
+                List<String> filterStoryNameList = routeStrategy.stream()
+                        .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && StringUtils.isNotBlank(s.getStory()))
+                        .map(EventStoryDefConfig.StrategyDefItemConfig::getStory)
+                        .collect(Collectors.toList());
+                AssertUtil.oneSize(filterStoryNameList, ExceptionEnum.PARAMS_ERROR);
+                eventNodeAgent.setFilterStoryName(filterStoryNameList.get(0));
+            }
         }
 
-        if (routeStrategy.stream().anyMatch(s -> StringUtils.isNotBlank(s.getNextStory()))) {
-            Map<String, List<TaskRouterInflectionPoint>> nextRouteNodeInflectionPointMap = new HashMap<>();
-            routeStrategy.stream().filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH) && StringUtils.isNotBlank(s.getNextStory())).forEach(config -> {
+        if (routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH))) {
+            Map<String, List<StrategyRule>> matchStrategyRuleMap = new HashMap<>();
+            routeStrategy.stream().filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH) && StringUtils.isNotBlank(s.getStory())).forEach(config -> {
                 if (MapUtils.isEmpty(config.getRuleSet())) {
-                    nextRouteNodeInflectionPointMap.put(config.getNextStory(), Lists.newArrayList());
+                    matchStrategyRuleMap.put(config.getStory(), Lists.newArrayList());
                     return;
                 }
 
-                nextRouteNodeInflectionPointMap.put(config.getNextStory(), getInflectionPointStrategy(config.getRuleSet(), InflectionPointTypeEnum.INVOKE));
+                matchStrategyRuleMap.put(config.getStory(), getStrategyRuleList(config.getRuleSet(), StrategyTypeEnum.MATCH));
             });
-            mapNodeAgent.setNextRouteNodeInflectionPointMap(nextRouteNodeInflectionPointMap);
+            eventNodeAgent.setMatchStrategyRuleMap(matchStrategyRuleMap);
+            return true;
         }
+        return false;
     }
 
-    private List<TaskRouterInflectionPoint> getInflectionPointStrategy(Map<String, String> strategy, InflectionPointTypeEnum inflectionPointTypeEnum) {
-        AssertUtil.notNull(inflectionPointTypeEnum);
-        List<TaskRouterInflectionPoint> inflectionPointList = new ArrayList<>();
+    private List<StrategyRule> getStrategyRuleList(Map<String, String> strategy, StrategyTypeEnum strategyTypeEnum) {
+        AssertUtil.notNull(strategyTypeEnum);
+        List<StrategyRule> strategyRuleList = new ArrayList<>();
         if (MapUtils.isEmpty(strategy)) {
-            return inflectionPointList;
+            return strategyRuleList;
         }
 
         strategy.forEach((k, v) -> {
@@ -207,14 +223,14 @@ public class ConfigResolver {
             String[] splitKeyArray = k.split("-");
             AssertUtil.isTrue(splitKeyArray.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
 
-            TaskRouterInflectionPoint inflectionPoint = new TaskRouterInflectionPoint();
-            inflectionPoint.setInflectionPointTypeEnum(inflectionPointTypeEnum);
-            inflectionPoint.setExpectedValue(v);
-            inflectionPoint.setFieldName(splitKeyArray[1]);
-            inflectionPoint.setMatchingStrategy(GlobalUtil.notEmpty(CalculateEnum.getCalculateEnumByName(splitKeyArray[0])).getExpression());
-            inflectionPointList.add(inflectionPoint);
+            StrategyRule strategyRule = new StrategyRule();
+            strategyRule.setStrategyTypeEnum(strategyTypeEnum);
+            strategyRule.setExpectedValue(v);
+            strategyRule.setFieldName(splitKeyArray[1]);
+            strategyRule.setStrategyRuleCalculator(GlobalUtil.notEmpty(CalculatorEnum.getCalculatorEnumByName(splitKeyArray[0])).getExpression());
+            strategyRuleList.add(strategyRule);
         });
-        return inflectionPointList;
+        return strategyRuleList;
     }
 
     private Map<String, RequestMappingGroup> parseMappingGroupMap() {
@@ -293,15 +309,17 @@ public class ConfigResolver {
     /**
      * 解析 TaskNode 时使用的辅助包装类
      */
-    private static class TaskNodeProxyForConfigResolver {
+    private static class TaskNodeAgentForConfigResolver {
 
         private TaskNode taskNode;
 
         private RequestMappingGroup requestMappingGroup;
 
-        private List<TaskRouterInflectionPoint> filterInflectionPointList;
+        private List<StrategyRule> filterStrategyRuleList;
 
-        private Map<String, List<TaskRouterInflectionPoint>> nextRouteNodeInflectionPointMap;
+        private Map<String, List<StrategyRule>> matchStrategyRuleMap;
+
+        private String filterStoryName;
 
         public TaskNode getTaskNode() {
             return taskNode;
@@ -311,14 +329,12 @@ public class ConfigResolver {
             this.taskNode = taskNode;
         }
 
-        public EventNode buildMapNode() {
-            if (getTaskNode() == null) {
-                return null;
-            }
-            TaskNode taskNode = getTaskNode().cloneRouteNode();
-            taskNode.setFilterInflectionPointList(getFilterInflectionPointList());
-            taskNode.setRequestMappingGroup(getRequestMappingGroup());
-            return new EventNode(taskNode);
+        public EventNode buildEventNode() {
+            AssertUtil.notNull(getTaskNode());
+            EventNode eventNode = new EventNode(getTaskNode().cloneTaskNode());
+            eventNode.setFilterStrategyRuleList(getFilterStrategyRuleList());
+            eventNode.setRequestMappingGroup(getRequestMappingGroup());
+            return eventNode;
         }
 
         public RequestMappingGroup getRequestMappingGroup() {
@@ -329,48 +345,56 @@ public class ConfigResolver {
             this.requestMappingGroup = requestMappingGroup;
         }
 
-        public List<TaskRouterInflectionPoint> getFilterInflectionPointList() {
-            return filterInflectionPointList;
+        public List<StrategyRule> getFilterStrategyRuleList() {
+            return filterStrategyRuleList;
         }
 
-        public void setFilterInflectionPointList(List<TaskRouterInflectionPoint> filterInflectionPointList) {
-            this.filterInflectionPointList = filterInflectionPointList;
+        public void setFilterStrategyRuleList(List<StrategyRule> filterStrategyRuleList) {
+            this.filterStrategyRuleList = filterStrategyRuleList;
         }
 
-        public Map<String, List<TaskRouterInflectionPoint>> getNextRouteNodeInflectionPointMap() {
-            return nextRouteNodeInflectionPointMap;
+        public Map<String, List<StrategyRule>> getMatchStrategyRuleMap() {
+            return matchStrategyRuleMap;
         }
 
-        public void setNextRouteNodeInflectionPointMap(Map<String, List<TaskRouterInflectionPoint>> nextRouteNodeInflectionPointMap) {
-            this.nextRouteNodeInflectionPointMap = nextRouteNodeInflectionPointMap;
+        public void setMatchStrategyRuleMap(Map<String, List<StrategyRule>> matchStrategyRuleMap) {
+            this.matchStrategyRuleMap = matchStrategyRuleMap;
+        }
+
+        public String getFilterStoryName() {
+            return filterStoryName;
+        }
+
+        public void setFilterStoryName(String filterStoryName) {
+            this.filterStoryName = filterStoryName;
         }
     }
 
     private static class ParseStoryNodeTaskItem {
 
-        private final EventNode beforeMapNode;
+        private final EventNode beforeEventNode;
 
-        private final List<TaskNodeProxyForConfigResolver> nodeDefQueue;
+        private final List<TaskNodeAgentForConfigResolver> nodeDefQueue;
 
-        private final List<TaskRouterInflectionPoint> matchInflectionPointList;
+        private final List<StrategyRule> strategyRuleList;
 
-        public ParseStoryNodeTaskItem(List<TaskNodeProxyForConfigResolver> nodeDefQueue, EventNode beforeMapNode,
-                                      List<TaskRouterInflectionPoint> matchInflectionPointList) {
+        public ParseStoryNodeTaskItem(List<TaskNodeAgentForConfigResolver> nodeDefQueue, EventNode beforeEventNode,
+                                      List<StrategyRule> strategyRuleList) {
             this.nodeDefQueue = nodeDefQueue;
-            this.beforeMapNode = beforeMapNode;
-            this.matchInflectionPointList = matchInflectionPointList;
+            this.beforeEventNode = beforeEventNode;
+            this.strategyRuleList = strategyRuleList;
         }
 
-        public EventNode getBeforeMapNode() {
-            return beforeMapNode;
+        public EventNode getBeforeEventNode() {
+            return beforeEventNode;
         }
 
-        public List<TaskNodeProxyForConfigResolver> getNodeDefQueue() {
+        public List<TaskNodeAgentForConfigResolver> getNodeDefQueue() {
             return nodeDefQueue;
         }
 
-        public List<TaskRouterInflectionPoint> getMatchInflectionPointList() {
-            return matchInflectionPointList;
+        public List<StrategyRule> getStrategyRuleList() {
+            return strategyRuleList;
         }
     }
 }

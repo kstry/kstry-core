@@ -74,7 +74,6 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                     new TypeReference<EventDef<String, EventDefItem<String, EventDefItemConfig>>>() {
                     })
             );
-            checkEventDef(config);
         }
 
         if (StringUtils.isNotBlank(configMap.get(REQUEST_MAPPING_DEF))) {
@@ -82,7 +81,6 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                     new TypeReference<RequestMappingDef<String, RequestMappingDefItem<String, String>>>() {
                     })
             );
-            checkRequestMappingDef(config);
         }
 
         if (StringUtils.isNotBlank(configMap.get(STORY_DEF))) {
@@ -90,7 +88,6 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                     new TypeReference<StoryDef<String, StoryDefItem<StoryDefItemConfig>>>() {
                     })
             );
-            checkStoryDef(config);
         }
 
         if (StringUtils.isNotBlank(configMap.get(STRATEGY_DEF))) {
@@ -98,7 +95,6 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                     new TypeReference<StrategyDef<String, StrategyDefItem<StrategyDefItemConfig>>>() {
                     })
             );
-            checkStrategyDef(config);
         }
         return config;
     }

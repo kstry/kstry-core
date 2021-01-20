@@ -23,7 +23,7 @@ import cn.kstry.framework.core.bus.GlobalBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
+import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.DynamicRouteTable;
@@ -35,11 +35,10 @@ import cn.kstry.framework.core.operator.TaskActionOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.RouteEventGroup;
+import cn.kstry.framework.core.route.StrategyRule;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.route.TaskRouterInflectionPoint;
 import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
-import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -157,7 +156,7 @@ public class TaskActionUtil {
      * 执行目标方法
      *
      * @param taskRequest    task request
-     * @param taskNode      route node
+     * @param taskNode       route node
      * @param actionOperator action operator
      * @return target result
      */
@@ -184,27 +183,27 @@ public class TaskActionUtil {
             return;
         }
         TaskNode taskNode = GlobalUtil.notEmpty(router.currentRouteNode());
-        EventNode mapNode = GlobalUtil.notNull(taskNode.getMapNode());
-        List<TaskRouterInflectionPoint> inflectionPointList = router.nextRouteNodeIgnoreTimeSlot().get().getInflectionPointList();
-        if (CollectionUtils.isEmpty(inflectionPointList) || mapNode.nextMapNodeSize() == 0) {
+        EventNode eventNode = GlobalUtil.notNull(taskNode.getEventNode());
+        List<StrategyRule> inflectionPointList = router.nextRouteNodeIgnoreTimeSlot().get().getMatchStrategyRuleList();
+        if (CollectionUtils.isEmpty(inflectionPointList) || eventNode.nextEventNodeSize() == 0) {
             return;
         }
 
         GlobalBus globalBus = GlobalUtil.notNull(router.getGlobalBus());
         DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
         AssertUtil.notNull(dynamicRouteTable);
-        router.reRouteNodeMap(node -> matchRouteNode(node.getInflectionPointList(), dynamicRouteTable, InflectionPointTypeEnum.INVOKE));
+        router.reRouteNodeMap(node -> matchRouteNode(node.getMatchStrategyRuleList(), dynamicRouteTable, StrategyTypeEnum.MATCH));
 
         Optional<TaskNode> nextRouteNode = router.nextRouteNodeIgnoreTimeSlot();
-        if (!nextRouteNode.isPresent() || CollectionUtils.isEmpty(nextRouteNode.get().getInflectionPointList())) {
+        if (!nextRouteNode.isPresent() || CollectionUtils.isEmpty(nextRouteNode.get().getMatchStrategyRuleList())) {
             return;
         }
 
-        if (nextRouteNode.get().getInflectionPointList().stream().noneMatch(point -> point.getInflectionPointTypeEnum() == InflectionPointTypeEnum.CONDITION)) {
+        if (nextRouteNode.get().getMatchStrategyRuleList().stream().noneMatch(point -> point.getStrategyTypeEnum() == StrategyTypeEnum.FILTER)) {
             return;
         }
 
-        if (TaskActionUtil.matchRouteNode(nextRouteNode.get().getInflectionPointList(), dynamicRouteTable, InflectionPointTypeEnum.CONDITION)) {
+        if (TaskActionUtil.matchRouteNode(nextRouteNode.get().getMatchStrategyRuleList(), dynamicRouteTable, StrategyTypeEnum.FILTER)) {
             return;
         }
 
@@ -248,27 +247,27 @@ public class TaskActionUtil {
         KstryException.throwException(exception);
     }
 
-    public static boolean matchRouteNode(List<TaskRouterInflectionPoint> inflectionPointList, DynamicRouteTable dynamicRouteTable,
-                                         InflectionPointTypeEnum inflectionPointTypeEnum) {
-        AssertUtil.notNull(inflectionPointTypeEnum);
+    public static boolean matchRouteNode(List<StrategyRule> inflectionPointList, DynamicRouteTable dynamicRouteTable,
+                                         StrategyTypeEnum strategyTypeEnum) {
+        AssertUtil.notNull(strategyTypeEnum);
         if (CollectionUtils.isEmpty(inflectionPointList)) {
             return false;
         }
 
         boolean flag = true;
         try {
-            for (TaskRouterInflectionPoint inflectionPoint : inflectionPointList) {
-                if (inflectionPoint.getInflectionPointTypeEnum() != inflectionPointTypeEnum) {
+            for (StrategyRule inflectionPoint : inflectionPointList) {
+                if (inflectionPoint.getStrategyTypeEnum() != strategyTypeEnum) {
                     continue;
                 }
 
                 AssertUtil.notBlank(inflectionPoint.getFieldName());
-                AssertUtil.anyNotNull(inflectionPoint.getExpectedValue(), inflectionPoint.getMatchingStrategy());
+                AssertUtil.anyNotNull(inflectionPoint.getExpectedValue(), inflectionPoint.getStrategyRuleCalculator());
 
                 Field field = FieldUtils.getField(dynamicRouteTable.getClass(), inflectionPoint.getFieldName(), true);
                 AssertUtil.notNull(field);
 
-                flag = flag && inflectionPoint.getMatchingStrategy().calculate(field.get(dynamicRouteTable), inflectionPoint.getExpectedValue());
+                flag = flag && inflectionPoint.getStrategyRuleCalculator().calculate(field.get(dynamicRouteTable), inflectionPoint.getExpectedValue());
             }
         } catch (Exception e) {
             KstryException.throwException(e);

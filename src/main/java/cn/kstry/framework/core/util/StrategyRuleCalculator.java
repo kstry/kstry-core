@@ -23,7 +23,7 @@ package cn.kstry.framework.core.util;
  * @author lykan
  */
 @FunctionalInterface
-public interface InflectionPointCalculate {
+public interface StrategyRuleCalculator {
 
     /**
      * 计算

@@ -32,6 +32,9 @@
         "event_node": "NODE_3"
       },
       {
+        "strategy": "STRATEGY_3"
+      },
+      {
         "event_node": "NODE_3"
       }
     ],
@@ -44,7 +47,7 @@
   "strategy_def": {
     "STRATEGY_1": [
       {
-        "next_story": "robHongBao1",
+        "story": "robHongBao1",
         "strategy_type": "match",
         "rule_set": {
           "equals-source": "2f"
@@ -53,14 +56,14 @@
     ],
     "STRATEGY_2": [
       {
-        "next_story": "robHongBao2",
+        "story": "robHongBao2",
         "strategy_type": "match",
         "rule_set": {
           "equals-source": "2f"
         }
       },
       {
-        "next_story": "robHongBao3",
+        "story": "robHongBao3",
         "strategy_type": "match",
         "rule_set": {
           "equals-source": "3f"
@@ -70,6 +73,15 @@
         "strategy_type": "filter",
         "rule_set": {
           "equals-source": "3f"
+        }
+      }
+    ],
+    "STRATEGY_3": [
+      {
+        "story": "robHongBao3",
+        "strategy_type": "filter",
+        "rule_set": {
+          "equals-source": "5f"
         }
       }
     ]

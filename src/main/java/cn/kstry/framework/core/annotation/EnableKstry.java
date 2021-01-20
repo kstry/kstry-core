@@ -19,7 +19,6 @@ package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.adapter.CommonResultAdapter;
 import cn.kstry.framework.core.timeslot.TimeSlotComponent;
-import cn.kstry.framework.core.timeslot.TimeSlotEventGroup;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;

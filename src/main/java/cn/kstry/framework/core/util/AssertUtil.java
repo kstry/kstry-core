@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 断言工具
@@ -38,42 +39,59 @@ import java.util.Map;
 public class AssertUtil {
 
     /**
-     * 集合只允许一个元素
-     *
-     * @param collection 集合
-     */
-    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
-        if (CollectionUtils.isEmpty(collection) || collection.size() != 1) {
-            throwCustomException(exceptionEnum, desc);
-        }
-    }
-
-    /**
      * 判断条件为 true
      */
     public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, Object... desc) {
-        if (BooleanUtils.isTrue(flag)) {
-            return;
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
         }
-        throwCustomException(exceptionEnum, desc);
-    }
-
-    /**
-     * 断言：有效字段
-     */
-    public static void isValidField(String field, ExceptionEnum exceptionEnum, Object... desc) {
-        isTrue(GlobalUtil.isValidField(field), exceptionEnum, desc);
+        if (BooleanUtils.isNotTrue(flag)) {
+            throwCustomException(exceptionEnum, desc);
+        }
     }
 
     /**
      * 判断条件为 equals
      */
     public static void equals(Object left, Object right, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
+        }
         if (left == null) {
             AssertUtil.isNull(right, exceptionEnum, desc);
             return;
         }
         AssertUtil.isTrue(left.equals(right), exceptionEnum, desc);
+    }
+
+    @SuppressWarnings("all")
+    public static void present(Optional<?> optional) {
+        present(optional, ExceptionEnum.SYSTEM_ERROR);
+    }
+
+    @SuppressWarnings("all")
+    public static void present(Optional<?> optional, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
+        }
+        isTrue(optional != null && optional.isPresent(), exceptionEnum, desc);
+    }
+
+    /**
+     * 必须为空
+     */
+    public static void isNull(Object object) {
+        isNull(object, ExceptionEnum.OBJ_MUST_EMPTY);
+    }
+
+    /**
+     * 必须为空
+     */
+    public static void isNull(Object object, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.OBJ_MUST_EMPTY;
+        }
+        isTrue(object == null, exceptionEnum, desc);
     }
 
     /**
@@ -88,30 +106,12 @@ public class AssertUtil {
     /**
      * 不允许为空
      *
-     * @param objectArray obj list
-     */
-    public static void anyNotNull(Object... objectArray) {
-        if (objectArray == null || objectArray.length == 0) {
-            return;
-        }
-        for (Object o : objectArray) {
-            notNull(o, ExceptionEnum.NOT_ALLOW_EMPTY);
-        }
-    }
-
-    /**
-     * 必须为空
-     */
-    public static void isNull(Object object, ExceptionEnum exceptionEnum, Object... desc) {
-        isTrue(object == null, exceptionEnum, desc);
-    }
-
-    /**
-     * 不允许为空
-     *
      * @param object obj
      */
     public static void notNull(Object object, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.NOT_ALLOW_EMPTY;
+        }
         if (object == null) {
             throwCustomException(exceptionEnum, desc);
         }
@@ -123,20 +123,50 @@ public class AssertUtil {
      * @param str str
      */
     public static void notBlank(String str) {
-        if (StringUtils.isBlank(str)) {
-            KstryException.throwException(ExceptionEnum.NOT_ALLOW_EMPTY);
-        }
+        notBlank(str, ExceptionEnum.NOT_ALLOW_EMPTY);
     }
 
     public static void notBlank(String str, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
-            notBlank(str);
+            exceptionEnum = ExceptionEnum.NOT_ALLOW_EMPTY;
+        }
+        isTrue(StringUtils.isNotBlank(str), exceptionEnum, desc);
+    }
+
+    public static void notEmpty(Collection<?> collection) {
+        notEmpty(collection, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
+    }
+
+    public static void notEmpty(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
+        }
+        isTrue(CollectionUtils.isNotEmpty(collection), exceptionEnum, desc);
+    }
+
+    public static void notEmpty(Map<?, ?> map) {
+        notEmpty(map, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
+    }
+
+    public static void notEmpty(Map<?, ?> map, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
+        }
+        isTrue(MapUtils.isNotEmpty(map), exceptionEnum, desc);
+    }
+
+    /**
+     * 不允许为空
+     *
+     * @param objectArray obj list
+     */
+    public static void anyNotNull(Object... objectArray) {
+        if (objectArray == null || objectArray.length == 0) {
             return;
         }
-        if (StringUtils.isNotBlank(str)) {
-            return;
+        for (Object o : objectArray) {
+            notNull(o);
         }
-        throwCustomException(exceptionEnum, desc);
     }
 
     public static void anyNotBlank(String... strArray) {
@@ -148,15 +178,27 @@ public class AssertUtil {
         }
     }
 
-    public static void notEmpty(Collection<?> collection) {
-        if (CollectionUtils.isEmpty(collection)) {
-            KstryException.throwException(ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
+    /**
+     * 断言：有效字段
+     */
+    public static void isValidField(String field, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.PARAMS_ERROR;
         }
+        isTrue(GlobalUtil.isValidField(field), exceptionEnum, desc);
     }
 
-    public static void notEmpty(Map<?, ?> map) {
-        if (MapUtils.isEmpty(map)) {
-            KstryException.throwException(ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
+    /**
+     * 集合只允许一个元素
+     *
+     * @param collection 集合
+     */
+    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.PARAMS_ERROR;
+        }
+        if (CollectionUtils.isEmpty(collection) || collection.size() != 1) {
+            throwCustomException(exceptionEnum, desc);
         }
     }
 

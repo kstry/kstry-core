@@ -47,11 +47,11 @@ public class TaskRouter {
     private GlobalBus globalBus;
 
     public TaskRouter(GlobalMap globalMap, String actionName) {
-        EventNode mapNode = globalMap.locateFirstMapNode(actionName);
-        toInvokeTaskNodeList.offerFirst(mapNode.getTaskNode());
+        EventNode eventNode = globalMap.locateFirstEventNode(actionName);
+        toInvokeTaskNodeList.offerFirst(eventNode.getTaskNode());
 
-        for (Optional<EventNode> mapNodeOptional = mapNode.locateNextMapNode(); mapNodeOptional.isPresent(); mapNodeOptional = mapNodeOptional.get().locateNextMapNode()) {
-            toInvokeTaskNodeList.offer(mapNodeOptional.get().getTaskNode());
+        for (Optional<EventNode> eventNodeOptional = eventNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional = eventNodeOptional.get().locateNextEventNode()) {
+            toInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
         }
     }
 
@@ -59,17 +59,17 @@ public class TaskRouter {
         AssertUtil.notNull(locateBehavior);
 
         LinkedList<TaskNode> reToInvokeTaskNodeList = new LinkedList<>();
-        EventNode mapNode = GlobalUtil.notEmpty(currentRouteNode()).getMapNode();
+        EventNode eventNode = GlobalUtil.notEmpty(currentRouteNode()).getEventNode();
 
-        Optional<EventNode> nextMapNodeOptional = mapNode.locateNextMapNode(locateBehavior);
-        if (!nextMapNodeOptional.isPresent()) {
+        Optional<EventNode> nextEventNodeOptional = eventNode.locateNextEventNode(locateBehavior);
+        if (!nextEventNodeOptional.isPresent()) {
             return;
         }
-        EventNode nextNode = nextMapNodeOptional.get();
+        EventNode nextNode = nextEventNodeOptional.get();
         reToInvokeTaskNodeList.offerFirst(nextNode.getTaskNode());
 
-        for (Optional<EventNode> mapNodeOptional = nextNode.locateNextMapNode(); mapNodeOptional.isPresent(); mapNodeOptional = mapNodeOptional.get().locateNextMapNode()) {
-            reToInvokeTaskNodeList.offer(mapNodeOptional.get().getTaskNode());
+        for (Optional<EventNode> eventNodeOptional = nextNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional = eventNodeOptional.get().locateNextEventNode()) {
+            reToInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
         }
 
         toInvokeTaskNodeList.clear();

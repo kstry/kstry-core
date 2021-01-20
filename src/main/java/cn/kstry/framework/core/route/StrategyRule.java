@@ -17,15 +17,15 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.enums.InflectionPointTypeEnum;
-import cn.kstry.framework.core.util.InflectionPointCalculate;
+import cn.kstry.framework.core.enums.StrategyTypeEnum;
+import cn.kstry.framework.core.util.StrategyRuleCalculator;
 
 /**
- * router 定义的可使用的拐点
+ * 策略规则
  *
  * @author lykan
  */
-public class TaskRouterInflectionPoint {
+public class StrategyRule {
 
     /**
      * DynamicRouteTable 字段名称
@@ -38,14 +38,14 @@ public class TaskRouterInflectionPoint {
     private String expectedValue;
 
     /**
-     * 拐点 类型
+     * 策略规则 类型
      */
-    private InflectionPointTypeEnum inflectionPointTypeEnum;
+    private StrategyTypeEnum strategyTypeEnum;
 
     /**
      * 匹配策略
      */
-    private InflectionPointCalculate matchingStrategy;
+    private StrategyRuleCalculator strategyRuleCalculator;
 
     public String getFieldName() {
         return fieldName;
@@ -63,19 +63,19 @@ public class TaskRouterInflectionPoint {
         this.expectedValue = expectedValue;
     }
 
-    public InflectionPointCalculate getMatchingStrategy() {
-        return matchingStrategy;
+    public StrategyRuleCalculator getStrategyRuleCalculator() {
+        return strategyRuleCalculator;
     }
 
-    public void setMatchingStrategy(InflectionPointCalculate matchingStrategy) {
-        this.matchingStrategy = matchingStrategy;
+    public void setStrategyRuleCalculator(StrategyRuleCalculator strategyRuleCalculator) {
+        this.strategyRuleCalculator = strategyRuleCalculator;
     }
 
-    public InflectionPointTypeEnum getInflectionPointTypeEnum() {
-        return inflectionPointTypeEnum;
+    public StrategyTypeEnum getStrategyTypeEnum() {
+        return strategyTypeEnum;
     }
 
-    public void setInflectionPointTypeEnum(InflectionPointTypeEnum inflectionPointTypeEnum) {
-        this.inflectionPointTypeEnum = inflectionPointTypeEnum;
+    public void setStrategyTypeEnum(StrategyTypeEnum strategyTypeEnum) {
+        this.strategyTypeEnum = strategyTypeEnum;
     }
 }

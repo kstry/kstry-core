@@ -1,5 +1,6 @@
 package cn.kstry.framework.core.route;
 
+import cn.kstry.framework.core.adapter.RequestMappingGroup;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.LocateBehavior;
@@ -14,75 +15,106 @@ import java.util.stream.Collectors;
  * @author lykan
  */
 public class EventNode {
-    /**
-     * 当前节点中保存的接下来，可以允许被执行的 MpaNode
-     */
-    private final List<EventNode> nextMapNodeList = new ArrayList<>();
 
     /**
-     * 前一个 MapNode
-     */
-    private EventNode prevMapNode;
-
-    /**
-     * 具体参与控制程序执行的路由 Node
-     * MapNode 与 RouteNode 一一对应
+     * 事件执行态存在的节点 与 EventNode 一一对应，TaskNode 是 EventNode 在执行期间的存在形式
      */
     private final TaskNode taskNode;
+
+    /**
+     * 当前节点中保存的接下来，可以允许被执行的 EventNode
+     */
+    private final List<EventNode> nextEventNodeList = new ArrayList<>();
+
+    /**
+     * 前一个 EventNode
+     */
+    private EventNode prevEventNode;
+
+    private RequestMappingGroup requestMappingGroup;
+
+    private List<StrategyRule> filterStrategyRuleList;
+
+    private List<StrategyRule> matchStrategyRuleList;
 
     public EventNode(TaskNode taskNode) {
         AssertUtil.notNull(taskNode);
         this.taskNode = taskNode;
-        taskNode.setMapNode(this);
+        AssertUtil.isNull(taskNode.getEventNode());
+        taskNode.setEventNode(this);
     }
 
-    public void addNextMapNode(EventNode mapNode) {
-        AssertUtil.notNull(mapNode);
-        if (nextMapNodeList.contains(mapNode)) {
+    public void addNextEventNode(EventNode eventNode) {
+        AssertUtil.notNull(eventNode);
+        if (nextEventNodeList.contains(eventNode)) {
             return;
         }
-        nextMapNodeList.add(mapNode);
-        mapNode.setPrevMapNode(this);
+        nextEventNodeList.add(eventNode);
+        eventNode.setPrevEventNode(this);
     }
 
-    public Optional<EventNode> locateNextMapNode(LocateBehavior<TaskNode> locateBehavior) {
-        if (CollectionUtils.isEmpty(nextMapNodeList)) {
+    public Optional<EventNode> locateNextEventNode(LocateBehavior<TaskNode> locateBehavior) {
+        if (CollectionUtils.isEmpty(nextEventNodeList)) {
             return Optional.empty();
         }
 
         if (locateBehavior == null) {
-            return Optional.ofNullable(nextMapNodeList.get(0));
+            return Optional.ofNullable(nextEventNodeList.get(0));
         }
 
-        List<EventNode> resultList = nextMapNodeList.stream().filter(map -> locateBehavior.locate(map.getTaskNode())).collect(Collectors.toList());
+        List<EventNode> resultList = nextEventNodeList.stream().filter(map -> locateBehavior.locate(map.getTaskNode())).collect(Collectors.toList());
         AssertUtil.oneSize(resultList, ExceptionEnum.INVALID_POSITIONING_BEHAVIOR);
         return Optional.of(resultList.get(0));
     }
 
-    public Optional<EventNode> locateNextMapNode() {
-        return this.locateNextMapNode(null);
+    public Optional<EventNode> locateNextEventNode() {
+        return this.locateNextEventNode(null);
     }
 
     public TaskNode getTaskNode() {
         return taskNode;
     }
 
-    public EventNode getPrevMapNode() {
-        return prevMapNode;
+    public EventNode getPrevEventNode() {
+        return prevEventNode;
     }
 
-    public List<EventNode> getNextMapNodeList() {
-        return nextMapNodeList;
+    public List<EventNode> getNextEventNodeList() {
+        return nextEventNodeList;
     }
 
-    public int nextMapNodeSize() {
-        if (CollectionUtils.isEmpty(this.nextMapNodeList)) {
+    private void setPrevEventNode(EventNode prevEventNode) {
+        this.prevEventNode = prevEventNode;
+    }
+
+    public int nextEventNodeSize() {
+        if (CollectionUtils.isEmpty(this.nextEventNodeList)) {
             return 0;
         }
-        return this.nextMapNodeList.size();
+        return this.nextEventNodeList.size();
     }
 
-    private void setPrevMapNode(EventNode prevMapNode) {
-        this.prevMapNode = prevMapNode;
+    public RequestMappingGroup getRequestMappingGroup() {
+        return requestMappingGroup;
+    }
+
+    public void setRequestMappingGroup(RequestMappingGroup requestMappingGroup) {
+        this.requestMappingGroup = requestMappingGroup;
+    }
+
+    public List<StrategyRule> getFilterStrategyRuleList() {
+        return filterStrategyRuleList;
+    }
+
+    public void setFilterStrategyRuleList(List<StrategyRule> filterStrategyRuleList) {
+        this.filterStrategyRuleList = filterStrategyRuleList;
+    }
+
+    public List<StrategyRule> getMatchStrategyRuleList() {
+        return matchStrategyRuleList;
+    }
+
+    public void setMatchStrategyRuleList(List<StrategyRule> matchStrategyRuleList) {
+        this.matchStrategyRuleList = matchStrategyRuleList;
     }
 }

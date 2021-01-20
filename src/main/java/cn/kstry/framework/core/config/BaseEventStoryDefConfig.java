@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.enums.CalculateEnum;
+import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author lykan
@@ -38,6 +39,11 @@ import java.util.List;
 public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
 
     /**
+     * 限制条件：
+     *  1. event_node、strategy 不允许同时为空
+     *  2. story_def 非空时，event_def 必须非空
+     *  3. event_node 为空时，strategy 必须存在，且 strategy 的规则项列表不能为空
+     *
      * {
      * 	"story_def": {
      * 		"updateUser": [{
@@ -62,16 +68,25 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     private StoryDef<String, StoryDefItem<StoryDefItemConfig>> storyDef;
 
     /**
+     * 限制条件：
+     *  1. strategy_def 非空时，event_def 必须非空
+     *  2. strategy_def 非空时，story_def 必须非空
+     *  3. strategy_type 必须存在，并且是 cn.kstry.framework.core.enums.StrategyTypeEnum 枚举中的值
+     *  4. 当 strategy_type=MATCH 时，story 必须存在，且不能被重复定义
+     *  5. 当 strategy_type=FILTER 时，event_node 和 strategy_def 中的 story 只能且必须存在一个
+     *  6. strategy.key：[ 匹配规则（在 CalculatorEnum 中定义）- 字段名称 ]  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculatorEnum
+     *     strategy.value  期望值
+     *
      * {
      * 	"strategy_def": {
      * 		"STRATEGY_1": [{
-     * 			"next_story": "update01", // 当 strategy_type=match 时，next_story 不允许为空
+     * 			"story": "update01", // 当 strategy_type=match 时，next_story 不允许为空
      * 			"strategy_type": "match", // 不允许为空 @see cn.kstry.framework.core.enums.StrategyTypeEnum
      * 			"strategy": {
      * 				"equals-source": "2f" // 匹配规则（在 CalculateEnum 中定义）-字段名称  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculateEnum
      *            }
      *        }, {
-     * 			"next_story": "update02",
+     * 			"story": "update02",
      * 			"strategy_type": "match",
      * 			"strategy": {
      * 				"equals-source": "3f"
@@ -89,6 +104,9 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     private StrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> strategyDef;
 
     /**
+     * 限制条件：
+     *  1. request_mapping_def 非空时，event_def 必须非空
+     *
      * {
      * 	"request_mapping_def": {
      * 		"MAPPING_1": {
@@ -105,6 +123,9 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     private RequestMappingDef<String, RequestMappingDefItem<String, String>> requestMappingDef;
 
     /**
+     * 限制条件：
+     * 1. event node key 不允许重复定义，在不同 event node group 中也不行
+     *
      * {
      * 	"event_def": {
      * 		"event_node_group1": {
@@ -151,18 +172,22 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
 
     protected void setStoryDef(StoryDef<String, StoryDefItem<StoryDefItemConfig>> storyDef) {
         this.storyDef = storyDef;
+        checkStoryDef(this);
     }
 
     protected void setStrategyDef(StrategyDef<String, StrategyDefItem<StrategyDefItemConfig>> strategyDef) {
         this.strategyDef = strategyDef;
+        checkStrategyDef(this);
     }
 
     protected void setRequestMappingDef(RequestMappingDef<String, RequestMappingDefItem<String, String>> requestMappingDef) {
         this.requestMappingDef = requestMappingDef;
+        checkRequestMappingDef(this);
     }
 
     protected void setEventDef(EventDef<String, EventDefItem<String, EventDefItemConfig>> eventDef) {
         this.eventDef = eventDef;
+        checkEventDef(this);
     }
 
     protected static void checkStrategyDef(EventStoryDefConfig config) {
@@ -171,41 +196,46 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
 
         // EventDef 为空时，StrategyDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getEventDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` is empty but `strategy_def` not empty!");
+        AssertUtil.notEmpty(config.getEventDef(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`event_def` is empty but `strategy_def` is not!");
 
         // StoryDef 为空时，StrategyDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getStoryDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `story_def` is empty but `strategy_def` not empty!");
+        AssertUtil.notEmpty(config.getStoryDef(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`story_def` is empty but `strategy_def` is not!!");
 
-        List<String> storyNameList = MapUtils.isEmpty(config.getStoryDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStoryDef().keySet());
+        List<String> storyNameList = Lists.newArrayList(config.getStoryDef().keySet());
         for (String k : config.getStrategyDef().keySet()) {
-            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `strategy_def` strategy key is error! ket:%s", k);
+            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of key in `strategy_def` is error! key:%s", k);
 
             StrategyDefItem<StrategyDefItemConfig> v = config.getStrategyDef().get(k);
             if (CollectionUtils.isEmpty(v)) {
                 continue;
             }
             v.forEach(strategy -> {
-                AssertUtil.isTrue(StrategyTypeEnum.getStrategyTypeEnum(strategy.getStrategyType()).isPresent(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                        "config `strategy_def` `strategy_type` is error! strategy_type:%s", strategy.getStrategyType());
-                if (StringUtils.isNotBlank(strategy.getNextStory())) {
-                    AssertUtil.isTrue(storyNameList.contains(strategy.getNextStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config `strategy_def` `next_story` is error! next_story:%s", strategy.getNextStory());
+                AssertUtil.present(StrategyTypeEnum.getStrategyTypeEnum(strategy.getStrategyType()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                        "The assignment of `strategy_type` in `strategy_def` is error! strategy_type:%s", strategy.getStrategyType());
+                if (StringUtils.isNotBlank(strategy.getStory())) {
+                    AssertUtil.isTrue(storyNameList.contains(strategy.getStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "The assignment of `story` in `strategy_def` is error! story:%s", strategy.getStory());
                 }
                 if (StrategyTypeEnum.isType(strategy.getStrategyType(), StrategyTypeEnum.MATCH)) {
-                    AssertUtil.notBlank(strategy.getNextStory(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config `strategy_def` `next_story` must exit when strategy_type=MATCH");
+                    AssertUtil.notBlank(strategy.getStory(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`story` must exist when 'strategy_type=MATCH'");
                 }
+
                 if (MapUtils.isNotEmpty(strategy.getRuleSet())) {
                     strategy.getRuleSet().keySet().forEach(kName -> {
-                        AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `strategy_def` `rule_set` key is blank!");
+                        AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `rule_set` key in `strategy_def` is blank!");
                         String[] split = kName.split("-");
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config `strategy_def` `rule_set` key error! rule_set:%s", kName);
-                        AssertUtil.isTrue(CalculateEnum.getCalculateEnumByName(split[0]).isPresent(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "config `strategy_def` `rule_set` key error! rule_set:%s", kName);
+                                "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
+                        AssertUtil.present(CalculatorEnum.getCalculatorEnumByName(split[0]), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                                "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
                     });
                 }
             });
+            List<StrategyDefItemConfig> matchStrategy = v.stream().filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(matchStrategy)) {
+                AssertUtil.isTrue(matchStrategy.size() == matchStrategy.stream().map(StrategyDefItemConfig::getStory).distinct().count(),
+                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "When `strategy_type=match`, `story` cannot be repeatedly defined!");
+            }
         }
 
         for (StoryDefItem<StoryDefItemConfig> nodeList : config.getStoryDef().values()) {
@@ -215,11 +245,28 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 }
 
                 StrategyDefItem<StrategyDefItemConfig> strategyDefItemConfig = config.getStrategyDef().get(node.getStrategy());
-                AssertUtil.notNull(strategyDefItemConfig, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `story_def` 'strategy' error! strategy:%s", node.getStrategy());
-                if (StringUtils.isBlank(node.getEventNode())) {
-                    AssertUtil.isTrue(strategyDefItemConfig.stream().anyMatch(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.MATCH)),
+                AssertUtil.notNull(strategyDefItemConfig, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                        "The assignment of `strategy` in `story_def` is error! strategy:%s", node.getStrategy());
+
+                if (CollectionUtils.isEmpty(strategyDefItemConfig)) {
+                    AssertUtil.notBlank(node.getEventNode(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "In `story_def` `event_node` and `strategy` are not allowed to be empty at the same time!");
+                }
+
+                List<StrategyDefItemConfig> filterStrategyList = strategyDefItemConfig.stream()
+                        .filter(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.FILTER)).collect(Collectors.toList());
+
+                boolean existFilterStory = CollectionUtils.isNotEmpty(filterStrategyList) && filterStrategyList.stream().anyMatch(s -> StringUtils.isNotBlank(s.getStory()));
+                boolean notExistFilterStory = CollectionUtils.isEmpty(filterStrategyList) || filterStrategyList.stream().noneMatch(s -> StringUtils.isNotBlank(s.getStory()));
+                if (CollectionUtils.isNotEmpty(filterStrategyList)) {
+                    AssertUtil.isTrue((StringUtils.isBlank(node.getEventNode()) && existFilterStory) || (StringUtils.isNotBlank(node.getEventNode()) && notExistFilterStory),
                             ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config `story_def` when `event_node` is empty `strategy` must contain `strategy` child of 'strategy_type=match'");
+                            "When `strategy_type=filter`, `story` in strategy_def and `event_node` can exist only one! event_node:%s", node.getEventNode());
+
+                }
+                if (existFilterStory) {
+                    AssertUtil.oneSize(filterStrategyList.stream().map(StrategyDefItemConfig::getStory).collect(Collectors.toSet()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "When `strategy_type=filter`, `story` in strategy_def and `event_node` can exist only one! event_node:%s", node.getEventNode());
                 }
             }
         }
@@ -231,7 +278,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
 
         // NodeDef 为空时，StoryDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getEventDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` is empty but `story_def` not empty!");
+        AssertUtil.notEmpty(config.getEventDef(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`event_def` is empty but `story_def` is not!");
 
         List<String> nodeNameList = new ArrayList<>();
         for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigEventDefItem : config.getEventDef().values()) {
@@ -240,7 +287,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         List<String> mappingNameList = MapUtils.isEmpty(config.getRequestMappingDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getRequestMappingDef().keySet());
         for (String k : config.getStoryDef().keySet()) {
 
-            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `story_def` story key is error! key:%s", k);
+            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of key in `story_def` is error! key:%s", k);
 
             StoryDefItem<StoryDefItemConfig> v = config.getStoryDef().get(k);
             if (CollectionUtils.isEmpty(v)) {
@@ -248,14 +295,14 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
             }
             v.forEach(storyItem -> {
                 AssertUtil.isTrue(StringUtils.isNotBlank(storyItem.getEventNode()) || StringUtils.isNotBlank(storyItem.getStrategy()),
-                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config both `event_node` and `strategy` in `story_def` are blank!");
+                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "In `story_def` `event_node` and `strategy` are not allowed to be empty at the same time!");
                 if (StringUtils.isNotBlank(storyItem.getEventNode())) {
                     AssertUtil.isTrue(nodeNameList.contains(storyItem.getEventNode()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config `story_def` `node_name` is error! node_name:%s", storyItem.getEventNode());
+                            "The assignment of `node_name` in `story_def` is error! node_name:%s", storyItem.getEventNode());
                 }
                 if (StringUtils.isNotBlank(storyItem.getRequestMapping())) {
                     AssertUtil.isTrue(mappingNameList.contains(storyItem.getRequestMapping()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "config `story_def` `request_mapping` is error! request_mapping:%s", storyItem.getRequestMapping());
+                            "The assignment of `request_mapping` in `story_def` is error! request_mapping:%s", storyItem.getRequestMapping());
                 }
             });
         }
@@ -267,25 +314,25 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
 
         // NodeDef 为空时，RequestMappingDef 不允许出现
-        AssertUtil.isTrue(MapUtils.isNotEmpty(config.getEventDef()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` is empty but `request_mapping_def` not empty!");
+        AssertUtil.notEmpty(config.getEventDef(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`event_def` is empty but `request_mapping_def` is not!");
 
         List<String> nodeNameList = new ArrayList<>();
         for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigEventDefItem : config.getEventDef().values()) {
             nodeNameList.addAll(stringNodeDefItemConfigEventDefItem.keySet());
         }
         for (String k : config.getRequestMappingDef().keySet()) {
-            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `request_mapping_def` mapping key is error! key:%s", k);
+            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of key in `request_mapping_def` is error! key:%s", k);
 
             RequestMappingDefItem<String, String> v = config.getRequestMappingDef().get(k);
             if (MapUtils.isEmpty(v)) {
                 continue;
             }
             v.forEach((kIn, vIn) -> {
-                AssertUtil.isValidField(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `request_mapping_def` mapping item key is error! key:%s", kIn);
-                AssertUtil.notBlank(vIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `request_mapping_def` mapping item value is blank!");
+                AssertUtil.isValidField(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item key in `request_mapping_def` is error! key:%s", kIn);
+                AssertUtil.notBlank(vIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item value in `request_mapping_def` is blank!");
 
                 boolean checkVin = REQUEST_MAPPING_KEYWORD.stream().anyMatch(vIn::startsWith) || nodeNameList.stream().anyMatch(vIn::startsWith);
-                AssertUtil.isTrue(checkVin, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `request_mapping_def` mapping item value error! value:%s", vIn);
+                AssertUtil.isTrue(checkVin, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item value in `request_mapping_def` is error! value:%s", vIn);
             });
         }
     }
@@ -297,7 +344,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
 
         List<String> nodeNameList = new ArrayList<>();
         for (String k : config.getEventDef().keySet()) {
-            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` event node group key is blank! key:%s", k);
+            AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of event group key in `event_def` is error! key:%s", k);
 
             EventDefItem<String, EventDefItemConfig> v = config.getEventDef().get(k);
             if (MapUtils.isEmpty(v)) {
@@ -305,18 +352,16 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
             }
 
             v.forEach((kIn, vIn) -> {
-                AssertUtil.isValidField(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` event node key is error! key:%s", kIn);
+                AssertUtil.isValidField(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of event node key in `event_def` is error! key:%s", kIn);
                 AssertUtil.isValidField(vIn.getEventAction(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                        "config `event_def` event node `event_action` error! key:%s", vIn.getEventAction());
-                AssertUtil.isValidField(vIn.getEventAction(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                        "config `event_def` event node `event_action` error! event_action:%s", vIn.getEventAction());
-                AssertUtil.notBlank(vIn.getEventType(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` event node `event_type` blank!");
-                AssertUtil.isTrue(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType()).isPresent(),
-                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config `event_def` event node `event_type` error! event_type:%s", vIn.getEventType());
+                        "The assignment of `event_action` in `event_def` is error! key:%s", vIn.getEventAction());
+                AssertUtil.notBlank(vIn.getEventType(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `event_action` in `event_type` is blank!");
+                AssertUtil.present(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType()),
+                        ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `event_action` in `event_type` is error! event_type:%s", vIn.getEventType());
                 nodeNameList.add(kIn);
             });
         }
         AssertUtil.isTrue(nodeNameList.size() == new HashSet<>(nodeNameList).size(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                "config `event_def` event node name duplicate definition!");
+                "event node key in `event_def` is repeatedly defined!");
     }
 }

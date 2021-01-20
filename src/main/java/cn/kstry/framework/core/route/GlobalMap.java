@@ -43,24 +43,24 @@ public class GlobalMap {
      */
     private ResultMappingRepository resultMappingRepository;
 
-    public void addFirstMapNode(String actionName, EventNode mapNode) {
-        AssertUtil.notNull(mapNode);
+    public void addFirstEventNode(String actionName, EventNode eventNode) {
+        AssertUtil.notNull(eventNode);
         AssertUtil.notBlank(actionName);
 
-        List<EventNode> mapNodeList = FIRST_MAP_NODES.get(actionName);
-        if (CollectionUtils.isEmpty(mapNodeList)) {
-            mapNodeList = Lists.newArrayList();
+        List<EventNode> eventNodeList = FIRST_MAP_NODES.get(actionName);
+        if (CollectionUtils.isEmpty(eventNodeList)) {
+            eventNodeList = Lists.newArrayList();
         }
-        if (mapNodeList.contains(mapNode)) {
+        if (eventNodeList.contains(eventNode)) {
             return;
         }
-        mapNodeList.add(mapNode);
+        eventNodeList.add(eventNode);
     }
 
-    public EventNode locateFirstMapNode(String actionName) {
+    public EventNode locateFirstEventNode(String actionName) {
 //        AssertUtil.notBlank(actionName);
-//        MapNode mapNode = firstMapNodes.get(actionName);
-//        AssertUtil.notNull(mapNode);
+//        EventNode eventNode = firstEventNodes.get(actionName);
+//        AssertUtil.notNull(eventNode);
         return null;
     }
 

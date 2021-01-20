@@ -67,10 +67,6 @@ public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperat
                 TaskActionUtil.saveTaskResultToGlobalBus(globalBus, taskNode, (TaskResponse<Object>) o);
                 TaskActionUtil.reRouteNodeMap(router);
                 taskRequest = o;
-
-                if (BooleanUtils.isTrue(taskNode.getInterruptTimeSlot())) {
-                    break;
-                }
             }
             return GlobalUtil.transfer(taskRequest, TaskResponse.class).orElse(null);
         } catch (Exception e) {

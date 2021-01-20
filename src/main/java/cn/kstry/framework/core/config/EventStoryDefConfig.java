@@ -142,10 +142,10 @@ public interface EventStoryDefConfig {
     class StrategyDefItemConfig {
 
         /**
-         * 下一个，待执行的 Story
+         * 待执行的 Story
          */
-        @JSONField(name = "next_story")
-        private String nextStory;
+        @JSONField(name = "story")
+        private String story;
 
         /**
          * 策略类型
@@ -161,12 +161,12 @@ public interface EventStoryDefConfig {
         @JSONField(name = "rule_set")
         private Map<String, String> ruleSet;
 
-        public String getNextStory() {
-            return nextStory;
+        public String getStory() {
+            return story;
         }
 
-        public void setNextStory(String nextStory) {
-            this.nextStory = nextStory;
+        public void setStory(String story) {
+            this.story = story;
         }
 
         public String getStrategyType() {

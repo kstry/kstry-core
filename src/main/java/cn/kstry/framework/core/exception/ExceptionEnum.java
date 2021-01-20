@@ -72,6 +72,11 @@ public enum ExceptionEnum {
     PARAMS_ERROR(ComponentTypeEnum.GLOBAL, "0009", "params error!"),
 
     /**
+     * 必须为空
+     */
+    OBJ_MUST_EMPTY(ComponentTypeEnum.GLOBAL, "0010", "Objects are not allowed to exist!"),
+
+    /**
      * 上一个任务的返回值需匹配下一个任务的入参
      */
     REQUEST_NOT_MATCHED(ComponentTypeEnum.TASK, "0001", "The return value type cannot be matched with the next task's request!"),

@@ -17,8 +17,8 @@
  */
 package cn.kstry.framework.core.enums;
 
-import cn.kstry.framework.core.route.calculate.EqualsCalculate;
-import cn.kstry.framework.core.util.InflectionPointCalculate;
+import cn.kstry.framework.core.route.calculate.EqualsCalculator;
+import cn.kstry.framework.core.util.StrategyRuleCalculator;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
@@ -28,31 +28,31 @@ import java.util.stream.Stream;
 /**
  * @author lykan
  */
-public enum CalculateEnum {
+public enum CalculatorEnum {
 
-    EQUALS("equals", new EqualsCalculate());
+    EQUALS("equals", new EqualsCalculator());
 
-    CalculateEnum(String name, InflectionPointCalculate expression) {
+    CalculatorEnum(String name, StrategyRuleCalculator expression) {
         this.name = name;
         this.expression = expression;
     }
 
     private final String name;
 
-    private final InflectionPointCalculate expression;
+    private final StrategyRuleCalculator expression;
 
     public String getName() {
         return name;
     }
 
-    public InflectionPointCalculate getExpression() {
+    public StrategyRuleCalculator getExpression() {
         return expression;
     }
 
-    public static Optional<CalculateEnum> getCalculateEnumByName(String name) {
+    public static Optional<CalculatorEnum> getCalculatorEnumByName(String name) {
         if (StringUtils.isBlank(name)) {
             return Optional.empty();
         }
-        return Stream.of(CalculateEnum.values()).filter(e -> Objects.equals(e.getName().toUpperCase(), name.trim().toUpperCase())).findFirst();
+        return Stream.of(CalculatorEnum.values()).filter(e -> Objects.equals(e.getName().toUpperCase(), name.trim().toUpperCase())).findFirst();
     }
 }

@@ -39,7 +39,6 @@ public enum StrategyTypeEnum {
         if (StringUtils.isBlank(type)) {
             return Optional.empty();
         }
-
         for (StrategyTypeEnum typeEnum : StrategyTypeEnum.values()) {
             if (typeEnum.getType().toUpperCase().equals(type.trim().toUpperCase())) {
                 return Optional.of(typeEnum);
