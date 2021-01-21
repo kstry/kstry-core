@@ -1,0 +1,51 @@
+{
+  "story_def": {
+    "login": [
+      {
+        "strategy": "LOGIN_RULE_SET"
+      }
+    ],
+    "userLogin": [
+      {
+        "event_node": "user_login_node"
+      }
+    ],
+    "customerLogin": [
+      {
+        "event_node": "customer_login_node"
+      }
+    ]
+  },
+  "strategy_def": {
+    "LOGIN_RULE_SET": [
+      {
+        "story": "customerLogin",
+        "strategy_type": "MATCH",
+        "rule_set": {
+          "equals-userType": "1"
+        }
+      },
+      {
+        "story": "userLogin",
+        "strategy_type": "MATCH",
+        "rule_set": {
+          "equals-userType": "2"
+        }
+      }
+    ]
+  },
+  "event_def": {
+    "USER_AUTHENTICATION_EVENT_GROUP": {
+      "user_login_node": {
+        "event_type": "TASK",
+        "event_action": "userLogin"
+      }
+    },
+    "CUSTOMER_AUTHENTICATION_EVENT_GROUP": {
+      "customer_login_node": {
+        "event_type": "TASK",
+        "event_action": "userLogin"
+      }
+    }
+  }
+}

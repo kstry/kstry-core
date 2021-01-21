@@ -1,9 +1,9 @@
-package cn.kstry.framework.test.demo.xiaoming.role;
+package cn.kstry.framework.test.demo.goods.role;
 
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.TaskActionOperatorRole;
-import cn.kstry.framework.test.demo.xiaoming.facade.PayRequest;
-import cn.kstry.framework.test.demo.xiaoming.facade.PayResponse;
+import cn.kstry.framework.test.demo.goods.facade.PayRequest;
+import cn.kstry.framework.test.demo.goods.facade.PayResponse;
 
 /**
  *

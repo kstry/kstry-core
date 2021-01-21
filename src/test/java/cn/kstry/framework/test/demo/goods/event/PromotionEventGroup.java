@@ -1,4 +1,4 @@
-package cn.kstry.framework.test.demo.xiaoming.event;
+package cn.kstry.framework.test.demo.goods.event;
 
 /**
  * 营销系统

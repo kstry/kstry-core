@@ -1,14 +1,24 @@
-package cn.kstry.framework.test.demo.xiaoming.entity;
+package cn.kstry.framework.test.demo.goods.entity;
 
 /**
  *
  * @author lykan
  */
-public class User {
+public class Goods {
+
+    private Long id;
 
     private String name;
 
     private long money;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;

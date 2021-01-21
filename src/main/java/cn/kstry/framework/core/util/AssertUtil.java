@@ -195,6 +195,10 @@ public class AssertUtil {
         isTrue(GlobalUtil.isValidField(field), exceptionEnum, desc);
     }
 
+    public static void oneSize(Collection<?> collection) {
+        oneSize(collection, ExceptionEnum.PARAMS_ERROR);
+    }
+
     /**
      * 集合只允许一个元素
      *

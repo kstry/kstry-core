@@ -1,4 +1,4 @@
-package cn.kstry.framework.test.demo.xiaoming.facade;
+package cn.kstry.framework.test.demo.goods.facade;
 
 import cn.kstry.framework.core.facade.TaskRequest;
 

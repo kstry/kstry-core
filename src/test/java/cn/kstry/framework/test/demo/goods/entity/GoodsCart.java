@@ -1,4 +1,4 @@
-package cn.kstry.framework.test.demo.xiaoming.entity;
+package cn.kstry.framework.test.demo.goods.entity;
 
 import java.util.ArrayList;
 import java.util.List;
