@@ -12,7 +12,7 @@ import cn.kstry.framework.test.demo.hongbao.facade.UserPayResponse;
 import com.alibaba.fastjson.JSON;
 import org.springframework.util.Assert;
 
-@EventGroupComponent(eventGroupName = "USER_PAY_ACTION", eventGroupTypeEnum = ComponentTypeEnum.TASK, operatorRoleClass = UserPayRole.class)
+@EventGroupComponent(eventGroupName = "USER_PAY_ACTION", operatorRoleClass = UserPayRole.class)
 public class UserPayActionImpl implements UserPayAction {
 
     @Override

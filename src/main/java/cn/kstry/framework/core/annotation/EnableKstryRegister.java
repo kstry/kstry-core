@@ -39,6 +39,8 @@ import java.util.List;
  */
 public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
 
+    public static final String DEFAULT_STORY_ENGINE_NAME = "storyEngine";
+
     private static String kstryConfigPath;
 
     @Override
@@ -56,7 +58,7 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
             EnableKstryRegister.kstryConfigPath = String.valueOf(kstryConfigPathList.get(0));
         }
 
-        String storyEngineName = "storyEngine";
+        String storyEngineName = DEFAULT_STORY_ENGINE_NAME;
         if (StringUtils.isNotBlank(String.valueOf(storyEngineNameList.get(0)))) {
             storyEngineName = String.valueOf(storyEngineNameList.get(0));
         }

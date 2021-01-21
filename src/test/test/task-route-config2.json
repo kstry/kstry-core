@@ -44,7 +44,6 @@
       }
     ],
     "robHongBao4": [
-
     ]
   },
   "strategy_def": {
@@ -66,7 +65,7 @@
         }
       },
       {
-        "story": "robHongBao4",
+        "story": "robHongBao3",
         "strategy_type": "match",
         "rule_set": {
           "equals-source": "3f"
@@ -81,7 +80,7 @@
     ],
     "STRATEGY_3": [
       {
-        "story": "robHongBao2",
+        "story": "robHongBao3",
         "strategy_type": "filter",
         "rule_set": {
           "equals-source": "5f"

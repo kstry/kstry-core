@@ -51,6 +51,13 @@ public class AssertUtil {
     }
 
     /**
+     * 判断条件为 非 true
+     */
+    public static void notTrue(Boolean flag, ExceptionEnum exceptionEnum, Object... desc) {
+        isTrue(BooleanUtils.isNotTrue(flag), exceptionEnum, desc);
+    }
+
+    /**
      * 判断条件为 equals
      */
     public static void equals(Object left, Object right, ExceptionEnum exceptionEnum, Object... desc) {

@@ -38,7 +38,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +55,11 @@ public class ConfigResolver {
     private Map<String, TaskNode> taskNodeMap;
 
     private Map<String, RequestMappingGroup> mappingGroupMap;
+
+    /**
+     * 允许的 eventNode 的最大深度
+     */
+    private static final int MAX_NODE_LEVEL_DEPTH = 1000;
 
     public Map<String, List<EventNode>> getStoryEventNode(List<EventGroup> eventGroupList, String eventStoryConfigName) {
 
@@ -140,8 +149,9 @@ public class ConfigResolver {
         for (ParseStoryNodeTaskItem taskItem = taskStack.poll(); taskItem != null && CollectionUtils.isNotEmpty(taskItem.getNodeDefQueue()); taskItem = taskStack.poll()) {
 
             EventNode beforeEventNode = taskItem.getBeforeEventNode();
-            AssertUtil.isTrue((beforeEventNode != null && beforeEventNode.getNodeLevel() > 1000) || invokeLevel > 1000,
-                    ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Event nodes with circular dependencies!");
+            int maxLevelDepth = (beforeEventNode != null && beforeEventNode.getNodeLevel() > invokeLevel) ? beforeEventNode.getNodeLevel() : invokeLevel;
+            AssertUtil.isTrue(maxLevelDepth < MAX_NODE_LEVEL_DEPTH, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                    "Event nodes with circular dependencies! levelDepth:%s", maxLevelDepth);
 
             List<StrategyRule> matchStrategyRuleList = taskItem.getStrategyRuleList();
             for (TaskNodeAgentForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {

@@ -238,7 +238,11 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
             }
         }
 
-        for (StoryDefItem<StoryDefItemConfig> nodeList : config.getStoryDef().values()) {
+        for (String key : config.getStoryDef().keySet()) {
+            StoryDefItem<StoryDefItemConfig> nodeList = config.getStoryDef().get(key);
+            if (CollectionUtils.isEmpty(nodeList)) {
+                continue;
+            }
             for (StoryDefItemConfig node : nodeList) {
                 if (StringUtils.isBlank(node.getStrategy())) {
                     continue;
@@ -251,6 +255,10 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 if (CollectionUtils.isEmpty(strategyDefItemConfig)) {
                     AssertUtil.notBlank(node.getEventNode(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                             "In `story_def` `event_node` and `strategy` are not allowed to be empty at the same time!");
+                }
+                if (CollectionUtils.isNotEmpty(strategyDefItemConfig)) {
+                    AssertUtil.notTrue(strategyDefItemConfig.stream().filter(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.MATCH))
+                            .anyMatch(s -> key.equals(s.getStory())), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Event nodes with circular dependencies! story:%s", key);
                 }
 
                 List<StrategyDefItemConfig> filterStrategyList = strategyDefItemConfig.stream()

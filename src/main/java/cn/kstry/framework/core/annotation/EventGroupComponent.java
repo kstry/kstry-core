@@ -53,7 +53,7 @@ public @interface EventGroupComponent {
     /**
      * event action group component type
      */
-    ComponentTypeEnum eventGroupTypeEnum();
+    ComponentTypeEnum eventGroupTypeEnum() default ComponentTypeEnum.TASK;
 
     /**
      * Operator 用来实际执行 EventActionGroup 中定义的 Event，获取 Operator 的角色类
