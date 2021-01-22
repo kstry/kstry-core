@@ -2,6 +2,14 @@
   "story_def": {
     "login": [
       {
+        "strategy": "USER_LOGIN"
+      },
+      {
+        "event_node": "auth_node"
+      }
+    ],
+    "doLogin": [
+      {
         "strategy": "LOGIN_RULE_SET"
       }
     ],
@@ -17,19 +25,28 @@
     ]
   },
   "strategy_def": {
+    "USER_LOGIN": [
+      {
+        "story": "doLogin",
+        "strategy_type": "FILTER",
+        "rule_set": {
+          "notNull-request.userType": ""
+        }
+      }
+    ],
     "LOGIN_RULE_SET": [
       {
         "story": "customerLogin",
         "strategy_type": "MATCH",
         "rule_set": {
-          "equals-userType": "1"
+          "equals-request.userType": "1"
         }
       },
       {
         "story": "userLogin",
         "strategy_type": "MATCH",
         "rule_set": {
-          "equals-userType": "2"
+          "compare-request.userType": ">=2L"
         }
       }
     ]
@@ -39,6 +56,10 @@
       "user_login_node": {
         "event_type": "TASK",
         "event_action": "userLogin"
+      },
+      "auth_node": {
+        "event_type": "TASK",
+        "event_action": "auth"
       }
     },
     "CUSTOMER_AUTHENTICATION_EVENT_GROUP": {

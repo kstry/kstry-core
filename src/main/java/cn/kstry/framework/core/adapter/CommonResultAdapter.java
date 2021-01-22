@@ -22,7 +22,7 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskPipelinePort;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.facade.TaskRequest;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.route.TaskRouter;
@@ -37,7 +37,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import java.util.Map;
 
-import static cn.kstry.framework.core.bus.GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY;
+import static cn.kstry.framework.core.bus.StoryBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY;
 
 /**
  * @author lykan
@@ -54,6 +54,7 @@ public class CommonResultAdapter extends RouteEventGroup implements ResultAdapte
     @Override
     public TaskPipelinePort<Object> mapping(ResultAdapterRequest request) {
         try {
+
             TaskRouter router = request.getRouter();
             TaskNode nextInvokeTaskNode = GlobalUtil.notEmpty(router.nextRouteNodeIgnoreTimeSlot());
 
@@ -81,11 +82,11 @@ public class CommonResultAdapter extends RouteEventGroup implements ResultAdapte
 
     private EvaluationContext getEvaluationContext(ResultAdapterRequest request, TaskRequest taskRequest) {
         EvaluationContext standardContext = new StandardEvaluationContext(taskRequest);
-        request.getGlobalBus().doParamsConsumer((k, v) -> {
+        request.getStoryBus().doParamsConsumer((k, v) -> {
             AssertUtil.anyNotNull(k, v);
             standardContext.setVariable(k.identityStr(), v);
         });
-        request.getGlobalBus().doResponseConsumer((k, v) -> {
+        request.getStoryBus().doResponseConsumer((k, v) -> {
             AssertUtil.anyNotNull(k, v);
             standardContext.setVariable(k.identityStr(), v.getResult());
         });
@@ -106,7 +107,7 @@ public class CommonResultAdapter extends RouteEventGroup implements ResultAdapte
     }
 
     @Override
-    public Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
         return ResultAdapterRole.class;
     }
 }

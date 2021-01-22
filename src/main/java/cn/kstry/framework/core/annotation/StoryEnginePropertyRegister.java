@@ -17,13 +17,12 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.config.ConfigResolver;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.GlobalMap;
 import cn.kstry.framework.core.route.RouteEventGroup;
@@ -62,7 +61,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             EventGroupComponent eventGroupComponent = targetClass.getAnnotation(EventGroupComponent.class);
             String eventGroupName = eventGroupComponent.eventGroupName();
             ComponentTypeEnum eventGroupTypeEnum = eventGroupComponent.eventGroupTypeEnum();
-            Class<? extends TaskActionOperatorRole> operatorRoleClass = eventGroupComponent.operatorRoleClass();
+            Class<? extends EventOperatorRole> operatorRoleClass = eventGroupComponent.operatorRoleClass();
 
             AssertUtil.notNull(eventGroupTypeEnum, ExceptionEnum.NOT_ALLOW_EMPTY, "The eventGroupTypeEnum is not allowed to be empty!");
             AssertUtil.notBlank(eventGroupName, ExceptionEnum.NOT_ALLOW_EMPTY, "The eventGroupName is not allowed to be empty!");
@@ -94,11 +93,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         if (MapUtils.isEmpty(storyEventNode)) {
             return globalMap;
         }
-//        storyDefinition.forEach(globalMap::addFirstEventNode);
-
-        ResultMappingRepository resultMappingRepository = new ResultMappingRepository();
-//        resultMappingRepository.putMap(configResolver.getRouteNodeMappingMap());
-        globalMap.setResultMappingRepository(resultMappingRepository);
+        storyEventNode.forEach(globalMap::addFirstEventNode);
         return globalMap;
     }
 
@@ -115,7 +110,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         private final Object eventGroup;
 
-        private Class<? extends TaskActionOperatorRole> operatorRoleClass;
+        private Class<? extends EventOperatorRole> operatorRoleClass;
 
         public AnnotationEventGroupProxy(Object eventGroup) {
             this.eventGroup = eventGroup;
@@ -143,11 +138,11 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             this.eventGroupTypeEnum = eventGroupTypeEnum;
         }
 
-        public Class<? extends TaskActionOperatorRole> getOperatorRoleClass() {
+        public Class<? extends EventOperatorRole> getOperatorRoleClass() {
             return operatorRoleClass;
         }
 
-        public void setOperatorRoleClass(Class<? extends TaskActionOperatorRole> operatorRoleClass) {
+        public void setOperatorRoleClass(Class<? extends EventOperatorRole> operatorRoleClass) {
             this.operatorRoleClass = operatorRoleClass;
         }
 

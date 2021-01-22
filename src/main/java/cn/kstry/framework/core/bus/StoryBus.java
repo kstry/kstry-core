@@ -32,14 +32,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-public class GlobalBus {
+public class StoryBus {
 
     /**
      * 路由器
      */
     private final TaskRouter router;
 
-    public static final TaskNode DEFAULT_GLOBAL_BUS_PARAMS_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_PARAMS_NODE", ComponentTypeEnum.GROUP);
+    public static final TaskNode DEFAULT_GLOBAL_BUS_PARAMS_KEY = new TaskNode("BASE", "GLOBAL_BUS_PARAMS_NODE", ComponentTypeEnum.GROUP);
 
     /**
      * 执行链路中，所有 task 的 response
@@ -61,12 +61,12 @@ public class GlobalBus {
      */
     private DynamicRouteTable dynamicRouteTable;
 
-    public GlobalBus(TaskRouter router) {
+    public StoryBus(TaskRouter router) {
         AssertUtil.notNull(router);
         this.router = router;
         globalParams.put(DEFAULT_GLOBAL_BUS_PARAMS_KEY, new HashMap<>());
 
-        router.setGlobalBus(this);
+        router.setStoryBus(this);
     }
 
     public void addNodeResult(TaskNode node, TaskResponse<?> result) {
@@ -95,7 +95,7 @@ public class GlobalBus {
         return globalResponse.get(node);
     }
 
-    public void setDefaultParams(Object object) {
+    public void setRequestParams(Object object) {
         if (object == null) {
             return;
         }

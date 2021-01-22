@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.timeslot;
 
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.engine.EventGroup;
 
@@ -43,7 +43,7 @@ public class TimeSlotInvokeRequest implements TaskRequest {
     /**
      * 全局 bus
      */
-    private GlobalBus globalBus;
+    private StoryBus storyBus;
 
     private ResultMappingRepository resultMappingRepository;
 
@@ -55,12 +55,12 @@ public class TimeSlotInvokeRequest implements TaskRequest {
         this.taskGroup = taskGroup;
     }
 
-    public GlobalBus getGlobalBus() {
-        return globalBus;
+    public StoryBus getStoryBus() {
+        return storyBus;
     }
 
-    public void setGlobalBus(GlobalBus globalBus) {
-        this.globalBus = globalBus;
+    public void setStoryBus(StoryBus storyBus) {
+        this.storyBus = storyBus;
     }
 
     public ResultMappingRepository getResultMappingRepository() {

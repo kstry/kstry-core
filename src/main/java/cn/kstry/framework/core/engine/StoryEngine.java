@@ -17,12 +17,12 @@
  */
 package cn.kstry.framework.core.engine;
 
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.GlobalMap;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
@@ -55,18 +55,19 @@ public class StoryEngine {
      */
     @SuppressWarnings("unchecked")
     public <T> TaskResponse<T> fire(Object request, String actionName, Class<T> resultClass) {
-        TaskRouter taskRouter = new TaskRouter(globalMap, actionName);
 
-        GlobalBus globalBus = new GlobalBus(taskRouter);
-        globalBus.setDefaultParams(request);
+        TaskRouter taskRouter = new TaskRouter(request, globalMap, actionName);
+        StoryBus storyBus = new StoryBus(taskRouter);
+
+        storyBus.setRequestParams(request);
         try {
             Object taskRequest = null;
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeRouteNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeRouteNode()) {
                 TaskNode taskNode = nodeOptional.get();
 
-                TaskActionOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
+                EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
 
-                taskRequest = TaskActionUtil.getNextRequest(taskRequest, taskRouter, globalMap.getResultMappingRepository(), globalBus, taskGroup);
+                taskRequest = TaskActionUtil.getNextRequest(taskRequest, taskRouter, null, storyBus, taskGroup);
                 Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
                     return (TaskResponse<T>) o;
@@ -74,14 +75,14 @@ public class StoryEngine {
 
                 ComponentTypeEnum componentEnum = taskNode.getEventGroupTypeEnum();
                 if (componentEnum != ComponentTypeEnum.TIME_SLOT) {
-                    TaskActionUtil.saveTaskResultToGlobalBus(globalBus, taskNode, (TaskResponse<Object>) o);
+                    TaskActionUtil.saveTaskResultToGlobalBus(storyBus, taskNode, (TaskResponse<Object>) o);
                 }
                 TaskActionUtil.reRouteNodeMap(taskRouter);
 
                 taskRequest = o;
             }
 
-            TaskResponse<?> resultResponse = globalBus.getResultByRouteNode(GlobalUtil.notEmpty(taskRouter.lastInvokeRouteNode()));
+            TaskResponse<?> resultResponse = storyBus.getResultByRouteNode(GlobalUtil.notEmpty(taskRouter.lastInvokeRouteNode()));
             if (resultResponse == null) {
                 return null;
             }

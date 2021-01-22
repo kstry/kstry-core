@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.config;
 
 import cn.kstry.framework.core.adapter.RequestMappingGroup;
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
@@ -243,7 +243,7 @@ public class ConfigResolver {
         }
 
         strategy.forEach((k, v) -> {
-            AssertUtil.anyNotBlank(k, v);
+            AssertUtil.notBlank(k);
             String[] splitKeyArray = k.split("-");
             AssertUtil.isTrue(splitKeyArray.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
 
@@ -277,7 +277,7 @@ public class ConfigResolver {
             List<RequestMappingGroup.RequestMappingItem> mappingItemList = new ArrayList<>();
             value.forEach((kIn, vIn) -> {
                 if (vIn.toUpperCase().startsWith("DEFAULT['")) {
-                    vIn = "#" + GlobalBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY.identityStr() + vIn.substring(7);
+                    vIn = "#" + StoryBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY.identityStr() + vIn.substring(7);
                 }
                 if (!vIn.startsWith("#")) {
                     String nodeName = vIn.substring(0, vIn.indexOf("["));

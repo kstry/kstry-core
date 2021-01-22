@@ -24,7 +24,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Maps;
@@ -44,7 +44,7 @@ public abstract class RouteEventGroup implements EventGroup {
     /**
      * Task Operator
      */
-    private TaskActionOperatorRole taskActionOperator;
+    private EventOperatorRole taskActionOperator;
 
     /**
      * Task Action 被代理方法集合
@@ -68,7 +68,7 @@ public abstract class RouteEventGroup implements EventGroup {
     }
 
     @Override
-    public Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
         KstryException.throwException(ExceptionEnum.NEED_CONFIRM_NECESSARY_METHODS);
         return null;
     }
@@ -132,11 +132,11 @@ public abstract class RouteEventGroup implements EventGroup {
         return taskActionMethodHashMap;
     }
 
-    public TaskActionOperatorRole getTaskActionOperator() {
+    public EventOperatorRole getTaskActionOperator() {
         return this.taskActionOperator;
     }
 
-    public void setTaskActionOperator(TaskActionOperatorRole taskActionOperator) {
+    public void setTaskActionOperator(EventOperatorRole taskActionOperator) {
         this.taskActionOperator = taskActionOperator;
     }
 }

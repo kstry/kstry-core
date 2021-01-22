@@ -22,6 +22,6 @@ package cn.kstry.framework.core.operator;
  *
  * @author lykan
  */
-public interface TaskActionOperatorRole {
+public interface EventOperatorRole {
 
 }

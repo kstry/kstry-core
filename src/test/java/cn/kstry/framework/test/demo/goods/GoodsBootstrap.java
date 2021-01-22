@@ -3,6 +3,10 @@ package cn.kstry.framework.test.demo.goods;
 import cn.kstry.framework.core.annotation.EnableKstry;
 import cn.kstry.framework.core.annotation.EnableKstryRegister;
 import cn.kstry.framework.core.engine.StoryEngine;
+import cn.kstry.framework.core.facade.TaskResponse;
+import cn.kstry.framework.test.demo.goods.facade.BuyGoodsRequest;
+import cn.kstry.framework.test.demo.goods.facade.BuyGoodsResponse;
+import com.alibaba.fastjson.JSON;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +23,9 @@ public class GoodsBootstrap {
     public static void main(String[] args) {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(GoodsBootstrap.class);
         StoryEngine storyEngine = context.getBean(EnableKstryRegister.DEFAULT_STORY_ENGINE_NAME, StoryEngine.class);
-        System.out.println(storyEngine);
+
+        BuyGoodsRequest buyGoodsRequest = new BuyGoodsRequest();
+        TaskResponse<BuyGoodsResponse> login = storyEngine.fire(buyGoodsRequest, "login", BuyGoodsResponse.class);
+        System.out.println(JSON.toJSONString(login));
     }
 }

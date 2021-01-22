@@ -3,7 +3,7 @@ package cn.kstry.framework.test.demo.hongbao.action;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.test.demo.hongbao.HongBaoOperatorRole;
 import cn.kstry.framework.test.demo.hongbao.facade.CreateHongBaoRequest;
@@ -37,7 +37,7 @@ public abstract class BaseHongBaoOperateActionGroup extends RouteEventGroup impl
     }
 
     @Override
-    public Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
         return HongBaoOperatorRole.class;
     }
 }

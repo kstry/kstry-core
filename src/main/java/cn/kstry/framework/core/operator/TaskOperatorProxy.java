@@ -41,7 +41,7 @@ public class TaskOperatorProxy implements InvocationHandler {
         this.workRouteAction = eventActionGroup;
     }
 
-    public void setTaskOperator(TaskActionOperatorRole taskOperator) {
+    public void setTaskOperator(EventOperatorRole taskOperator) {
         AssertUtil.notNull(workRouteAction);
         ((RouteEventGroup) this.workRouteAction).setTaskActionOperator(taskOperator);
     }

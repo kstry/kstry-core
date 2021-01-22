@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.adapter;
 
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.facade.TaskPipelinePort;
 import cn.kstry.framework.core.facade.TaskPipelinePortBox;
 import cn.kstry.framework.core.engine.EventGroup;
@@ -36,7 +36,7 @@ public class ResultAdapterRequest extends TaskPipelinePortBox<Object> implements
     /**
      * 全局 Bus
      */
-    private GlobalBus globalBus;
+    private StoryBus storyBus;
 
     /**
      * task group
@@ -62,13 +62,13 @@ public class ResultAdapterRequest extends TaskPipelinePortBox<Object> implements
         this.router = router;
     }
 
-    public GlobalBus getGlobalBus() {
-        return globalBus;
+    public StoryBus getStoryBus() {
+        return storyBus;
     }
 
-    public void setGlobalBus(GlobalBus globalBus) {
-        AssertUtil.notNull(globalBus);
-        this.globalBus = globalBus;
+    public void setStoryBus(StoryBus storyBus) {
+        AssertUtil.notNull(storyBus);
+        this.storyBus = storyBus;
     }
 
     public ResultMappingRepository getResultMappingRepository() {

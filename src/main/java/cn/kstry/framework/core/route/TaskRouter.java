@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -44,13 +44,14 @@ public class TaskRouter {
     /**
      * 单次请求 router 关联 globalBus 数据
      */
-    private GlobalBus globalBus;
+    private StoryBus storyBus;
 
-    public TaskRouter(GlobalMap globalMap, String actionName) {
-        EventNode eventNode = globalMap.locateFirstEventNode(actionName);
+    public TaskRouter(Object request, GlobalMap globalMap, String storyName) {
+        EventNode eventNode = globalMap.locateFirstEventNode(request, storyName);
         toInvokeTaskNodeList.offerFirst(eventNode.getTaskNode());
 
-        for (Optional<EventNode> eventNodeOptional = eventNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional = eventNodeOptional.get().locateNextEventNode()) {
+        for (Optional<EventNode> eventNodeOptional = eventNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional =
+                eventNodeOptional.get().locateNextEventNode()) {
             toInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
         }
     }
@@ -152,13 +153,13 @@ public class TaskRouter {
         return beforeInvokeRouteNodeOptional;
     }
 
-    public GlobalBus getGlobalBus() {
-        return globalBus;
+    public StoryBus getStoryBus() {
+        return storyBus;
     }
 
-    public void setGlobalBus(GlobalBus globalBus) {
-        AssertUtil.notNull(globalBus);
-        this.globalBus = globalBus;
+    public void setStoryBus(StoryBus storyBus) {
+        AssertUtil.notNull(storyBus);
+        this.storyBus = storyBus;
     }
 
     @Override

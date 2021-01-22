@@ -18,19 +18,18 @@
 package cn.kstry.framework.core.timeslot;
 
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
-import org.apache.commons.lang3.BooleanUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,12 +43,12 @@ public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperat
     @SuppressWarnings("unchecked")
     public TaskResponse<?> invoke(TimeSlotInvokeRequest request) {
 
-        GlobalBus globalBus = request.getGlobalBus();
-        TaskRouter router = globalBus.getRouter();
+        StoryBus storyBus = request.getStoryBus();
+        TaskRouter router = storyBus.getRouter();
         List<EventGroup> taskGroup = request.getTaskGroup();
         ResultMappingRepository resultMappingRepository = request.getResultMappingRepository();
 
-        Object taskRequest = getFirstRequest(globalBus, router);
+        Object taskRequest = getFirstRequest(storyBus, router);
         try {
             for (Optional<TaskNode> nodeOptional = router.invokeRouteNode(); nodeOptional.isPresent(); nodeOptional = router.invokeRouteNode()) {
                 TaskNode taskNode = nodeOptional.get();
@@ -57,14 +56,14 @@ public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperat
                 // 不支持 slot 里嵌套 slot 的情况
                 AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() != ComponentTypeEnum.TIME_SLOT, ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED);
 
-                TaskActionOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(router, taskGroup);
-                taskRequest = TaskActionUtil.getNextRequest(taskRequest, router, resultMappingRepository, globalBus, taskGroup);
+                EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(router, taskGroup);
+                taskRequest = TaskActionUtil.getNextRequest(taskRequest, router, resultMappingRepository, storyBus, taskGroup);
 
                 Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
                     return (TaskResponse<?>) o;
                 }
-                TaskActionUtil.saveTaskResultToGlobalBus(globalBus, taskNode, (TaskResponse<Object>) o);
+                TaskActionUtil.saveTaskResultToGlobalBus(storyBus, taskNode, (TaskResponse<Object>) o);
                 TaskActionUtil.reRouteNodeMap(router);
                 taskRequest = o;
             }
@@ -78,7 +77,7 @@ public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperat
     /**
      * 获取 TimeSlot 中首个 Task 执行的参数，从 StoryEngine 中传入
      */
-    private Object getFirstRequest(GlobalBus globalBus, TaskRouter router) {
+    private Object getFirstRequest(StoryBus storyBus, TaskRouter router) {
         Optional<TaskNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNode();
         if (!beforeInvokeRouteNodeOptional.isPresent()) {
             return null;
@@ -86,7 +85,7 @@ public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperat
 
         TaskNode beforeInvokeTaskNode = beforeInvokeRouteNodeOptional.get();
         if (beforeInvokeTaskNode.getEventGroupTypeEnum() != ComponentTypeEnum.MAPPING) {
-            return globalBus.getResultByRouteNode(beforeInvokeTaskNode);
+            return storyBus.getResultByRouteNode(beforeInvokeTaskNode);
         }
         return null;
     }
@@ -102,7 +101,7 @@ public class TimeSlotComponent extends RouteEventGroup implements TimeSlotOperat
     }
 
     @Override
-    public Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
         return TimeSlotOperatorRole.class;
     }
 }

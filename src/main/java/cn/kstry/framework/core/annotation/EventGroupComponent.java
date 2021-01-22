@@ -19,7 +19,7 @@ package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.Documented;
@@ -56,7 +56,7 @@ public @interface EventGroupComponent {
     ComponentTypeEnum eventGroupTypeEnum() default ComponentTypeEnum.TASK;
 
     /**
-     * Operator 用来实际执行 EventActionGroup 中定义的 Event，获取 Operator 的角色类
+     * Operator 用来实际执行 EventGroup 中定义的 Event
      */
-    Class<? extends TaskActionOperatorRole> operatorRoleClass();
+    Class<? extends EventOperatorRole> operatorRoleClass();
 }

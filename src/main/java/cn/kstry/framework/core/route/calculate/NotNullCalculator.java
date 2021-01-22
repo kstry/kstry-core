@@ -15,14 +15,30 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.timeslot;
+package cn.kstry.framework.core.route.calculate;
 
-import cn.kstry.framework.core.operator.EventOperatorRole;
+import cn.kstry.framework.core.enums.CalculatorEnum;
+import cn.kstry.framework.core.util.StrategyRuleCalculator;
 
 /**
+ * 计算规则： source != null
+ *
  * @author lykan
  */
-public interface TimeSlotOperatorRole extends EventOperatorRole, TimeSlotEventGroup {
+public class NotNullCalculator implements StrategyRuleCalculator {
 
+    @Override
+    public boolean calculate(Object source, String expected) {
+        return source != null;
+    }
 
+    @Override
+    public boolean checkExpected(String expected) {
+        return true;
+    }
+
+    @Override
+    public String getCalculatorName() {
+        return CalculatorEnum.NOT_NULL.getName();
+    }
 }

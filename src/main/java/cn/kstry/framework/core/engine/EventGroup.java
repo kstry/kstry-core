@@ -18,7 +18,7 @@ package cn.kstry.framework.core.engine;
  */
 
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.TaskRouter;
 
 /**
@@ -53,5 +53,5 @@ public interface EventGroup {
     /**
      * 获取 Task Action 操作者的 角色类
      */
-    Class<? extends TaskActionOperatorRole> getTaskActionOperatorRoleClass();
+    Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass();
 }

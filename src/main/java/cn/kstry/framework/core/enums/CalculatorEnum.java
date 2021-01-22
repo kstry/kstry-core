@@ -18,6 +18,8 @@
 package cn.kstry.framework.core.enums;
 
 import cn.kstry.framework.core.route.calculate.EqualsCalculator;
+import cn.kstry.framework.core.route.calculate.NotNullCalculator;
+import cn.kstry.framework.core.route.calculate.NumberCompareCalculator;
 import cn.kstry.framework.core.util.StrategyRuleCalculator;
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,7 +32,23 @@ import java.util.stream.Stream;
  */
 public enum CalculatorEnum {
 
-    EQUALS("equals", new EqualsCalculator());
+    /**
+     * 相等
+     */
+    EQUALS("equals", new EqualsCalculator()),
+
+    /**
+     * 非空
+     */
+    NOT_NULL("notNull", new NotNullCalculator()),
+
+    /**
+     * 数字比较
+     */
+    COMPARE("compare", new NumberCompareCalculator()),
+
+    // END
+    ;
 
     CalculatorEnum(String name, StrategyRuleCalculator expression) {
         this.name = name;

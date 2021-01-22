@@ -17,7 +17,9 @@
  */
 package cn.kstry.framework.core.route.calculate;
 
+import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.util.StrategyRuleCalculator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.text.ParseException;
@@ -26,12 +28,14 @@ import java.util.Date;
 import java.util.Objects;
 
 /**
+ * 计算规则：source == expected
+ *
  * @author lykan
  */
 public class EqualsCalculator implements StrategyRuleCalculator {
 
     @Override
-    public boolean calculate(Object source, Object expected) {
+    public boolean calculate(Object source, String expected) {
         if (source == null) {
             return expected == null;
         }
@@ -41,22 +45,32 @@ public class EqualsCalculator implements StrategyRuleCalculator {
         }
 
         if (NumberUtils.isCreatable(source.toString())) {
-            if (!NumberUtils.isCreatable(expected.toString())) {
+            if (!NumberUtils.isCreatable(expected)) {
                 return false;
             }
             Number s = NumberUtils.createNumber(source.toString());
-            Number t = NumberUtils.createNumber(expected.toString());
+            Number t = NumberUtils.createNumber(expected);
             return s.equals(t);
         }
 
         if (source instanceof Date) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             try {
-                return source.equals(sdf.parse(expected.toString()));
+                return source.equals(sdf.parse(expected));
             } catch (ParseException e) {
                 return false;
             }
         }
         return Objects.equals(source, expected);
+    }
+
+    @Override
+    public boolean checkExpected(String expected) {
+        return StringUtils.isNotBlank(expected);
+    }
+
+    @Override
+    public String getCalculatorName() {
+        return CalculatorEnum.EQUALS.getName();
     }
 }

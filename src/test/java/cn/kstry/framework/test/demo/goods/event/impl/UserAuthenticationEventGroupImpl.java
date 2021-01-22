@@ -7,6 +7,8 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.test.demo.goods.entity.User;
 import cn.kstry.framework.test.demo.goods.enums.UserTypeEnum;
 import cn.kstry.framework.test.demo.goods.event.AuthenticationEventGroup;
+import cn.kstry.framework.test.demo.goods.facade.AuthRequest;
+import cn.kstry.framework.test.demo.goods.facade.AuthResponse;
 import cn.kstry.framework.test.demo.goods.facade.UserLoginRequest;
 import cn.kstry.framework.test.demo.goods.facade.UserLoginResponse;
 import cn.kstry.framework.test.demo.goods.role.AuthenticationRole;
@@ -35,5 +37,16 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
         UserLoginResponse response = new UserLoginResponse();
         response.setUser(user);
         return TaskResponseBox.buildSuccess(response);
+    }
+
+    @Override
+    public TaskResponse<AuthResponse> auth(AuthRequest authRequest) {
+
+        AssertUtil.notNull(authRequest.getUser());
+        if (userList.stream().noneMatch(user -> user.getUserId() != null && user.getUserId().equals(authRequest.getUser().getUserId()))) {
+            return TaskResponseBox.buildError("50001", "登陆失败");
+        }
+        AuthResponse authResponse = new AuthResponse();
+        return TaskResponseBox.buildSuccess(authResponse);
     }
 }

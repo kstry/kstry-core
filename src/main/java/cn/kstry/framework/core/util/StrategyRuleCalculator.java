@@ -22,11 +22,17 @@ package cn.kstry.framework.core.util;
  *
  * @author lykan
  */
-@FunctionalInterface
 public interface StrategyRuleCalculator {
 
     /**
      * 计算
      */
-    boolean calculate(Object source, Object expected);
+    boolean calculate(Object source, String expected);
+
+    /**
+     * 校验预期值规则
+     */
+    boolean checkExpected(String expected);
+
+    String getCalculatorName();
 }

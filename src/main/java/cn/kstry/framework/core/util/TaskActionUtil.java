@@ -19,7 +19,7 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.adapter.ResultAdapterRequest;
 import cn.kstry.framework.core.adapter.ResultMappingRepository;
-import cn.kstry.framework.core.bus.GlobalBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
@@ -31,7 +31,7 @@ import cn.kstry.framework.core.facade.RouteMapResponse;
 import cn.kstry.framework.core.facade.TaskPipelinePort;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.RouteEventGroup;
@@ -64,7 +64,7 @@ public class TaskActionUtil {
     /**
      * 将 Task 执行的结果保存在 globalBus 中
      */
-    public static void saveTaskResultToGlobalBus(GlobalBus globalBus, TaskNode taskNode, TaskResponse<Object> o) {
+    public static void saveTaskResultToGlobalBus(StoryBus storyBus, TaskNode taskNode, TaskResponse<Object> o) {
         ComponentTypeEnum componentEnum = taskNode.getEventGroupTypeEnum();
         if (componentEnum == ComponentTypeEnum.TIME_SLOT) {
             return;
@@ -73,7 +73,7 @@ public class TaskActionUtil {
         if (o instanceof RouteMapResponse) {
             RouteMapResponse<?> routeMapResponse = GlobalUtil.transferNotEmpty(o, RouteMapResponse.class);
             DynamicRouteTable taskRouterTable = routeMapResponse.getTaskRouterTable();
-            updateDynamicRouteTable(globalBus, taskRouterTable);
+            updateDynamicRouteTable(storyBus, taskRouterTable);
         }
 
         if (componentEnum == ComponentTypeEnum.MAPPING) {
@@ -81,19 +81,19 @@ public class TaskActionUtil {
             TaskRequest taskRequest = GlobalUtil.transferNotEmpty(o, TaskPipelinePort.class).getTaskRequest();
             AssertUtil.notNull(taskRequest, ExceptionEnum.MAPPING_RESULT_ERROR);
             AssertUtil.isNull(GlobalUtil.transferNotEmpty(o, TaskPipelinePort.class).getResult(), ExceptionEnum.MAPPING_RESULT_ERROR);
-            globalBus.addMappingResult(taskNode, taskRequest);
+            storyBus.addMappingResult(taskNode, taskRequest);
             return;
         }
         if (o == null) {
             return;
         }
-        globalBus.addNodeResult(taskNode, o);
+        storyBus.addNodeResult(taskNode, o);
     }
 
     /**
      * 获取下一个 task 请求的 request
      */
-    public static Object getNextRequest(Object taskRequest, TaskRouter router, ResultMappingRepository resultMappingRepository, GlobalBus globalBus, List<EventGroup> taskGroup) throws InstantiationException,
+    public static Object getNextRequest(Object taskRequest, TaskRouter router, ResultMappingRepository resultMappingRepository, StoryBus storyBus, List<EventGroup> taskGroup) throws InstantiationException,
             IllegalAccessException {
         TaskNode taskNode = GlobalUtil.notEmpty(router.currentRouteNode());
         Class<? extends TaskRequest> currentRequestClass = taskNode.getRequestClass();
@@ -103,7 +103,7 @@ public class TaskActionUtil {
 
         if (taskNode.getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
             TimeSlotInvokeRequest timeSlotInvokeRequest = new TimeSlotInvokeRequest();
-            timeSlotInvokeRequest.setGlobalBus(globalBus);
+            timeSlotInvokeRequest.setStoryBus(storyBus);
             timeSlotInvokeRequest.setTaskGroup(taskGroup);
             timeSlotInvokeRequest.setResultMappingRepository(resultMappingRepository);
             return timeSlotInvokeRequest;
@@ -113,7 +113,7 @@ public class TaskActionUtil {
         if (nextRequestInstance instanceof ResultAdapterRequest) {
             AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() == ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
             ResultAdapterRequest adapterRequest = (ResultAdapterRequest) nextRequestInstance;
-            adapterRequest.setGlobalBus(globalBus);
+            adapterRequest.setStoryBus(storyBus);
             adapterRequest.setTaskGroup(taskGroup);
             adapterRequest.setRouter(router);
             adapterRequest.setResultMappingRepository(resultMappingRepository);
@@ -126,7 +126,7 @@ public class TaskActionUtil {
         // MAPPING 返回的结果直接被赋值给下一个任务
         Optional<TaskNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNodeIgnoreTimeSlot();
         if (beforeInvokeRouteNodeOptional.isPresent() && beforeInvokeRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.MAPPING) {
-            return globalBus.getRequestByRouteNode(beforeInvokeRouteNodeOptional.get());
+            return storyBus.getRequestByRouteNode(beforeInvokeRouteNodeOptional.get());
         }
 
         // 非 MAPPING 返回的结果进行参数拷贝后赋值，并且只能拿到 request 中的内容，无法获取 TaskResponse 的返回结果
@@ -143,9 +143,9 @@ public class TaskActionUtil {
     /**
      * 获取执行 task 的 operator，该 operator 一定是从 role 中派生而来
      */
-    public static TaskActionOperatorRole getTaskActionOperator(TaskRouter router, List<EventGroup> taskGroup) {
+    public static EventOperatorRole getTaskActionOperator(TaskRouter router, List<EventGroup> taskGroup) {
         EventGroup eventActionGroup = TaskActionUtil.getNextTaskAction(taskGroup, router);
-        TaskActionOperatorRole actionOperator = ((RouteEventGroup) eventActionGroup).getTaskActionOperator();
+        EventOperatorRole actionOperator = ((RouteEventGroup) eventActionGroup).getTaskActionOperator();
         if (actionOperator == null) {
             actionOperator = TaskOperatorCreator.getTaskOperator(eventActionGroup);
         }
@@ -160,7 +160,7 @@ public class TaskActionUtil {
      * @param actionOperator action operator
      * @return target result
      */
-    public static Object invokeTarget(Object taskRequest, TaskNode taskNode, TaskActionOperatorRole actionOperator) throws NoSuchMethodException {
+    public static Object invokeTarget(Object taskRequest, TaskNode taskNode, EventOperatorRole actionOperator) throws NoSuchMethodException {
         Object o;
         if (taskNode.getRequestClass() == null) {
             Method method = actionOperator.getClass().getMethod(taskNode.getActionName());
@@ -189,10 +189,10 @@ public class TaskActionUtil {
             return;
         }
 
-        GlobalBus globalBus = GlobalUtil.notNull(router.getGlobalBus());
-        DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
+        StoryBus storyBus = GlobalUtil.notNull(router.getStoryBus());
+        DynamicRouteTable dynamicRouteTable = storyBus.getDynamicRouteTable();
         AssertUtil.notNull(dynamicRouteTable);
-        router.reRouteNodeMap(node -> matchRouteNode(node.getMatchStrategyRuleList(), dynamicRouteTable, StrategyTypeEnum.MATCH));
+        router.reRouteNodeMap(node -> matchStrategyRule(node.getMatchStrategyRuleList(), dynamicRouteTable));
 
         Optional<TaskNode> nextRouteNode = router.nextRouteNodeIgnoreTimeSlot();
         if (!nextRouteNode.isPresent() || CollectionUtils.isEmpty(nextRouteNode.get().getMatchStrategyRuleList())) {
@@ -203,7 +203,7 @@ public class TaskActionUtil {
             return;
         }
 
-        if (TaskActionUtil.matchRouteNode(nextRouteNode.get().getMatchStrategyRuleList(), dynamicRouteTable, StrategyTypeEnum.FILTER)) {
+        if (TaskActionUtil.matchStrategyRule(nextRouteNode.get().getMatchStrategyRuleList(), dynamicRouteTable)) {
             return;
         }
 
@@ -247,27 +247,22 @@ public class TaskActionUtil {
         KstryException.throwException(exception);
     }
 
-    public static boolean matchRouteNode(List<StrategyRule> inflectionPointList, DynamicRouteTable dynamicRouteTable,
-                                         StrategyTypeEnum strategyTypeEnum) {
-        AssertUtil.notNull(strategyTypeEnum);
-        if (CollectionUtils.isEmpty(inflectionPointList)) {
+    public static boolean matchStrategyRule(List<StrategyRule> strategyRuleList, DynamicRouteTable dynamicRouteTable) {
+
+        if (CollectionUtils.isEmpty(strategyRuleList)) {
             return false;
         }
 
         boolean flag = true;
         try {
-            for (StrategyRule inflectionPoint : inflectionPointList) {
-                if (inflectionPoint.getStrategyTypeEnum() != strategyTypeEnum) {
-                    continue;
-                }
+            for (StrategyRule strategyRule : strategyRuleList) {
+                AssertUtil.notBlank(strategyRule.getFieldName());
+                AssertUtil.anyNotNull(strategyRule.getExpectedValue(), strategyRule.getStrategyRuleCalculator());
 
-                AssertUtil.notBlank(inflectionPoint.getFieldName());
-                AssertUtil.anyNotNull(inflectionPoint.getExpectedValue(), inflectionPoint.getStrategyRuleCalculator());
-
-                Field field = FieldUtils.getField(dynamicRouteTable.getClass(), inflectionPoint.getFieldName(), true);
+                Field field = FieldUtils.getField(dynamicRouteTable.getClass(), strategyRule.getFieldName(), true);
                 AssertUtil.notNull(field);
 
-                flag = flag && inflectionPoint.getStrategyRuleCalculator().calculate(field.get(dynamicRouteTable), inflectionPoint.getExpectedValue());
+                flag = flag && strategyRule.getStrategyRuleCalculator().calculate(field.get(dynamicRouteTable), strategyRule.getExpectedValue());
             }
         } catch (Exception e) {
             KstryException.throwException(e);
@@ -275,14 +270,14 @@ public class TaskActionUtil {
         return flag;
     }
 
-    private static void updateDynamicRouteTable(GlobalBus globalBus, DynamicRouteTable taskRouterTable) {
+    private static void updateDynamicRouteTable(StoryBus storyBus, DynamicRouteTable taskRouterTable) {
         if (taskRouterTable == null) {
             return;
         }
 
-        DynamicRouteTable dynamicRouteTable = globalBus.getDynamicRouteTable();
+        DynamicRouteTable dynamicRouteTable = storyBus.getDynamicRouteTable();
         if (dynamicRouteTable == null) {
-            globalBus.setDynamicRouteTable(taskRouterTable);
+            storyBus.setDynamicRouteTable(taskRouterTable);
             return;
         }
 

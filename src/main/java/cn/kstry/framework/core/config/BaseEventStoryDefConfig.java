@@ -22,6 +22,7 @@ import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,7 +32,9 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author lykan
@@ -226,8 +229,16 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                         String[] split = kName.split("-");
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
-                        AssertUtil.present(CalculatorEnum.getCalculatorEnumByName(split[0]), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                        Optional<CalculatorEnum> calculatorEnumOptional = CalculatorEnum.getCalculatorEnumByName(split[0]);
+                        AssertUtil.present(calculatorEnumOptional, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
+                        AssertUtil.notBlank(split[1], ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                                "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
+                        AssertUtil.isTrue(Stream.of(split[1].split("\\.")).allMatch(GlobalUtil::isValidField), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                                "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
+                        String expected = strategy.getRuleSet().get(kName);
+                        AssertUtil.isTrue(calculatorEnumOptional.isPresent() && calculatorEnumOptional.get().getExpression().checkExpected(expected),
+                                ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `rule_set` expected value in `strategy_def` is error! expected:%s", expected);
                     });
                 }
             });

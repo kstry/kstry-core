@@ -18,12 +18,12 @@
 package cn.kstry.framework.core.adapter;
 
 import cn.kstry.framework.core.facade.TaskPipelinePort;
-import cn.kstry.framework.core.operator.TaskActionOperatorRole;
+import cn.kstry.framework.core.operator.EventOperatorRole;
 
 /**
  * @author lykan
  */
-public interface ResultAdapterRole extends TaskActionOperatorRole {
+public interface ResultAdapterRole extends EventOperatorRole {
 
     String COMMON_TASK_RESULT_MAPPING_TASK_KEY = "COMMON_TASK_RESULT_MAPPING";
 

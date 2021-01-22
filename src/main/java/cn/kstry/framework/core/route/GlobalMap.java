@@ -17,14 +17,15 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.adapter.ResultMappingRepository;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 全局地图
@@ -36,40 +37,52 @@ public class GlobalMap {
     /**
      * 整个业务地图的始发点列表
      */
-    private final Map<String, List<EventNode>> FIRST_MAP_NODES = new ConcurrentHashMap<>();
+    private final Map<String, List<EventNode>> firstEventNodes = new HashMap<>();
 
-    /**
-     * mapping 映射表
-     */
-    private ResultMappingRepository resultMappingRepository;
+    private final ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
 
-    public void addFirstEventNode(String actionName, EventNode eventNode) {
-        AssertUtil.notNull(eventNode);
+    public void addFirstEventNode(String actionName, List<EventNode> eventNodeList) {
+
+        AssertUtil.notEmpty(eventNodeList);
         AssertUtil.notBlank(actionName);
 
-        List<EventNode> eventNodeList = FIRST_MAP_NODES.get(actionName);
-        if (CollectionUtils.isEmpty(eventNodeList)) {
-            eventNodeList = Lists.newArrayList();
+        ReentrantReadWriteLock.WriteLock writeLock = reentrantReadWriteLock.writeLock();
+        writeLock.lock();
+        try {
+            List<EventNode> firstEventNodeList = firstEventNodes.get(actionName);
+            if (CollectionUtils.isEmpty(firstEventNodeList)) {
+                firstEventNodeList = Lists.newArrayList();
+                firstEventNodes.put(actionName, firstEventNodeList);
+            }
+
+            for (EventNode eventNode : eventNodeList) {
+                if (firstEventNodeList.contains(eventNode)) {
+                    continue;
+                }
+                firstEventNodeList.add(eventNode);
+            }
+        } finally {
+            writeLock.unlock();
         }
-        if (eventNodeList.contains(eventNode)) {
-            return;
+    }
+
+    public EventNode locateFirstEventNode(Object request, String storyName) {
+        ReentrantReadWriteLock.ReadLock readLock = reentrantReadWriteLock.readLock();
+        readLock.lock();
+        try {
+            AssertUtil.notBlank(storyName, ExceptionEnum.PARAMS_ERROR, "storyName not allowed to be empty!");
+
+            List<EventNode> eventNodeList = firstEventNodes.get(storyName);
+            AssertUtil.notEmpty(eventNodeList, ExceptionEnum.PARAMS_ERROR, "Unable to match to an executable story! storyName:%s", storyName);
+            if (eventNodeList.size() == 1) {
+                return eventNodeList.get(0);
+            }
+
+            AssertUtil.notNull(request, ExceptionEnum.PARAMS_ERROR, "When there are multiple start event nodes, request is not allowed to be empty!");
+
+            return null;
+        } finally {
+            readLock.unlock();
         }
-        eventNodeList.add(eventNode);
     }
-
-    public EventNode locateFirstEventNode(String actionName) {
-//        AssertUtil.notBlank(actionName);
-//        EventNode eventNode = firstEventNodes.get(actionName);
-//        AssertUtil.notNull(eventNode);
-        return null;
-    }
-
-    public ResultMappingRepository getResultMappingRepository() {
-        return resultMappingRepository;
-    }
-
-    public void setResultMappingRepository(ResultMappingRepository resultMappingRepository) {
-        this.resultMappingRepository = resultMappingRepository;
-    }
-
 }
