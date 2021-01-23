@@ -21,7 +21,7 @@ import cn.kstry.framework.core.adapter.RequestMappingGroup;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.LocateBehavior;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;

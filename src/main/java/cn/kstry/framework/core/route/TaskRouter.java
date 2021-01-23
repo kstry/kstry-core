@@ -24,7 +24,7 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.LocateBehavior;
 import com.alibaba.fastjson.JSON;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.LinkedList;
 import java.util.Optional;

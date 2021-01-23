@@ -29,7 +29,7 @@ import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Lists;
-import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections.MapUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;

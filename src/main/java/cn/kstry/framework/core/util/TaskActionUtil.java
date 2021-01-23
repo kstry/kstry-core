@@ -26,22 +26,17 @@ import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.facade.DynamicRouteTable;
-import cn.kstry.framework.core.facade.RouteMapResponse;
-import cn.kstry.framework.core.facade.TaskPipelinePort;
-import cn.kstry.framework.core.facade.TaskRequest;
-import cn.kstry.framework.core.facade.TaskResponse;
+import cn.kstry.framework.core.facade.*;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.route.StrategyRule;
-import cn.kstry.framework.core.route.TaskNode;
-import cn.kstry.framework.core.route.TaskRouter;
+import cn.kstry.framework.core.route.*;
 import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.ReflectionUtils;
 
@@ -50,6 +45,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -60,6 +56,8 @@ import java.util.stream.Collectors;
  * @author lykan
  */
 public class TaskActionUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskActionUtil.class);
 
     /**
      * 将 Task 执行的结果保存在 globalBus 中
@@ -247,11 +245,21 @@ public class TaskActionUtil {
         KstryException.throwException(exception);
     }
 
-    public static boolean matchStrategyRule(List<StrategyRule> strategyRuleList, DynamicRouteTable dynamicRouteTable) {
+    public static boolean matchStrategyRule(List<StrategyRule> strategyRuleList, Object dynamicRouteTable) {
 
         if (CollectionUtils.isEmpty(strategyRuleList)) {
             return false;
         }
+        Map<String, Object> describe = null;
+        try {
+            describe = BeanUtilsBean.getInstance().getPropertyUtils().describe(dynamicRouteTable);
+        } catch (Exception e) {
+            LOGGER.error("");
+            KstryException.throwException(e);
+        }
+
+        System.out.println(describe.get("userType2"));
+
 
         boolean flag = true;
         try {

@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.adapter;
 
 import cn.kstry.framework.core.route.TaskNode;
-import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections.MapUtils;
 
 import java.util.HashMap;
 import java.util.Map;

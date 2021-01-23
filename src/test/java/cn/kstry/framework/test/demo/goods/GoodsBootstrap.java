@@ -25,7 +25,10 @@ public class GoodsBootstrap {
         StoryEngine storyEngine = context.getBean(EnableKstryRegister.DEFAULT_STORY_ENGINE_NAME, StoryEngine.class);
 
         BuyGoodsRequest buyGoodsRequest = new BuyGoodsRequest();
-        TaskResponse<BuyGoodsResponse> login = storyEngine.fire(buyGoodsRequest, "login", BuyGoodsResponse.class);
+        buyGoodsRequest.setUserId(1L);
+        buyGoodsRequest.setUserType(1);
+        TaskResponse<BuyGoodsResponse> login = storyEngine.fire(buyGoodsRequest, "doLogin", BuyGoodsResponse.class);
+//        TaskResponse<BuyGoodsResponse> login = storyEngine.fire(buyGoodsRequest, "login", BuyGoodsResponse.class);
         System.out.println(JSON.toJSONString(login));
     }
 }

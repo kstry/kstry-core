@@ -19,13 +19,15 @@ package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.TaskActionUtil;
 import com.google.common.collect.Lists;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * 全局地图
@@ -79,6 +81,11 @@ public class GlobalMap {
             }
 
             AssertUtil.notNull(request, ExceptionEnum.PARAMS_ERROR, "When there are multiple start event nodes, request is not allowed to be empty!");
+
+            List<EventNode> collect = eventNodeList.stream()
+                    .filter(eventNode -> TaskActionUtil.matchStrategyRule(eventNode.getMatchStrategyRuleList(), request))
+                    .collect(Collectors.toList());
+
 
             return null;
         } finally {

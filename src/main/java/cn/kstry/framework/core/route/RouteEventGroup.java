@@ -28,7 +28,7 @@ import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Maps;
-import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Method;
