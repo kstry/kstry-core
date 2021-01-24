@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -27,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 /**
  * 全局地图
@@ -68,26 +68,17 @@ public class GlobalMap {
         }
     }
 
-    public EventNode locateFirstEventNode(Object request, String storyName) {
+    public EventNode locateFirstEventNode(StoryBus storyBus, String storyName) {
+
         ReentrantReadWriteLock.ReadLock readLock = reentrantReadWriteLock.readLock();
         readLock.lock();
         try {
+            AssertUtil.notNull(storyBus);
             AssertUtil.notBlank(storyName, ExceptionEnum.PARAMS_ERROR, "storyName not allowed to be empty!");
 
             List<EventNode> eventNodeList = firstEventNodes.get(storyName);
             AssertUtil.notEmpty(eventNodeList, ExceptionEnum.PARAMS_ERROR, "Unable to match to an executable story! storyName:%s", storyName);
-            if (eventNodeList.size() == 1) {
-                return eventNodeList.get(0);
-            }
-
-            AssertUtil.notNull(request, ExceptionEnum.PARAMS_ERROR, "When there are multiple start event nodes, request is not allowed to be empty!");
-
-            List<EventNode> collect = eventNodeList.stream()
-                    .filter(eventNode -> TaskActionUtil.matchStrategyRule(eventNode.getMatchStrategyRuleList(), request))
-                    .collect(Collectors.toList());
-
-
-            return null;
+            return TaskActionUtil.locateInvokeEventNode(storyBus, eventNodeList);
         } finally {
             readLock.unlock();
         }

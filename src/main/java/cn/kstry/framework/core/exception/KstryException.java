@@ -41,7 +41,7 @@ public class KstryException extends RuntimeException {
     }
 
     public KstryException(Throwable cause) {
-        super(cause.getMessage(), cause);
+        super(String.format("[%s] %s", ExceptionEnum.SYSTEM_ERROR.getExceptionCode(), cause.getMessage()), cause);
         this.errorCode = ExceptionEnum.SYSTEM_ERROR.getExceptionCode();
     }
 
@@ -50,11 +50,11 @@ public class KstryException extends RuntimeException {
     }
 
     public static void throwException(ExceptionEnum exceptionEnum) {
-        throw new KstryException(exceptionEnum);
+        throwException(exceptionEnum.getExceptionCode(), exceptionEnum.getDesc());
     }
 
     public static void throwException(String code, String desc) {
-        throw new KstryException(code, desc);
+        throw new KstryException(code, String.format("[%s] %s", code, desc));
     }
 
     public static void throwException(Throwable e) {

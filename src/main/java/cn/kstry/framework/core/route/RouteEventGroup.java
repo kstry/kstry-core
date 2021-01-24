@@ -19,7 +19,6 @@ package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.annotation.EventGroupComponent;
 import cn.kstry.framework.core.engine.EventGroup;
-import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskRequest;
@@ -55,7 +54,7 @@ public abstract class RouteEventGroup implements EventGroup {
     public boolean route(TaskRouter router) {
         AssertUtil.notNull(router);
 
-        Optional<TaskNode> routeNodeOptional = router.currentRouteNode();
+        Optional<TaskNode> routeNodeOptional = router.currentTaskNode();
         if (!routeNodeOptional.isPresent()) {
             return false;
         }
@@ -68,7 +67,7 @@ public abstract class RouteEventGroup implements EventGroup {
     }
 
     @Override
-    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getOperatorRoleClass() {
         KstryException.throwException(ExceptionEnum.NEED_CONFIRM_NECESSARY_METHODS);
         return null;
     }

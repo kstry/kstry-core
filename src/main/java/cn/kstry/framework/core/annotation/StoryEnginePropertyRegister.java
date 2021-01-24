@@ -19,7 +19,7 @@ package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.config.ConfigResolver;
 import cn.kstry.framework.core.engine.EventGroup;
-import cn.kstry.framework.core.engine.TaskActionMethod;
+import cn.kstry.framework.core.route.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
@@ -77,6 +77,9 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         long actionCount = eventGroupList.stream().map(a -> a.getEventGroupName() + "-" + a.getEventGroupTypeEnum()).distinct().count();
         AssertUtil.equals((long) eventGroupList.size(), actionCount, ExceptionEnum.TASK_IDENTIFY_DUPLICATE_DEFINITION);
+
+        // 初始化 TaskActionMethod 信息
+        eventGroupList.stream().map(g -> (RouteEventGroup) g).forEach(RouteEventGroup::getActionMethodMap);
         return eventGroupList;
     }
 
@@ -138,6 +141,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             this.eventGroupTypeEnum = eventGroupTypeEnum;
         }
 
+        @Override
         public Class<? extends EventOperatorRole> getOperatorRoleClass() {
             return operatorRoleClass;
         }

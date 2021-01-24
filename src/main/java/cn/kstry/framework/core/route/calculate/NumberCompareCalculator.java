@@ -21,6 +21,7 @@ import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.util.StrategyRuleCalculator;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +75,7 @@ public class NumberCompareCalculator implements StrategyRuleCalculator {
      * <=2
      * >=2L
      */
-    private static final Pattern CALCULATE_SIGN_PATTERN = Pattern.compile(String.format("^(%s){1}(-|\\+)?\\d+(\\.\\d)?\\d*[fFlL]?$",
+    private static final Pattern CALCULATE_SIGN_PATTERN = Pattern.compile(String.format("^(%s){1}(-|\\+)?\\d+(\\.\\d)?\\d*[fFlLdD]?$",
             StringUtils.join(CALCULATE_SIGN_LIST.stream().map(s -> String.format("(%s)", s)).collect(Collectors.toList()), "|")));
 
     @Override
@@ -88,17 +89,30 @@ public class NumberCompareCalculator implements StrategyRuleCalculator {
             expectedNumber = expectedNumber.replace(sign, StringUtils.EMPTY);
         }
         try {
-            if (source instanceof Integer) {
-                return expected.contains(compareInt((int) source, Integer.parseInt(expectedNumber)));
+            Number number = NumberUtils.createNumber(expectedNumber);
+            if (source instanceof Integer && number instanceof Integer) {
+                return expected.contains(compareInt((int) source, (int) number));
             }
-            if (source instanceof Long) {
-                return expected.contains(compareLong((long) source, Long.parseLong(expectedNumber)));
+            if (source instanceof Integer && number instanceof Long) {
+                return expected.contains(compareLong(((Integer) source).longValue(), (long) number));
             }
-            if (source instanceof Double) {
-                return expected.contains(compareDouble((double) source, Double.parseDouble(expectedNumber)));
+            if (source instanceof Long && number instanceof Long) {
+                return expected.contains(compareLong((long) source, (long) number));
             }
-            if (source instanceof Float) {
-                return expected.contains(compareFloat((float) source, Float.parseFloat(expectedNumber)));
+            if (source instanceof Long && number instanceof Integer) {
+                return expected.contains(compareLong((long) source, number.longValue()));
+            }
+            if (source instanceof Double && number instanceof Double) {
+                return expected.contains(compareDouble((double) source, (double) number));
+            }
+            if (source instanceof Double && number instanceof Float) {
+                return expected.contains(compareDouble((double) source, number.doubleValue()));
+            }
+            if (source instanceof Float && number instanceof Float) {
+                return expected.contains(compareFloat((float) source, (float) number));
+            }
+            if (source instanceof Float && number instanceof Double) {
+                return expected.contains(compareDouble(((Float) source).doubleValue(), number.doubleValue()));
             }
         } catch (NumberFormatException e) {
             LOGGER.error("An error occurred while parsing the expected value of the rule! source:{}, expected:{}", source, expected, e);

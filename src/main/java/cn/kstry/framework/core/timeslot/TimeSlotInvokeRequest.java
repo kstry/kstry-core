@@ -17,10 +17,10 @@
  */
 package cn.kstry.framework.core.timeslot;
 
-import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.facade.TaskRequest;
+import cn.kstry.framework.core.route.TaskRouter;
 
 import java.util.List;
 
@@ -31,9 +31,7 @@ import java.util.List;
  */
 public class TimeSlotInvokeRequest implements TaskRequest {
 
-
     private static final long serialVersionUID = 6960705481098414756L;
-
 
     /**
      * 需要 time slot 执行的 task group
@@ -45,7 +43,10 @@ public class TimeSlotInvokeRequest implements TaskRequest {
      */
     private StoryBus storyBus;
 
-    private ResultMappingRepository resultMappingRepository;
+    /**
+     *
+     */
+    private TaskRouter taskRouter;
 
     public List<EventGroup> getTaskGroup() {
         return taskGroup;
@@ -63,11 +64,11 @@ public class TimeSlotInvokeRequest implements TaskRequest {
         this.storyBus = storyBus;
     }
 
-    public ResultMappingRepository getResultMappingRepository() {
-        return resultMappingRepository;
+    public TaskRouter getTaskRouter() {
+        return taskRouter;
     }
 
-    public void setResultMappingRepository(ResultMappingRepository resultMappingRepository) {
-        this.resultMappingRepository = resultMappingRepository;
+    public void setTaskRouter(TaskRouter taskRouter) {
+        this.taskRouter = taskRouter;
     }
 }

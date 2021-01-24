@@ -29,12 +29,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author lykan
@@ -153,6 +149,11 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     @JSONField(name = EVENT_DEF)
     private EventDef<String, EventDefItem<String, EventDefItemConfig>> eventDef;
 
+    /**
+     * 字段校验过程中出现的可疑待校验的字段
+     */
+    private final Set<String> questionFieldNameSet = new HashSet<>();
+
     @Override
     public StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef() {
         return storyDef;
@@ -193,7 +194,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         checkEventDef(this);
     }
 
-    protected static void checkStrategyDef(EventStoryDefConfig config) {
+    protected void checkStrategyDef(EventStoryDefConfig config) {
         if (MapUtils.isEmpty(config.getStrategyDef())) {
             return;
         }
@@ -203,6 +204,11 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
 
         // StoryDef 为空时，StrategyDef 不允许出现
         AssertUtil.notEmpty(config.getStoryDef(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`story_def` is empty but `strategy_def` is not!!");
+
+        List<String> nodeNameList = new ArrayList<>();
+        for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigEventDefItem : config.getEventDef().values()) {
+            nodeNameList.addAll(stringNodeDefItemConfigEventDefItem.keySet());
+        }
 
         List<String> storyNameList = Lists.newArrayList(config.getStoryDef().keySet());
         for (String k : config.getStrategyDef().keySet()) {
@@ -226,7 +232,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 if (MapUtils.isNotEmpty(strategy.getRuleSet())) {
                     strategy.getRuleSet().keySet().forEach(kName -> {
                         AssertUtil.notBlank(kName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `rule_set` key in `strategy_def` is blank!");
-                        String[] split = kName.split("-");
+                        String[] split = kName.split(GlobalConstant.DISTINCT_SIGN);
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
                         Optional<CalculatorEnum> calculatorEnumOptional = CalculatorEnum.getCalculatorEnumByName(split[0]);
@@ -234,7 +240,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
                         AssertUtil.notBlank(split[1], ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
-                        AssertUtil.isTrue(Stream.of(split[1].split("\\.")).allMatch(GlobalUtil::isValidField), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                        AssertUtil.isTrue(checkStrategyField(nodeNameList, split[1]), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
                         String expected = strategy.getRuleSet().get(kName);
                         AssertUtil.isTrue(calculatorEnumOptional.isPresent() && calculatorEnumOptional.get().getExpression().checkExpected(expected),
@@ -247,6 +253,9 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 AssertUtil.isTrue(matchStrategy.size() == matchStrategy.stream().map(StrategyDefItemConfig::getStory).distinct().count(),
                         ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "When `strategy_type=match`, `story` cannot be repeatedly defined!");
             }
+
+            questionFieldNameSet.forEach(fieldName -> AssertUtil.isTrue(config.getStrategyDef().containsKey(fieldName), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                    "Undefined `strategy_def` or `event_def` node! node:%s", fieldName));
         }
 
         for (String key : config.getStoryDef().keySet()) {
@@ -291,7 +300,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
     }
 
-    protected static void checkStoryDef(EventStoryDefConfig config) {
+    protected void checkStoryDef(EventStoryDefConfig config) {
         if (MapUtils.isEmpty(config.getStoryDef())) {
             return;
         }
@@ -327,7 +336,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
     }
 
-    protected static void checkRequestMappingDef(EventStoryDefConfig config) {
+    protected void checkRequestMappingDef(EventStoryDefConfig config) {
         if (MapUtils.isEmpty(config.getRequestMappingDef())) {
             return;
         }
@@ -349,14 +358,13 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
             v.forEach((kIn, vIn) -> {
                 AssertUtil.isValidField(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item key in `request_mapping_def` is error! key:%s", kIn);
                 AssertUtil.notBlank(vIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item value in `request_mapping_def` is blank!");
-
-                boolean checkVin = REQUEST_MAPPING_KEYWORD.stream().anyMatch(vIn::startsWith) || nodeNameList.stream().anyMatch(vIn::startsWith);
-                AssertUtil.isTrue(checkVin, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item value in `request_mapping_def` is error! value:%s", vIn);
+                AssertUtil.isTrue(checkStrategyField(nodeNameList, vIn), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                        "The assignment of mapping item value in `request_mapping_def` is error! value:%s", vIn);
             });
         }
     }
 
-    protected static void checkEventDef(EventStoryDefConfig config) {
+    protected void checkEventDef(EventStoryDefConfig config) {
         if (MapUtils.isEmpty(config.getEventDef())) {
             return;
         }
@@ -382,5 +390,35 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
         AssertUtil.isTrue(nodeNameList.size() == new HashSet<>(nodeNameList).size(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                 "event node key in `event_def` is repeatedly defined!");
+    }
+
+    private boolean checkStrategyField(List<String> nodeNameList, String value) {
+        AssertUtil.notNull(nodeNameList);
+        if (StringUtils.isBlank(value)) {
+            return false;
+        }
+        String[] fieldNameArray = value.split("\\.");
+        if (fieldNameArray.length <= 1) {
+            return false;
+        }
+        if (!fieldNameArray[0].startsWith(GlobalConstant.NODE_SIGN) && !fieldNameArray[0].startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
+            return false;
+        }
+
+        boolean checkVin = true;
+        for (String fieldName : fieldNameArray) {
+            if (!fieldName.startsWith(GlobalConstant.NODE_SIGN) && !fieldName.startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
+                checkVin = checkVin && GlobalUtil.isValidField(fieldName.replaceAll("\\[\\d+\\]", StringUtils.EMPTY));
+                continue;
+            }
+
+            if (fieldName.startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
+                this.questionFieldNameSet.add(fieldName.replace(GlobalConstant.TIME_SLOT_NODE_SIGN, StringUtils.EMPTY));
+                continue;
+            }
+            fieldName = fieldName.replace(GlobalConstant.NODE_SIGN, StringUtils.EMPTY);
+            checkVin = checkVin && (GlobalConstant.RESERVED_WORDS_LIST.stream().anyMatch(fieldName::equals) || nodeNameList.stream().anyMatch(fieldName::equals));
+        }
+        return checkVin;
     }
 }

@@ -38,11 +38,10 @@ public class TaskOperatorCreator {
      */
     public static <T extends EventOperatorRole> T getTaskOperator(EventGroup eventActionGroup) {
         AssertUtil.notNull(eventActionGroup);
-        AssertUtil.notNull(eventActionGroup.getTaskActionOperatorRoleClass());
+        AssertUtil.notNull(eventActionGroup.getOperatorRoleClass());
 
         TaskOperatorProxy operatorProxy = new TaskOperatorProxy(eventActionGroup);
-        Class<? extends EventOperatorRole> operatorRoleClass = eventActionGroup.getTaskActionOperatorRoleClass();
-        AssertUtil.notNull(operatorRoleClass);
+        Class<? extends EventOperatorRole> operatorRoleClass = eventActionGroup.getOperatorRoleClass();
 
         T t = (T) Proxy.newProxyInstance(operatorRoleClass.getClassLoader(), new Class[]{operatorRoleClass}, operatorProxy);
         operatorProxy.setTaskOperator(t);

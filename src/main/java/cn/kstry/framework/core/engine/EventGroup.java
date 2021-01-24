@@ -51,7 +51,7 @@ public interface EventGroup {
     ComponentTypeEnum getEventGroupTypeEnum();
 
     /**
-     * 获取 Task Action 操作者的 角色类
+     * 获取 Event Operator 的 角色类
      */
-    Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass();
+    Class<? extends EventOperatorRole> getOperatorRoleClass();
 }

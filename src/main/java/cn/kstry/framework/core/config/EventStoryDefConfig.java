@@ -54,11 +54,6 @@ public interface EventStoryDefConfig {
     String REQUEST_MAPPING_DEF = "request_mapping_def";
 
     /**
-     * request mapping 中允许出现的关键字
-     */
-    List<String> REQUEST_MAPPING_KEYWORD = Lists.newArrayList("DEFAULT", "#data");
-
-    /**
      * 获取 story 定义
      */
     StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef();

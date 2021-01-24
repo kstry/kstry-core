@@ -17,10 +17,16 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +35,13 @@ import java.util.Optional;
  * @author lykan
  */
 public class GlobalUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalUtil.class);
+
+    /**
+     * 获取解析属性值失败，返回该标识
+     */
+    public static final Object GET_PROPERTY_ERROR_SIGN = new Object();
 
     private static final List<Character> VALID_FIELD_CHARACTER_LIST = Lists.newArrayList(
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
@@ -67,11 +80,39 @@ public class GlobalUtil {
             return false;
         }
 
+        if (GlobalConstant.RESERVED_WORDS_LIST.contains(fieldStr.trim())) {
+            return false;
+        }
         for (Character c : fieldStr.toCharArray()) {
             if (!VALID_FIELD_CHARACTER_LIST.contains(c)) {
                 return false;
             }
         }
         return true;
+    }
+
+    public static Optional<Object> getProperty(Object bean, String propertyName) {
+        if (bean == null || StringUtils.isBlank(propertyName)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(BeanUtilsBean.getInstance().getPropertyUtils().getProperty(bean, propertyName));
+        } catch (Exception e) {
+            LOGGER.warn("[{}] BeanUtils Failed to get bean property! propertyName:{}", ExceptionEnum.FAILED_GET_PROPERTY.getExceptionCode(), propertyName, e);
+            return Optional.of(GET_PROPERTY_ERROR_SIGN);
+        }
+    }
+
+    public static void setProperty(Object target, String propertyName, Object value) {
+        if (target == null || StringUtils.isBlank(propertyName)) {
+            return;
+        }
+
+        try {
+            BeanUtils.setProperty(target, propertyName, value);
+        } catch (Exception e) {
+            LOGGER.warn("[{}] BeanUtils Failed to set bean property! target:{}, propertyName:{}, value:{}",
+                    ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value, e);
+        }
     }
 }

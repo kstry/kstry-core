@@ -17,12 +17,31 @@
  */
 package cn.kstry.framework.core.timeslot;
 
+import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
+
+import java.util.Map;
 
 /**
  * @author lykan
  */
-public interface TimeSlotOperatorRole extends EventOperatorRole, TimeSlotEventGroup {
+public interface TimeSlotOperatorRole extends EventOperatorRole {
 
+    /**
+     * time slot task name
+     */
+    String TIME_SLOT_TASK_NAME = "KSTRY_TIME_SLOT";
 
+    /**
+     * time slot task action name
+     */
+    String TIME_SLOT_TASK_ACTION_NAME = "invoke";
+
+    /**
+     * 时间片执行入口
+     *
+     * @param request 第一个task 的 request
+     * @return 最后一个 task的返回结果
+     */
+    TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request);
 }

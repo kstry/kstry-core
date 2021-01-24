@@ -12,6 +12,7 @@ import cn.kstry.framework.test.demo.goods.facade.AuthResponse;
 import cn.kstry.framework.test.demo.goods.facade.UserLoginRequest;
 import cn.kstry.framework.test.demo.goods.facade.UserLoginResponse;
 import cn.kstry.framework.test.demo.goods.role.AuthenticationRole;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
 
         UserLoginResponse response = new UserLoginResponse();
         response.setUser(user);
+        System.out.println("userLogin ->"+ JSON.toJSONString(user));
         return TaskResponseBox.buildSuccess(response);
     }
 
@@ -47,6 +49,7 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
             return TaskResponseBox.buildError("50001", "登陆失败");
         }
         AuthResponse authResponse = new AuthResponse();
+        System.out.println("userAuth ->" + JSON.toJSONString(authRequest.getUser()));
         return TaskResponseBox.buildSuccess(authResponse);
     }
 }

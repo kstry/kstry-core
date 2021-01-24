@@ -34,6 +34,8 @@ import java.util.Objects;
  */
 public class EqualsCalculator implements StrategyRuleCalculator {
 
+    private final StrategyRuleCalculator numberCompareCalculator = new NumberCompareCalculator();
+
     @Override
     public boolean calculate(Object source, String expected) {
         if (source == null) {
@@ -48,9 +50,7 @@ public class EqualsCalculator implements StrategyRuleCalculator {
             if (!NumberUtils.isCreatable(expected)) {
                 return false;
             }
-            Number s = NumberUtils.createNumber(source.toString());
-            Number t = NumberUtils.createNumber(expected);
-            return s.equals(t);
+            return numberCompareCalculator.calculate(source, "=" + expected);
         }
 
         if (source instanceof Date) {

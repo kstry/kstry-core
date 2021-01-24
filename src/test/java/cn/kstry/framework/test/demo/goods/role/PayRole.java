@@ -11,6 +11,7 @@ import cn.kstry.framework.test.demo.goods.facade.PayResponse;
  */
 public interface PayRole extends EventOperatorRole {
 
-    TaskResponse<PayResponse> pay(PayRequest payRequest);
+    TaskResponse<PayResponse> wxPay(PayRequest payRequest);
 
+    TaskResponse<PayResponse> aliPay(PayRequest payRequest);
 }

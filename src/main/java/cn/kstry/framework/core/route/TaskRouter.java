@@ -21,8 +21,6 @@ import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.LocateBehavior;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections.CollectionUtils;
 
@@ -44,40 +42,35 @@ public class TaskRouter {
     /**
      * 单次请求 router 关联 globalBus 数据
      */
-    private StoryBus storyBus;
+    private final StoryBus storyBus;
 
-    public TaskRouter(Object request, GlobalMap globalMap, String storyName) {
-        EventNode eventNode = globalMap.locateFirstEventNode(request, storyName);
-        toInvokeTaskNodeList.offerFirst(eventNode.getTaskNode());
+    public TaskRouter(EventNode firstEventNode, StoryBus storyBus) {
+        AssertUtil.notNull(storyBus);
+        AssertUtil.notNull(firstEventNode);
+        this.storyBus = storyBus;
+        toInvokeTaskNodeList.offerFirst(firstEventNode.getTaskNode());
 
-        for (Optional<EventNode> eventNodeOptional = eventNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional =
+        for (Optional<EventNode> eventNodeOptional = firstEventNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional =
                 eventNodeOptional.get().locateNextEventNode()) {
             toInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
         }
+        storyBus.setRouter(this);
     }
 
-    public void reRouteNodeMap(LocateBehavior<TaskNode> locateBehavior) {
-        AssertUtil.notNull(locateBehavior);
+    public void reTaskNodeMap(TaskNode nextNode) {
+        AssertUtil.notNull(nextNode);
 
         LinkedList<TaskNode> reToInvokeTaskNodeList = new LinkedList<>();
-        EventNode eventNode = GlobalUtil.notEmpty(currentRouteNode()).getEventNode();
-
-        Optional<EventNode> nextEventNodeOptional = eventNode.locateNextEventNode(locateBehavior);
-        if (!nextEventNodeOptional.isPresent()) {
-            return;
-        }
-        EventNode nextNode = nextEventNodeOptional.get();
-        reToInvokeTaskNodeList.offerFirst(nextNode.getTaskNode());
-
-        for (Optional<EventNode> eventNodeOptional = nextNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional = eventNodeOptional.get().locateNextEventNode()) {
+        reToInvokeTaskNodeList.offerFirst(nextNode);
+        for (Optional<EventNode> eventNodeOptional = nextNode.getEventNode().locateNextEventNode(); eventNodeOptional.isPresent();
+             eventNodeOptional = eventNodeOptional.get().locateNextEventNode()) {
             reToInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
         }
-
         toInvokeTaskNodeList.clear();
         toInvokeTaskNodeList.addAll(reToInvokeTaskNodeList);
     }
 
-    public Optional<TaskNode> invokeRouteNode() {
+    public Optional<TaskNode> invokeTaskNode() {
         if (CollectionUtils.isEmpty(toInvokeTaskNodeList)) {
             return Optional.empty();
         }
@@ -86,7 +79,7 @@ public class TaskRouter {
         return Optional.ofNullable(node);
     }
 
-    public Optional<TaskNode> skipRouteNode() {
+    public Optional<TaskNode> skipTaskNode() {
         if (CollectionUtils.isEmpty(toInvokeTaskNodeList)) {
             return Optional.empty();
         }
@@ -94,59 +87,59 @@ public class TaskRouter {
         return Optional.ofNullable(node);
     }
 
-    public Optional<TaskNode> currentRouteNode() {
-        return lastInvokeRouteNode();
+    public Optional<TaskNode> currentTaskNode() {
+        return lastInvokeTaskNode();
     }
 
-    public Optional<TaskNode> lastInvokeRouteNode() {
+    public Optional<TaskNode> lastInvokeTaskNode() {
         if (CollectionUtils.isEmpty(alreadyInvokeTaskNodeList)) {
             return Optional.empty();
         }
         return Optional.ofNullable(alreadyInvokeTaskNodeList.peekLast());
     }
 
-    public Optional<TaskNode> nextRouteNode() {
+    public Optional<TaskNode> nextTaskNode() {
         if (CollectionUtils.isEmpty(toInvokeTaskNodeList)) {
             return Optional.empty();
         }
         return Optional.ofNullable(toInvokeTaskNodeList.peekFirst());
     }
 
-    public Optional<TaskNode> next2RouteNode() {
+    public Optional<TaskNode> next2TaskNode() {
         if (CollectionUtils.isEmpty(toInvokeTaskNodeList) || toInvokeTaskNodeList.size() < 2) {
             return Optional.empty();
         }
         return Optional.ofNullable(toInvokeTaskNodeList.get(1));
     }
 
-    public Optional<TaskNode> nextRouteNodeIgnoreTimeSlot() {
-        Optional<TaskNode> nextRouteNodeOptional = this.nextRouteNode();
+    public Optional<TaskNode> nextTaskNodeIgnoreTimeSlot() {
+        Optional<TaskNode> nextRouteNodeOptional = this.nextTaskNode();
         if (nextRouteNodeOptional.isPresent() && nextRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
-            nextRouteNodeOptional = this.next2RouteNode();
+            nextRouteNodeOptional = this.next2TaskNode();
         }
         nextRouteNodeOptional.ifPresent(routeNode -> AssertUtil.isTrue(routeNode.getEventGroupTypeEnum() != ComponentTypeEnum.TIME_SLOT,
                 ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED));
         return nextRouteNodeOptional;
     }
 
-    public Optional<TaskNode> beforeInvokeRouteNode() {
+    public Optional<TaskNode> beforeInvokeTaskNode() {
         if (CollectionUtils.isEmpty(alreadyInvokeTaskNodeList) || alreadyInvokeTaskNodeList.size() <= 1) {
             return Optional.empty();
         }
         return Optional.ofNullable(alreadyInvokeTaskNodeList.get(alreadyInvokeTaskNodeList.size() - 2));
     }
 
-    public Optional<TaskNode> before2InvokeRouteNode() {
+    public Optional<TaskNode> before2InvokeTaskNode() {
         if (CollectionUtils.isEmpty(alreadyInvokeTaskNodeList) || alreadyInvokeTaskNodeList.size() <= 2) {
             return Optional.empty();
         }
         return Optional.ofNullable(alreadyInvokeTaskNodeList.get(alreadyInvokeTaskNodeList.size() - 3));
     }
 
-    public Optional<TaskNode> beforeInvokeRouteNodeIgnoreTimeSlot() {
-        Optional<TaskNode> beforeInvokeRouteNodeOptional = this.beforeInvokeRouteNode();
+    public Optional<TaskNode> beforeInvokeTaskNodeIgnoreTimeSlot() {
+        Optional<TaskNode> beforeInvokeRouteNodeOptional = this.beforeInvokeTaskNode();
         if (beforeInvokeRouteNodeOptional.isPresent() && beforeInvokeRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
-            beforeInvokeRouteNodeOptional = this.before2InvokeRouteNode();
+            beforeInvokeRouteNodeOptional = this.before2InvokeTaskNode();
         }
         beforeInvokeRouteNodeOptional.ifPresent(routeNode -> AssertUtil.isTrue(routeNode.getEventGroupTypeEnum() != ComponentTypeEnum.TIME_SLOT,
                 ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED));
@@ -157,14 +150,9 @@ public class TaskRouter {
         return storyBus;
     }
 
-    public void setStoryBus(StoryBus storyBus) {
-        AssertUtil.notNull(storyBus);
-        this.storyBus = storyBus;
-    }
-
     @Override
     public String toString() {
-        return JSON.toJSONString(currentRouteNode().map(TaskNode::getEventGroupName).orElse("INIT"));
+        return JSON.toJSONString(currentTaskNode().map(TaskNode::getEventGroupName).orElse("INIT"));
     }
 
 }

@@ -12,6 +12,12 @@ public class Goods {
 
     private long money;
 
+    public Goods(Long id, String name, long money) {
+        this.id = id;
+        this.name = name;
+        this.money = money;
+    }
+
     public Long getId() {
         return id;
     }
@@ -35,4 +41,5 @@ public class Goods {
     public void setMoney(long money) {
         this.money = money;
     }
+
 }

@@ -15,77 +15,72 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.engine;
+package cn.kstry.framework.core.timeslot;
 
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.GlobalMap;
+import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
-import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-public class StoryEngine {
+/**
+ * @author lykan
+ */
+public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorRole {
 
-    private final List<EventGroup> taskGroup;
+    @Override
+    public TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request) {
 
-    private final GlobalMap globalMap;
+        StoryBus storyBus = request.getStoryBus();
+        TaskRouter taskRouter = storyBus.getRouter();
+        List<EventGroup> taskGroup = request.getTaskGroup();
 
-    public StoryEngine(@Qualifier("defaultGlobalMap") GlobalMap globalMap,
-                       @Qualifier("defaultEventGroupList") List<EventGroup> eventActionGroupList) {
-        this.globalMap = globalMap;
-        this.taskGroup = eventActionGroupList;
-    }
-
-    /**
-     * story fire!
-     *
-     * @param request     request
-     * @param storyName      指令
-     */
-    @SuppressWarnings("unchecked")
-    public <T> TaskResponse<T> fire(Object request, String storyName, Class<T> resultClass) {
-
-        StoryBus storyBus = new StoryBus(request);
-        EventNode firstEventNode = this.globalMap.locateFirstEventNode(storyBus, storyName);
-        TaskRouter taskRouter = new TaskRouter(firstEventNode, storyBus);
         try {
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
-
                 TaskNode taskNode = nodeOptional.get();
                 if (TaskActionUtil.checkIfSkipCurrentNode(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), storyBus)) {
                     continue;
                 }
-                EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, this.taskGroup);
+                EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
                 Object taskRequest = TaskActionUtil.getNextRequest(taskRouter, storyBus, taskGroup);
                 Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
 
-                if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
-                    return (TaskResponse<T>) o;
-                }
-
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
-                TaskActionUtil.reRouteNodeMap(taskRouter);
+//                TaskActionUtil.reRouteNodeMap(taskRouter);
             }
 
-            Object result = storyBus.getResultByTaskNode(GlobalUtil.notEmpty(taskRouter.lastInvokeTaskNode()));
-            if (result == null) {
-                return null;
-            }
-            AssertUtil.isTrue(resultClass.isAssignableFrom(result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
-            return (TaskResponse<T>) TaskResponseBox.buildSuccess(result);
+            Map<String, Object> resultData = new HashMap<>();
+            storyBus.loadResultData(resultData);
+            return TaskResponseBox.buildSuccess(resultData);
         } catch (Exception e) {
             TaskActionUtil.throwException(e);
             return null;
         }
+    }
+
+    @Override
+    public String getEventGroupName() {
+        return TIME_SLOT_TASK_NAME;
+    }
+
+    @Override
+    public ComponentTypeEnum getEventGroupTypeEnum() {
+        return ComponentTypeEnum.TIME_SLOT;
+    }
+
+    @Override
+    public Class<? extends EventOperatorRole> getOperatorRoleClass() {
+        return TimeSlotOperatorRole.class;
     }
 }

@@ -37,7 +37,7 @@ public abstract class BaseHongBaoOperateActionGroup extends RouteEventGroup impl
     }
 
     @Override
-    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getOperatorRoleClass() {
         return HongBaoOperatorRole.class;
     }
 }

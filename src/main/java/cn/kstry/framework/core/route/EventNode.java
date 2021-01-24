@@ -17,16 +17,12 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.adapter.RequestMappingGroup;
-import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.LocateBehavior;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * @author lykan
@@ -72,22 +68,12 @@ public class EventNode {
         eventNode.setPrevEventNode(this);
     }
 
-    public Optional<EventNode> locateNextEventNode(LocateBehavior<TaskNode> locateBehavior) {
+    public Optional<EventNode> locateNextEventNode() {
         if (CollectionUtils.isEmpty(nextEventNodeList)) {
             return Optional.empty();
         }
 
-        if (locateBehavior == null) {
-            return Optional.ofNullable(nextEventNodeList.get(0));
-        }
-
-        List<EventNode> resultList = nextEventNodeList.stream().filter(map -> locateBehavior.locate(map.getTaskNode())).collect(Collectors.toList());
-        AssertUtil.oneSize(resultList, ExceptionEnum.INVALID_POSITIONING_BEHAVIOR);
-        return Optional.of(resultList.get(0));
-    }
-
-    public Optional<EventNode> locateNextEventNode() {
-        return this.locateNextEventNode(null);
+        return Optional.ofNullable(nextEventNodeList.get(0));
     }
 
     public TaskNode getTaskNode() {

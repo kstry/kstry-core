@@ -41,6 +41,13 @@ public class AssertUtil {
     /**
      * 判断条件为 true
      */
+    public static void isTrue(Boolean flag) {
+        isTrue(flag, ExceptionEnum.SYSTEM_ERROR);
+    }
+
+    /**
+     * 判断条件为 true
+     */
     public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
@@ -149,6 +156,17 @@ public class AssertUtil {
             exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
         }
         isTrue(CollectionUtils.isNotEmpty(collection), exceptionEnum, desc);
+    }
+
+    public static <T> void notEmpty(T[] array) {
+        notEmpty(array, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
+    }
+
+    public static <T> void notEmpty(T[] array, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
+        }
+        isTrue(array != null && array.length > 0, exceptionEnum, desc);
     }
 
     public static void notEmpty(Map<?, ?> map) {

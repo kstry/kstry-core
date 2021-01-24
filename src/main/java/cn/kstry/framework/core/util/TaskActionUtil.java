@@ -17,35 +17,27 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.adapter.ResultAdapterRequest;
-import cn.kstry.framework.core.adapter.ResultMappingRepository;
 import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.engine.EventGroup;
-import cn.kstry.framework.core.engine.TaskActionMethod;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.facade.*;
+import cn.kstry.framework.core.facade.TaskRequest;
+import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
 import cn.kstry.framework.core.route.*;
 import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
-import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.util.ReflectionUtils;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -60,82 +52,35 @@ public class TaskActionUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskActionUtil.class);
 
     /**
-     * 将 Task 执行的结果保存在 globalBus 中
-     */
-    public static void saveTaskResultToGlobalBus(StoryBus storyBus, TaskNode taskNode, TaskResponse<Object> o) {
-        ComponentTypeEnum componentEnum = taskNode.getEventGroupTypeEnum();
-        if (componentEnum == ComponentTypeEnum.TIME_SLOT) {
-            return;
-        }
-
-        if (o instanceof RouteMapResponse) {
-            RouteMapResponse<?> routeMapResponse = GlobalUtil.transferNotEmpty(o, RouteMapResponse.class);
-            DynamicRouteTable taskRouterTable = routeMapResponse.getTaskRouterTable();
-            updateDynamicRouteTable(storyBus, taskRouterTable);
-        }
-
-        if (componentEnum == ComponentTypeEnum.MAPPING) {
-            AssertUtil.isTrue(o instanceof TaskPipelinePort, ExceptionEnum.MAPPING_RESULT_ERROR);
-            TaskRequest taskRequest = GlobalUtil.transferNotEmpty(o, TaskPipelinePort.class).getTaskRequest();
-            AssertUtil.notNull(taskRequest, ExceptionEnum.MAPPING_RESULT_ERROR);
-            AssertUtil.isNull(GlobalUtil.transferNotEmpty(o, TaskPipelinePort.class).getResult(), ExceptionEnum.MAPPING_RESULT_ERROR);
-            storyBus.addMappingResult(taskNode, taskRequest);
-            return;
-        }
-        if (o == null) {
-            return;
-        }
-        storyBus.addNodeResult(taskNode, o);
-    }
-
-    /**
      * 获取下一个 task 请求的 request
      */
-    public static Object getNextRequest(Object taskRequest, TaskRouter router, ResultMappingRepository resultMappingRepository, StoryBus storyBus, List<EventGroup> taskGroup) throws InstantiationException,
-            IllegalAccessException {
-        TaskNode taskNode = GlobalUtil.notEmpty(router.currentRouteNode());
+    public static Object getNextRequest(TaskRouter router, StoryBus storyBus, List<EventGroup> taskGroup) throws IllegalAccessException, InstantiationException {
+
+        TaskNode taskNode = GlobalUtil.notEmpty(router.currentTaskNode());
+        if (taskNode.getEventNode() instanceof TimeSlotEventNode) {
+            StoryBus timeSlotStoryBus = storyBus.cloneStoryBus();
+            List<EventNode> timeSlotFirstEventNodeList = ((TimeSlotEventNode) taskNode.getEventNode()).getFirstTimeSlotEventNodeList();
+            AssertUtil.notEmpty(timeSlotFirstEventNodeList);
+            EventNode timeSlotEventNode = TaskActionUtil.locateInvokeEventNode(timeSlotStoryBus, timeSlotFirstEventNodeList);
+            TaskRouter timeSlotTaskRouter = new TaskRouter(timeSlotEventNode, timeSlotStoryBus);
+            TimeSlotInvokeRequest timeSlotInvokeRequest = new TimeSlotInvokeRequest();
+            timeSlotInvokeRequest.setTaskGroup(taskGroup);
+            timeSlotInvokeRequest.setStoryBus(timeSlotStoryBus);
+            timeSlotInvokeRequest.setTaskRouter(timeSlotTaskRouter);
+            return timeSlotInvokeRequest;
+        }
+
         Class<? extends TaskRequest> currentRequestClass = taskNode.getRequestClass();
         if (currentRequestClass == null) {
             return null;
         }
 
-        if (taskNode.getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
-            TimeSlotInvokeRequest timeSlotInvokeRequest = new TimeSlotInvokeRequest();
-            timeSlotInvokeRequest.setStoryBus(storyBus);
-            timeSlotInvokeRequest.setTaskGroup(taskGroup);
-            timeSlotInvokeRequest.setResultMappingRepository(resultMappingRepository);
-            return timeSlotInvokeRequest;
-        }
+        EventNode eventNode = taskNode.getEventNode();
+        AssertUtil.notNull(eventNode);
 
-        TaskRequest nextRequestInstance = currentRequestClass.newInstance();
-        if (nextRequestInstance instanceof ResultAdapterRequest) {
-            AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() == ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
-            ResultAdapterRequest adapterRequest = (ResultAdapterRequest) nextRequestInstance;
-            adapterRequest.setStoryBus(storyBus);
-            adapterRequest.setTaskGroup(taskGroup);
-            adapterRequest.setRouter(router);
-            adapterRequest.setResultMappingRepository(resultMappingRepository);
-            fillResultInfo(taskRequest, adapterRequest);
-            return adapterRequest;
-        } else {
-            AssertUtil.isTrue(taskNode.getEventGroupTypeEnum() != ComponentTypeEnum.MAPPING, ExceptionEnum.MAPPING_REQUEST_ERROR);
-        }
-
-        // MAPPING 返回的结果直接被赋值给下一个任务
-        Optional<TaskNode> beforeInvokeRouteNodeOptional = router.beforeInvokeRouteNodeIgnoreTimeSlot();
-        if (beforeInvokeRouteNodeOptional.isPresent() && beforeInvokeRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.MAPPING) {
-            return storyBus.getRequestByRouteNode(beforeInvokeRouteNodeOptional.get());
-        }
-
-        // 非 MAPPING 返回的结果进行参数拷贝后赋值，并且只能拿到 request 中的内容，无法获取 TaskResponse 的返回结果
-        AssertUtil.isTrue(taskRequest instanceof TaskPipelinePort, ExceptionEnum.REQUEST_NOT_MATCHED);
-        TaskRequest pipelineTaskRequest = GlobalUtil.transferNotEmpty(taskRequest, TaskPipelinePort.class).getTaskRequest();
-        if (pipelineTaskRequest == null) {
-            return null;
-        }
-
-        BeanUtils.copyProperties(pipelineTaskRequest, nextRequestInstance);
-        return nextRequestInstance;
+        TaskRequest innerTaskRequest = currentRequestClass.newInstance();
+        storyBus.loadTaskRequest(innerTaskRequest, eventNode.getRequestMappingGroup());
+        return innerTaskRequest;
     }
 
     /**
@@ -177,36 +122,23 @@ public class TaskActionUtil {
      * @param router router
      */
     public static void reRouteNodeMap(TaskRouter router) {
-        if (!router.nextRouteNodeIgnoreTimeSlot().isPresent()) {
-            return;
-        }
-        TaskNode taskNode = GlobalUtil.notEmpty(router.currentRouteNode());
-        EventNode eventNode = GlobalUtil.notNull(taskNode.getEventNode());
-        List<StrategyRule> inflectionPointList = router.nextRouteNodeIgnoreTimeSlot().get().getMatchStrategyRuleList();
-        if (CollectionUtils.isEmpty(inflectionPointList) || eventNode.nextEventNodeSize() == 0) {
+
+        if (!router.nextTaskNode().isPresent()) {
             return;
         }
 
-        StoryBus storyBus = GlobalUtil.notNull(router.getStoryBus());
-        DynamicRouteTable dynamicRouteTable = storyBus.getDynamicRouteTable();
-        AssertUtil.notNull(dynamicRouteTable);
-        router.reRouteNodeMap(node -> matchStrategyRule(node.getMatchStrategyRuleList(), dynamicRouteTable));
-
-        Optional<TaskNode> nextRouteNode = router.nextRouteNodeIgnoreTimeSlot();
-        if (!nextRouteNode.isPresent() || CollectionUtils.isEmpty(nextRouteNode.get().getMatchStrategyRuleList())) {
+        TaskNode currentTaskNode = GlobalUtil.notEmpty(router.currentTaskNode());
+        EventNode currentEventNode = GlobalUtil.notNull(currentTaskNode.getEventNode());
+        if (currentEventNode.nextEventNodeSize() == 0) {
             return;
         }
 
-        if (nextRouteNode.get().getMatchStrategyRuleList().stream().noneMatch(point -> point.getStrategyTypeEnum() == StrategyTypeEnum.FILTER)) {
+        if (currentEventNode.nextEventNodeSize() == 1) {
             return;
         }
 
-        if (TaskActionUtil.matchStrategyRule(nextRouteNode.get().getMatchStrategyRuleList(), dynamicRouteTable)) {
-            return;
-        }
-
-        router.skipRouteNode();
-        reRouteNodeMap(router);
+        EventNode nextEventNode = TaskActionUtil.locateInvokeEventNode(router.getStoryBus(), currentEventNode.getNextEventNodeList());
+        router.reTaskNodeMap(nextEventNode.getTaskNode());
     }
 
     public static TaskActionMethod getTaskActionMethod(List<EventGroup> eventGroupList, TaskNode taskNode) {
@@ -245,64 +177,23 @@ public class TaskActionUtil {
         KstryException.throwException(exception);
     }
 
-    public static boolean matchStrategyRule(List<StrategyRule> strategyRuleList, Object dynamicRouteTable) {
-
+    public static boolean matchStrategyRule(List<StrategyRule> strategyRuleList, StoryBus storyBus) {
+        AssertUtil.notNull(storyBus);
         if (CollectionUtils.isEmpty(strategyRuleList)) {
-            return false;
-        }
-        Map<String, Object> describe = null;
-        try {
-            describe = BeanUtilsBean.getInstance().getPropertyUtils().describe(dynamicRouteTable);
-        } catch (Exception e) {
-            LOGGER.error("");
-            KstryException.throwException(e);
+            return true;
         }
 
-        System.out.println(describe.get("userType2"));
+        return strategyRuleList.stream().allMatch(rule -> {
+            AssertUtil.notBlank(rule.getFieldName());
 
-
-        boolean flag = true;
-        try {
-            for (StrategyRule strategyRule : strategyRuleList) {
-                AssertUtil.notBlank(strategyRule.getFieldName());
-                AssertUtil.anyNotNull(strategyRule.getExpectedValue(), strategyRule.getStrategyRuleCalculator());
-
-                Field field = FieldUtils.getField(dynamicRouteTable.getClass(), strategyRule.getFieldName(), true);
-                AssertUtil.notNull(field);
-
-                flag = flag && strategyRule.getStrategyRuleCalculator().calculate(field.get(dynamicRouteTable), strategyRule.getExpectedValue());
-            }
-        } catch (Exception e) {
-            KstryException.throwException(e);
-        }
-        return flag;
+            StrategyRuleCalculator ruleCalculator = rule.getStrategyRuleCalculator();
+            AssertUtil.notNull(ruleCalculator);
+            AssertUtil.isTrue(ruleCalculator.checkExpected(rule.getExpectedValue()), ExceptionEnum.PARAMS_ERROR);
+            Optional<Object> valueOptional = storyBus.getGlobalParamValue(rule.getFieldName().replace(GlobalConstant.NODE_SIGN, StringUtils.EMPTY));
+            return ruleCalculator.calculate(valueOptional.orElse(null), rule.getExpectedValue());
+        });
     }
 
-    private static void updateDynamicRouteTable(StoryBus storyBus, DynamicRouteTable taskRouterTable) {
-        if (taskRouterTable == null) {
-            return;
-        }
-
-        DynamicRouteTable dynamicRouteTable = storyBus.getDynamicRouteTable();
-        if (dynamicRouteTable == null) {
-            storyBus.setDynamicRouteTable(taskRouterTable);
-            return;
-        }
-
-        AssertUtil.equals(dynamicRouteTable.getClass(), taskRouterTable.getClass(), ExceptionEnum.DYNAMIC_ROUTING_TABLES_ERROR);
-        try {
-            List<Field> allFieldsList = FieldUtils.getAllFieldsList(taskRouterTable.getClass());
-            for (Field field : allFieldsList) {
-                Object o = FieldUtils.readField(field, taskRouterTable, true);
-                if (o == null) {
-                    continue;
-                }
-                FieldUtils.writeField(field, dynamicRouteTable, o, true);
-            }
-        } catch (Exception e) {
-            KstryException.throwException(e);
-        }
-    }
 
     /**
      * 从 taskGroup 中根据 Router 路由出需要被执行的 TaskAction
@@ -318,16 +209,26 @@ public class TaskActionUtil {
         return eventActionGroupList.get(0);
     }
 
-    @SuppressWarnings("all")
-    private static void fillResultInfo(Object taskRequest, ResultAdapterRequest adapterRequest) {
-        if (!(taskRequest instanceof TaskResponse)) {
-            return;
+    public static EventNode locateInvokeEventNode(StoryBus storyBus, List<EventNode> eventNodeList) {
+        AssertUtil.notNull(storyBus);
+        AssertUtil.notEmpty(eventNodeList);
+
+        if (eventNodeList.size() == 1) {
+            return eventNodeList.get(0);
         }
-        Optional<TaskResponse> taskResponseOptional = GlobalUtil.transfer(taskRequest, TaskResponse.class);
-        if (!taskResponseOptional.isPresent() || !taskResponseOptional.get().isSuccess()) {
-            return;
+        List<EventNode> taskNodeCollect = eventNodeList.stream()
+                .filter(eventNode -> TaskActionUtil.matchStrategyRule(eventNode.getMatchStrategyRuleList(), storyBus))
+                .collect(Collectors.toList());
+        AssertUtil.oneSize(taskNodeCollect, ExceptionEnum.MUST_ONE_TASK_ACTION);
+        return taskNodeCollect.get(0);
+    }
+
+    public static boolean checkIfSkipCurrentNode(TaskNode taskNode, StoryBus storyBus) {
+
+        AssertUtil.anyNotNull(taskNode, storyBus);
+        if (CollectionUtils.isEmpty(taskNode.getFilterStrategyRuleList())) {
+            return false;
         }
-        adapterRequest.setResult(taskResponseOptional.get().getResult());
-        adapterRequest.resultSuccess();
+        return !matchStrategyRule(taskNode.getFilterStrategyRuleList(), storyBus);
     }
 }

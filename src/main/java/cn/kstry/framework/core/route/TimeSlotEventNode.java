@@ -28,6 +28,8 @@ public class TimeSlotEventNode extends EventNode {
 
     private List<EventNode> firstTimeSlotEventNodeList;
 
+    private String strategyName;
+
     public TimeSlotEventNode(TaskNode taskNode) {
         super(taskNode);
     }
@@ -38,5 +40,13 @@ public class TimeSlotEventNode extends EventNode {
 
     public void setFirstTimeSlotEventNodeList(List<EventNode> firstTimeSlotEventNodeList) {
         this.firstTimeSlotEventNodeList = firstTimeSlotEventNodeList;
+    }
+
+    public String getStrategyName() {
+        return strategyName;
+    }
+
+    public void setStrategyName(String strategyName) {
+        this.strategyName = strategyName;
     }
 }

@@ -17,12 +17,9 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.adapter.RequestMappingGroup;
-import cn.kstry.framework.core.engine.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.util.AssertUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
 import java.util.List;
@@ -71,10 +68,6 @@ public class TaskNode {
 
     public String identity() {
         return this.eventGroupTypeEnum.name() + "-" + this.eventGroupName + "-" + this.actionName;
-    }
-
-    public String identityStr() {
-        return identity().replace("-", StringUtils.EMPTY).replace("_", StringUtils.EMPTY);
     }
 
     public TaskNode cloneTaskNode() {

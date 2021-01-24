@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.adapter.RequestMappingGroup;
+import cn.kstry.framework.core.route.RequestMappingGroup;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.CalculatorEnum;
@@ -29,6 +29,7 @@ import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.StrategyRule;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TimeSlotEventNode;
+import cn.kstry.framework.core.timeslot.TimeSlotOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -38,11 +39,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -50,16 +47,25 @@ import java.util.stream.Collectors;
  */
 public class ConfigResolver {
 
+    /**
+     * 承载 解析后的 配置文件
+     */
     private EventStoryDefConfig eventStoryDefConfig;
 
+    /**
+     * Task Node Map
+     */
     private Map<String, TaskNode> taskNodeMap;
 
+    /**
+     * Mapping Group Map
+     */
     private Map<String, RequestMappingGroup> mappingGroupMap;
 
     /**
-     * 允许的 eventNode 的最大深度
+     * time slot task node
      */
-    private static final int MAX_NODE_LEVEL_DEPTH = 1000;
+    private TaskNode globalTimeSlotTaskNode;
 
     public Map<String, List<EventNode>> getStoryEventNode(List<EventGroup> eventGroupList, String eventStoryConfigName) {
 
@@ -79,6 +85,9 @@ public class ConfigResolver {
 
         // 为 event_node 设置 TaskActionMethod
         taskNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(eventGroupList, node)));
+        TaskNode timeSlotTaskNode = new TaskNode(TimeSlotOperatorRole.TIME_SLOT_TASK_ACTION_NAME, TimeSlotOperatorRole.TIME_SLOT_TASK_NAME, ComponentTypeEnum.TIME_SLOT);
+        timeSlotTaskNode.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(eventGroupList, timeSlotTaskNode));
+        this.globalTimeSlotTaskNode = timeSlotTaskNode;
 
         // 根据 request_mapping_def 初始化 参数映射规则表
         this.mappingGroupMap = parseMappingGroupMap();
@@ -104,6 +113,7 @@ public class ConfigResolver {
             List<TaskNodeAgentForConfigResolver> eventNodeAdapterList = new ArrayList<>();
             for (EventStoryDefConfig.StoryDefItemConfig item : value) {
                 TaskNodeAgentForConfigResolver eventNodeAgent = new TaskNodeAgentForConfigResolver();
+                eventNodeAgent.setGlobalTimeSlotTaskNode(this.globalTimeSlotTaskNode);
                 if (StringUtils.isNotBlank(item.getEventNode())) {
                     TaskNode taskNode = this.taskNodeMap.get(item.getEventNode());
                     AssertUtil.notNull(taskNode);
@@ -123,7 +133,7 @@ public class ConfigResolver {
                     if (CollectionUtils.isEmpty(routeStrategy)) {
                         continue;
                     }
-                    if (parseStrategyInfoReturnInterruptFlag(eventNodeAgent, routeStrategy)) {
+                    if (parseStrategyInfoReturnInterruptFlag(eventNodeAgent, routeStrategy, item.getStrategy())) {
                         eventNodeAdapterList.add(eventNodeAgent);
                         break;
                     }
@@ -150,7 +160,7 @@ public class ConfigResolver {
 
             EventNode beforeEventNode = taskItem.getBeforeEventNode();
             int maxLevelDepth = (beforeEventNode != null && beforeEventNode.getNodeLevel() > invokeLevel) ? beforeEventNode.getNodeLevel() : invokeLevel;
-            AssertUtil.isTrue(maxLevelDepth < MAX_NODE_LEVEL_DEPTH, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+            AssertUtil.isTrue(maxLevelDepth < GlobalConstant.MAX_NODE_LEVEL_DEPTH, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                     "Event nodes with circular dependencies! levelDepth:%s", maxLevelDepth);
 
             List<StrategyRule> matchStrategyRuleList = taskItem.getStrategyRuleList();
@@ -162,6 +172,8 @@ public class ConfigResolver {
                     if (eventNode instanceof TimeSlotEventNode && CollectionUtils.isNotEmpty(taskNodeAgentList)) {
                         List<EventNode> filterStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
                         ((TimeSlotEventNode) eventNode).setFirstTimeSlotEventNodeList(filterStoryEventNodeList);
+                        AssertUtil.notBlank(nodeAgent.getStrategyName());
+                        ((TimeSlotEventNode) eventNode).setStrategyName(nodeAgent.getStrategyName());
                     }
                     if (matchStrategyRuleList != null) {
                         eventNode.setMatchStrategyRuleList(matchStrategyRuleList);
@@ -197,7 +209,7 @@ public class ConfigResolver {
     }
 
     private boolean parseStrategyInfoReturnInterruptFlag(TaskNodeAgentForConfigResolver eventNodeAgent,
-                                                         EventStoryDefConfig.StrategyDefItem<EventStoryDefConfig.StrategyDefItemConfig> routeStrategy) {
+                                                         EventStoryDefConfig.StrategyDefItem<EventStoryDefConfig.StrategyDefItemConfig> routeStrategy, String strategyName) {
         if (CollectionUtils.isEmpty(routeStrategy)) {
             return false;
         }
@@ -216,6 +228,7 @@ public class ConfigResolver {
                         .collect(Collectors.toList());
                 AssertUtil.oneSize(filterStoryNameList, ExceptionEnum.PARAMS_ERROR);
                 eventNodeAgent.setFilterStoryName(filterStoryNameList.get(0));
+                eventNodeAgent.setStrategyName(strategyName);
             }
         }
 
@@ -244,13 +257,13 @@ public class ConfigResolver {
 
         strategy.forEach((k, v) -> {
             AssertUtil.notBlank(k);
-            String[] splitKeyArray = k.split("-");
+            String[] splitKeyArray = k.split(GlobalConstant.DISTINCT_SIGN);
             AssertUtil.isTrue(splitKeyArray.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
 
             StrategyRule strategyRule = new StrategyRule();
             strategyRule.setStrategyTypeEnum(strategyTypeEnum);
             strategyRule.setExpectedValue(v);
-            strategyRule.setFieldName(splitKeyArray[1]);
+            strategyRule.setFieldName(parseStrategyProperty(splitKeyArray[1]));
             strategyRule.setStrategyRuleCalculator(GlobalUtil.notEmpty(CalculatorEnum.getCalculatorEnumByName(splitKeyArray[0])).getExpression());
             strategyRuleList.add(strategyRule);
         });
@@ -276,19 +289,9 @@ public class ConfigResolver {
 
             List<RequestMappingGroup.RequestMappingItem> mappingItemList = new ArrayList<>();
             value.forEach((kIn, vIn) -> {
-                if (vIn.toUpperCase().startsWith("DEFAULT['")) {
-                    vIn = "#" + StoryBus.DEFAULT_GLOBAL_BUS_PARAMS_KEY.identityStr() + vIn.substring(7);
-                }
-                if (!vIn.startsWith("#")) {
-                    String nodeName = vIn.substring(0, vIn.indexOf("["));
-                    TaskNode taskNode = this.taskNodeMap.get(nodeName);
-                    AssertUtil.notNull(taskNode, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
-                    vIn = "#" + taskNode.identityStr() + vIn.replaceFirst("^" + nodeName, StringUtils.EMPTY);
-                }
-
                 RequestMappingGroup.RequestMappingItem item = new RequestMappingGroup.RequestMappingItem();
-                item.setSource(kIn);
-                item.setTarget(vIn);
+                item.setSource(parseStrategyProperty(vIn));
+                item.setTarget(kIn);
                 mappingItemList.add(item);
             });
             RequestMappingGroup mappingGroup = new RequestMappingGroup();
@@ -297,6 +300,38 @@ public class ConfigResolver {
         });
 
         return mappingGroupMap;
+    }
+
+    private String parseStrategyProperty(String field) {
+        AssertUtil.notBlank(field);
+
+        String[] fieldList = field.split("\\.");
+        for (int i = 0; i < fieldList.length; i++) {
+            if (i == 0) {
+                AssertUtil.isTrue(fieldList[0].startsWith(GlobalConstant.NODE_SIGN) || fieldList[0].startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN));
+            }
+
+            if (!fieldList[i].startsWith(GlobalConstant.NODE_SIGN)) {
+                continue;
+            }
+            switch (fieldList[i].toUpperCase()) {
+                case GlobalConstant.NODE_SIGN + "REQ":
+                    fieldList[i] = StoryBus.DEFAULT_GLOBAL_BUS_REQUEST_KEY.identity();
+                    break;
+                case GlobalConstant.NODE_SIGN + "STA":
+                    fieldList[i] = StoryBus.DEFAULT_GLOBAL_BUS_STABLE_KEY.identity();
+                    break;
+                case GlobalConstant.NODE_SIGN + "VAR":
+                    fieldList[i] = StoryBus.DEFAULT_GLOBAL_BUS_VARIABLE_KEY.identity();
+                    break;
+                default:
+                    TaskNode taskNode = this.taskNodeMap.get(fieldList[i].substring(1));
+                    AssertUtil.notNull(taskNode);
+                    fieldList[i] = taskNode.identity();
+                    break;
+            }
+        }
+        return StringUtils.join(fieldList, ".");
     }
 
     private Map<String, TaskNode> parseTaskNodeMap() {
@@ -345,6 +380,13 @@ public class ConfigResolver {
 
         private String filterStoryName;
 
+        /**
+         * time slot task node
+         */
+        private TaskNode globalTimeSlotTaskNode;
+
+        private String strategyName;
+
         public TaskNode getTaskNode() {
             return taskNode;
         }
@@ -358,7 +400,8 @@ public class ConfigResolver {
             if (getTaskNode() != null) {
                 eventNode = new EventNode(getTaskNode().cloneTaskNode());
             } else if (StringUtils.isNotBlank(getFilterStoryName())) {
-                TaskNode timeSlotTaskNode = new TaskNode(ComponentTypeEnum.TIME_SLOT.name(), ComponentTypeEnum.TIME_SLOT.name(), ComponentTypeEnum.TIME_SLOT);
+                AssertUtil.notNull(this.globalTimeSlotTaskNode);
+                TaskNode timeSlotTaskNode = this.globalTimeSlotTaskNode.cloneTaskNode();
                 eventNode = new TimeSlotEventNode(timeSlotTaskNode);
             } else {
                 KstryException.throwException(ExceptionEnum.SYSTEM_ERROR);
@@ -398,6 +441,22 @@ public class ConfigResolver {
 
         public void setFilterStoryName(String filterStoryName) {
             this.filterStoryName = filterStoryName;
+        }
+
+        public TaskNode getGlobalTimeSlotTaskNode() {
+            return globalTimeSlotTaskNode;
+        }
+
+        public void setGlobalTimeSlotTaskNode(TaskNode globalTimeSlotTaskNode) {
+            this.globalTimeSlotTaskNode = globalTimeSlotTaskNode;
+        }
+
+        public String getStrategyName() {
+            return strategyName;
+        }
+
+        public void setStrategyName(String strategyName) {
+            this.strategyName = strategyName;
         }
     }
 

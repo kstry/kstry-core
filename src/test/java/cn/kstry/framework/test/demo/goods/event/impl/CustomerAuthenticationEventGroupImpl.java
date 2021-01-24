@@ -10,6 +10,7 @@ import cn.kstry.framework.test.demo.goods.event.AuthenticationEventGroup;
 import cn.kstry.framework.test.demo.goods.facade.UserLoginRequest;
 import cn.kstry.framework.test.demo.goods.facade.UserLoginResponse;
 import cn.kstry.framework.test.demo.goods.role.AuthenticationRole;
+import com.alibaba.fastjson.JSON;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ public class CustomerAuthenticationEventGroupImpl extends UserAuthenticationEven
 
         UserLoginResponse response = new UserLoginResponse();
         response.setUser(user);
+        System.out.println("customerLogin ->" + JSON.toJSONString(user));
         return TaskResponseBox.buildSuccess(response);
     }
 }

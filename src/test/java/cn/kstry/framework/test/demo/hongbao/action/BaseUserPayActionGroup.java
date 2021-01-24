@@ -16,7 +16,7 @@ public abstract class BaseUserPayActionGroup extends RouteEventGroup implements 
     }
 
     @Override
-    public Class<? extends EventOperatorRole> getTaskActionOperatorRoleClass() {
+    public Class<? extends EventOperatorRole> getOperatorRoleClass() {
         return UserPayRole.class;
     }
 }
