@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.timeslot;
 
-import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.engine.StoryBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.route.TaskRouter;

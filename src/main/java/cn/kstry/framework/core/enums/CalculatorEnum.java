@@ -20,7 +20,7 @@ package cn.kstry.framework.core.enums;
 import cn.kstry.framework.core.route.calculate.EqualsCalculator;
 import cn.kstry.framework.core.route.calculate.NotNullCalculator;
 import cn.kstry.framework.core.route.calculate.NumberCompareCalculator;
-import cn.kstry.framework.core.util.StrategyRuleCalculator;
+import cn.kstry.framework.core.route.StrategyRuleCalculator;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;

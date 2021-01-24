@@ -1,4 +1,3 @@
-package cn.kstry.framework.core.engine;
 /*
  *
  *  *  Copyright (c) 2020-2021, Lykan (jiashuomeng@gmail.com).
@@ -16,6 +15,8 @@ package cn.kstry.framework.core.engine;
  *  * limitations under the License.
  *
  */
+
+package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;

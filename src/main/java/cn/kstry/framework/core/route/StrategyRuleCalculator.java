@@ -15,7 +15,7 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.util;
+package cn.kstry.framework.core.route;
 
 /**
  * 计算触发条件

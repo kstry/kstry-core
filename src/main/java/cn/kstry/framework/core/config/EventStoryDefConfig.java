@@ -19,11 +19,9 @@ package cn.kstry.framework.core.config;
 
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import com.alibaba.fastjson.annotation.JSONField;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

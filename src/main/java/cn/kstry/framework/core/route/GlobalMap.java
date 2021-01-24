@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.engine.StoryBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;

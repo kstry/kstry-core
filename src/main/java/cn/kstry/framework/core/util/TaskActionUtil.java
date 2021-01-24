@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.engine.StoryBus;
 import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.exception.ExceptionEnum;

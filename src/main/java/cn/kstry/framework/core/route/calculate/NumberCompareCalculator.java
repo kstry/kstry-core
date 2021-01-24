@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.route.calculate;
 
 import cn.kstry.framework.core.enums.CalculatorEnum;
-import cn.kstry.framework.core.util.StrategyRuleCalculator;
+import cn.kstry.framework.core.route.StrategyRuleCalculator;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;

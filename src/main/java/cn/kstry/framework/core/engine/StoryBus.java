@@ -15,7 +15,7 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bus;
+package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
