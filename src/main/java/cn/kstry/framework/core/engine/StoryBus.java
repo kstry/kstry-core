@@ -25,7 +25,7 @@ import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.route.RequestMappingGroup;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.route.TimeSlotEventNode;
+import cn.kstry.framework.core.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.collections.CollectionUtils;
