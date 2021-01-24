@@ -27,7 +27,7 @@ public class GoodsBootstrap {
         BuyGoodsRequest buyGoodsRequest = new BuyGoodsRequest();
         buyGoodsRequest.setUserId(2L);
         buyGoodsRequest.setUserType(3);
-        buyGoodsRequest.setGoodIds(Lists.newArrayList(5L));
+        buyGoodsRequest.setGoodIds(Lists.newArrayList(1L, 2L, 3L, 4L, 5L));
 
         TaskResponse<Object> login = storyEngine.fire(buyGoodsRequest, "login", Object.class);
         System.out.println(JSON.toJSONString(login));

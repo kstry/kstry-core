@@ -408,7 +408,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         boolean checkVin = true;
         for (String fieldName : fieldNameArray) {
             if (!fieldName.startsWith(GlobalConstant.NODE_SIGN) && !fieldName.startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
-                checkVin = checkVin && GlobalUtil.isValidField(fieldName.replaceAll("\\[\\d+\\]", StringUtils.EMPTY));
+                checkVin = checkVin && GlobalUtil.isValidField(fieldName.replaceAll("\\[\\d+]", StringUtils.EMPTY));
                 continue;
             }
 

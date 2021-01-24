@@ -18,8 +18,6 @@
 package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections.CollectionUtils;
@@ -79,14 +77,6 @@ public class TaskRouter {
         return Optional.ofNullable(node);
     }
 
-    public Optional<TaskNode> skipTaskNode() {
-        if (CollectionUtils.isEmpty(toInvokeTaskNodeList)) {
-            return Optional.empty();
-        }
-        TaskNode node = toInvokeTaskNodeList.pollFirst();
-        return Optional.ofNullable(node);
-    }
-
     public Optional<TaskNode> currentTaskNode() {
         return lastInvokeTaskNode();
     }
@@ -103,47 +93,6 @@ public class TaskRouter {
             return Optional.empty();
         }
         return Optional.ofNullable(toInvokeTaskNodeList.peekFirst());
-    }
-
-    public Optional<TaskNode> next2TaskNode() {
-        if (CollectionUtils.isEmpty(toInvokeTaskNodeList) || toInvokeTaskNodeList.size() < 2) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(toInvokeTaskNodeList.get(1));
-    }
-
-    public Optional<TaskNode> nextTaskNodeIgnoreTimeSlot() {
-        Optional<TaskNode> nextRouteNodeOptional = this.nextTaskNode();
-        if (nextRouteNodeOptional.isPresent() && nextRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
-            nextRouteNodeOptional = this.next2TaskNode();
-        }
-        nextRouteNodeOptional.ifPresent(routeNode -> AssertUtil.isTrue(routeNode.getEventGroupTypeEnum() != ComponentTypeEnum.TIME_SLOT,
-                ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED));
-        return nextRouteNodeOptional;
-    }
-
-    public Optional<TaskNode> beforeInvokeTaskNode() {
-        if (CollectionUtils.isEmpty(alreadyInvokeTaskNodeList) || alreadyInvokeTaskNodeList.size() <= 1) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(alreadyInvokeTaskNodeList.get(alreadyInvokeTaskNodeList.size() - 2));
-    }
-
-    public Optional<TaskNode> before2InvokeTaskNode() {
-        if (CollectionUtils.isEmpty(alreadyInvokeTaskNodeList) || alreadyInvokeTaskNodeList.size() <= 2) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(alreadyInvokeTaskNodeList.get(alreadyInvokeTaskNodeList.size() - 3));
-    }
-
-    public Optional<TaskNode> beforeInvokeTaskNodeIgnoreTimeSlot() {
-        Optional<TaskNode> beforeInvokeRouteNodeOptional = this.beforeInvokeTaskNode();
-        if (beforeInvokeRouteNodeOptional.isPresent() && beforeInvokeRouteNodeOptional.get().getEventGroupTypeEnum() == ComponentTypeEnum.TIME_SLOT) {
-            beforeInvokeRouteNodeOptional = this.before2InvokeTaskNode();
-        }
-        beforeInvokeRouteNodeOptional.ifPresent(routeNode -> AssertUtil.isTrue(routeNode.getEventGroupTypeEnum() != ComponentTypeEnum.TIME_SLOT,
-                ExceptionEnum.TIME_SLOT_SUPERIMPOSED_EXECUTED));
-        return beforeInvokeRouteNodeOptional;
     }
 
     public StoryBus getStoryBus() {

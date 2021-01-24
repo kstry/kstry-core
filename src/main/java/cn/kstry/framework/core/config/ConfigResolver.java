@@ -17,7 +17,6 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.route.RequestMappingGroup;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.engine.EventGroup;
 import cn.kstry.framework.core.enums.CalculatorEnum;
@@ -25,10 +24,7 @@ import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.StrategyRule;
-import cn.kstry.framework.core.route.TaskNode;
-import cn.kstry.framework.core.route.TimeSlotEventNode;
+import cn.kstry.framework.core.route.*;
 import cn.kstry.framework.core.timeslot.TimeSlotOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -441,10 +437,6 @@ public class ConfigResolver {
 
         public void setFilterStoryName(String filterStoryName) {
             this.filterStoryName = filterStoryName;
-        }
-
-        public TaskNode getGlobalTimeSlotTaskNode() {
-            return globalTimeSlotTaskNode;
         }
 
         public void setGlobalTimeSlotTaskNode(TaskNode globalTimeSlotTaskNode) {

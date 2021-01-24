@@ -17,13 +17,12 @@
  */
 package cn.kstry.framework.core.bus;
 
-import cn.kstry.framework.core.route.RequestMappingGroup;
 import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.facade.DynamicRouteTable;
 import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
+import cn.kstry.framework.core.route.RequestMappingGroup;
 import cn.kstry.framework.core.route.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.route.TimeSlotEventNode;
@@ -64,11 +63,6 @@ public class StoryBus {
      */
     private final Map<String, Object> globalParamAndResult = new ConcurrentHashMap<>();
 
-    /**
-     * 动态路由表
-     */
-    private DynamicRouteTable dynamicRouteTable;
-
     public StoryBus(Object request) {
         // 初始化全局参数
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_REQUEST_KEY.identity(), (request == null) ? new HashMap<String, Object>() : request);
@@ -104,15 +98,6 @@ public class StoryBus {
 
     public TaskRouter getRouter() {
         return router;
-    }
-
-    public DynamicRouteTable getDynamicRouteTable() {
-        return dynamicRouteTable;
-    }
-
-    public void setDynamicRouteTable(DynamicRouteTable dynamicRouteTable) {
-//        AssertUtil.isNull(this.dynamicRouteTable, ExceptionEnum.DYNAMIC_ROUTING_TABLES_ERROR);
-        this.dynamicRouteTable = dynamicRouteTable;
     }
 
     public void loadTaskRequest(TaskRequest innerTaskRequest, RequestMappingGroup requestMappingGroup) {

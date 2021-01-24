@@ -45,7 +45,6 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
         StoryBus storyBus = request.getStoryBus();
         TaskRouter taskRouter = storyBus.getRouter();
         List<EventGroup> taskGroup = request.getTaskGroup();
-
         try {
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
                 TaskNode taskNode = nodeOptional.get();
@@ -57,7 +56,7 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
                 Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
 
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
-//                TaskActionUtil.reRouteNodeMap(taskRouter);
+                TaskActionUtil.reRouteNodeMap(taskRouter);
             }
 
             Map<String, Object> resultData = new HashMap<>();
