@@ -1,14 +1,12 @@
 package cn.kstry.framework.test.demo.goods.facade;
 
-import cn.kstry.framework.core.facade.TaskRequest;
-
 import java.util.List;
 
 /**
  *
  * @author lykan
  */
-public class GetGoodsRequest implements TaskRequest {
+public class GetGoodsRequest {
 
     /**
      *

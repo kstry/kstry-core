@@ -1,8 +1,6 @@
 package cn.kstry.framework.test.demo.goods.facade;
 
-import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.test.demo.goods.entity.Goods;
-import cn.kstry.framework.test.demo.goods.entity.User;
 
 import java.util.List;
 
@@ -10,7 +8,7 @@ import java.util.List;
  *
  * @author lykan
  */
-public class ImmediatelyDiscountRequest implements TaskRequest {
+public class ImmediatelyDiscountRequest {
 
     private List<Goods> goodsList;
 

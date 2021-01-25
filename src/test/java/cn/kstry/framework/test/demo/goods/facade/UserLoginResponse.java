@@ -1,5 +1,6 @@
 package cn.kstry.framework.test.demo.goods.facade;
 
+import cn.kstry.framework.core.annotation.NoticeStableField;
 import cn.kstry.framework.test.demo.goods.entity.User;
 
 /**
@@ -8,6 +9,7 @@ import cn.kstry.framework.test.demo.goods.entity.User;
  */
 public class UserLoginResponse {
 
+    @NoticeStableField(name = "user")
     private User user;
 
     public User getUser() {

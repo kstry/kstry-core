@@ -1,6 +1,8 @@
 package cn.kstry.framework.test.demo.goods.event.impl;
 
 import cn.kstry.framework.core.annotation.EventGroupComponent;
+import cn.kstry.framework.core.facade.NoticeBusTaskResponse;
+import cn.kstry.framework.core.facade.NoticeBusTaskResponseBox;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -15,6 +17,7 @@ import cn.kstry.framework.test.demo.goods.role.AuthenticationRole;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +31,7 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
     protected final List<User> userList = Lists.newArrayList(new User(1L, "张三", 10000), new User(2L, "李四", 10000));
 
     @Override
-    public TaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest) {
+    public NoticeBusTaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest) {
 
         List<User> collect = userList.stream().filter(user -> user.getUserId().equals(userLoginRequest.getUserId())).collect(Collectors.toList());
         AssertUtil.oneSize(collect);
@@ -37,8 +40,13 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
 
         UserLoginResponse response = new UserLoginResponse();
         response.setUser(user);
-        System.out.println("userLogin ->"+ JSON.toJSONString(user));
-        return TaskResponseBox.buildSuccess(response);
+        System.out.println("userLogin ->" + JSON.toJSONString(user));
+
+        NoticeBusTaskResponse<UserLoginResponse> responseBox = NoticeBusTaskResponseBox.buildSuccess(response);
+        responseBox.addStableDataMap(new HashMap<String, Object>() {{
+            put("user", user);
+        }});
+        return responseBox;
     }
 
     @Override

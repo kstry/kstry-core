@@ -1,5 +1,6 @@
 package cn.kstry.framework.test.demo.goods.event;
 
+import cn.kstry.framework.core.facade.NoticeBusTaskResponse;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.test.demo.goods.facade.AuthRequest;
 import cn.kstry.framework.test.demo.goods.facade.AuthResponse;
@@ -13,7 +14,7 @@ import cn.kstry.framework.test.demo.goods.facade.UserLoginResponse;
  */
 public interface AuthenticationEventGroup {
 
-    TaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest);
+    NoticeBusTaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest);
 
     TaskResponse<AuthResponse> auth(AuthRequest authRequest);
 }
