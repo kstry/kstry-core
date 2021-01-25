@@ -15,13 +15,33 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.facade;
+package cn.kstry.framework.core.engine.timeslot;
+
+import cn.kstry.framework.core.facade.TaskResponse;
+import cn.kstry.framework.core.operator.EventOperatorRole;
+
+import java.util.Map;
 
 /**
- * 路由表
- *
  * @author lykan
  */
-public interface DynamicRouteTable {
+public interface TimeSlotOperatorRole extends EventOperatorRole {
 
+    /**
+     * time slot task name
+     */
+    String TIME_SLOT_TASK_NAME = "KSTRY_TIME_SLOT";
+
+    /**
+     * time slot task action name
+     */
+    String TIME_SLOT_TASK_ACTION_NAME = "invoke";
+
+    /**
+     * 时间片执行入口
+     *
+     * @param request 第一个task 的 request
+     * @return 最后一个 task的返回结果
+     */
+    TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request);
 }

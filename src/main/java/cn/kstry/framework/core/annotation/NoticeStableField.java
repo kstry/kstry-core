@@ -15,33 +15,25 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.timeslot;
+package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.operator.EventOperatorRole;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.Map;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ *
  * @author lykan
  */
-public interface TimeSlotOperatorRole extends EventOperatorRole {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+public @interface NoticeStableField {
 
     /**
-     * time slot task name
+     * 字段名称
      */
-    String TIME_SLOT_TASK_NAME = "KSTRY_TIME_SLOT";
-
-    /**
-     * time slot task action name
-     */
-    String TIME_SLOT_TASK_ACTION_NAME = "invoke";
-
-    /**
-     * 时间片执行入口
-     *
-     * @param request 第一个task 的 request
-     * @return 最后一个 task的返回结果
-     */
-    TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request);
+    String name() default StringUtils.EMPTY;
 }

@@ -92,9 +92,8 @@ public interface TaskResponse<T> extends Serializable {
     T getResult();
 
     /**
-     * 获取 Task 执行任务结果
+     * 设置 Task 执行任务结果
      *
-     * @return Task 执行任务结果
      */
     void setResult(T result);
 }

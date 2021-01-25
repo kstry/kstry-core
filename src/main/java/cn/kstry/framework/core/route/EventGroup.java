@@ -16,14 +16,18 @@
  *
  */
 
-package cn.kstry.framework.core.engine;
+package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
-import cn.kstry.framework.core.route.TaskRouter;
 
 /**
  * 定义一组相关的 Event
+ *
+ * 正确 EventNode 的定义规则
+ *  - 类实现 EventGroup 接口，或 使用 @EventGroupComponent 注解
+ *  - 方法入参：无参数或者仅有一个参数
+ *  - 方法出参：void 或者 实现了 TaskResponse 接口的类
  *
  * @author lykan
  */

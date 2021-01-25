@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.operator;
 
 import cn.kstry.framework.core.annotation.StoryEnginePropertyRegister;
-import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.util.AssertUtil;
 

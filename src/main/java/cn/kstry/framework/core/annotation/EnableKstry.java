@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.timeslot.TimeSlotEngine;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEngine;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;

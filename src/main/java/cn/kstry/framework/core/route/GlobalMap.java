@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.engine.StoryBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -37,17 +37,19 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class GlobalMap {
 
     /**
-     * 整个业务地图的始发点列表
+     * 整个业务地图的始发点列表集
      */
     private final Map<String, List<EventNode>> firstEventNodes = new HashMap<>();
 
+    /**
+     * 控制 firstEventNodes 的 读写锁
+     */
     private final ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
 
     public void addFirstEventNode(String actionName, List<EventNode> eventNodeList) {
 
         AssertUtil.notEmpty(eventNodeList);
         AssertUtil.notBlank(actionName);
-
         ReentrantReadWriteLock.WriteLock writeLock = reentrantReadWriteLock.writeLock();
         writeLock.lock();
         try {
@@ -74,10 +76,10 @@ public class GlobalMap {
         readLock.lock();
         try {
             AssertUtil.notNull(storyBus);
-            AssertUtil.notBlank(storyName, ExceptionEnum.PARAMS_ERROR, "storyName not allowed to be empty!");
+            AssertUtil.notBlank(storyName, ExceptionEnum.STORY_NAME_NOT_VALID, "storyName not allowed to be empty!");
 
             List<EventNode> eventNodeList = firstEventNodes.get(storyName);
-            AssertUtil.notEmpty(eventNodeList, ExceptionEnum.PARAMS_ERROR, "Unable to match to an executable story! storyName:%s", storyName);
+            AssertUtil.notEmpty(eventNodeList, ExceptionEnum.STORY_NAME_NOT_VALID, "Unable to match to an executable story! storyName:%s", storyName);
             return TaskActionUtil.locateInvokeEventNode(storyBus, eventNodeList);
         } finally {
             readLock.unlock();

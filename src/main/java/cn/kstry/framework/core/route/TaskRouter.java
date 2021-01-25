@@ -17,8 +17,11 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.engine.StoryBus;
+import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.TaskActionUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections.CollectionUtils;
 
@@ -30,7 +33,7 @@ public class TaskRouter {
     /**
      * 调用链
      */
-    private final LinkedList<TaskNode> toInvokeTaskNodeList = new LinkedList<>();
+    private TaskNode nextInvokeTaskNode;
 
     /**
      * 已执行的调用链
@@ -42,39 +45,35 @@ public class TaskRouter {
      */
     private final StoryBus storyBus;
 
+    public StoryBus getStoryBus() {
+        return storyBus;
+    }
+
     public TaskRouter(EventNode firstEventNode, StoryBus storyBus) {
         AssertUtil.notNull(storyBus);
         AssertUtil.notNull(firstEventNode);
         this.storyBus = storyBus;
-        toInvokeTaskNodeList.offerFirst(firstEventNode.getTaskNode());
-
-        for (Optional<EventNode> eventNodeOptional = firstEventNode.locateNextEventNode(); eventNodeOptional.isPresent(); eventNodeOptional =
-                eventNodeOptional.get().locateNextEventNode()) {
-            toInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
-        }
+        this.nextInvokeTaskNode = firstEventNode.getTaskNode();
         storyBus.setRouter(this);
     }
 
-    public void reTaskNodeMap(TaskNode nextNode) {
-        AssertUtil.notNull(nextNode);
-
-        LinkedList<TaskNode> reToInvokeTaskNodeList = new LinkedList<>();
-        reToInvokeTaskNodeList.offerFirst(nextNode);
-        for (Optional<EventNode> eventNodeOptional = nextNode.getEventNode().locateNextEventNode(); eventNodeOptional.isPresent();
-             eventNodeOptional = eventNodeOptional.get().locateNextEventNode()) {
-            reToInvokeTaskNodeList.offer(eventNodeOptional.get().getTaskNode());
-        }
-        toInvokeTaskNodeList.clear();
-        toInvokeTaskNodeList.addAll(reToInvokeTaskNodeList);
-    }
-
     public Optional<TaskNode> invokeTaskNode() {
-        if (CollectionUtils.isEmpty(toInvokeTaskNodeList)) {
+        AssertUtil.notNull(getStoryBus());
+        if (this.nextInvokeTaskNode == null) {
             return Optional.empty();
         }
-        TaskNode node = toInvokeTaskNodeList.pollFirst();
-        alreadyInvokeTaskNodeList.offerLast(node);
-        return Optional.ofNullable(node);
+
+        TaskNode node = this.nextInvokeTaskNode;
+        this.alreadyInvokeTaskNodeList.offerLast(node);
+
+        // 路由下一待执行节点
+        locateNextTaskNode();
+
+        // 判断是否需要跳过当前节点
+        if (needSkipCurrentNode(node, getStoryBus())) {
+            invokeTaskNode();
+        }
+        return currentTaskNode();
     }
 
     public Optional<TaskNode> currentTaskNode() {
@@ -82,26 +81,42 @@ public class TaskRouter {
     }
 
     public Optional<TaskNode> lastInvokeTaskNode() {
-        if (CollectionUtils.isEmpty(alreadyInvokeTaskNodeList)) {
+        if (CollectionUtils.isEmpty(this.alreadyInvokeTaskNodeList)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(alreadyInvokeTaskNodeList.peekLast());
+        return Optional.ofNullable(this.alreadyInvokeTaskNodeList.peekLast());
     }
 
-    public Optional<TaskNode> nextTaskNode() {
-        if (CollectionUtils.isEmpty(toInvokeTaskNodeList)) {
-            return Optional.empty();
+    private void locateNextTaskNode() {
+        if (!currentTaskNode().isPresent()) {
+            this.nextInvokeTaskNode = null;
+            return;
         }
-        return Optional.ofNullable(toInvokeTaskNodeList.peekFirst());
+        EventNode currentEventNode = GlobalUtil.notNull(currentTaskNode().get().getEventNode());
+        if (CollectionUtils.isEmpty(currentEventNode.getNextEventNodeList())) {
+            this.nextInvokeTaskNode = null;
+            return;
+        }
+        if (currentEventNode.getNextEventNodeList().size() == 1) {
+            this.nextInvokeTaskNode = GlobalUtil.notNull(currentEventNode.getNextEventNodeList().get(0).getTaskNode());
+            return;
+        }
+        EventNode nextNode = TaskActionUtil.locateInvokeEventNode(getStoryBus(), currentEventNode.getNextEventNodeList());
+        AssertUtil.notNull(nextNode);
+        this.nextInvokeTaskNode = nextNode.getTaskNode();
     }
 
-    public StoryBus getStoryBus() {
-        return storyBus;
+    private boolean needSkipCurrentNode(TaskNode taskNode, StoryBus storyBus) {
+
+        AssertUtil.anyNotNull(taskNode, storyBus);
+        if (CollectionUtils.isEmpty(taskNode.getFilterStrategyRuleList())) {
+            return false;
+        }
+        return !TaskActionUtil.matchStrategyRule(taskNode.getFilterStrategyRuleList(), storyBus);
     }
 
     @Override
     public String toString() {
         return JSON.toJSONString(currentTaskNode().map(TaskNode::getEventGroupName).orElse("INIT"));
     }
-
 }

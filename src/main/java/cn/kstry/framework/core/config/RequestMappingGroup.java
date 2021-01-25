@@ -15,7 +15,7 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.route;
+package cn.kstry.framework.core.config;
 
 import java.util.List;
 

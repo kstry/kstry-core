@@ -57,4 +57,9 @@ public interface GlobalConstant {
      * 配置文件中 同一字符串中 类型分隔符 标志
      */
     String DISTINCT_SIGN = "-";
+
+    /**
+     * Story 执行成功后的 code
+     */
+    String STORY_SUCCESS_CODE = "200";
 }

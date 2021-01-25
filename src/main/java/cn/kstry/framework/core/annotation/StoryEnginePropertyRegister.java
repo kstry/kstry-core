@@ -18,14 +18,14 @@
 package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.config.ConfigResolver;
-import cn.kstry.framework.core.engine.EventGroup;
-import cn.kstry.framework.core.route.TaskActionMethod;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.GlobalMap;
 import cn.kstry.framework.core.route.RouteEventGroup;
+import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Lists;
@@ -77,9 +77,6 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         long actionCount = eventGroupList.stream().map(a -> a.getEventGroupName() + "-" + a.getEventGroupTypeEnum()).distinct().count();
         AssertUtil.equals((long) eventGroupList.size(), actionCount, ExceptionEnum.TASK_IDENTIFY_DUPLICATE_DEFINITION);
-
-        // 初始化 TaskActionMethod 信息
-        eventGroupList.stream().map(g -> (RouteEventGroup) g).forEach(RouteEventGroup::getActionMethodMap);
         return eventGroupList;
     }
 
@@ -88,10 +85,10 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         Map<String, ConfigResolver> configResolverMap = applicationContext.getBeansOfType(ConfigResolver.class);
         AssertUtil.notEmpty(configResolverMap);
-
-        GlobalMap globalMap = new GlobalMap();
+        AssertUtil.oneSize(configResolverMap.values(), ExceptionEnum.INVALID_SYSTEM_PARAMS, "ConfigResolver cannot be repeatedly defined!");
         ConfigResolver configResolver = configResolverMap.values().iterator().next();
 
+        GlobalMap globalMap = new GlobalMap();
         Map<String, List<EventNode>> storyEventNode = configResolver.getStoryEventNode(eventGroupList, EnableKstryRegister.getKstryConfigPath());
         if (MapUtils.isEmpty(storyEventNode)) {
             return globalMap;

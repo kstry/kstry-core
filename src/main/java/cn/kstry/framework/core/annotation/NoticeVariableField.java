@@ -15,15 +15,26 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.facade;
+package cn.kstry.framework.core.annotation;
 
-import java.io.Serializable;
+import org.apache.commons.lang3.StringUtils;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Task 入口请求参数
  *
  * @author lykan
  */
-public interface TaskRequest extends Serializable {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+public @interface NoticeVariableField {
 
+    /**
+     * 字段名称
+     */
+    String name() default StringUtils.EMPTY;
 }
+

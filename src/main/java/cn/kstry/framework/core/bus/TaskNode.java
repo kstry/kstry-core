@@ -15,10 +15,13 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.route;
+package cn.kstry.framework.core.bus;
 
+import cn.kstry.framework.core.config.RequestMappingGroup;
+import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.facade.TaskRequest;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.StrategyRule;
 import cn.kstry.framework.core.util.AssertUtil;
 import org.springframework.beans.BeanUtils;
 
@@ -121,7 +124,7 @@ public class TaskNode {
         this.eventNode = eventNode;
     }
 
-    public Class<? extends TaskRequest> getRequestClass() {
+    public Class<?> getRequestClass() {
         if (taskActionMethod == null) {
             return null;
         }

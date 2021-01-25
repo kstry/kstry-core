@@ -15,9 +15,8 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.route;
+package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 
 /**
@@ -35,7 +34,7 @@ public class TaskActionMethod {
     /**
      * 请求参数
      */
-    private Class<? extends TaskRequest> requestClass;
+    private Class<?> requestClass;
 
     /**
      * 返回结果
@@ -55,11 +54,11 @@ public class TaskActionMethod {
         this.methodName = methodName;
     }
 
-    public Class<? extends TaskRequest> getRequestClass() {
+    public Class<?> getRequestClass() {
         return requestClass;
     }
 
-    public void setRequestClass(Class<? extends TaskRequest> requestClass) {
+    public void setRequestClass(Class<?> requestClass) {
         this.requestClass = requestClass;
     }
 

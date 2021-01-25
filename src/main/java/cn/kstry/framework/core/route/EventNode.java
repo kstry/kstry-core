@@ -17,12 +17,12 @@
  */
 package cn.kstry.framework.core.route;
 
+import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.config.RequestMappingGroup;
 import cn.kstry.framework.core.util.AssertUtil;
-import org.apache.commons.collections.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author lykan
@@ -68,14 +68,6 @@ public class EventNode {
         eventNode.setPrevEventNode(this);
     }
 
-    public Optional<EventNode> locateNextEventNode() {
-        if (CollectionUtils.isEmpty(nextEventNodeList)) {
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(nextEventNodeList.get(0));
-    }
-
     public TaskNode getTaskNode() {
         return taskNode;
     }
@@ -90,13 +82,6 @@ public class EventNode {
 
     private void setPrevEventNode(EventNode prevEventNode) {
         this.prevEventNode = prevEventNode;
-    }
-
-    public int nextEventNodeSize() {
-        if (CollectionUtils.isEmpty(this.nextEventNodeList)) {
-            return 0;
-        }
-        return this.nextEventNodeList.size();
     }
 
     public RequestMappingGroup getRequestMappingGroup() {

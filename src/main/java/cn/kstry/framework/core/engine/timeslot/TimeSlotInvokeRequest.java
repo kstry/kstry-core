@@ -15,11 +15,10 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.timeslot;
+package cn.kstry.framework.core.engine.timeslot;
 
-import cn.kstry.framework.core.engine.StoryBus;
-import cn.kstry.framework.core.engine.EventGroup;
-import cn.kstry.framework.core.facade.TaskRequest;
+import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.route.TaskRouter;
 
 import java.util.List;
@@ -29,9 +28,7 @@ import java.util.List;
  *
  * @author lykan
  */
-public class TimeSlotInvokeRequest implements TaskRequest {
-
-    private static final long serialVersionUID = 6960705481098414756L;
+public class TimeSlotInvokeRequest {
 
     /**
      * 需要 time slot 执行的 task group
@@ -47,6 +44,11 @@ public class TimeSlotInvokeRequest implements TaskRequest {
      *
      */
     private TaskRouter taskRouter;
+
+    /**
+     * time slot 执行 story 的 策略名称
+     */
+    private String strategyName;
 
     public List<EventGroup> getTaskGroup() {
         return taskGroup;
@@ -70,5 +72,13 @@ public class TimeSlotInvokeRequest implements TaskRequest {
 
     public void setTaskRouter(TaskRouter taskRouter) {
         this.taskRouter = taskRouter;
+    }
+
+    public String getStrategyName() {
+        return strategyName;
+    }
+
+    public void setStrategyName(String strategyName) {
+        this.strategyName = strategyName;
     }
 }

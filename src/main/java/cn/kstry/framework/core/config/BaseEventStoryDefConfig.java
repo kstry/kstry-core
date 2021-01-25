@@ -29,7 +29,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -71,32 +75,45 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
      *  1. strategy_def 非空时，event_def 必须非空
      *  2. strategy_def 非空时，story_def 必须非空
      *  3. strategy_type 必须存在，并且是 cn.kstry.framework.core.enums.StrategyTypeEnum 枚举中的值
-     *  4. 当 strategy_type=MATCH 时，story 必须存在，且不能被重复定义
-     *  5. 当 strategy_type=FILTER 时，event_node 和 strategy_def 中的 story 只能且必须存在一个
+     *  4. 当 strategy_type=MATCH 时
+     *      - story 必须存在，且不能被重复定义
+     *  5. 当 strategy_type=FILTER 时
+     *      - event_node 和 strategy_def 中的 story 只能且必须存在一个
+     *      - 当 strategy_def.story 出现时，允许出现多个相同的 story 值，不允许出现不同的 strategy_def.story，因为可以 match 多个分支，只能 filter 一个 story
+     *
      *  6. strategy.key：[ 匹配规则（在 CalculatorEnum 中定义）- 字段名称 ]  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculatorEnum
      *     strategy.value  期望值
+     *  7. rule_set 取值规则写法校验同 request_mapping value 校验
      *
      * {
-     * 	"strategy_def": {
-     * 		"STRATEGY_1": [{
-     * 			"story": "update01", // 当 strategy_type=match 时，next_story 不允许为空
-     * 			"strategy_type": "match", // 不允许为空 @see cn.kstry.framework.core.enums.StrategyTypeEnum
-     * 			"strategy": {
-     * 				"equals-source": "2f" // 匹配规则（在 CalculateEnum 中定义）-字段名称  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculateEnum
-     *            }
-     *        }, {
-     * 			"story": "update02",
-     * 			"strategy_type": "match",
-     * 			"strategy": {
-     * 				"equals-source": "3f"
-     *            }
-     *        }, {
-     * 			"strategy_type": "filter",
-     * 			"strategy": {
-     * 				"equals-source": "3f"
-     *            }
-     *        }]
-     *    }
+     *   "strategy_def": {
+     *     "USER_LOGIN": [{
+     *       "story": "doLogin",
+     *       "strategy_type": "FILTER",
+     *       "rule_set": {
+     *         "notNull-@req.userType": "" // 匹配规则（在 CalculateEnum 中定义）-字段取值  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculateEnum
+     *       }
+     *     }],
+     *     "LOGIN_RULE_SET": [{
+     *       "story": "customerLogin",
+     *       "strategy_type": "MATCH",
+     *       "rule_set": {
+     *         "equals-@req.userType": "1"
+     *       }
+     *     }, {
+     *       "story": "userLogin",
+     *       "strategy_type": "MATCH",
+     *       "rule_set": {
+     *         "compare-@req.userType": ">=2L"
+     *       }
+     *     }],
+     *     "IMMEDIATELY_DISCOUNT_S": [{
+     *       "strategy_type": "FILTER",
+     *       "rule_set": {
+     *         "compare-@get_goods.goodsList[0].money": ">500"
+     *       }
+     *     }]
+     *   }
      * }
      */
     @JSONField(name = STRATEGY_DEF)
@@ -105,17 +122,19 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     /**
      * 限制条件：
      *  1. request_mapping_def 非空时，event_def 必须非空
+     *  2. mapping value 规则
+     *      - 必须是  @ 或 $ 开头， @代表从 node 或者 全局变量(req、sta、var) 中取值，$代表从 time_slot 的计算结果中取值
+     *      - 中间以 '.' 字符分隔
      *
      * {
-     * 	"request_mapping_def": {
-     * 		"MAPPING_1": {
-     * 			"count": "DEFAULT['count']",
-     * 			"money": "#data['money']"
-     *        },
-     * 		"MAPPING_2": {
-     * 			"id": "NODE_1['id']"
-     *        }
-     *    }
+     *   "request_mapping_def": {
+     *     "userMapping": {
+     *       "user": "$USER_LOGIN.@user_login_node.user"
+     *     },
+     *     "userTologinMapping": {
+     *       "userType": "@req.userType",
+     *       "userId": "@req.userId"
+     *     }
      * }
      */
     @JSONField(name = REQUEST_MAPPING_DEF)
@@ -253,10 +272,11 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 AssertUtil.isTrue(matchStrategy.size() == matchStrategy.stream().map(StrategyDefItemConfig::getStory).distinct().count(),
                         ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "When `strategy_type=match`, `story` cannot be repeatedly defined!");
             }
-
-            questionFieldNameSet.forEach(fieldName -> AssertUtil.isTrue(config.getStrategyDef().containsKey(fieldName), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                    "Undefined `strategy_def` or `event_def` node! node:%s", fieldName));
         }
+
+        // 校验策略名称是否合法
+        questionFieldNameSet.forEach(fieldName -> AssertUtil.isTrue(config.getStrategyDef().containsKey(fieldName), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                "Undefined `strategy_def` or `event_def` node! node:%s", fieldName));
 
         for (String key : config.getStoryDef().keySet()) {
             StoryDefItem<StoryDefItemConfig> nodeList = config.getStoryDef().get(key);

@@ -17,18 +17,22 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.engine.StoryBus;
-import cn.kstry.framework.core.config.GlobalConstant;
-import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.*;
-import cn.kstry.framework.core.timeslot.TimeSlotEventNode;
-import cn.kstry.framework.core.timeslot.TimeSlotInvokeRequest;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.RouteEventGroup;
+import cn.kstry.framework.core.route.StrategyRule;
+import cn.kstry.framework.core.route.StrategyRuleCalculator;
+import cn.kstry.framework.core.config.TaskActionMethod;
+import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.route.TaskRouter;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotInvokeRequest;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -60,7 +64,8 @@ public class TaskActionUtil {
         TaskNode taskNode = GlobalUtil.notEmpty(router.currentTaskNode());
         if (taskNode.getEventNode() instanceof TimeSlotEventNode) {
             StoryBus timeSlotStoryBus = storyBus.cloneStoryBus();
-            List<EventNode> timeSlotFirstEventNodeList = ((TimeSlotEventNode) taskNode.getEventNode()).getFirstTimeSlotEventNodeList();
+            TimeSlotEventNode currentEventNode = (TimeSlotEventNode) taskNode.getEventNode();
+            List<EventNode> timeSlotFirstEventNodeList = currentEventNode.getFirstTimeSlotEventNodeList();
             AssertUtil.notEmpty(timeSlotFirstEventNodeList);
             EventNode timeSlotEventNode = TaskActionUtil.locateInvokeEventNode(timeSlotStoryBus, timeSlotFirstEventNodeList);
             TaskRouter timeSlotTaskRouter = new TaskRouter(timeSlotEventNode, timeSlotStoryBus);
@@ -68,18 +73,17 @@ public class TaskActionUtil {
             timeSlotInvokeRequest.setTaskGroup(taskGroup);
             timeSlotInvokeRequest.setStoryBus(timeSlotStoryBus);
             timeSlotInvokeRequest.setTaskRouter(timeSlotTaskRouter);
+            timeSlotInvokeRequest.setStrategyName(currentEventNode.getStrategyName());
             return timeSlotInvokeRequest;
         }
 
-        Class<? extends TaskRequest> currentRequestClass = taskNode.getRequestClass();
+        Class<?> currentRequestClass = taskNode.getRequestClass();
         if (currentRequestClass == null) {
             return null;
         }
 
-        EventNode eventNode = taskNode.getEventNode();
-        AssertUtil.notNull(eventNode);
-
-        TaskRequest innerTaskRequest = currentRequestClass.newInstance();
+        EventNode eventNode = GlobalUtil.notNull(taskNode.getEventNode());
+        Object innerTaskRequest = currentRequestClass.newInstance();
         storyBus.loadTaskRequest(innerTaskRequest, eventNode.getRequestMappingGroup());
         return innerTaskRequest;
     }
@@ -115,31 +119,6 @@ public class TaskActionUtil {
         }
         AssertUtil.isTrue(o == null || o instanceof TaskResponse, ExceptionEnum.TASK_RESULT_TYPE_ERROR);
         return o;
-    }
-
-    /**
-     * 给予重新规划接未执行 Task 线路的机会
-     *
-     * @param router router
-     */
-    public static void reRouteNodeMap(TaskRouter router) {
-
-        if (!router.nextTaskNode().isPresent()) {
-            return;
-        }
-
-        TaskNode currentTaskNode = GlobalUtil.notEmpty(router.currentTaskNode());
-        EventNode currentEventNode = GlobalUtil.notNull(currentTaskNode.getEventNode());
-        if (currentEventNode.nextEventNodeSize() == 0) {
-            return;
-        }
-
-        if (currentEventNode.nextEventNodeSize() == 1) {
-            return;
-        }
-
-        EventNode nextEventNode = TaskActionUtil.locateInvokeEventNode(router.getStoryBus(), currentEventNode.getNextEventNodeList());
-        router.reTaskNodeMap(nextEventNode.getTaskNode());
     }
 
     public static TaskActionMethod getTaskActionMethod(List<EventGroup> eventGroupList, TaskNode taskNode) {
@@ -190,7 +169,7 @@ public class TaskActionUtil {
             StrategyRuleCalculator ruleCalculator = rule.getStrategyRuleCalculator();
             AssertUtil.notNull(ruleCalculator);
             AssertUtil.isTrue(ruleCalculator.checkExpected(rule.getExpectedValue()), ExceptionEnum.PARAMS_ERROR);
-            Optional<Object> valueOptional = storyBus.getGlobalParamValue(rule.getFieldName().replace(GlobalConstant.NODE_SIGN, StringUtils.EMPTY));
+            Optional<Object> valueOptional = storyBus.getGlobalParamValue(rule.getFieldName());
             return ruleCalculator.calculate(valueOptional.orElse(null), rule.getExpectedValue());
         });
     }
@@ -222,14 +201,5 @@ public class TaskActionUtil {
                 .collect(Collectors.toList());
         AssertUtil.oneSize(taskNodeCollect, ExceptionEnum.MUST_ONE_TASK_ACTION);
         return taskNodeCollect.get(0);
-    }
-
-    public static boolean checkIfSkipCurrentNode(TaskNode taskNode, StoryBus storyBus) {
-
-        AssertUtil.anyNotNull(taskNode, storyBus);
-        if (CollectionUtils.isEmpty(taskNode.getFilterStrategyRuleList())) {
-            return false;
-        }
-        return !matchStrategyRule(taskNode.getFilterStrategyRuleList(), storyBus);
     }
 }

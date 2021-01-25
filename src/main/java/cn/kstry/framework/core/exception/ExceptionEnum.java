@@ -76,6 +76,11 @@ public enum ExceptionEnum {
      */
     OBJ_MUST_EMPTY(ComponentTypeEnum.GLOBAL, "0010", "Objects are not allowed to exist!"),
 
+    /**
+     * [K1010011] 返回结果错误
+     */
+    RESPONSE_ERROR(ComponentTypeEnum.GLOBAL, "0011", "response error!"),
+
     ///////////////////////////////////////////////// Global END /////////////////////////////////////////////////
 
     /**
@@ -103,19 +108,24 @@ public enum ExceptionEnum {
      */
     TASK_RESULT_TYPE_ERROR(ComponentTypeEnum.TASK, "0005", "The result of Task execution must be TaskResponse or its subclass, or null!"),
 
+    /**
+     * [K1020006] 不可变集合中已存在的值不允许被重复设置
+     */
+    IMMUTABLE_SET_UPDATE(ComponentTypeEnum.TASK, "0006", "Values that already exist in the immutable set are not allowed to be set repeatedly!"),
+
     ///////////////////////////////////////////////// Task END /////////////////////////////////////////////////
 
     /**
-     * [K1030001] TIME_SLOT 只能执行完一个之后再执行另一个，不能叠加出现
+     * [K1030001] time slot 执行期间发生错误
      */
-    TIME_SLOT_SUPERIMPOSED_EXECUTED(ComponentTypeEnum.TIME_SLOT, "0001", "TIME_SLOT cannot be superimposed to be executed!"),
+    TIME_SLOT_EXECUTION_ERROR(ComponentTypeEnum.TIME_SLOT, "0001", "Time slot task An error occurred during execution!"),
 
     ///////////////////////////////////////////////// TimeSlot END /////////////////////////////////////////////////
 
     /**
-     * [K1040001] 无效的定位行为
+     * [K1040001] story name 非法
      */
-    INVALID_POSITIONING_BEHAVIOR(ComponentTypeEnum.STORY, "0001", "Invalid positioning behavior!"),
+    STORY_NAME_NOT_VALID(ComponentTypeEnum.STORY, "0001", "Story name not valid!"),
 
     ///////////////////////////////////////////////// Story END /////////////////////////////////////////////////
     ;

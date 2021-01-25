@@ -15,24 +15,25 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.facade;
+package cn.kstry.framework.core.annotation;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * 具备重新规划接下来待执行 Task 链路的能力
  *
  * @author lykan
  */
-public interface RouteMapResponse<T> extends TaskPipelinePort<T> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+public @interface NoticeStableVariableField {
 
     /**
-     * 更新路由表
+     * 字段名称
      */
-    void updateTaskRouterTable(DynamicRouteTable dynamicRouteTable);
-
-    /**
-     * 获取动态路由表
-     *
-     * @return 动态路由表
-     */
-    DynamicRouteTable getTaskRouterTable();
+    String name() default StringUtils.EMPTY;
 }

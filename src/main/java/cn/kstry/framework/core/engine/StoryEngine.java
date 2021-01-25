@@ -17,13 +17,17 @@
  */
 package cn.kstry.framework.core.engine;
 
+import cn.kstry.framework.core.bus.BusDataBox;
+import cn.kstry.framework.core.bus.DefaultDataBox;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.GlobalMap;
-import cn.kstry.framework.core.route.TaskNode;
+import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -48,22 +52,21 @@ public class StoryEngine {
     /**
      * story fire!
      *
-     * @param request     request
-     * @param storyName      指令
+     * @param request           request
+     * @param storyName         指令
+     * @param stableDataBox     不可变数据集承载对象
+     * @param variableDataBox   可变数据集承载对象
+     * @param resultClass       预期结果类型
      */
     @SuppressWarnings("unchecked")
-    public <T> TaskResponse<T> fire(Object request, String storyName, Class<T> resultClass) {
-
-        StoryBus storyBus = new StoryBus(request);
+    public <T> TaskResponse<T> fire(Object request, String storyName, BusDataBox stableDataBox, BusDataBox variableDataBox, Class<T> resultClass) {
+        StoryBus storyBus = new StoryBus(request, stableDataBox, variableDataBox);
         EventNode firstEventNode = this.globalMap.locateFirstEventNode(storyBus, storyName);
         TaskRouter taskRouter = new TaskRouter(firstEventNode, storyBus);
         try {
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
 
                 TaskNode taskNode = nodeOptional.get();
-                if (TaskActionUtil.checkIfSkipCurrentNode(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), storyBus)) {
-                    continue;
-                }
                 EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, this.taskGroup);
                 Object taskRequest = TaskActionUtil.getNextRequest(taskRouter, storyBus, taskGroup);
                 Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
@@ -73,18 +76,41 @@ public class StoryEngine {
                 }
 
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
-                TaskActionUtil.reRouteNodeMap(taskRouter);
             }
 
             Object result = storyBus.getResultByTaskNode(GlobalUtil.notEmpty(taskRouter.lastInvokeTaskNode()));
             if (result == null) {
-                return null;
+                return TaskResponseBox.buildSuccess(null);
             }
-            AssertUtil.isTrue(resultClass.isAssignableFrom(result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
+            AssertUtil.isTrue(resultClass.isAssignableFrom(result.getClass()), ExceptionEnum.RESPONSE_ERROR,
+                    "The result type of the final execution does not match the expected type! real result type:%s", result.getClass());
             return (TaskResponse<T>) TaskResponseBox.buildSuccess(result);
         } catch (Exception e) {
             TaskActionUtil.throwException(e);
             return null;
         }
+    }
+
+    /**
+     * story fire!
+     *
+     * @param request           request
+     * @param storyName         指令
+     * @param resultClass       预期结果类型
+     */
+    public <T> TaskResponse<T> fire(Object request, String storyName, Class<T> resultClass) {
+        return fire(request, storyName, new DefaultDataBox(), resultClass);
+    }
+
+    /**
+     * story fire!
+     *
+     * @param request           request
+     * @param storyName         指令(story Name)
+     * @param stableDataBox     不可变数据集承载对象
+     * @param resultClass       预期结果类型
+     */
+    public <T> TaskResponse<T> fire(Object request, String storyName, BusDataBox stableDataBox, Class<T> resultClass) {
+        return fire(request, storyName, stableDataBox, new DefaultDataBox(), resultClass);
     }
 }

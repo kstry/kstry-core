@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.facade;
 
+import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.util.AssertUtil;
 
 /**
@@ -72,7 +73,7 @@ public class TaskResponseBox<T> implements TaskResponse<T> {
 
     @Override
     public void resultSuccess() {
-        resultSuccess("200");
+        resultSuccess(GlobalConstant.STORY_SUCCESS_CODE);
     }
 
     @Override

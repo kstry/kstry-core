@@ -15,19 +15,22 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.timeslot;
+package cn.kstry.framework.core.engine.timeslot;
 
-import cn.kstry.framework.core.engine.StoryBus;
-import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.route.TaskNode;
+import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +42,10 @@ import java.util.Optional;
  */
 public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorRole {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimeSlotEngine.class);
+
     @Override
+    @SuppressWarnings("unchecked")
     public TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request) {
 
         StoryBus storyBus = request.getStoryBus();
@@ -47,22 +53,22 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
         List<EventGroup> taskGroup = request.getTaskGroup();
         try {
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
-                TaskNode taskNode = nodeOptional.get();
-                if (TaskActionUtil.checkIfSkipCurrentNode(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), storyBus)) {
-                    continue;
-                }
+
                 EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
                 Object taskRequest = TaskActionUtil.getNextRequest(taskRouter, storyBus, taskGroup);
-                Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
+                Object o = TaskActionUtil.invokeTarget(taskRequest, nodeOptional.get(), actionOperator);
 
+                if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
+                    return (TaskResponse<Map<String, Object>>) o;
+                }
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
-                TaskActionUtil.reRouteNodeMap(taskRouter);
             }
 
             Map<String, Object> resultData = new HashMap<>();
             storyBus.loadResultData(resultData);
             return TaskResponseBox.buildSuccess(resultData);
         } catch (Exception e) {
+            LOGGER.error("[{}] time slot execution Failure! strategy name:[{}]", ExceptionEnum.TIME_SLOT_EXECUTION_ERROR.getExceptionCode(), request.getStrategyName(), e);
             TaskActionUtil.throwException(e);
             return null;
         }

@@ -18,10 +18,10 @@
 package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.annotation.EventGroupComponent;
-import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.facade.TaskRequest;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -96,18 +96,15 @@ public abstract class RouteEventGroup implements EventGroup {
                 continue;
             }
 
-            Class<? extends TaskRequest> requestClass = null;
+            Class<?> requestClass = null;
             Class<?>[] parameterTypes = method.getParameterTypes();
 
-            // 入参要求：如果有参数，要求只有一个，并且实现 TaskRequest
+            // 入参要求：如果有参数，要求只有一个
             if (ArrayUtils.isNotEmpty(parameterTypes)) {
                 if (parameterTypes.length != 1) {
                     continue;
                 }
-                if (!TaskRequest.class.isAssignableFrom(parameterTypes[0])) {
-                    continue;
-                }
-                requestClass = (Class<? extends TaskRequest>) parameterTypes[0];
+                requestClass = parameterTypes[0];
             }
 
             // 出参要求：无参 或 实现 TaskResponse

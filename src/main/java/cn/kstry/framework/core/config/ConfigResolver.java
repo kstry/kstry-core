@@ -17,16 +17,18 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.engine.StoryBus;
-import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.route.*;
-import cn.kstry.framework.core.timeslot.TimeSlotEventNode;
-import cn.kstry.framework.core.timeslot.TimeSlotOperatorRole;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.StrategyRule;
+import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -36,7 +38,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -139,7 +145,9 @@ public class ConfigResolver {
             }
             storyNodeAdaptorMap.put(key, eventNodeAdapterList);
         });
-
+        if (MapUtils.isEmpty(storyNodeAdaptorMap)) {
+            return storyNodeMap;
+        }
         storyNodeAdaptorMap.forEach((k, v) -> {
             AssertUtil.notEmpty(v);
             storyNodeMap.put(k, initEventNodePipeline(0, storyNodeAdaptorMap, v));
@@ -147,12 +155,13 @@ public class ConfigResolver {
         return storyNodeMap;
     }
 
-    private List<EventNode> initEventNodePipeline(int invokeLevel, Map<String, List<TaskNodeAgentForConfigResolver>> storyNodeAdaptorMap, List<TaskNodeAgentForConfigResolver> v) {
+    private List<EventNode> initEventNodePipeline(int invokeLevel, Map<String, List<TaskNodeAgentForConfigResolver>> storyNodeAdaptorMap,
+                                                  List<TaskNodeAgentForConfigResolver> eventNodeList) {
 
         List<EventNode> firstEventNodeList = new ArrayList<>();
 
         LinkedList<ParseStoryNodeTaskItem> taskStack = new LinkedList<>();
-        taskStack.push(new ParseStoryNodeTaskItem(v, null, null));
+        taskStack.push(new ParseStoryNodeTaskItem(eventNodeList, null, null));
         for (ParseStoryNodeTaskItem taskItem = taskStack.poll(); taskItem != null && CollectionUtils.isNotEmpty(taskItem.getNodeDefQueue()); taskItem = taskStack.poll()) {
 
             EventNode beforeEventNode = taskItem.getBeforeEventNode();
@@ -164,8 +173,8 @@ public class ConfigResolver {
             for (TaskNodeAgentForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
                 if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap()) || nodeAgent.getTaskNode() != null || StringUtils.isNotBlank(nodeAgent.getFilterStoryName())) {
                     EventNode eventNode = nodeAgent.buildEventNode();
-
-                    List<TaskNodeAgentForConfigResolver> taskNodeAgentList = storyNodeAdaptorMap.get(nodeAgent.getFilterStoryName());
+                    List<TaskNodeAgentForConfigResolver> taskNodeAgentList =
+                            StringUtils.isBlank(nodeAgent.getFilterStoryName()) ? null : storyNodeAdaptorMap.get(nodeAgent.getFilterStoryName());
                     if (eventNode instanceof TimeSlotEventNode && CollectionUtils.isNotEmpty(taskNodeAgentList)) {
                         List<EventNode> filterStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
                         ((TimeSlotEventNode) eventNode).setFirstTimeSlotEventNodeList(filterStoryEventNodeList);
@@ -196,8 +205,8 @@ public class ConfigResolver {
                 }
 
                 EventNode finalBeforeEventNode = beforeEventNode;
-                Map<String, List<StrategyRule>> nextInflectionPointMap = nodeAgent.getMatchStrategyRuleMap();
-                nextInflectionPointMap.forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), finalBeforeEventNode, vIn)));
+                Map<String, List<StrategyRule>> nextMatchStrategyRuleMap = nodeAgent.getMatchStrategyRuleMap();
+                nextMatchStrategyRuleMap.forEach((kIn, vIn) -> taskStack.push(new ParseStoryNodeTaskItem(storyNodeAdaptorMap.get(kIn), finalBeforeEventNode, vIn)));
                 break;
             }
         }
@@ -463,6 +472,7 @@ public class ConfigResolver {
 
         public ParseStoryNodeTaskItem(List<TaskNodeAgentForConfigResolver> nodeDefQueue, EventNode beforeEventNode,
                                       List<StrategyRule> strategyRuleList) {
+            AssertUtil.notEmpty(nodeDefQueue);
             this.nodeDefQueue = nodeDefQueue;
             this.beforeEventNode = beforeEventNode;
             this.strategyRuleList = strategyRuleList;

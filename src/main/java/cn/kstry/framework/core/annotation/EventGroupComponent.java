@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.engine.EventGroup;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import org.springframework.stereotype.Component;
@@ -29,7 +29,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 实现 cn.kstry.framework.core.engine.EventGroup 定义的功能
+ * 实现 cn.kstry.framework.core.route.EventGroup 定义的功能
+ *
+ * 正确 EventNode 的定义规则
+ *  - 类实现 EventGroup 接口，或 使用 @EventGroupComponent 注解
+ *  - 方法入参：无参数或者仅有一个参数
+ *  - 方法出参：void 或者 实现了 TaskResponse 接口的类
  *
  * @author lykan
  * @see EventGroup
