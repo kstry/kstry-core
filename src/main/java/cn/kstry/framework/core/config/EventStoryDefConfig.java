@@ -154,6 +154,19 @@ public interface EventStoryDefConfig {
         @JSONField(name = "rule_set")
         private Map<String, String> ruleSet;
 
+        /**
+         * 异步任务的超时时间，单位 ms
+         * 默认值：cn.kstry.framework.core.config.GlobalConstant#DEFAULT_ASYNC_TIMEOUT
+         */
+        @JSONField(name = "timeout")
+        private Integer timeout;
+
+        /**
+         * true: 代表使用异步任务
+         */
+        @JSONField(name = "async")
+        private Boolean async;
+
         public String getStory() {
             return story;
         }
@@ -176,6 +189,22 @@ public interface EventStoryDefConfig {
 
         public void setRuleSet(Map<String, String> ruleSet) {
             this.ruleSet = ruleSet;
+        }
+
+        public Integer getTimeout() {
+            return timeout;
+        }
+
+        public void setTimeout(Integer timeout) {
+            this.timeout = timeout;
+        }
+
+        public Boolean getAsync() {
+            return async;
+        }
+
+        public void setAsync(Boolean async) {
+            this.async = async;
         }
     }
 

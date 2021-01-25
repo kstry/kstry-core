@@ -17,8 +17,8 @@
  */
 package cn.kstry.framework.core.engine.timeslot;
 
-import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.route.TaskRouter;
 
 import java.util.List;
@@ -50,6 +50,17 @@ public class TimeSlotInvokeRequest {
      */
     private String strategyName;
 
+    /**
+     * 异步任务的超时时间，单位 ms
+     * 默认值：cn.kstry.framework.core.config.GlobalConstant#DEFAULT_ASYNC_TIMEOUT
+     */
+    private int timeout;
+
+    /**
+     * true: 代表使用异步任务
+     */
+    private boolean async;
+
     public List<EventGroup> getTaskGroup() {
         return taskGroup;
     }
@@ -80,5 +91,21 @@ public class TimeSlotInvokeRequest {
 
     public void setStrategyName(String strategyName) {
         this.strategyName = strategyName;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public boolean isAsync() {
+        return async;
+    }
+
+    public void setAsync(boolean async) {
+        this.async = async;
     }
 }

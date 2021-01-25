@@ -62,4 +62,9 @@ public interface GlobalConstant {
      * Story 执行成功后的 code
      */
     String STORY_SUCCESS_CODE = "200";
+
+    /**
+     * 默认的，异步任务的超时时间，单位：ms
+     */
+    int DEFAULT_ASYNC_TIMEOUT = 2000;
 }

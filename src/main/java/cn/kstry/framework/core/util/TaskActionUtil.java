@@ -17,22 +17,17 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.config.TaskActionMethod;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotInvokeRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.route.StrategyRule;
-import cn.kstry.framework.core.route.StrategyRuleCalculator;
-import cn.kstry.framework.core.config.TaskActionMethod;
-import cn.kstry.framework.core.bus.TaskNode;
-import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
-import cn.kstry.framework.core.engine.timeslot.TimeSlotInvokeRequest;
+import cn.kstry.framework.core.route.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -74,6 +69,8 @@ public class TaskActionUtil {
             timeSlotInvokeRequest.setStoryBus(timeSlotStoryBus);
             timeSlotInvokeRequest.setTaskRouter(timeSlotTaskRouter);
             timeSlotInvokeRequest.setStrategyName(currentEventNode.getStrategyName());
+            timeSlotInvokeRequest.setAsync(currentEventNode.isAsync());
+            timeSlotInvokeRequest.setTimeout(currentEventNode.getTimeout());
             return timeSlotInvokeRequest;
         }
 

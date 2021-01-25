@@ -17,8 +17,8 @@
  */
 package cn.kstry.framework.core.engine.timeslot;
 
-import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.route.EventNode;
 
 import java.util.List;
 
@@ -32,6 +32,17 @@ public class TimeSlotEventNode extends EventNode {
     private List<EventNode> firstTimeSlotEventNodeList;
 
     private String strategyName;
+
+    /**
+     * 异步任务的超时时间，单位 ms
+     * 默认值：cn.kstry.framework.core.config.GlobalConstant#DEFAULT_ASYNC_TIMEOUT
+     */
+    private int timeout;
+
+    /**
+     * true: 代表使用异步任务
+     */
+    private boolean async;
 
     public TimeSlotEventNode(TaskNode taskNode) {
         super(taskNode);
@@ -51,5 +62,21 @@ public class TimeSlotEventNode extends EventNode {
 
     public void setStrategyName(String strategyName) {
         this.strategyName = strategyName;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public boolean isAsync() {
+        return async;
+    }
+
+    public void setAsync(boolean async) {
+        this.async = async;
     }
 }

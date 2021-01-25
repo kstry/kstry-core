@@ -25,15 +25,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 该注解修饰的字段，字段结果被通知到 bus 中的 variable 变量集中
  *
  * @author lykan
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER})
-public @interface NoticeStableField {
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+public @interface NoticeVar {
 
     /**
      * 字段名称
      */
     String name() default StringUtils.EMPTY;
 }
+

@@ -17,18 +17,18 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotOperatorRole;
 import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.StrategyRule;
-import cn.kstry.framework.core.bus.TaskNode;
-import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
-import cn.kstry.framework.core.engine.timeslot.TimeSlotOperatorRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -38,11 +38,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -177,9 +173,11 @@ public class ConfigResolver {
                             StringUtils.isBlank(nodeAgent.getFilterStoryName()) ? null : storyNodeAdaptorMap.get(nodeAgent.getFilterStoryName());
                     if (eventNode instanceof TimeSlotEventNode && CollectionUtils.isNotEmpty(taskNodeAgentList)) {
                         List<EventNode> filterStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
-                        ((TimeSlotEventNode) eventNode).setFirstTimeSlotEventNodeList(filterStoryEventNodeList);
-                        AssertUtil.notBlank(nodeAgent.getStrategyName());
-                        ((TimeSlotEventNode) eventNode).setStrategyName(nodeAgent.getStrategyName());
+                        TimeSlotEventNode timeSlotEventNode = (TimeSlotEventNode) eventNode;
+                        timeSlotEventNode.setFirstTimeSlotEventNodeList(filterStoryEventNodeList);
+                        timeSlotEventNode.setStrategyName(GlobalUtil.notBlank(nodeAgent.getStrategyName()));
+                        timeSlotEventNode.setAsync(GlobalUtil.notNull(nodeAgent.getAsync()));
+                        timeSlotEventNode.setTimeout(GlobalUtil.notNull(nodeAgent.getTimeout()));
                     }
                     if (matchStrategyRuleList != null) {
                         eventNode.setMatchStrategyRuleList(matchStrategyRuleList);
@@ -221,20 +219,30 @@ public class ConfigResolver {
         }
 
         if (routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER))) {
-            List<StrategyRule> filterInflectionPointList = routeStrategy.stream()
+            List<StrategyRule> filterStrategyRuleList = routeStrategy.stream()
                     .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(s.getRuleSet()))
                     .map(EventStoryDefConfig.StrategyDefItemConfig::getRuleSet)
                     .flatMap(s -> getStrategyRuleList(s, StrategyTypeEnum.FILTER).stream())
                     .collect(Collectors.toList());
-            eventNodeAgent.setFilterStrategyRuleList(filterInflectionPointList);
+            eventNodeAgent.setFilterStrategyRuleList(filterStrategyRuleList);
             if (eventNodeAgent.getTaskNode() == null) {
                 List<String> filterStoryNameList = routeStrategy.stream()
                         .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && StringUtils.isNotBlank(s.getStory()))
                         .map(EventStoryDefConfig.StrategyDefItemConfig::getStory)
                         .collect(Collectors.toList());
                 AssertUtil.oneSize(filterStoryNameList, ExceptionEnum.PARAMS_ERROR);
+
+                boolean async = routeStrategy.stream()
+                        .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && s.getAsync() != null)
+                        .findFirst().map(EventStoryDefConfig.StrategyDefItemConfig::getAsync).orElse(false);
+                int timeout = routeStrategy.stream()
+                        .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && s.getTimeout() != null && s.getTimeout() > 0)
+                        .findFirst().map(EventStoryDefConfig.StrategyDefItemConfig::getTimeout).orElse(GlobalConstant.DEFAULT_ASYNC_TIMEOUT);
+
                 eventNodeAgent.setFilterStoryName(filterStoryNameList.get(0));
                 eventNodeAgent.setStrategyName(strategyName);
+                eventNodeAgent.setAsync(async);
+                eventNodeAgent.setTimeout(timeout);
             }
         }
 
@@ -393,6 +401,17 @@ public class ConfigResolver {
 
         private String strategyName;
 
+        /**
+         * 异步任务的超时时间，单位 ms
+         * 默认值：cn.kstry.framework.core.config.GlobalConstant#DEFAULT_ASYNC_TIMEOUT
+         */
+        private Integer timeout;
+
+        /**
+         * true: 代表使用异步任务
+         */
+        private Boolean async;
+
         public TaskNode getTaskNode() {
             return taskNode;
         }
@@ -459,6 +478,22 @@ public class ConfigResolver {
 
         public void setStrategyName(String strategyName) {
             this.strategyName = strategyName;
+        }
+
+        public Integer getTimeout() {
+            return timeout;
+        }
+
+        public void setTimeout(Integer timeout) {
+            this.timeout = timeout;
+        }
+
+        public Boolean getAsync() {
+            return async;
+        }
+
+        public void setAsync(Boolean async) {
+            this.async = async;
         }
     }
 

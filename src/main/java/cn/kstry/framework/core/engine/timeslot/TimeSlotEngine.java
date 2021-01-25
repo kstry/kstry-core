@@ -17,60 +17,51 @@
  */
 package cn.kstry.framework.core.engine.timeslot;
 
-import cn.kstry.framework.core.route.EventGroup;
-import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
-import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.bus.TaskNode;
-import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.TaskActionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.kstry.framework.core.util.AssertUtil;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author lykan
  */
-public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorRole {
+public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorRole, ApplicationListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TimeSlotEngine.class);
+    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @Override
-    @SuppressWarnings("unchecked")
     public TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request) {
 
-        StoryBus storyBus = request.getStoryBus();
-        TaskRouter taskRouter = storyBus.getRouter();
-        List<EventGroup> taskGroup = request.getTaskGroup();
+        AssertUtil.notNull(request);
+        TimeSlotAsyncTask timeSlotAsyncTask = new TimeSlotAsyncTask(request);
+        if (!request.isAsync()) {
+            return timeSlotAsyncTask.call();
+        }
+
+        Future<TaskResponse<Map<String, Object>>> submit = executorService.submit(timeSlotAsyncTask);
         try {
-            for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
-
-                EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
-                Object taskRequest = TaskActionUtil.getNextRequest(taskRouter, storyBus, taskGroup);
-                Object o = TaskActionUtil.invokeTarget(taskRequest, nodeOptional.get(), actionOperator);
-
-                if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
-                    return (TaskResponse<Map<String, Object>>) o;
-                }
-                storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
-            }
-
-            Map<String, Object> resultData = new HashMap<>();
-            storyBus.loadResultData(resultData);
-            return TaskResponseBox.buildSuccess(resultData);
+            TaskResponse<Map<String, Object>> mapTaskResponse = submit.get(request.getTimeout(), TimeUnit.MILLISECONDS);
+            return mapTaskResponse;
         } catch (Exception e) {
-            LOGGER.error("[{}] time slot execution Failure! strategy name:[{}]", ExceptionEnum.TIME_SLOT_EXECUTION_ERROR.getExceptionCode(), request.getStrategyName(), e);
-            TaskActionUtil.throwException(e);
             return null;
+        }
+    }
+
+    @Override
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (event instanceof ContextClosedEvent) {
+            System.out.println("shutdown!");
+            executorService.shutdown();
         }
     }
 

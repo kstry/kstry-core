@@ -18,16 +18,17 @@
 package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.config.GlobalConstant;
+import cn.kstry.framework.core.config.RequestMappingGroup;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.NoticeBusTaskResponse;
 import cn.kstry.framework.core.facade.TaskResponse;
-import cn.kstry.framework.core.config.RequestMappingGroup;
 import cn.kstry.framework.core.route.TaskRouter;
-import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.NoticeBusDataUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
@@ -36,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,21 +86,33 @@ public class StoryBus {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public void saveTaskResult(TaskNode taskNode, Object result) {
+    public void saveTaskResult(TaskNode taskNode, Object taskResponse) {
         AssertUtil.notNull(taskNode);
+        if (taskResponse == null) {
+            return;
+        }
+
+        AssertUtil.isTrue(taskResponse instanceof TaskResponse);
+        AssertUtil.isTrue(((TaskResponse<?>) taskResponse).isSuccess());
+        Object result = ((TaskResponse<?>) taskResponse).getResult();
         if (result == null) {
             return;
         }
-        AssertUtil.isTrue(result instanceof TaskResponse);
+
         if (taskNode.getEventNode() instanceof TimeSlotEventNode) {
             AssertUtil.notBlank(((TimeSlotEventNode) taskNode.getEventNode()).getStrategyName());
-            globalParamAndResult.put(GlobalConstant.TIME_SLOT_NODE_SIGN + ((TimeSlotEventNode) taskNode.getEventNode()).getStrategyName(), ((TaskResponse<?>) result).getResult());
+            globalParamAndResult.put(GlobalConstant.TIME_SLOT_NODE_SIGN + ((TimeSlotEventNode) taskNode.getEventNode()).getStrategyName(), result);
         } else {
-            globalParamAndResult.put(taskNode.identity(), ((TaskResponse<?>) result).getResult());
+            globalParamAndResult.put(taskNode.identity(), result);
         }
 
-        if (result instanceof NoticeBusTaskResponse) {
-            NoticeBusTaskResponse<?> noticeBusTaskResponse = (NoticeBusTaskResponse<?>) result;
+        Map<Class<?>, List<NoticeBusDataUtil.NoticeFieldItem>> noticeFieldMap = NoticeBusDataUtil.getNoticeFieldMap(result);
+        if (MapUtils.isNotEmpty(noticeFieldMap)) {
+            taskResponse = NoticeBusDataUtil.transferNoticeBusTaskResponse(taskResponse, noticeFieldMap);
+        }
+
+        if (taskResponse instanceof NoticeBusTaskResponse) {
+            NoticeBusTaskResponse<?> noticeBusTaskResponse = (NoticeBusTaskResponse<?>) taskResponse;
             noticeBusDataChange(noticeBusTaskResponse);
         }
     }
@@ -164,7 +178,7 @@ public class StoryBus {
 
         StoryBus cloneStoryBus = new StoryBus(null, null, null);
 
-        // 请求入参 分支流程与主流程公用
+        // 请求入参 分支流程与主流程共用
         cloneStoryBus.globalParamAndResult.putAll(this.globalParamAndResult);
         try {
             // 在分支流程出现时开始，复制当下的 不可变更数据

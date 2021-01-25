@@ -65,7 +65,9 @@
         "strategy_type": "FILTER",
         "rule_set": {
           "notNull-@req.userType": ""
-        }
+        },
+        "async": true,
+        "timeout": 1000
       }
     ],
     "LOGIN_RULE_SET": [
@@ -109,7 +111,7 @@
   },
   "request_mapping_def": {
     "userMapping": {
-      "user": "$USER_LOGIN.@sta.user"
+      "user": "$USER_LOGIN.@var.user"
     },
     "userTologinMapping": {
       "userType": "@req.userType",

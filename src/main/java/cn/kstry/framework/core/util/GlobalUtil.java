@@ -61,6 +61,11 @@ public class GlobalUtil {
         return obj;
     }
 
+    public static String notBlank(String str) {
+        AssertUtil.notBlank(str);
+        return str;
+    }
+
     public static boolean isValidField(String fieldStr) {
         if (StringUtils.isBlank(fieldStr)) {
             return false;

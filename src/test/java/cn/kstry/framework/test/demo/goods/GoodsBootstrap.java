@@ -1,7 +1,6 @@
 package cn.kstry.framework.test.demo.goods;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
-import cn.kstry.framework.core.annotation.NoticeStableField;
 import cn.kstry.framework.core.bus.BusDataBox;
 import cn.kstry.framework.core.bus.DefaultDataBox;
 import cn.kstry.framework.core.engine.StoryEngine;
@@ -31,7 +30,7 @@ public class GoodsBootstrap {
 
         BuyGoodsRequest buyGoodsRequest = new BuyGoodsRequest();
         buyGoodsRequest.setUserId(2L);
-        buyGoodsRequest.setUserType(2);
+        buyGoodsRequest.setUserType(1);
         buyGoodsRequest.setGoodIds(Lists.newArrayList(1L, 2L, 3L, 4L, 5L));
 
         DefaultDataBox defaultDataBox = new DefaultDataBox();
@@ -43,13 +42,14 @@ public class GoodsBootstrap {
 
         A a = new A();
         a.setUser(new User(null, null, 0));
-        TaskResponse<Object> login = storyEngine.fire(buyGoodsRequest, "login", Object.class);
+        TaskResponse<Object> login = storyEngine.fire(buyGoodsRequest, "login", a, Object.class);
+        login = storyEngine.fire(buyGoodsRequest, "login", a, Object.class);
         System.out.println(JSON.toJSONString(login));
+        context.close();
     }
 
     public static class A implements BusDataBox {
 
-        @NoticeStableField(name = "123")
         private User user;
 
         public User getUser() {
