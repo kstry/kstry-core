@@ -17,27 +17,40 @@
  */
 package cn.kstry.framework.core.engine.timeslot;
 
+import cn.kstry.framework.core.annotation.IgnoreEventNode;
+import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.RouteEventGroup;
 import cn.kstry.framework.core.util.AssertUtil;
-import org.springframework.context.ApplicationEvent;
+import org.apache.commons.collections.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * TimeSlot 任务执行 Engine
  * @author lykan
  */
-public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorRole, ApplicationListener {
+public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorRole, ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
-    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimeSlotEngine.class);
+
+    /**
+     * 执行 time slot 任务的线程池
+     */
+    private TimeSlotThreadPoolExecutor threadPoolExecutor;
 
     @Override
     public TaskResponse<Map<String, Object>> invoke(TimeSlotInvokeRequest request) {
@@ -45,24 +58,62 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
         AssertUtil.notNull(request);
         TimeSlotAsyncTask timeSlotAsyncTask = new TimeSlotAsyncTask(request);
         if (!request.isAsync()) {
-            return timeSlotAsyncTask.call();
+            TimeSlotTaskResponse taskResponse = new TimeSlotTaskResponse(null);
+            BeanUtils.copyProperties(timeSlotAsyncTask.call(), taskResponse);
+            taskResponse.setStrategyName(request.getStrategyName());
+            return taskResponse;
         }
 
-        Future<TaskResponse<Map<String, Object>>> submit = executorService.submit(timeSlotAsyncTask);
+        AssertUtil.notNull(threadPoolExecutor, ExceptionEnum.THREAD_POOL_COUNT_ERROR);
+        Future<TaskResponse<Map<String, Object>>> submit = threadPoolExecutor.submit(timeSlotAsyncTask);
+        TimeSlotTaskResponse taskResponse = new TimeSlotTaskResponse(submit);
+        taskResponse.resultSuccess();
+        taskResponse.setTimeout(request.getTimeout());
+        taskResponse.setStrategyName(request.getStrategyName());
+        return taskResponse;
+    }
+
+    @SuppressWarnings("all")
+    @Override
+    @IgnoreEventNode
+    public void onApplicationEvent(ContextClosedEvent event) {
+        LOGGER.info("begin shutdown time slot thread pool!");
+        threadPoolExecutor.shutdown();
         try {
-            TaskResponse<Map<String, Object>> mapTaskResponse = submit.get(request.getTimeout(), TimeUnit.MILLISECONDS);
-            return mapTaskResponse;
+            TimeUnit.SECONDS.sleep(GlobalConstant.ENGINE_SHUTDOWN_SLEEP_SECONDS);
         } catch (Exception e) {
-            return null;
+            LOGGER.warn("time slot thread pool close task are interrupted on shutdown!", e);
+        }
+        if (threadPoolExecutor.isShutdown() && threadPoolExecutor.getActiveCount() == 0) {
+            LOGGER.info("[shutdown] interrupting tasks in the thread pool success! thread pool close success!");
+            return;
+        } else {
+            LOGGER.info("interrupting tasks in the thread pool that have not yet finished! begin shutdownNow!");
+            threadPoolExecutor.shutdownNow();
+        }
+        try {
+            TimeUnit.SECONDS.sleep(GlobalConstant.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS);
+        } catch (Exception e) {
+            LOGGER.warn("time slot thread pool close task are interrupted on shutdown!", e);
+        }
+        if (threadPoolExecutor.isShutdown() && threadPoolExecutor.getActiveCount() == 0) {
+            LOGGER.info("[shutdownNow] interrupting tasks in the thread pool success! thread pool close success!");
+        } else {
+            LOGGER.error("[shutdownNow] interrupting tasks in the thread pool error! thread pool close error!");
         }
     }
 
     @Override
-    public void onApplicationEvent(ApplicationEvent event) {
-        if (event instanceof ContextClosedEvent) {
-            System.out.println("shutdown!");
-            executorService.shutdown();
+    @IgnoreEventNode
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        Map<String, TimeSlotThreadPoolExecutor> threadPoolExecutorMap = applicationContext.getBeansOfType(TimeSlotThreadPoolExecutor.class);
+        if (MapUtils.isNotEmpty(threadPoolExecutorMap)) {
+            AssertUtil.oneSize(threadPoolExecutorMap.keySet(), ExceptionEnum.THREAD_POOL_COUNT_ERROR);
+            this.threadPoolExecutor = threadPoolExecutorMap.values().iterator().next();
+            return;
         }
+
+        this.threadPoolExecutor = TimeSlotThreadPoolExecutor.buildDefaultExecutor();
     }
 
     @Override

@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.annotation.EventGroupComponent;
+import cn.kstry.framework.core.annotation.IgnoreEventNode;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -96,6 +97,9 @@ public abstract class RouteEventGroup implements EventGroup {
                 continue;
             }
 
+            if (method.isAnnotationPresent(IgnoreEventNode.class)) {
+                continue;
+            }
             Class<?> requestClass = null;
             Class<?>[] parameterTypes = method.getParameterTypes();
 

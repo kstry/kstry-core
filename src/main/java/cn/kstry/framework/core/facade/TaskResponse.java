@@ -77,12 +77,12 @@ public interface TaskResponse<T> extends Serializable {
      *
      * @return Task 执行的异常信息
      */
-    Exception getResultException();
+    Throwable getResultException();
 
     /**
      * Task 执行出现异常时，保存异常信息
      */
-    void setResultException(Exception resultException);
+    void setResultException(Throwable resultException);
 
     /**
      * 获取 Task 执行任务结果

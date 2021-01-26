@@ -67,4 +67,22 @@ public interface GlobalConstant {
      * 默认的，异步任务的超时时间，单位：ms
      */
     int DEFAULT_ASYNC_TIMEOUT = 2000;
+
+    /**
+     * Engine shutdown 后，校验任务是否全部关闭的等待时间
+     * Engine 关闭策略:
+     *  - 监听 Spring 容器关闭事件，事件发生后调用 shutdown()
+     *  - 等待 ENGINE_SHUTDOWN_SLEEP_SECONDS s 后，check 线程池中是否有活动中的线程，如果没有关闭成功，如果存在进行后续操作
+     *  - 调用 shutdownNow()
+     *  - 等待 ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS s 后，check 线程池中是否有活动中的线程，并将结果通过日志打印
+     *
+     * @see GlobalConstant#ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS
+     */
+    int ENGINE_SHUTDOWN_SLEEP_SECONDS = 1;
+
+    /**
+     * Engine shutdownNow 后，校验任务是否全部关闭的等待时间
+     * @see GlobalConstant#ENGINE_SHUTDOWN_SLEEP_SECONDS
+     */
+    int ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS = 1;
 }

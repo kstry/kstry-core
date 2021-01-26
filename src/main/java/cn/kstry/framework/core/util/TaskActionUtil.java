@@ -27,7 +27,12 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.*;
+import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.RouteEventGroup;
+import cn.kstry.framework.core.route.StrategyRule;
+import cn.kstry.framework.core.route.StrategyRuleCalculator;
+import cn.kstry.framework.core.route.TaskRouter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -63,11 +68,11 @@ public class TaskActionUtil {
             List<EventNode> timeSlotFirstEventNodeList = currentEventNode.getFirstTimeSlotEventNodeList();
             AssertUtil.notEmpty(timeSlotFirstEventNodeList);
             EventNode timeSlotEventNode = TaskActionUtil.locateInvokeEventNode(timeSlotStoryBus, timeSlotFirstEventNodeList);
-            TaskRouter timeSlotTaskRouter = new TaskRouter(timeSlotEventNode, timeSlotStoryBus);
+            // 建立 TaskRouter 与 timeSlotStoryBus 的关联关系，不可省略
+            new TaskRouter(timeSlotEventNode, timeSlotStoryBus);
             TimeSlotInvokeRequest timeSlotInvokeRequest = new TimeSlotInvokeRequest();
             timeSlotInvokeRequest.setTaskGroup(taskGroup);
             timeSlotInvokeRequest.setStoryBus(timeSlotStoryBus);
-            timeSlotInvokeRequest.setTaskRouter(timeSlotTaskRouter);
             timeSlotInvokeRequest.setStrategyName(currentEventNode.getStrategyName());
             timeSlotInvokeRequest.setAsync(currentEventNode.isAsync());
             timeSlotInvokeRequest.setTimeout(currentEventNode.getTimeout());
@@ -141,17 +146,25 @@ public class TaskActionUtil {
     }
 
     public static void throwException(Exception e) {
+        KstryException.throwException(splitException(e));
+    }
+
+    public static Throwable splitException(Exception e) {
+        AssertUtil.notNull(e);
+        if (e instanceof KstryException) {
+            return e;
+        }
         Throwable exception = e;
-        if (exception instanceof UndeclaredThrowableException) {
+        if (exception instanceof UndeclaredThrowableException && ((UndeclaredThrowableException) exception).getUndeclaredThrowable() != null) {
             exception = ((UndeclaredThrowableException) exception).getUndeclaredThrowable();
         }
-        if (exception instanceof InvocationTargetException) {
+        if (exception instanceof KstryException) {
+            return exception;
+        }
+        if (exception instanceof InvocationTargetException && ((InvocationTargetException) exception).getTargetException() != null) {
             exception = ((InvocationTargetException) exception).getTargetException();
         }
-        if (exception instanceof KstryException) {
-            throw (KstryException) exception;
-        }
-        KstryException.throwException(exception);
+        return exception;
     }
 
     public static boolean matchStrategyRule(List<StrategyRule> strategyRuleList, StoryBus storyBus) {
@@ -170,7 +183,6 @@ public class TaskActionUtil {
             return ruleCalculator.calculate(valueOptional.orElse(null), rule.getExpectedValue());
         });
     }
-
 
     /**
      * 从 taskGroup 中根据 Router 路由出需要被执行的 TaskAction

@@ -20,7 +20,10 @@ package cn.kstry.framework.core.bus;
 import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.config.RequestMappingGroup;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotTaskResponse;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotTaskResultWrapper;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.TimeSlotTaskStatusEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.NoticeBusTaskResponse;
@@ -67,6 +70,11 @@ public class StoryBus {
     public static final TaskNode DEFAULT_GLOBAL_BUS_VARIABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_VARIABLE_KEY", ComponentTypeEnum.GROUP);
 
     /**
+     * 保存了 timeSlot 任务触发的结果集
+     */
+    private final Map<String, TimeSlotTaskResultWrapper> timeSlotTaskResultWrapperMap = new ConcurrentHashMap<>();
+
+    /**
      * 全局流转的参数
      */
     private final Map<String, Object> globalParamAndResult = new ConcurrentHashMap<>();
@@ -94,18 +102,18 @@ public class StoryBus {
 
         AssertUtil.isTrue(taskResponse instanceof TaskResponse);
         AssertUtil.isTrue(((TaskResponse<?>) taskResponse).isSuccess());
+        if (taskResponse instanceof TimeSlotTaskResponse) {
+            AssertUtil.isTrue(taskNode.getEventNode() instanceof TimeSlotEventNode);
+            saveTimeSlotTaskResult(taskResponse);
+            return;
+        }
+
         Object result = ((TaskResponse<?>) taskResponse).getResult();
         if (result == null) {
             return;
         }
 
-        if (taskNode.getEventNode() instanceof TimeSlotEventNode) {
-            AssertUtil.notBlank(((TimeSlotEventNode) taskNode.getEventNode()).getStrategyName());
-            globalParamAndResult.put(GlobalConstant.TIME_SLOT_NODE_SIGN + ((TimeSlotEventNode) taskNode.getEventNode()).getStrategyName(), result);
-        } else {
-            globalParamAndResult.put(taskNode.identity(), result);
-        }
-
+        globalParamAndResult.put(taskNode.identity(), result);
         Map<Class<?>, List<NoticeBusDataUtil.NoticeFieldItem>> noticeFieldMap = NoticeBusDataUtil.getNoticeFieldMap(result);
         if (MapUtils.isNotEmpty(noticeFieldMap)) {
             taskResponse = NoticeBusDataUtil.transferNoticeBusTaskResponse(taskResponse, noticeFieldMap);
@@ -115,6 +123,34 @@ public class StoryBus {
             NoticeBusTaskResponse<?> noticeBusTaskResponse = (NoticeBusTaskResponse<?>) taskResponse;
             noticeBusDataChange(noticeBusTaskResponse);
         }
+    }
+
+    public void saveTimeSlotTaskResult(Object response) {
+        if (!(response instanceof TimeSlotTaskResponse)) {
+            return;
+        }
+
+        TimeSlotTaskResponse taskResponse = (TimeSlotTaskResponse) response;
+        AssertUtil.notBlank(taskResponse.getStrategyName());
+        TimeSlotTaskResultWrapper resultWrapper = new TimeSlotTaskResultWrapper();
+        if (!taskResponse.isSuccess()) {
+            resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.ERROR);
+            timeSlotTaskResultWrapperMap.put(taskResponse.getStrategyName(), resultWrapper);
+            return;
+        }
+
+        if (taskResponse.getFutureTask() == null) {
+            resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.SUCCESS);
+            globalParamAndResult.put(GlobalConstant.TIME_SLOT_NODE_SIGN + taskResponse.getStrategyName(), taskResponse.getResult());
+            timeSlotTaskResultWrapperMap.put(taskResponse.getStrategyName(), resultWrapper);
+            return;
+        }
+
+        resultWrapper.setTimeout(taskResponse.getTimeout());
+        resultWrapper.setStrategyName(taskResponse.getStrategyName());
+        resultWrapper.setFutureTask(taskResponse.getFutureTask());
+        resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.DOING);
+        timeSlotTaskResultWrapperMap.put(taskResponse.getStrategyName(), resultWrapper);
     }
 
     private void noticeBusDataChange(NoticeBusTaskResponse<?> noticeBusTaskResponse) {

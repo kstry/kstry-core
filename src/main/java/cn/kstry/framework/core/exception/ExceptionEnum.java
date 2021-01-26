@@ -113,12 +113,33 @@ public enum ExceptionEnum {
      */
     IMMUTABLE_SET_UPDATE(ComponentTypeEnum.TASK, "0006", "Values that already exist in the immutable set are not allowed to be set repeatedly!"),
 
+    /**
+     * [K1020007] 当前线程被中断
+     */
+    TASK_INTERRUPTED_ERROR(ComponentTypeEnum.TASK, "0007", "The current thread is interrupted!"),
+
     ///////////////////////////////////////////////// Task END /////////////////////////////////////////////////
 
     /**
      * [K1030001] time slot 执行期间发生错误
      */
     TIME_SLOT_EXECUTION_ERROR(ComponentTypeEnum.TIME_SLOT, "0001", "Time slot task An error occurred during execution!"),
+
+    /**
+     * [K1030002] TimeSlotThreadPoolExecutor 只能在容器中出现一次
+     */
+    THREAD_POOL_COUNT_ERROR(ComponentTypeEnum.TIME_SLOT, "0002", "Only one TimeSlotThreadPoolExecutor can exist in the container!"),
+
+    /**
+     * [K1030003] time slot 线程池已满，任务被丢弃
+     */
+    CONTAINER_QUEUE_FULL_ERROR(ComponentTypeEnum.TIME_SLOT, "0003", "Thread pool container queue is full, discard task!"),
+
+    /**
+     * [K1030004] time slot 中出现未定义的异常
+     */
+    TIME_SLOT_SYSTEM_ERROR(ComponentTypeEnum.TIME_SLOT, "0004", "Undefined exception in time slot!"),
+
 
     ///////////////////////////////////////////////// TimeSlot END /////////////////////////////////////////////////
 

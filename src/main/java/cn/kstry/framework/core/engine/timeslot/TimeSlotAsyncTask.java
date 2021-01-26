@@ -20,6 +20,7 @@ package cn.kstry.framework.core.engine.timeslot;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
@@ -57,10 +58,11 @@ public class TimeSlotAsyncTask implements Callable<TaskResponse<Map<String, Obje
     @SuppressWarnings("unchecked")
     public TaskResponse<Map<String, Object>> call() {
 
-        StoryBus storyBus = timeSlotInvokeRequest.getStoryBus();
-        TaskRouter taskRouter = storyBus.getRouter();
-        List<EventGroup> taskGroup = timeSlotInvokeRequest.getTaskGroup();
         try {
+            StoryBus storyBus = timeSlotInvokeRequest.getStoryBus();
+            TaskRouter taskRouter = storyBus.getRouter();
+            List<EventGroup> taskGroup = timeSlotInvokeRequest.getTaskGroup();
+
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
 
                 EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
@@ -68,6 +70,7 @@ public class TimeSlotAsyncTask implements Callable<TaskResponse<Map<String, Obje
                 Object o = TaskActionUtil.invokeTarget(taskRequest, nodeOptional.get(), actionOperator);
 
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
+                    storyBus.saveTimeSlotTaskResult(o);
                     return (TaskResponse<Map<String, Object>>) o;
                 }
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
@@ -77,10 +80,22 @@ public class TimeSlotAsyncTask implements Callable<TaskResponse<Map<String, Obje
             storyBus.loadResultData(resultData);
             return TaskResponseBox.buildSuccess(resultData);
         } catch (Exception e) {
-            LOGGER.error("[{}] time slot execution Failure! strategy name:[{}]",
+            LOGGER.warn("[{}] time slot execution Failure! strategy name:[{}]",
                     ExceptionEnum.TIME_SLOT_EXECUTION_ERROR.getExceptionCode(), timeSlotInvokeRequest.getStrategyName(), e);
-            TaskActionUtil.throwException(e);
-            return null;
+            Throwable throwable = GlobalUtil.notNull(TaskActionUtil.splitException(e));
+            TaskResponse<Map<String, Object>> taskResponse;
+            if (throwable instanceof KstryException) {
+                KstryException kstryException = (KstryException) throwable;
+                taskResponse = TaskResponseBox.buildError(kstryException.getErrorCode(), kstryException.getMessage());
+            } else {
+                taskResponse = TaskResponseBox.buildError(ExceptionEnum.TIME_SLOT_SYSTEM_ERROR.getExceptionCode(), throwable.getMessage());
+            }
+            taskResponse.setResultException(throwable);
+            return taskResponse;
         }
+    }
+
+    public TimeSlotInvokeRequest getTimeSlotInvokeRequest() {
+        return timeSlotInvokeRequest;
     }
 }

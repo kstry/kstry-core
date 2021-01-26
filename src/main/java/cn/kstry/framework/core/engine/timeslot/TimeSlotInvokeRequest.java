@@ -19,7 +19,6 @@ package cn.kstry.framework.core.engine.timeslot;
 
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.route.EventGroup;
-import cn.kstry.framework.core.route.TaskRouter;
 
 import java.util.List;
 
@@ -39,11 +38,6 @@ public class TimeSlotInvokeRequest {
      * 全局 bus
      */
     private StoryBus storyBus;
-
-    /**
-     *
-     */
-    private TaskRouter taskRouter;
 
     /**
      * time slot 执行 story 的 策略名称
@@ -75,14 +69,6 @@ public class TimeSlotInvokeRequest {
 
     public void setStoryBus(StoryBus storyBus) {
         this.storyBus = storyBus;
-    }
-
-    public TaskRouter getTaskRouter() {
-        return taskRouter;
-    }
-
-    public void setTaskRouter(TaskRouter taskRouter) {
-        this.taskRouter = taskRouter;
     }
 
     public String getStrategyName() {

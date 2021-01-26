@@ -24,7 +24,6 @@ public class CustomerAuthenticationEventGroupImpl extends UserAuthenticationEven
 
     @Override
     public TaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest) {
-
         List<User> collect = userList.stream().filter(user -> user.getUserId().equals(userLoginRequest.getUserId())).collect(Collectors.toList());
         AssertUtil.oneSize(collect);
         User user = collect.get(0);

@@ -19,6 +19,7 @@ package cn.kstry.framework.core.route;
 
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.bus.TaskNode;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -58,7 +59,9 @@ public class TaskRouter {
     }
 
     public Optional<TaskNode> invokeTaskNode() {
+
         AssertUtil.notNull(getStoryBus());
+        AssertUtil.notTrue(Thread.currentThread().isInterrupted(), ExceptionEnum.TASK_INTERRUPTED_ERROR);
         if (this.nextInvokeTaskNode == null) {
             return Optional.empty();
         }

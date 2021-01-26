@@ -72,9 +72,9 @@ public class StoryEngine {
                 Object o = TaskActionUtil.invokeTarget(taskRequest, taskNode, actionOperator);
 
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
+                    storyBus.saveTimeSlotTaskResult(o);
                     return (TaskResponse<T>) o;
                 }
-
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
             }
 

@@ -24,7 +24,7 @@ import java.util.HashMap;
 @EnableKstry(configPath = "goods-config.json")
 public class GoodsBootstrap {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(GoodsBootstrap.class);
         StoryEngine storyEngine = context.getBean("storyEngine", StoryEngine.class);
 
@@ -46,6 +46,7 @@ public class GoodsBootstrap {
         login = storyEngine.fire(buyGoodsRequest, "login", a, Object.class);
         System.out.println(JSON.toJSONString(login));
         context.close();
+
     }
 
     public static class A implements BusDataBox {

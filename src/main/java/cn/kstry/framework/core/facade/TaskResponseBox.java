@@ -47,7 +47,7 @@ public class TaskResponseBox<T> implements TaskResponse<T> {
     /**
      * exception
      */
-    private Exception resultException;
+    private Throwable resultException;
 
     /**
      * result
@@ -97,12 +97,12 @@ public class TaskResponseBox<T> implements TaskResponse<T> {
     }
 
     @Override
-    public Exception getResultException() {
+    public Throwable getResultException() {
         return this.resultException;
     }
 
     @Override
-    public void setResultException(Exception exception) {
+    public void setResultException(Throwable exception) {
         this.resultException = exception;
     }
 
