@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class StoryBus {
 
@@ -55,24 +56,24 @@ public class StoryBus {
     private TaskRouter router;
 
     /**
-     * 承载 请求入参 全局流转的参数-Key
+     * 承载 请求入参 全局流转的参数-Key ( 整个Story共享 )
      */
     public static final TaskNode DEFAULT_GLOBAL_BUS_REQUEST_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_REQUEST_KEY", ComponentTypeEnum.GROUP);
 
     /**
-     * 承载 全局不可变量 全局流转的参数-Key
+     * 承载 全局不可变量 全局流转的参数-Key （ 分支进行复制 ）
      */
     public static final TaskNode DEFAULT_GLOBAL_BUS_STABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_STABLE_KEY", ComponentTypeEnum.GROUP);
 
     /**
-     * 承载 全局可变量 全局流转的参数-Key
+     * 承载 全局可变量 全局流转的参数-Key （ 分支进行复制 ）
      */
     public static final TaskNode DEFAULT_GLOBAL_BUS_VARIABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_VARIABLE_KEY", ComponentTypeEnum.GROUP);
 
     /**
-     * 保存了 timeSlot 任务触发的结果集
+     * 承载 timeSlot 任务触发的结果集 ( 整个Story共享 )
      */
-    private final Map<String, TimeSlotTaskResultWrapper> timeSlotTaskResultWrapperMap = new ConcurrentHashMap<>();
+    public static final TaskNode TIMESLOT_TASK_RESULT_WRAPPER_KEY = new TaskNode("BASE", "TIMESLOT_TASK_RESULT_WRAPPER_KEY", ComponentTypeEnum.GROUP);
 
     /**
      * 全局流转的参数
@@ -85,6 +86,7 @@ public class StoryBus {
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_REQUEST_KEY.identity(), (request == null) ? new DefaultDataBox() : request);
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_STABLE_KEY.identity(), (stableDataBox == null) ? new DefaultDataBox() : stableDataBox);
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_VARIABLE_KEY.identity(), (variableDataBox == null) ? new DefaultDataBox() : variableDataBox);
+        this.globalParamAndResult.put(TIMESLOT_TASK_RESULT_WRAPPER_KEY.identity(), new ConcurrentHashMap<>());
     }
 
     public void setRouter(TaskRouter router) {
@@ -125,11 +127,15 @@ public class StoryBus {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void saveTimeSlotTaskResult(Object response) {
         if (!(response instanceof TimeSlotTaskResponse)) {
             return;
         }
 
+        Map<String, TimeSlotTaskResultWrapper> timeSlotTaskResultWrapperMap =
+                GlobalUtil.transferNotEmpty(globalParamAndResult.get(TIMESLOT_TASK_RESULT_WRAPPER_KEY.identity()), Map.class);
+        AssertUtil.notNull(timeSlotTaskResultWrapperMap);
         TimeSlotTaskResponse taskResponse = (TimeSlotTaskResponse) response;
         AssertUtil.notBlank(taskResponse.getStrategyName());
         TimeSlotTaskResultWrapper resultWrapper = new TimeSlotTaskResultWrapper();
@@ -194,12 +200,84 @@ public class StoryBus {
             String[] fieldNameArray = source.split("\\.");
             AssertUtil.isTrue(fieldNameArray.length > 1, ExceptionEnum.PARAMS_ERROR);
 
+            if (!tryGetTimeSlotResult(source)) {
+                return;
+            }
             Object value = GlobalUtil.getProperty(this.globalParamAndResult, source).orElse(null);
             if (value == GlobalUtil.GET_PROPERTY_ERROR_SIGN) {
                 return;
             }
             GlobalUtil.setProperty(innerTaskRequest, mappingItem.getTarget(), value);
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean tryGetTimeSlotResult(String source) {
+        if (StringUtils.isBlank(source) || !source.startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
+            return true;
+        }
+
+        Map<String, Object> resultMap = this.globalParamAndResult;
+        for (String timeSlotTaskKey : source.split("\\.")) {
+            if (!timeSlotTaskKey.startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
+                break;
+            }
+            if (!doGetTimeSlotResult(timeSlotTaskKey.replace(GlobalConstant.TIME_SLOT_NODE_SIGN, StringUtils.EMPTY), resultMap)) {
+                return false;
+            }
+            resultMap = GlobalUtil.transferNotEmpty(resultMap.get(timeSlotTaskKey), Map.class);
+            AssertUtil.notEmpty(resultMap);
+        }
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean doGetTimeSlotResult(String timeSlotTaskKey, Map<String, Object> resultMap) {
+
+        AssertUtil.notBlank(timeSlotTaskKey);
+        Map<String, TimeSlotTaskResultWrapper> timeSlotTaskResultWrapperMap =
+                GlobalUtil.transferNotEmpty(resultMap.get(TIMESLOT_TASK_RESULT_WRAPPER_KEY.identity()), Map.class);
+        TimeSlotTaskResultWrapper resultWrapper = timeSlotTaskResultWrapperMap.get(timeSlotTaskKey);
+        if (resultWrapper == null || resultWrapper.getTaskStatusEnum() == TimeSlotTaskStatusEnum.ERROR) {
+            return false;
+        }
+
+        if (resultWrapper.getTaskStatusEnum() == TimeSlotTaskStatusEnum.SUCCESS) {
+            return true;
+        }
+
+        AssertUtil.isTrue(resultWrapper.getTaskStatusEnum() == TimeSlotTaskStatusEnum.DOING);
+        AssertUtil.notNull(resultWrapper.getFutureTask());
+        synchronized (TIMESLOT_TASK_RESULT_WRAPPER_KEY) {
+            if (resultWrapper.getTaskStatusEnum() == TimeSlotTaskStatusEnum.ERROR) {
+                return false;
+            }
+
+            if (resultWrapper.getTaskStatusEnum() == TimeSlotTaskStatusEnum.SUCCESS) {
+                return true;
+            }
+            TaskResponse<Map<String, Object>> mapTaskResponse;
+            try {
+                mapTaskResponse = resultWrapper.getFutureTask().get(resultWrapper.getTimeout(), TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                resultWrapper.getFutureTask().cancel(true);
+                LOGGER.warn("Cancel timeSlot's asynchronous task because of timeout! strategyName:{}, timeout:{}", resultWrapper.getStrategyName(), resultWrapper.getTimeout());
+                resultWrapper.setFutureTask(null);
+                resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.ERROR);
+                return false;
+            }
+
+            if (mapTaskResponse == null || !mapTaskResponse.isSuccess() || mapTaskResponse.getResult() == null) {
+                resultWrapper.setFutureTask(null);
+                resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.ERROR);
+                return false;
+            }
+
+            resultMap.put(GlobalConstant.TIME_SLOT_NODE_SIGN + resultWrapper.getStrategyName(), mapTaskResponse.getResult());
+            resultWrapper.setFutureTask(null);
+            resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.SUCCESS);
+        }
+        return true;
     }
 
     public Optional<Object> getGlobalParamValue(String fieldName) {
@@ -214,7 +292,8 @@ public class StoryBus {
 
         StoryBus cloneStoryBus = new StoryBus(null, null, null);
 
-        // 请求入参 分支流程与主流程共用
+        // 请求入参 分支流程与主流程共享
+        // timeSlot 异步任务结果集共享
         cloneStoryBus.globalParamAndResult.putAll(this.globalParamAndResult);
         try {
             // 在分支流程出现时开始，复制当下的 不可变更数据

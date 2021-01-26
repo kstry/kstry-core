@@ -13,6 +13,7 @@ import cn.kstry.framework.test.demo.goods.role.AuthenticationRole;
 import com.alibaba.fastjson.JSON;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +30,11 @@ public class CustomerAuthenticationEventGroupImpl extends UserAuthenticationEven
         User user = collect.get(0);
         user.setUserTypeEnum(UserTypeEnum.CUSTOMER);
 
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         UserLoginResponse response = new UserLoginResponse();
         response.setUser(user);
         System.out.println("customerLogin ->" + JSON.toJSONString(user));

@@ -16,4 +16,6 @@ public interface AuthenticationEventGroup {
     TaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest);
 
     TaskResponse<AuthResponse> auth(AuthRequest authRequest);
+
+    void safeCheck();
 }

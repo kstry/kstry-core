@@ -13,6 +13,9 @@
         "request_mapping": "getGoodsMapping"
       },
       {
+        "event_node": "safe_check"
+      },
+      {
         "event_node": "immediately_discount",
         "request_mapping": "immediatelyDiscountMapping",
         "strategy": "IMMEDIATELY_DISCOUNT_S"
@@ -29,6 +32,11 @@
       }
     ],
     "doLogin": [
+      {
+        "strategy": "USER_LOGIN2"
+      }
+    ],
+    "doLogin2": [
       {
         "strategy": "LOGIN_RULE_SET"
       }
@@ -66,8 +74,19 @@
         "rule_set": {
           "notNull-@req.userType": ""
         },
-
-        "timeout": 1000
+        "async": true,
+        "timeout": 2100
+      }
+    ],
+    "USER_LOGIN2": [
+      {
+        "story": "doLogin2",
+        "strategy_type": "FILTER",
+        "rule_set": {
+          "notNull-@req.userType": ""
+        },
+        "async": true,
+        "timeout": 2100
       }
     ],
     "LOGIN_RULE_SET": [
@@ -111,7 +130,7 @@
   },
   "request_mapping_def": {
     "userMapping": {
-      "user": "$USER_LOGIN.@var.user"
+      "user": "$USER_LOGIN.$USER_LOGIN2.@var.user"
     },
     "userTologinMapping": {
       "userType": "@req.userType",
@@ -136,6 +155,10 @@
       "auth_node": {
         "event_type": "TASK",
         "event_action": "auth"
+      },
+      "safe_check": {
+        "event_type": "TASK",
+        "event_action": "safeCheck"
       }
     },
     "CUSTOMER_AUTHENTICATION_EVENT_GROUP": {

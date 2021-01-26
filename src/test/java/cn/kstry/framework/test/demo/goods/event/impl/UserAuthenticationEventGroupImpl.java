@@ -53,4 +53,9 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
         System.out.println("userAuth ->" + JSON.toJSONString(authRequest.getUser()));
         return TaskResponseBox.buildSuccess(authResponse);
     }
+
+    @Override
+    public void safeCheck() {
+        System.out.println("safe checke");
+    }
 }

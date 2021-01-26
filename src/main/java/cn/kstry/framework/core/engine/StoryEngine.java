@@ -86,8 +86,7 @@ public class StoryEngine {
                     "The result type of the final execution does not match the expected type! real result type:%s", result.getClass());
             return (TaskResponse<T>) TaskResponseBox.buildSuccess(result);
         } catch (Exception e) {
-            TaskActionUtil.throwException(e);
-            return null;
+            return (TaskResponse<T>) TaskActionUtil.getTaskResponseFromException(e, ExceptionEnum.SYSTEM_ERROR);
         }
     }
 

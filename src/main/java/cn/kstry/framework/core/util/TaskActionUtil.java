@@ -25,6 +25,7 @@ import cn.kstry.framework.core.engine.timeslot.TimeSlotInvokeRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
+import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
 import cn.kstry.framework.core.route.EventGroup;
@@ -43,6 +44,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -145,11 +147,20 @@ public class TaskActionUtil {
         return taskActionMethod;
     }
 
-    public static void throwException(Exception e) {
-        KstryException.throwException(splitException(e));
+    public static TaskResponse<?> getTaskResponseFromException(Exception e, ExceptionEnum exceptionEnum) {
+        Throwable throwable = GlobalUtil.notNull(TaskActionUtil.splitException(e));
+        TaskResponse<Map<String, Object>> taskResponse;
+        if (throwable instanceof KstryException) {
+            KstryException kstryException = (KstryException) throwable;
+            taskResponse = TaskResponseBox.buildError(kstryException.getErrorCode(), kstryException.getMessage());
+        } else {
+            taskResponse = TaskResponseBox.buildError(exceptionEnum.getExceptionCode(), throwable.getMessage());
+        }
+        taskResponse.setResultException(throwable);
+        return taskResponse;
     }
 
-    public static Throwable splitException(Exception e) {
+    private static Throwable splitException(Exception e) {
         AssertUtil.notNull(e);
         if (e instanceof KstryException) {
             return e;

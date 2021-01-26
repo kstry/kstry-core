@@ -20,7 +20,6 @@ package cn.kstry.framework.core.engine.timeslot;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
@@ -82,16 +81,7 @@ public class TimeSlotAsyncTask implements Callable<TaskResponse<Map<String, Obje
         } catch (Exception e) {
             LOGGER.warn("[{}] time slot execution Failure! strategy name:[{}]",
                     ExceptionEnum.TIME_SLOT_EXECUTION_ERROR.getExceptionCode(), timeSlotInvokeRequest.getStrategyName(), e);
-            Throwable throwable = GlobalUtil.notNull(TaskActionUtil.splitException(e));
-            TaskResponse<Map<String, Object>> taskResponse;
-            if (throwable instanceof KstryException) {
-                KstryException kstryException = (KstryException) throwable;
-                taskResponse = TaskResponseBox.buildError(kstryException.getErrorCode(), kstryException.getMessage());
-            } else {
-                taskResponse = TaskResponseBox.buildError(ExceptionEnum.TIME_SLOT_SYSTEM_ERROR.getExceptionCode(), throwable.getMessage());
-            }
-            taskResponse.setResultException(throwable);
-            return taskResponse;
+            return (TaskResponse<Map<String, Object>>) TaskActionUtil.getTaskResponseFromException(e, ExceptionEnum.TIME_SLOT_SYSTEM_ERROR);
         }
     }
 

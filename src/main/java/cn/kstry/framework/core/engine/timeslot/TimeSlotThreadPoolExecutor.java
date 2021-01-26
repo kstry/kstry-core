@@ -67,7 +67,7 @@ public class TimeSlotThreadPoolExecutor extends ThreadPoolExecutor {
                 10,
                 10, TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>(5000),
-                new ThreadFactoryBuilder().setNameFormat("timeslot-thread-pool").build(),
+                new ThreadFactoryBuilder().setNameFormat("timeslot-thread-pool-%d").build(),
                 (r, executor) -> {
                     if (!(r instanceof TimeSlotAsyncTask)) {
                         LOGGER.error("[{}] Thread pool container queue is full, discard task!", ExceptionEnum.CONTAINER_QUEUE_FULL_ERROR.getExceptionCode());

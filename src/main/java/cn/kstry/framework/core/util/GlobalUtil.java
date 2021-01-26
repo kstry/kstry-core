@@ -82,6 +82,20 @@ public class GlobalUtil {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> transfer(Object source, Class<T> targetClass) {
+        AssertUtil.notNull(targetClass);
+        if (source == null) {
+            return Optional.empty();
+        }
+        AssertUtil.isTrue(targetClass.isAssignableFrom(source.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
+        return Optional.of((T) source);
+    }
+
+    public static <T> T transferNotEmpty(Object source, Class<T> targetClass) {
+        return notEmpty(transfer(source, targetClass));
+    }
+
     public static Optional<Object> getProperty(Object bean, String propertyName) {
         if (bean == null || StringUtils.isBlank(propertyName)) {
             return Optional.empty();
