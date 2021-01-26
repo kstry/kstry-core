@@ -36,7 +36,12 @@ public enum StrategyTypeEnum {
     /**
      * 匹配成功，将事件流切至当前事件执行
      */
-    MATCH("MATCH");
+    MATCH("MATCH"),
+
+    /**
+     * 脱离主流程，使用 timeSlot 的形式执行任务
+     */
+    TIMESLOT("TIMESLOT");
 
     /**
      * 策略类型

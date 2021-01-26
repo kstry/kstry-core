@@ -16,6 +16,10 @@ public class User {
 
     private UserTypeEnum userTypeEnum;
 
+    public User() {
+
+    }
+
     public User(Long userId, String name, long money) {
         this.userId = userId;
         this.name = name;

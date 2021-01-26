@@ -29,11 +29,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -75,15 +71,22 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
      *  1. strategy_def 非空时，event_def 必须非空
      *  2. strategy_def 非空时，story_def 必须非空
      *  3. strategy_type 必须存在，并且是 cn.kstry.framework.core.enums.StrategyTypeEnum 枚举中的值
-     *  4. 当 strategy_type=MATCH 时
-     *      - story 必须存在，且不能被重复定义
-     *  5. 当 strategy_type=FILTER 时
-     *      - event_node 和 strategy_def 中的 story 只能且必须存在一个
-     *      - 当 strategy_def.story 出现时，允许出现多个相同的 story 值，不允许出现不同的 strategy_def.story，因为可以 match 多个分支，只能 filter 一个 story
-     *
-     *  6. strategy.key：[ 匹配规则（在 CalculatorEnum 中定义）- 字段名称 ]  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculatorEnum
+     *  4. strategy.key：[ 匹配规则（在 CalculatorEnum 中定义）- 字段名称 ]  “-” 固定写法不可变更 @see cn.kstry.framework.core.enums.CalculatorEnum
      *     strategy.value  期望值
-     *  7. rule_set 取值规则写法校验同 request_mapping value 校验
+     *  5. rule_set 取值规则写法校验同 request_mapping value 校验
+     *
+     *  6. 策略类型与 story_def 中 event_node 的关系
+     *      FILTER 		类型中，story值一定为空(*)	    story不会出现					可以出现多个
+     *      MATCH  		类型中，story值不能为空(*)	    story、node存在个数无限制			可以出现多个，story不可相同(*)
+     *      TIMESLOT 	类型中，story可空可不空		story、node必须且仅存在一个(*)		仅允许出现一次(*)
+     *
+     *      event_node出现时
+     * 	    	- match 	可出现可不出现
+     * 	    	- timeslot	可出现可不出现
+     * 	    	- filter    可出现可不出现
+     *      event_node不出现时
+     * 	    	- match、timeslot 	必须出现一个，可同时出现 (*)
+     * 	    	- filter 			timeslot不出现时，filter不可出现 (*)
      *
      * {
      *   "strategy_def": {
@@ -247,6 +250,10 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 if (StrategyTypeEnum.isType(strategy.getStrategyType(), StrategyTypeEnum.MATCH)) {
                     AssertUtil.notBlank(strategy.getStory(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`story` must exist when 'strategy_type=MATCH'");
                 }
+                if (StrategyTypeEnum.isType(strategy.getStrategyType(), StrategyTypeEnum.FILTER)) {
+                    AssertUtil.isTrue(StringUtils.isBlank(strategy.getStory()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "`story` must not exist when 'strategy_type=FILTER'");
+                }
 
                 if (MapUtils.isNotEmpty(strategy.getRuleSet())) {
                     strategy.getRuleSet().keySet().forEach(kName -> {
@@ -271,6 +278,11 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
             if (CollectionUtils.isNotEmpty(matchStrategy)) {
                 AssertUtil.isTrue(matchStrategy.size() == matchStrategy.stream().map(StrategyDefItemConfig::getStory).distinct().count(),
                         ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "When `strategy_type=match`, `story` cannot be repeatedly defined!");
+            }
+            List<StrategyDefItemConfig> timeSlotStrategy = v.stream()
+                    .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.TIMESLOT)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(timeSlotStrategy)) {
+                AssertUtil.oneSize(timeSlotStrategy, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`strategy_type=timeslot` only allowed to appear once!");
             }
         }
 
@@ -301,20 +313,29 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                             .anyMatch(s -> key.equals(s.getStory())), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Event nodes with circular dependencies! story:%s", key);
                 }
 
-                List<StrategyDefItemConfig> filterStrategyList = strategyDefItemConfig.stream()
-                        .filter(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.FILTER)).collect(Collectors.toList());
-
-                boolean existFilterStory = CollectionUtils.isNotEmpty(filterStrategyList) && filterStrategyList.stream().anyMatch(s -> StringUtils.isNotBlank(s.getStory()));
-                boolean notExistFilterStory = CollectionUtils.isEmpty(filterStrategyList) || filterStrategyList.stream().noneMatch(s -> StringUtils.isNotBlank(s.getStory()));
-                if (CollectionUtils.isNotEmpty(filterStrategyList)) {
-                    AssertUtil.isTrue((StringUtils.isBlank(node.getEventNode()) && existFilterStory) || (StringUtils.isNotBlank(node.getEventNode()) && notExistFilterStory),
+                List<StrategyDefItemConfig> timeSlotStrategyList = strategyDefItemConfig.stream()
+                        .filter(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.TIMESLOT)).collect(Collectors.toList());
+                boolean existTimeSlotStory = CollectionUtils.isNotEmpty(timeSlotStrategyList) && timeSlotStrategyList.stream().anyMatch(s -> StringUtils.isNotBlank(s.getStory()));
+                boolean notExistTimeSlotStory = CollectionUtils.isEmpty(timeSlotStrategyList) || timeSlotStrategyList.stream().noneMatch(s -> StringUtils.isNotBlank(s.getStory()));
+                if (CollectionUtils.isNotEmpty(timeSlotStrategyList)) {
+                    AssertUtil.isTrue((StringUtils.isBlank(node.getEventNode()) && existTimeSlotStory) || (StringUtils.isNotBlank(node.getEventNode()) && notExistTimeSlotStory),
                             ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "When `strategy_type=filter`, `story` in strategy_def and `event_node` can exist only one! event_node:%s", node.getEventNode());
-
+                            "When `strategy_type=timeslot`, `story` in strategy_def and `event_node` can exist only and must one! event_node:%s", node.getEventNode());
                 }
-                if (existFilterStory) {
-                    AssertUtil.oneSize(filterStrategyList.stream().map(StrategyDefItemConfig::getStory).collect(Collectors.toSet()), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                            "When `strategy_type=filter`, `story` in strategy_def and `event_node` can exist only one! event_node:%s", node.getEventNode());
+
+                if (StringUtils.isBlank(node.getEventNode())) {
+                    List<StrategyDefItemConfig> strategyList = strategyDefItemConfig.stream().filter(c ->
+                            StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.TIMESLOT)
+                                    || StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.MATCH)).collect(Collectors.toList());
+                    AssertUtil.notEmpty(strategyList, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                            "When `event_node` is empty `strategy_type=timeslot` and `strategy_type=match` are not allowed to be empty at the same time!");
+
+                    List<StrategyDefItemConfig> filterStrategyList = strategyDefItemConfig.stream()
+                            .filter(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.FILTER)).collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(timeSlotStrategyList)) {
+                        AssertUtil.isTrue(CollectionUtils.isEmpty(filterStrategyList), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                                "`strategy_type=timeslot` does not appear when `strategy_type=filter` does not appear!");
+                    }
                 }
             }
         }
@@ -376,7 +397,10 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 continue;
             }
             v.forEach((kIn, vIn) -> {
-                AssertUtil.isValidField(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item key in `request_mapping_def` is error! key:%s", kIn);
+                AssertUtil.notBlank(kIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item key in `request_mapping_def` is blank!");
+                for (String kItem : kIn.split("\\.")) {
+                    AssertUtil.isValidField(kItem, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item key in `request_mapping_def` is error! key:%s", kIn);
+                }
                 AssertUtil.notBlank(vIn, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of mapping item value in `request_mapping_def` is blank!");
                 AssertUtil.isTrue(checkStrategyField(nodeNameList, vIn), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                         "The assignment of mapping item value in `request_mapping_def` is error! value:%s", vIn);

@@ -26,6 +26,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -59,8 +60,8 @@ public class NoticeBusDataUtil {
         }
 
         noticeFieldMap = new HashMap<>();
-        Field[] declaredFields = result.getClass().getDeclaredFields();
-        for (Field declaredField : declaredFields) {
+        List<Field> allFieldsList = FieldUtils.getAllFieldsList(result.getClass());
+        for (Field declaredField : allFieldsList) {
             if (declaredField.isAnnotationPresent(NoticeSta.class)) {
                 List<NoticeFieldItem> noticeFieldItems = noticeFieldMap.computeIfAbsent(NoticeSta.class, k -> new ArrayList<>());
                 NoticeSta annotation = declaredField.getAnnotation(NoticeSta.class);

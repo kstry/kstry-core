@@ -44,6 +44,11 @@ public class TimeSlotEventNode extends EventNode {
      */
     private boolean async;
 
+    /**
+     * 被 TimeSlotEventNode 包装前的 原始的 TaskNode
+     */
+    private TaskNode originalTaskNode;
+
     public TimeSlotEventNode(TaskNode taskNode) {
         super(taskNode);
     }
@@ -78,5 +83,13 @@ public class TimeSlotEventNode extends EventNode {
 
     public void setAsync(boolean async) {
         this.async = async;
+    }
+
+    public TaskNode getOriginalTaskNode() {
+        return originalTaskNode;
+    }
+
+    public void setOriginalTaskNode(TaskNode originalTaskNode) {
+        this.originalTaskNode = originalTaskNode;
     }
 }

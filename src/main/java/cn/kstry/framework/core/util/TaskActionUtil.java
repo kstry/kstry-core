@@ -24,16 +24,12 @@ import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotInvokeRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.facade.TaskRequestInit;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.EventGroup;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.route.StrategyRule;
-import cn.kstry.framework.core.route.StrategyRuleCalculator;
-import cn.kstry.framework.core.route.TaskRouter;
+import cn.kstry.framework.core.route.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -65,8 +61,8 @@ public class TaskActionUtil {
 
         TaskNode taskNode = GlobalUtil.notEmpty(router.currentTaskNode());
         if (taskNode.getEventNode() instanceof TimeSlotEventNode) {
-            StoryBus timeSlotStoryBus = storyBus.cloneStoryBus();
             TimeSlotEventNode currentEventNode = (TimeSlotEventNode) taskNode.getEventNode();
+            StoryBus timeSlotStoryBus = storyBus.cloneStoryBus(currentEventNode.isAsync());
             List<EventNode> timeSlotFirstEventNodeList = currentEventNode.getFirstTimeSlotEventNodeList();
             AssertUtil.notEmpty(timeSlotFirstEventNodeList);
             EventNode timeSlotEventNode = TaskActionUtil.locateInvokeEventNode(timeSlotStoryBus, timeSlotFirstEventNodeList);
@@ -87,7 +83,11 @@ public class TaskActionUtil {
         }
 
         EventNode eventNode = GlobalUtil.notNull(taskNode.getEventNode());
+
         Object innerTaskRequest = currentRequestClass.newInstance();
+        if (innerTaskRequest instanceof TaskRequestInit) {
+            ((TaskRequestInit) innerTaskRequest).init();
+        }
         storyBus.loadTaskRequest(innerTaskRequest, eventNode.getRequestMappingGroup());
         return innerTaskRequest;
     }

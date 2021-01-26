@@ -56,6 +56,6 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
 
     @Override
     public void safeCheck() {
-        System.out.println("safe checke");
+        System.out.println(Thread.currentThread().getName()+ " safe check!");
     }
 }

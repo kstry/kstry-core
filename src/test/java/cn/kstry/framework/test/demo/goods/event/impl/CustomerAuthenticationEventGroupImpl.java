@@ -31,7 +31,7 @@ public class CustomerAuthenticationEventGroupImpl extends UserAuthenticationEven
         user.setUserTypeEnum(UserTypeEnum.CUSTOMER);
 
         try {
-            TimeUnit.SECONDS.sleep(2);
+            TimeUnit.MILLISECONDS.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

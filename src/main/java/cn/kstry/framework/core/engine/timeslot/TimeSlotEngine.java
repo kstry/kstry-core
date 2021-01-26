@@ -59,7 +59,8 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
         TimeSlotAsyncTask timeSlotAsyncTask = new TimeSlotAsyncTask(request);
         if (!request.isAsync()) {
             TimeSlotTaskResponse taskResponse = new TimeSlotTaskResponse(null);
-            BeanUtils.copyProperties(timeSlotAsyncTask.call(), taskResponse);
+            TaskResponse<Map<String, Object>> syncTaskResponse = timeSlotAsyncTask.call();
+            BeanUtils.copyProperties(syncTaskResponse, taskResponse);
             taskResponse.setStrategyName(request.getStrategyName());
             return taskResponse;
         }

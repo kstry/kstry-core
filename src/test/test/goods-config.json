@@ -10,7 +10,8 @@
       },
       {
         "event_node": "get_goods",
-        "request_mapping": "getGoodsMapping"
+        "request_mapping": "getGoodsMapping",
+        "strategy": "ssss"
       },
       {
         "event_node": "safe_check"
@@ -70,23 +71,39 @@
     "USER_LOGIN": [
       {
         "story": "doLogin",
-        "strategy_type": "FILTER",
+        "strategy_type": "TIMESLOT",
         "rule_set": {
           "notNull-@req.userType": ""
         },
         "async": true,
-        "timeout": 2100
+        "timeout": 1000
+      },
+      {
+        "strategy_type": "filter",
+        "rule_set": {
+          "notNull-@req.userType": ""
+        }
+      }
+    ],
+    "ssss": [
+      {
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
       }
     ],
     "USER_LOGIN2": [
       {
         "story": "doLogin2",
-        "strategy_type": "FILTER",
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
+      },
+      {
+        "strategy_type": "filter",
         "rule_set": {
           "notNull-@req.userType": ""
-        },
-        "async": true,
-        "timeout": 2100
+        }
       }
     ],
     "LOGIN_RULE_SET": [
@@ -140,7 +157,7 @@
       "goodIds": "@req.goodIds"
     },
     "immediatelyDiscountMapping": {
-      "goodsList": "@get_goods.goodsList"
+      "goodsList": "$get_goods.goodsList"
     },
     "payMapping": {
       "money": "@get_goods.goodsList[0].money"

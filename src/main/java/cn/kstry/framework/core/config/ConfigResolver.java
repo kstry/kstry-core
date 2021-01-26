@@ -36,6 +36,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -136,6 +137,8 @@ public class ConfigResolver {
                         eventNodeAdapterList.add(eventNodeAgent);
                         break;
                     }
+                } else {
+                    AssertUtil.notNull(eventNodeAgent.getTaskNode());
                 }
                 eventNodeAdapterList.add(eventNodeAgent);
             }
@@ -167,17 +170,15 @@ public class ConfigResolver {
 
             List<StrategyRule> matchStrategyRuleList = taskItem.getStrategyRuleList();
             for (TaskNodeAgentForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
-                if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap()) || nodeAgent.getTaskNode() != null || StringUtils.isNotBlank(nodeAgent.getFilterStoryName())) {
+                if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap()) || nodeAgent.getTaskNode() != null || StringUtils.isNotBlank(nodeAgent.getTimeSlotStoryName())) {
                     EventNode eventNode = nodeAgent.buildEventNode();
                     List<TaskNodeAgentForConfigResolver> taskNodeAgentList =
-                            StringUtils.isBlank(nodeAgent.getFilterStoryName()) ? null : storyNodeAdaptorMap.get(nodeAgent.getFilterStoryName());
-                    if (eventNode instanceof TimeSlotEventNode && CollectionUtils.isNotEmpty(taskNodeAgentList)) {
-                        List<EventNode> filterStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
+                            StringUtils.isBlank(nodeAgent.getTimeSlotStoryName()) ? null : storyNodeAdaptorMap.get(nodeAgent.getTimeSlotStoryName());
+                    if (eventNode instanceof TimeSlotEventNode && CollectionUtils.isNotEmpty(taskNodeAgentList)
+                            && ((TimeSlotEventNode) eventNode).getOriginalTaskNode() == null) {
+                        List<EventNode> timeSlotStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
                         TimeSlotEventNode timeSlotEventNode = (TimeSlotEventNode) eventNode;
-                        timeSlotEventNode.setFirstTimeSlotEventNodeList(filterStoryEventNodeList);
-                        timeSlotEventNode.setStrategyName(GlobalUtil.notBlank(nodeAgent.getStrategyName()));
-                        timeSlotEventNode.setAsync(GlobalUtil.notNull(nodeAgent.getAsync()));
-                        timeSlotEventNode.setTimeout(GlobalUtil.notNull(nodeAgent.getTimeout()));
+                        timeSlotEventNode.setFirstTimeSlotEventNodeList(timeSlotStoryEventNodeList);
                     }
                     if (matchStrategyRuleList != null) {
                         eventNode.setMatchStrategyRuleList(matchStrategyRuleList);
@@ -218,32 +219,29 @@ public class ConfigResolver {
             return false;
         }
 
-        if (routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER))) {
-            List<StrategyRule> filterStrategyRuleList = routeStrategy.stream()
-                    .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(s.getRuleSet()))
-                    .map(EventStoryDefConfig.StrategyDefItemConfig::getRuleSet)
-                    .flatMap(s -> getStrategyRuleList(s, StrategyTypeEnum.FILTER).stream())
-                    .collect(Collectors.toList());
+        List<StrategyRule> filterStrategyRuleList = routeStrategy.stream()
+                .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && MapUtils.isNotEmpty(s.getRuleSet()))
+                .map(EventStoryDefConfig.StrategyDefItemConfig::getRuleSet)
+                .flatMap(s -> getStrategyRuleList(s, StrategyTypeEnum.FILTER).stream())
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(filterStrategyRuleList)) {
             eventNodeAgent.setFilterStrategyRuleList(filterStrategyRuleList);
-            if (eventNodeAgent.getTaskNode() == null) {
-                List<String> filterStoryNameList = routeStrategy.stream()
-                        .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && StringUtils.isNotBlank(s.getStory()))
-                        .map(EventStoryDefConfig.StrategyDefItemConfig::getStory)
-                        .collect(Collectors.toList());
-                AssertUtil.oneSize(filterStoryNameList, ExceptionEnum.PARAMS_ERROR);
+        }
 
-                boolean async = routeStrategy.stream()
-                        .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && s.getAsync() != null)
-                        .findFirst().map(EventStoryDefConfig.StrategyDefItemConfig::getAsync).orElse(false);
-                int timeout = routeStrategy.stream()
-                        .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.FILTER) && s.getTimeout() != null && s.getTimeout() > 0)
-                        .findFirst().map(EventStoryDefConfig.StrategyDefItemConfig::getTimeout).orElse(GlobalConstant.DEFAULT_ASYNC_TIMEOUT);
-
-                eventNodeAgent.setFilterStoryName(filterStoryNameList.get(0));
-                eventNodeAgent.setStrategyName(strategyName);
-                eventNodeAgent.setAsync(async);
-                eventNodeAgent.setTimeout(timeout);
-            }
+        List<EventStoryDefConfig.StrategyDefItemConfig> timeSlotStrategyList = routeStrategy.stream()
+                .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.TIMESLOT))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(timeSlotStrategyList)) {
+            AssertUtil.oneSize(timeSlotStrategyList, ExceptionEnum.PARAMS_ERROR);
+            EventStoryDefConfig.StrategyDefItemConfig strategyConfig = timeSlotStrategyList.get(0);
+            boolean async = Optional.ofNullable(strategyConfig.getAsync()).orElse(false);
+            int timeout = Optional.ofNullable(strategyConfig.getTimeout()).orElse(GlobalConstant.DEFAULT_ASYNC_TIMEOUT);
+            eventNodeAgent.setTimeSlotStoryName(strategyConfig.getStory());
+            eventNodeAgent.setStrategyName(strategyName);
+            eventNodeAgent.setAsync(async);
+            eventNodeAgent.setTimeout(timeout);
+            eventNodeAgent.setTimeSlotTask(true);
+            AssertUtil.isTrue(eventNodeAgent.getTaskNode() == null || StringUtils.isBlank(eventNodeAgent.getTimeSlotStoryName()));
         }
 
         if (routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH))) {
@@ -392,7 +390,7 @@ public class ConfigResolver {
 
         private Map<String, List<StrategyRule>> matchStrategyRuleMap;
 
-        private String filterStoryName;
+        private String timeSlotStoryName;
 
         /**
          * time slot task node
@@ -412,6 +410,8 @@ public class ConfigResolver {
          */
         private Boolean async;
 
+        private Boolean timeSlotTask;
+
         public TaskNode getTaskNode() {
             return taskNode;
         }
@@ -422,12 +422,22 @@ public class ConfigResolver {
 
         public EventNode buildEventNode() {
             EventNode eventNode = null;
-            if (getTaskNode() != null) {
-                eventNode = new EventNode(getTaskNode().cloneTaskNode());
-            } else if (StringUtils.isNotBlank(getFilterStoryName())) {
+            if (BooleanUtils.isTrue(getTimeSlotTask())) {
                 AssertUtil.notNull(this.globalTimeSlotTaskNode);
                 TaskNode timeSlotTaskNode = this.globalTimeSlotTaskNode.cloneTaskNode();
-                eventNode = new TimeSlotEventNode(timeSlotTaskNode);
+                TimeSlotEventNode timeSlotEventNode = new TimeSlotEventNode(timeSlotTaskNode);
+                timeSlotEventNode.setStrategyName(GlobalUtil.notBlank(getStrategyName()));
+                timeSlotEventNode.setAsync(GlobalUtil.notNull(getAsync()));
+                timeSlotEventNode.setTimeout(GlobalUtil.notNull(getTimeout()));
+                if (getTaskNode() != null) {
+                    EventNode firstEventNode = new EventNode(getTaskNode().cloneTaskNode());
+                    timeSlotEventNode.setOriginalTaskNode(firstEventNode.getTaskNode());
+                    timeSlotEventNode.setStrategyName(firstEventNode.getTaskNode().identity());
+                    timeSlotEventNode.setFirstTimeSlotEventNodeList(Lists.newArrayList(firstEventNode));
+                }
+                eventNode = timeSlotEventNode;
+            } else if (getTaskNode() != null) {
+                eventNode = new EventNode(getTaskNode().cloneTaskNode());
             } else {
                 KstryException.throwException(ExceptionEnum.SYSTEM_ERROR);
             }
@@ -460,12 +470,12 @@ public class ConfigResolver {
             this.matchStrategyRuleMap = matchStrategyRuleMap;
         }
 
-        public String getFilterStoryName() {
-            return filterStoryName;
+        public String getTimeSlotStoryName() {
+            return timeSlotStoryName;
         }
 
-        public void setFilterStoryName(String filterStoryName) {
-            this.filterStoryName = filterStoryName;
+        public void setTimeSlotStoryName(String timeSlotStoryName) {
+            this.timeSlotStoryName = timeSlotStoryName;
         }
 
         public void setGlobalTimeSlotTaskNode(TaskNode globalTimeSlotTaskNode) {
@@ -494,6 +504,14 @@ public class ConfigResolver {
 
         public void setAsync(Boolean async) {
             this.async = async;
+        }
+
+        public Boolean getTimeSlotTask() {
+            return timeSlotTask;
+        }
+
+        public void setTimeSlotTask(Boolean timeSlotTask) {
+            this.timeSlotTask = timeSlotTask;
         }
     }
 

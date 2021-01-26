@@ -78,9 +78,17 @@ public class StoryBus {
     /**
      * 全局流转的参数
      */
-    private final Map<String, Object> globalParamAndResult = new ConcurrentHashMap<>();
+    private final Map<String, Object> globalParamAndResult;
+
+    public StoryBus(Map<String, Object> globalParamAndResult) {
+        if (globalParamAndResult == null) {
+            globalParamAndResult = new ConcurrentHashMap<>();
+        }
+        this.globalParamAndResult = globalParamAndResult;
+    }
 
     public StoryBus(Object request, BusDataBox stableDataBox, BusDataBox variableDataBox) {
+        this(null);
 
         // 初始化全局参数
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_REQUEST_KEY.identity(), (request == null) ? new DefaultDataBox() : request);
@@ -288,12 +296,15 @@ public class StoryBus {
         return GlobalUtil.getProperty(this.globalParamAndResult, fieldName).filter(obj -> obj != GlobalUtil.GET_PROPERTY_ERROR_SIGN);
     }
 
-    public StoryBus cloneStoryBus() {
-
-        StoryBus cloneStoryBus = new StoryBus(null, null, null);
+    public StoryBus cloneStoryBus(boolean isAsync) {
+        // 同步执行时，数据与主流程共享
+        if (!isAsync) {
+            return new StoryBus(this.globalParamAndResult);
+        }
 
         // 请求入参 分支流程与主流程共享
         // timeSlot 异步任务结果集共享
+        StoryBus cloneStoryBus = new StoryBus(null);
         cloneStoryBus.globalParamAndResult.putAll(this.globalParamAndResult);
         try {
             // 在分支流程出现时开始，复制当下的 不可变更数据
