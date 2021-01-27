@@ -1,3 +1,202 @@
 {
-
+  "story_def": {
+    "login": [
+      {
+        "strategy": "USER_LOGIN"
+      },
+      {
+        "event_node": "auth_node",
+        "request_mapping": "userMapping",
+        "strategy": "ssss"
+      },
+      {
+        "event_node": "get_goods",
+        "request_mapping": "getGoodsMapping",
+        "strategy": "ssss"
+      },
+      {
+        "event_node": "safe_check",
+        "strategy": "ssss"
+      },
+      {
+        "event_node": "immediately_discount",
+        "request_mapping": "immediatelyDiscountMapping",
+        "strategy": "IMMEDIATELY_DISCOUNT_S"
+      }
+    ],
+    "userTologin": [
+      {
+        "event_node": "user_login_node",
+        "request_mapping": "userTologinMapping"
+      },
+      {
+        "event_node": "auth_node",
+        "request_mapping": "userMapping"
+      }
+    ],
+    "doLogin": [
+      {
+        "strategy": "USER_LOGIN2"
+      }
+    ],
+    "doLogin2": [
+      {
+        "strategy": "LOGIN_RULE_SET"
+      }
+    ],
+    "userLogin": [
+      {
+        "event_node": "user_login_node",
+        "request_mapping": "userTologinMapping",
+        "strategy": "ssss"
+      }
+    ],
+    "customerLogin": [
+      {
+        "event_node": "customer_login_node",
+        "request_mapping": "userTologinMapping",
+        "strategy": "ssss"
+      }
+    ],
+    "wxPay": [
+      {
+        "event_node": "WX_PAY",
+        "request_mapping": "payMapping"
+      }
+    ],
+    "aliPay": [
+      {
+        "event_node": "ALI_PAY",
+        "request_mapping": "payMapping"
+      }
+    ]
+  },
+  "strategy_def": {
+    "USER_LOGIN": [
+      {
+        "story": "doLogin",
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
+      },
+      {
+        "strategy_type": "filter",
+        "rule_set": {
+          "in-@req.userType": "[2]"
+        }
+      }
+    ],
+    "ssss": [
+      {
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
+      }
+    ],
+    "USER_LOGIN2": [
+      {
+        "story": "doLogin2",
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
+      },
+      {
+        "strategy_type": "filter",
+        "rule_set": {
+          "notNull-@req.userType": ""
+        }
+      }
+    ],
+    "LOGIN_RULE_SET": [
+      {
+        "story": "customerLogin",
+        "strategy_type": "MATCH",
+        "rule_set": {
+          "equals-@req.userType": "1"
+        }
+      },
+      {
+        "story": "userLogin",
+        "strategy_type": "MATCH",
+        "rule_set": {
+          "compare-@req.userType": ">=2L"
+        }
+      }
+    ],
+    "IMMEDIATELY_DISCOUNT_S": [
+      {
+        "strategy_type": "FILTER",
+        "rule_set": {
+          "compare-$get_goods.goodsList[0].money": ">500"
+        }
+      },
+      {
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
+      },
+      {
+        "story": "wxPay",
+        "strategy_type": "MATCH",
+        "rule_set": {
+          "compare-$get_goods.goodsList[0].money": "<3000"
+        }
+      },
+      {
+        "story": "aliPay",
+        "strategy_type": "MATCH",
+        "rule_set": {
+          "compare-$get_goods.goodsList[0].money": ">=3000"
+        }
+      }
+    ]
+  },
+  "request_mapping_def": {
+    "userMapping": {
+      "user": "$USER_LOGIN.$USER_LOGIN2.$user_login_node.@var.user"
+    },
+    "userTologinMapping": {
+      "userType": "@req.userType",
+      "userId": "@req.userId"
+    },
+    "getGoodsMapping": {
+      "goodIds": "@req.goodIds"
+    },
+    "immediatelyDiscountMapping": {
+      "goodsList": "$get_goods.goodsList"
+    },
+    "payMapping": {
+      "money": "$get_goods.goodsList[0].money"
+    }
+  },
+  "event_def": {
+    "CUSTOMER_AUTHENTICATION_EVENT_GROUP": {
+      "customer_login_node": {
+        "event_type": "TASK",
+        "event_action": "userLogin"
+      }
+    },
+    "GOODS_EVENT_GROUP": {
+      "get_goods": {
+        "event_type": "TASK",
+        "event_action": "getGoods"
+      }
+    },
+    "PROMOTION_EVENT_GROUP": {
+      "immediately_discount": {
+        "event_type": "TASK",
+        "event_action": "immediatelyDiscount"
+      }
+    },
+    "PAY_EVENT_GROUP": {
+      "WX_PAY": {
+        "event_type": "TASK",
+        "event_action": "wxPay"
+      },
+      "ALI_PAY": {
+        "event_type": "TASK",
+        "event_action": "aliPay"
+      }
+    }
+  }
 }

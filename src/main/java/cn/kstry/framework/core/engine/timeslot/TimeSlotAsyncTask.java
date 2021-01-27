@@ -56,23 +56,23 @@ public class TimeSlotAsyncTask implements Callable<TaskResponse<Map<String, Obje
     @Override
     @SuppressWarnings("unchecked")
     public TaskResponse<Map<String, Object>> call() {
-
         try {
             StoryBus storyBus = timeSlotInvokeRequest.getStoryBus();
             TaskRouter taskRouter = storyBus.getRouter();
             List<EventGroup> taskGroup = timeSlotInvokeRequest.getTaskGroup();
-
             for (Optional<TaskNode> nodeOptional = taskRouter.invokeTaskNode(); nodeOptional.isPresent(); nodeOptional = taskRouter.invokeTaskNode()) {
 
                 EventOperatorRole actionOperator = TaskActionUtil.getTaskActionOperator(taskRouter, taskGroup);
                 Object taskRequest = TaskActionUtil.getNextRequest(taskRouter, storyBus, taskGroup);
                 Object o = TaskActionUtil.invokeTarget(taskRequest, nodeOptional.get(), actionOperator);
-
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
                     storyBus.saveTimeSlotTaskResult(o);
+                    LOGGER.debug("timeslot engine execution result unsuccessful! result:{}", o);
                     return (TaskResponse<Map<String, Object>>) o;
                 }
+
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
+                taskRouter.locateNextTaskNode();
             }
 
             Map<String, Object> resultData = new HashMap<>();

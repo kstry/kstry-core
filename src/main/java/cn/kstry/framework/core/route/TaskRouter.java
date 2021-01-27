@@ -25,11 +25,15 @@ import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.Optional;
 
 public class TaskRouter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskRouter.class);
 
     /**
      * 调用链
@@ -68,12 +72,16 @@ public class TaskRouter {
 
         TaskNode node = this.nextInvokeTaskNode;
         this.alreadyInvokeTaskNodeList.offerLast(node);
+        if (CollectionUtils.isNotEmpty(node.getEventNode().getNextEventNodeList())) {
+            this.nextInvokeTaskNode = node.getEventNode().getNextEventNodeList().get(0).getTaskNode();
+        } else {
+            this.nextInvokeTaskNode = null;
+        }
 
-        // 路由下一待执行节点
-        locateNextTaskNode();
-
+        LOGGER.debug("Current execution node:{}", node.identity());
         // 判断是否需要跳过当前节点
         if (needSkipCurrentNode(node, getStoryBus())) {
+            locateNextTaskNode();
             invokeTaskNode();
         }
         return currentTaskNode();
@@ -90,7 +98,7 @@ public class TaskRouter {
         return Optional.ofNullable(this.alreadyInvokeTaskNodeList.peekLast());
     }
 
-    private void locateNextTaskNode() {
+    public void locateNextTaskNode() {
         if (!currentTaskNode().isPresent()) {
             this.nextInvokeTaskNode = null;
             return;

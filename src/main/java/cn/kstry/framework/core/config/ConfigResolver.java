@@ -39,12 +39,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -175,14 +170,15 @@ public class ConfigResolver {
 
             List<StrategyRule> matchStrategyRuleList = taskItem.getStrategyRuleList();
             for (TaskNodeAgentForConfigResolver nodeAgent : taskItem.getNodeDefQueue()) {
-                if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap()) || nodeAgent.getTaskNode() != null || StringUtils.isNotBlank(nodeAgent.getTimeSlotStoryName())) {
+                if (MapUtils.isEmpty(nodeAgent.getMatchStrategyRuleMap()) || nodeAgent.getTaskNode() != null || BooleanUtils.isTrue(nodeAgent.getTimeSlotTask())) {
                     EventNode eventNode = nodeAgent.buildEventNode();
                     List<TaskNodeAgentForConfigResolver> taskNodeAgentList =
                             StringUtils.isBlank(nodeAgent.getTimeSlotStoryName()) ? null : storyNodeAdaptorMap.get(nodeAgent.getTimeSlotStoryName());
-                    if (eventNode instanceof TimeSlotEventNode && CollectionUtils.isNotEmpty(taskNodeAgentList)
-                            && ((TimeSlotEventNode) eventNode).getOriginalTaskNode() == null) {
-                        List<EventNode> timeSlotStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
+                    if (eventNode instanceof TimeSlotEventNode && ((TimeSlotEventNode) eventNode).getOriginalTaskNode() == null) {
+                        AssertUtil.notEmpty(taskNodeAgentList);
                         TimeSlotEventNode timeSlotEventNode = (TimeSlotEventNode) eventNode;
+                        AssertUtil.isEmpty(timeSlotEventNode.getFirstTimeSlotEventNodeList());
+                        List<EventNode> timeSlotStoryEventNodeList = initEventNodePipeline(++invokeLevel, storyNodeAdaptorMap, taskNodeAgentList);
                         timeSlotEventNode.setFirstTimeSlotEventNodeList(timeSlotStoryEventNodeList);
                     }
                     if (matchStrategyRuleList != null) {
@@ -237,7 +233,7 @@ public class ConfigResolver {
                 .filter(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.TIMESLOT))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(timeSlotStrategyList)) {
-            AssertUtil.oneSize(timeSlotStrategyList, ExceptionEnum.PARAMS_ERROR);
+            AssertUtil.oneSize(timeSlotStrategyList, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "time slot only allowed to appear once!");
             EventStoryDefConfig.StrategyDefItemConfig strategyConfig = timeSlotStrategyList.get(0);
             boolean async = Optional.ofNullable(strategyConfig.getAsync()).orElse(false);
             int timeout = Optional.ofNullable(strategyConfig.getTimeout()).orElse(GlobalConstant.DEFAULT_ASYNC_TIMEOUT);
@@ -247,6 +243,7 @@ public class ConfigResolver {
             eventNodeAgent.setTimeout(timeout);
             eventNodeAgent.setTimeSlotTask(true);
             AssertUtil.isTrue(eventNodeAgent.getTaskNode() == null || StringUtils.isBlank(eventNodeAgent.getTimeSlotStoryName()));
+            AssertUtil.isTrue(eventNodeAgent.getTaskNode() != null || StringUtils.isNotBlank(eventNodeAgent.getTimeSlotStoryName()));
         }
 
         if (routeStrategy.stream().anyMatch(s -> StrategyTypeEnum.isType(s.getStrategyType(), StrategyTypeEnum.MATCH))) {
@@ -338,7 +335,7 @@ public class ConfigResolver {
                 realFieldName.append(fieldList[i]);
                 continue;
             }
-            if (!fieldList[i].startsWith(GlobalConstant.NODE_SIGN)) {
+            if (fieldList[i].startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
                 TaskNode taskNode = this.taskNodeMap.get(fieldList[i].substring(1));
                 if (taskNode == null) {
                     realFieldName.append(fieldList[i]);

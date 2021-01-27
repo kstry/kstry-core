@@ -132,6 +132,7 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
             );
         }
         config.duplicateKeyCheck(config);
+        LOGGER.info("Use the following configuration file to generate a global map. config:{}", JSON.toJSONString(config));
         return config;
     }
 }

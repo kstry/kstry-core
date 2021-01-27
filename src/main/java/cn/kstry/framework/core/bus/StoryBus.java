@@ -243,8 +243,10 @@ public class StoryBus {
     private boolean doGetTimeSlotResult(String timeSlotTaskKey, Map<String, Object> resultMap) {
 
         AssertUtil.notBlank(timeSlotTaskKey);
+        AssertUtil.notNull(resultMap);
         Map<String, TimeSlotTaskResultWrapper> timeSlotTaskResultWrapperMap =
                 GlobalUtil.transferNotEmpty(resultMap.get(TIMESLOT_TASK_RESULT_WRAPPER_KEY.identity()), Map.class);
+        AssertUtil.notEmpty(timeSlotTaskResultWrapperMap);
         TimeSlotTaskResultWrapper resultWrapper = timeSlotTaskResultWrapperMap.get(timeSlotTaskKey);
         if (resultWrapper == null || resultWrapper.getTaskStatusEnum() == TimeSlotTaskStatusEnum.ERROR) {
             return false;
@@ -267,15 +269,17 @@ public class StoryBus {
             TaskResponse<Map<String, Object>> mapTaskResponse;
             try {
                 mapTaskResponse = resultWrapper.getFutureTask().get(resultWrapper.getTimeout(), TimeUnit.MILLISECONDS);
+                LOGGER.debug("Get asynchronous task results normally! strategyName:{} result success:{}", resultWrapper.getStrategyName(), mapTaskResponse.isSuccess());
             } catch (Exception e) {
                 resultWrapper.getFutureTask().cancel(true);
-                LOGGER.warn("Cancel timeSlot's asynchronous task because of timeout! strategyName:{}, timeout:{}", resultWrapper.getStrategyName(), resultWrapper.getTimeout());
+                LOGGER.warn("Cancel timeSlot's asynchronous task because of timeout! strategyName:{}, config timeout:{}", resultWrapper.getStrategyName(),
+                        resultWrapper.getTimeout());
                 resultWrapper.setFutureTask(null);
                 resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.ERROR);
                 return false;
             }
 
-            if (mapTaskResponse == null || !mapTaskResponse.isSuccess() || mapTaskResponse.getResult() == null) {
+            if (!mapTaskResponse.isSuccess() || mapTaskResponse.getResult() == null) {
                 resultWrapper.setFutureTask(null);
                 resultWrapper.setTaskStatusEnum(TimeSlotTaskStatusEnum.ERROR);
                 return false;

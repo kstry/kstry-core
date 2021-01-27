@@ -29,16 +29,9 @@ import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.EventGroup;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.route.StrategyRule;
-import cn.kstry.framework.core.route.StrategyRuleCalculator;
-import cn.kstry.framework.core.route.TaskRouter;
+import cn.kstry.framework.core.route.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,8 +49,6 @@ import java.util.stream.Collectors;
  * @author lykan
  */
 public class TaskActionUtil {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskActionUtil.class);
 
     /**
      * 获取下一个 task 请求的 request
@@ -194,7 +185,6 @@ public class TaskActionUtil {
 
             StrategyRuleCalculator ruleCalculator = rule.getStrategyRuleCalculator();
             AssertUtil.notNull(ruleCalculator);
-            AssertUtil.isTrue(ruleCalculator.checkExpected(rule.getExpectedValue()), ExceptionEnum.PARAMS_ERROR);
             Optional<Object> valueOptional = storyBus.getGlobalParamValue(rule.getFieldName());
             return ruleCalculator.calculate(valueOptional.orElse(null), rule.getExpectedValue());
         });
@@ -224,7 +214,11 @@ public class TaskActionUtil {
         List<EventNode> taskNodeCollect = eventNodeList.stream()
                 .filter(eventNode -> TaskActionUtil.matchStrategyRule(eventNode.getMatchStrategyRuleList(), storyBus))
                 .collect(Collectors.toList());
-        AssertUtil.oneSize(taskNodeCollect, ExceptionEnum.MUST_ONE_TASK_ACTION);
+
+        if (taskNodeCollect.size() > 1) {
+            AssertUtil.oneSize(taskNodeCollect, ExceptionEnum.MUST_ONE_TASK_ACTION, "Only one task is allowed to be executed! list:%s",
+                    taskNodeCollect.stream().map(EventNode::getTaskNode).map(TaskNode::identity).collect(Collectors.toList()));
+        }
         return taskNodeCollect.get(0);
     }
 }

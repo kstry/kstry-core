@@ -32,6 +32,8 @@ import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -40,6 +42,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class StoryEngine implements ApplicationContextAware {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StoryEngine.class);
 
     /**
      * 代码中定义的事件组列表，实际参与任务执行
@@ -75,9 +79,11 @@ public class StoryEngine implements ApplicationContextAware {
 
                 if (o instanceof TaskResponse && !((TaskResponse<?>) o).isSuccess()) {
                     storyBus.saveTimeSlotTaskResult(o);
+                    LOGGER.debug("story engine execution result unsuccessful! result:{}", o);
                     return (TaskResponse<T>) o;
                 }
                 storyBus.saveTaskResult(GlobalUtil.notEmpty(taskRouter.currentTaskNode()), o);
+                taskRouter.locateNextTaskNode();
             }
 
             Object result = storyBus.getResultByTaskNode(GlobalUtil.notEmpty(taskRouter.lastInvokeTaskNode()));
@@ -88,6 +94,7 @@ public class StoryEngine implements ApplicationContextAware {
                     "The result type of the final execution does not match the expected type! real result type:%s", result.getClass());
             return (TaskResponse<T>) TaskResponseBox.buildSuccess(result);
         } catch (Exception e) {
+            LOGGER.warn("story engine execution exception occurred!", e);
             return (TaskResponse<T>) TaskActionUtil.getTaskResponseFromException(e, ExceptionEnum.SYSTEM_ERROR);
         }
     }

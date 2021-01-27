@@ -66,8 +66,8 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
         }
 
         AssertUtil.notNull(threadPoolExecutor, ExceptionEnum.THREAD_POOL_COUNT_ERROR);
-        Future<TaskResponse<Map<String, Object>>> submit = threadPoolExecutor.submit(timeSlotAsyncTask);
-        TimeSlotTaskResponse taskResponse = new TimeSlotTaskResponse(submit);
+        Future<TaskResponse<Map<String, Object>>> futureTask = threadPoolExecutor.submit(timeSlotAsyncTask);
+        TimeSlotTaskResponse taskResponse = new TimeSlotTaskResponse(futureTask);
         taskResponse.resultSuccess();
         taskResponse.setTimeout(request.getTimeout());
         taskResponse.setStrategyName(request.getStrategyName());
