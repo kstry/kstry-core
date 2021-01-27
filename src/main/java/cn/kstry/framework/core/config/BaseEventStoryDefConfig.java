@@ -222,7 +222,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     }
 
     protected void checkStrategyDef(EventStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getStrategyDef())) {
+        if (config == null || MapUtils.isEmpty(config.getStrategyDef())) {
             return;
         }
 
@@ -347,7 +347,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     }
 
     protected void checkStoryDef(EventStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getStoryDef())) {
+        if (config == null || MapUtils.isEmpty(config.getStoryDef())) {
             return;
         }
 
@@ -383,7 +383,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     }
 
     protected void checkRequestMappingDef(EventStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getRequestMappingDef())) {
+        if (config == null || MapUtils.isEmpty(config.getRequestMappingDef())) {
             return;
         }
 
@@ -414,7 +414,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
     }
 
     protected void checkEventDef(EventStoryDefConfig config) {
-        if (MapUtils.isEmpty(config.getEventDef())) {
+        if (config == null || MapUtils.isEmpty(config.getEventDef())) {
             return;
         }
 
@@ -450,8 +450,10 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         List<String> storyNameList = MapUtils.isEmpty(config.getStoryDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStoryDef().keySet());
         List<String> strategyNameList = MapUtils.isEmpty(config.getStrategyDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStrategyDef().keySet());
         List<String> nodeNameList = new ArrayList<>();
-        for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigEventDefItem : config.getEventDef().values()) {
-            nodeNameList.addAll(stringNodeDefItemConfigEventDefItem.keySet());
+        if (MapUtils.isNotEmpty(config.getEventDef())) {
+            for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigEventDefItem : config.getEventDef().values()) {
+                nodeNameList.addAll(stringNodeDefItemConfigEventDefItem.keySet());
+            }
         }
 
         List<String> itemNameList = Lists.newArrayList();

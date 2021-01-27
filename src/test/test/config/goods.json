@@ -1,18 +1,3 @@
 {
-  "event_def": {
-    "USER_AUTHENTICATION_EVENT_GROUP": {
-      "user_login_node": {
-        "event_type": "TASK",
-        "event_action": "userLogin"
-      },
-      "auth_node": {
-        "event_type": "TASK",
-        "event_action": "auth"
-      },
-      "safe_check": {
-        "event_type": "TASK",
-        "event_action": "safeCheck"
-      }
-    }
-  }
+
 }
