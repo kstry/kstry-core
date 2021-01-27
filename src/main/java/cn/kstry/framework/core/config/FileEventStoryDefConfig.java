@@ -59,7 +59,8 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                 AssertUtil.notNull(path, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", eventStoryConfigName);
                 StringBuilder sb = new StringBuilder();
                 Files.lines(path).forEach(sb::append);
-                configList.add(sb.toString().replace("\"","'"));
+                configList.add(sb.toString());
+                LOGGER.info("Read using profile {}", r.getFilename());
             }
             return FileEventStoryDefConfig.doParseEventStoryConfig(mergeFiles(configList));
         } catch (Exception e) {

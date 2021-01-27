@@ -74,16 +74,13 @@
       {
         "story": "doLogin",
         "strategy_type": "TIMESLOT",
-        "rule_set": {
-          "notNull-@req.userType": ""
-        },
         "async": true,
         "timeout": 1000
       },
       {
         "strategy_type": "filter",
         "rule_set": {
-          "notNull-@req.userType": ""
+          "in-@req.userType": "[2]"
         }
       }
     ],

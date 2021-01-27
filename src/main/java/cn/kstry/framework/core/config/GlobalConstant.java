@@ -28,7 +28,6 @@ import java.util.List;
  */
 public interface GlobalConstant {
 
-
     /**
      *
      * 以下字段不能作为 配置 key 定义出现
