@@ -17,10 +17,13 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.engine.timeslot.TimeSlotEngine;
 import org.springframework.context.annotation.Import;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * 开启 Kstry 框架
@@ -30,7 +33,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({TimeSlotEngine.class, EnableKstryRegister.class, StoryEnginePropertyRegister.class})
+@Import({EnableKstryRegister.class, StoryEnginePropertyRegister.class, GlobalMapRegister.class})
 public @interface EnableKstry {
 
     /**

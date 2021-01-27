@@ -18,25 +18,20 @@
 package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.config.ConfigResolver;
-import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.config.TaskActionMethod;
+import cn.kstry.framework.core.engine.timeslot.TimeSlotEngine;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
-import cn.kstry.framework.core.route.EventNode;
-import cn.kstry.framework.core.route.GlobalMap;
+import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.route.RouteEventGroup;
-import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Lists;
-import org.apache.commons.collections.MapUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.lang.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -45,12 +40,11 @@ import java.util.stream.Collectors;
 /**
  * @author lykan
  */
-@Import(ConfigResolver.class)
 public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
-    @Bean("defaultEventGroupList")
+    @Bean(name = "defaultEventGroupList")
     public List<EventGroup> getEventGroupList() {
         Map<String, EventGroup> eventGroupMap = applicationContext.getBeansOfType(EventGroup.class);
         List<EventGroup> eventGroupList = Lists.newArrayList(eventGroupMap.values());
@@ -80,25 +74,18 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         return eventGroupList;
     }
 
-    @Bean("defaultGlobalMap")
-    public GlobalMap getGlobalMap(@Qualifier("defaultEventGroupList") List<EventGroup> eventGroupList) {
+    @Bean
+    public TimeSlotEngine initTimeSlotEngine() {
+        return new TimeSlotEngine();
+    }
 
-        Map<String, ConfigResolver> configResolverMap = applicationContext.getBeansOfType(ConfigResolver.class);
-        AssertUtil.notEmpty(configResolverMap);
-        AssertUtil.oneSize(configResolverMap.values(), ExceptionEnum.INVALID_SYSTEM_PARAMS, "ConfigResolver cannot be repeatedly defined!");
-        ConfigResolver configResolver = configResolverMap.values().iterator().next();
-
-        GlobalMap globalMap = new GlobalMap();
-        Map<String, List<EventNode>> storyEventNode = configResolver.getStoryEventNode(eventGroupList, EnableKstryRegister.getKstryConfigPath());
-        if (MapUtils.isEmpty(storyEventNode)) {
-            return globalMap;
-        }
-        storyEventNode.forEach(globalMap::addFirstEventNode);
-        return globalMap;
+    @Bean
+    public ConfigResolver initConfigResolver() {
+        return new ConfigResolver();
     }
 
     @Override
-    public void setApplicationContext(@Nullable ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 

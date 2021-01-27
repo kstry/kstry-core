@@ -74,7 +74,6 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
         return taskResponse;
     }
 
-    @SuppressWarnings("all")
     @Override
     @IgnoreEventNode
     public void onApplicationEvent(ContextClosedEvent event) {

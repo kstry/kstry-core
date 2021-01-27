@@ -43,7 +43,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <dependency.spring.version>5.2.10.RELEASE</dependency.spring.version>
+        <dependency.spring.version>4.0.9.RELEASE</dependency.spring.version>
         <dependency.collections.version>3.2.2</dependency.collections.version>
         <dependency.fastjson.version>1.2.75</dependency.fastjson.version>
         <dependency.lang3.version>3.11</dependency.lang3.version>

@@ -32,22 +32,24 @@ import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.util.List;
 import java.util.Optional;
 
-public class StoryEngine {
+public class StoryEngine implements ApplicationContextAware {
 
-    private final List<EventGroup> taskGroup;
+    /**
+     * 代码中定义的事件组列表，实际参与任务执行
+     */
+    private List<EventGroup> taskGroup;
 
-    private final GlobalMap globalMap;
-
-    public StoryEngine(@Qualifier("defaultGlobalMap") GlobalMap globalMap,
-                       @Qualifier("defaultEventGroupList") List<EventGroup> eventActionGroupList) {
-        this.globalMap = globalMap;
-        this.taskGroup = eventActionGroupList;
-    }
+    /**
+     * 全局地图
+     */
+    private GlobalMap globalMap;
 
     /**
      * story fire!
@@ -111,5 +113,18 @@ public class StoryEngine {
      */
     public <T> TaskResponse<T> fire(Object request, String storyName, BusDataBox stableDataBox, Class<T> resultClass) {
         return fire(request, storyName, stableDataBox, new DefaultDataBox(), resultClass);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+
+        GlobalMap globalMap = applicationContext.getBean(GlobalMap.class);
+        AssertUtil.notNull(globalMap);
+        this.globalMap = globalMap;
+
+        Object eventGroupListBean = applicationContext.getBean("defaultEventGroupList");
+        AssertUtil.notNull(eventGroupListBean);
+        this.taskGroup = (List<EventGroup>) eventGroupListBean;
     }
 }

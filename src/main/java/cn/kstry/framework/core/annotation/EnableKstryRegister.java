@@ -27,7 +27,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.lang.NonNull;
 import org.springframework.util.MultiValueMap;
 
 import java.util.List;
@@ -44,8 +43,7 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
     private static String kstryConfigPath;
 
     @Override
-    @SuppressWarnings("ConstantConditions")
-    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, @NonNull BeanDefinitionRegistry registry) {
+    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
         MultiValueMap<String, Object> enableKstryAnnotation = importingClassMetadata.getAllAnnotationAttributes("cn.kstry.framework.core.annotation.EnableKstry");
         AssertUtil.notNull(enableKstryAnnotation, ExceptionEnum.NOT_ALLOW_EMPTY, "The class modified by @EnableKstry is not allowed to be empty!");
