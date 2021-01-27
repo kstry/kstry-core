@@ -158,6 +158,13 @@ public class AssertUtil {
         isTrue(CollectionUtils.isNotEmpty(collection), exceptionEnum, desc);
     }
 
+    public static void isEmpty(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
+        if (exceptionEnum == null) {
+            exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
+        }
+        isTrue(CollectionUtils.isEmpty(collection), exceptionEnum, desc);
+    }
+
     public static <T> void notEmpty(T[] array) {
         notEmpty(array, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
     }

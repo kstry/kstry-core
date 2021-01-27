@@ -29,7 +29,12 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -287,8 +292,8 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
         }
 
         // 校验策略名称是否合法
-        questionFieldNameSet.forEach(fieldName -> AssertUtil.isTrue(config.getStrategyDef().containsKey(fieldName), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                "Undefined `strategy_def` or `event_def` node! node:%s", fieldName));
+        questionFieldNameSet.forEach(fieldName -> AssertUtil.isTrue(config.getStrategyDef().containsKey(fieldName) || nodeNameList.contains(fieldName),
+                ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Undefined `strategy_def` or `event_def` node! node:%s", fieldName));
 
         for (String key : config.getStoryDef().keySet()) {
             StoryDefItem<StoryDefItemConfig> nodeList = config.getStoryDef().get(key);
@@ -333,8 +338,8 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                     List<StrategyDefItemConfig> filterStrategyList = strategyDefItemConfig.stream()
                             .filter(c -> StrategyTypeEnum.isType(c.getStrategyType(), StrategyTypeEnum.FILTER)).collect(Collectors.toList());
                     if (CollectionUtils.isEmpty(timeSlotStrategyList)) {
-                        AssertUtil.isTrue(CollectionUtils.isEmpty(filterStrategyList), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "`strategy_type=timeslot` does not appear when `strategy_type=filter` does not appear!");
+                        AssertUtil.isEmpty(filterStrategyList,
+                                ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "`strategy_type=timeslot` does not appear when `strategy_type=filter` does not appear!");
                     }
                 }
             }
@@ -436,6 +441,31 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 "event node key in `event_def` is repeatedly defined!");
     }
 
+    protected void duplicateKeyCheck(EventStoryDefConfig config) {
+        if (config == null) {
+            return;
+        }
+
+        List<String> mappingNameList = MapUtils.isEmpty(config.getRequestMappingDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getRequestMappingDef().keySet());
+        List<String> storyNameList = MapUtils.isEmpty(config.getStoryDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStoryDef().keySet());
+        List<String> strategyNameList = MapUtils.isEmpty(config.getStrategyDef()) ? Lists.newArrayList() : Lists.newArrayList(config.getStrategyDef().keySet());
+        List<String> nodeNameList = new ArrayList<>();
+        for (EventDefItem<String, EventDefItemConfig> stringNodeDefItemConfigEventDefItem : config.getEventDef().values()) {
+            nodeNameList.addAll(stringNodeDefItemConfigEventDefItem.keySet());
+        }
+
+        List<String> itemNameList = Lists.newArrayList();
+        itemNameList.addAll(nodeNameList);
+        itemNameList.addAll(mappingNameList);
+        itemNameList.addAll(storyNameList);
+        itemNameList.addAll(strategyNameList);
+
+        List<String> duplicateNameList = itemNameList.stream().collect(Collectors.toMap(e -> e, e -> 1, Integer::sum))
+                .entrySet().stream().filter(entry -> entry.getValue() > 1).map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        AssertUtil.isEmpty(duplicateNameList, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Component names are repeatedly defined! names:%s", duplicateNameList);
+    }
+
     private boolean checkStrategyField(List<String> nodeNameList, String value) {
         AssertUtil.notNull(nodeNameList);
         if (StringUtils.isBlank(value)) {
@@ -460,8 +490,10 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                 this.questionFieldNameSet.add(fieldName.replace(GlobalConstant.TIME_SLOT_NODE_SIGN, StringUtils.EMPTY));
                 continue;
             }
-            fieldName = fieldName.replace(GlobalConstant.NODE_SIGN, StringUtils.EMPTY);
-            checkVin = checkVin && (GlobalConstant.RESERVED_WORDS_LIST.stream().anyMatch(fieldName::equals) || nodeNameList.stream().anyMatch(fieldName::equals));
+            fieldName = fieldName.replace(GlobalConstant.NODE_SIGN, StringUtils.EMPTY).replace(GlobalConstant.TIME_SLOT_NODE_SIGN, StringUtils.EMPTY);
+            final String fieldNameUpperCase = fieldName.toUpperCase();
+            checkVin = checkVin && (GlobalConstant.RESERVED_WORDS_LIST.stream().anyMatch(fieldNameUpperCase::equals)
+                    || nodeNameList.stream().map(String::toUpperCase).anyMatch(fieldNameUpperCase::equals));
         }
         return checkVin;
     }

@@ -71,7 +71,7 @@ public class GlobalUtil {
             return false;
         }
 
-        if (GlobalConstant.RESERVED_WORDS_LIST.contains(fieldStr.trim())) {
+        if (GlobalConstant.RESERVED_WORDS_LIST.contains(fieldStr.trim().toUpperCase())) {
             return false;
         }
         for (Character c : fieldStr.toCharArray()) {

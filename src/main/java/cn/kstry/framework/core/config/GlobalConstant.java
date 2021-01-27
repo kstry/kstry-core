@@ -36,7 +36,7 @@ public interface GlobalConstant {
      * sta（Stable）：稳定，一经指定就不可变数据集合
      * req（Request）：请求入参集合 （不可变集合）
      */
-    List<String> RESERVED_WORDS_LIST = Lists.newArrayList("var", "sta", "req");
+    List<String> RESERVED_WORDS_LIST = Lists.newArrayList("VAR", "STA", "REQ");
 
     /**
      * 允许的 eventNode 的最大深度

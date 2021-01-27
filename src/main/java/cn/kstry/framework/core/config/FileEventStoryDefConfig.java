@@ -96,6 +96,7 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                     })
             );
         }
+        config.duplicateKeyCheck(config);
         return config;
     }
 }

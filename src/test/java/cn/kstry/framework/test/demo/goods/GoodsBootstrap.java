@@ -30,7 +30,7 @@ public class GoodsBootstrap {
 
         BuyGoodsRequest buyGoodsRequest = new BuyGoodsRequest();
         buyGoodsRequest.setUserId(2L);
-        buyGoodsRequest.setUserType(1);
+        buyGoodsRequest.setUserType(2);
         buyGoodsRequest.setGoodIds(Lists.newArrayList(1L, 2L, 3L, 4L, 5L));
 
         DefaultDataBox defaultDataBox = new DefaultDataBox();

@@ -39,7 +39,12 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -315,35 +320,59 @@ public class ConfigResolver {
     }
 
     private String parseStrategyProperty(String field) {
+
         AssertUtil.notBlank(field);
 
+        StringBuilder realFieldName = new StringBuilder();
         String[] fieldList = field.split("\\.");
         for (int i = 0; i < fieldList.length; i++) {
             if (i == 0) {
                 AssertUtil.isTrue(fieldList[0].startsWith(GlobalConstant.NODE_SIGN) || fieldList[0].startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN));
             }
 
-            if (!fieldList[i].startsWith(GlobalConstant.NODE_SIGN)) {
+            if (realFieldName.length() != 0) {
+                realFieldName.append(".");
+            }
+
+            if (!fieldList[i].startsWith(GlobalConstant.NODE_SIGN) && !fieldList[i].startsWith(GlobalConstant.TIME_SLOT_NODE_SIGN)) {
+                realFieldName.append(fieldList[i]);
                 continue;
             }
+            if (!fieldList[i].startsWith(GlobalConstant.NODE_SIGN)) {
+                TaskNode taskNode = this.taskNodeMap.get(fieldList[i].substring(1));
+                if (taskNode == null) {
+                    realFieldName.append(fieldList[i]);
+                    continue;
+                }
+
+                realFieldName.append(GlobalConstant.TIME_SLOT_NODE_SIGN).append(taskNode.identity());
+                if ((i + 1 < fieldList.length)
+                        && fieldList[i + 1].startsWith(GlobalConstant.NODE_SIGN)
+                        && GlobalConstant.RESERVED_WORDS_LIST.contains(fieldList[i + 1].substring(1).toUpperCase())) {
+                    continue;
+                } else {
+                    realFieldName.append(".");
+                }
+            }
+
             switch (fieldList[i].toUpperCase()) {
                 case GlobalConstant.NODE_SIGN + "REQ":
-                    fieldList[i] = StoryBus.DEFAULT_GLOBAL_BUS_REQUEST_KEY.identity();
+                    realFieldName.append(StoryBus.DEFAULT_GLOBAL_BUS_REQUEST_KEY.identity());
                     break;
                 case GlobalConstant.NODE_SIGN + "STA":
-                    fieldList[i] = StoryBus.DEFAULT_GLOBAL_BUS_STABLE_KEY.identity();
+                    realFieldName.append(StoryBus.DEFAULT_GLOBAL_BUS_STABLE_KEY.identity());
                     break;
                 case GlobalConstant.NODE_SIGN + "VAR":
-                    fieldList[i] = StoryBus.DEFAULT_GLOBAL_BUS_VARIABLE_KEY.identity();
+                    realFieldName.append(StoryBus.DEFAULT_GLOBAL_BUS_VARIABLE_KEY.identity());
                     break;
                 default:
                     TaskNode taskNode = this.taskNodeMap.get(fieldList[i].substring(1));
                     AssertUtil.notNull(taskNode);
-                    fieldList[i] = taskNode.identity();
+                    realFieldName.append(taskNode.identity());
                     break;
             }
         }
-        return StringUtils.join(fieldList, ".");
+        return GlobalUtil.notBlank(realFieldName.toString());
     }
 
     private Map<String, TaskNode> parseTaskNodeMap() {
@@ -431,6 +460,8 @@ public class ConfigResolver {
                 timeSlotEventNode.setTimeout(GlobalUtil.notNull(getTimeout()));
                 if (getTaskNode() != null) {
                     EventNode firstEventNode = new EventNode(getTaskNode().cloneTaskNode());
+                    firstEventNode.setFilterStrategyRuleList(getFilterStrategyRuleList());
+                    firstEventNode.setRequestMappingGroup(getRequestMappingGroup());
                     timeSlotEventNode.setOriginalTaskNode(firstEventNode.getTaskNode());
                     timeSlotEventNode.setStrategyName(firstEventNode.getTaskNode().identity());
                     timeSlotEventNode.setFirstTimeSlotEventNodeList(Lists.newArrayList(firstEventNode));

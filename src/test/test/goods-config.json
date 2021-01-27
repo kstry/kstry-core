@@ -6,7 +6,8 @@
       },
       {
         "event_node": "auth_node",
-        "request_mapping": "userMapping"
+        "request_mapping": "userMapping",
+        "strategy": "ssss"
       },
       {
         "event_node": "get_goods",
@@ -14,7 +15,8 @@
         "strategy": "ssss"
       },
       {
-        "event_node": "safe_check"
+        "event_node": "safe_check",
+        "strategy": "ssss"
       },
       {
         "event_node": "immediately_discount",
@@ -126,28 +128,33 @@
       {
         "strategy_type": "FILTER",
         "rule_set": {
-          "compare-@get_goods.goodsList[0].money": ">500"
+          "compare-$get_goods.goodsList[0].money": ">500"
         }
+      },
+      {
+        "strategy_type": "TIMESLOT",
+        "async": true,
+        "timeout": 1000
       },
       {
         "story": "wxPay",
         "strategy_type": "MATCH",
         "rule_set": {
-          "compare-@get_goods.goodsList[0].money": "<3000"
+          "compare-$get_goods.goodsList[0].money": "<3000"
         }
       },
       {
         "story": "aliPay",
         "strategy_type": "MATCH",
         "rule_set": {
-          "compare-@get_goods.goodsList[0].money": ">=3000"
+          "compare-$get_goods.goodsList[0].money": ">=3000"
         }
       }
     ]
   },
   "request_mapping_def": {
     "userMapping": {
-      "user": "$USER_LOGIN.$USER_LOGIN2.@var.user"
+      "user": "$USER_LOGIN.$USER_LOGIN2.@user_login_node.user"
     },
     "userTologinMapping": {
       "userType": "@req.userType",
@@ -160,7 +167,7 @@
       "goodsList": "$get_goods.goodsList"
     },
     "payMapping": {
-      "money": "@get_goods.goodsList[0].money"
+      "money": "$get_goods.goodsList[0].money"
     }
   },
   "event_def": {

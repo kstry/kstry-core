@@ -292,7 +292,9 @@ public class StoryBus {
         if (StringUtils.isBlank(fieldName)) {
             return Optional.empty();
         }
-
+        if (!tryGetTimeSlotResult(fieldName)) {
+            return Optional.empty();
+        }
         return GlobalUtil.getProperty(this.globalParamAndResult, fieldName).filter(obj -> obj != GlobalUtil.GET_PROPERTY_ERROR_SIGN);
     }
 

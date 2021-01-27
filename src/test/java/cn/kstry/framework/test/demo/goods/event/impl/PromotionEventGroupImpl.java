@@ -19,6 +19,7 @@ public class PromotionEventGroupImpl implements PromotionEventGroup {
             return;
         }
 
+        System.out.println(Thread.currentThread().getName() + " - immediatelyDiscount");
         request.getGoodsList().forEach(g -> g.setMoney(g.getMoney() - 10));
     }
 }
