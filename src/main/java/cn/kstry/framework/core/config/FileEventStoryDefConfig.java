@@ -29,9 +29,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,19 +50,24 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
         try {
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Resource[] resources = resolver.getResources(eventStoryConfigName);
-            AssertUtil.notEmpty(resources, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", eventStoryConfigName);
+            if (resources == null || resources.length == 0) {
+                LOGGER.warn("Kstry configuration file does not exist!");
+                return new FileEventStoryDefConfig();
+            }
 
             List<String> configList = new ArrayList<>();
             for (Resource r : resources) {
-                Path path = Paths.get(r.getURI());
-                AssertUtil.notNull(path, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file not exist! name:%s", eventStoryConfigName);
+                BufferedReader br = new BufferedReader(new InputStreamReader(r.getInputStream()));
                 StringBuilder sb = new StringBuilder();
-                Files.lines(path).forEach(sb::append);
+                for (String sLine = br.readLine(); sLine != null; sLine = br.readLine()) {
+                    sb.append(sLine);
+                }
                 configList.add(sb.toString());
                 LOGGER.info("Read using profile {}", r.getFilename());
             }
             return FileEventStoryDefConfig.doParseEventStoryConfig(mergeFiles(configList));
         } catch (Exception e) {
+            LOGGER.error("Failed to read or parse a file!", e);
             KstryException.throwException(e);
             return null;
         }
