@@ -22,7 +22,7 @@ import cn.kstry.framework.core.config.RequestMappingGroup;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotTaskResponse;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotTaskResultWrapper;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.enums.TimeSlotTaskStatusEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -59,29 +59,29 @@ public class StoryBus {
     /**
      * 承载 请求入参 全局流转的参数-Key ( 整个Story共享 )
      */
-    public static final TaskNode DEFAULT_GLOBAL_BUS_REQUEST_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_REQUEST_KEY", ComponentTypeEnum.GROUP);
+    public static final TaskNode DEFAULT_GLOBAL_BUS_REQUEST_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_REQUEST_KEY", KstryTypeEnum.STORY);
 
     /**
      * 承载 全局不可变量 全局流转的参数-Key （ 分支进行复制 ）
      */
-    public static final TaskNode DEFAULT_GLOBAL_BUS_STABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_STABLE_KEY", ComponentTypeEnum.GROUP);
+    public static final TaskNode DEFAULT_GLOBAL_BUS_STABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_STABLE_KEY", KstryTypeEnum.STORY_BUS);
 
     /**
      * 承载 全局可变量 全局流转的参数-Key （ 分支进行复制 ）
      */
-    public static final TaskNode DEFAULT_GLOBAL_BUS_VARIABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_VARIABLE_KEY", ComponentTypeEnum.GROUP);
+    public static final TaskNode DEFAULT_GLOBAL_BUS_VARIABLE_KEY = new TaskNode("BASE", "DEFAULT_GLOBAL_BUS_VARIABLE_KEY", KstryTypeEnum.STORY_BUS);
 
     /**
      * 承载 timeSlot 任务触发的结果集 ( 整个Story共享 )
      */
-    public static final TaskNode TIMESLOT_TASK_RESULT_WRAPPER_KEY = new TaskNode("BASE", "TIMESLOT_TASK_RESULT_WRAPPER_KEY", ComponentTypeEnum.GROUP);
+    public static final TaskNode TIMESLOT_TASK_RESULT_WRAPPER_KEY = new TaskNode("BASE", "TIMESLOT_TASK_RESULT_WRAPPER_KEY", KstryTypeEnum.STORY);
 
     /**
      * 保存最后一个被 cn.kstry.framework.core.annotation.LastEventNode 注释的事件节点返回结果，如果存在，返回作为最终结果
      *
      * 如果为空，则默认取最后一个执行节点的结果作为最终结果返回
      */
-    public static final TaskNode STORY_LAST_NODE_RESULT_KEY = new TaskNode("BASE", "STORY_LAST_NODE_RESULT_KEY", ComponentTypeEnum.GROUP);
+    public static final TaskNode STORY_LAST_NODE_RESULT_KEY = new TaskNode("BASE", "STORY_LAST_NODE_RESULT_KEY", KstryTypeEnum.STORY);
 
     /**
      * 全局流转的参数

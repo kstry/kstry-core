@@ -19,7 +19,7 @@ package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.config.RequestMappingGroup;
 import cn.kstry.framework.core.config.TaskActionMethod;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.StrategyRule;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -48,7 +48,7 @@ public class TaskNode {
     /**
      * 组件的类型
      */
-    private ComponentTypeEnum eventGroupTypeEnum;
+    private KstryTypeEnum eventGroupTypeEnum;
 
     /**
      * 节点执行，目标方法属性
@@ -63,7 +63,7 @@ public class TaskNode {
     public TaskNode() {
     }
 
-    public TaskNode(String actionName, String eventGroupName, ComponentTypeEnum eventGroupTypeEnum) {
+    public TaskNode(String actionName, String eventGroupName, KstryTypeEnum eventGroupTypeEnum) {
         this.actionName = actionName;
         this.eventGroupName = eventGroupName;
         this.eventGroupTypeEnum = eventGroupTypeEnum;
@@ -97,11 +97,11 @@ public class TaskNode {
         this.eventGroupName = eventGroupName;
     }
 
-    public ComponentTypeEnum getEventGroupTypeEnum() {
+    public KstryTypeEnum getEventGroupTypeEnum() {
         return eventGroupTypeEnum;
     }
 
-    public void setEventGroupTypeEnum(ComponentTypeEnum eventGroupTypeEnum) {
+    public void setEventGroupTypeEnum(KstryTypeEnum eventGroupTypeEnum) {
         AssertUtil.notNull(eventGroupTypeEnum);
         this.eventGroupTypeEnum = eventGroupTypeEnum;
     }

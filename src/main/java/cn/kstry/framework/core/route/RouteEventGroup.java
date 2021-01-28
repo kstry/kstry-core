@@ -23,6 +23,7 @@ import cn.kstry.framework.core.annotation.IgnoreEventNode;
 import cn.kstry.framework.core.annotation.LastEventNode;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.config.TaskActionMethod;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskResponse;
@@ -65,7 +66,9 @@ public abstract class RouteEventGroup implements EventGroup {
         TaskNode taskNode = routeNodeOptional.get();
         boolean nameEquals = taskNode.getEventGroupName().equals(getEventGroupName());
         boolean enumEquals = getEventGroupTypeEnum() == taskNode.getEventGroupTypeEnum();
-
+        if (!enumEquals && getEventGroupTypeEnum() == KstryTypeEnum.EVENT_GROUP) {
+            enumEquals = taskNode.getEventGroupTypeEnum() == KstryTypeEnum.TASK;
+        }
         return nameEquals && enumEquals;
     }
 

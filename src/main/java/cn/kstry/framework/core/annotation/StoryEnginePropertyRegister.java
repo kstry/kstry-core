@@ -22,7 +22,7 @@ import cn.kstry.framework.core.config.EventStoryDefConfig;
 import cn.kstry.framework.core.config.FileEventStoryDefConfig;
 import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEngine;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.route.EventGroup;
@@ -56,7 +56,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
             Class<?> targetClass = ProxyUtil.noneProxyClass(o);
             EventGroupComponent eventGroupComponent = targetClass.getAnnotation(EventGroupComponent.class);
             String eventGroupName = eventGroupComponent.eventGroupName();
-            ComponentTypeEnum eventGroupTypeEnum = eventGroupComponent.eventGroupTypeEnum();
+            KstryTypeEnum eventGroupTypeEnum = eventGroupComponent.eventGroupTypeEnum();
             Class<? extends EventOperatorRole> operatorRoleClass = eventGroupComponent.operatorRoleClass();
 
             AssertUtil.notNull(eventGroupTypeEnum, ExceptionEnum.NOT_ALLOW_EMPTY, "The eventGroupTypeEnum is not allowed to be empty!");
@@ -100,7 +100,7 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
 
         private String eventGroupName;
 
-        private ComponentTypeEnum eventGroupTypeEnum;
+        private KstryTypeEnum eventGroupTypeEnum;
 
         private final Object eventGroup;
 
@@ -124,11 +124,11 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
         }
 
         @Override
-        public ComponentTypeEnum getEventGroupTypeEnum() {
+        public KstryTypeEnum getEventGroupTypeEnum() {
             return eventGroupTypeEnum;
         }
 
-        public void setEventGroupTypeEnum(ComponentTypeEnum eventGroupTypeEnum) {
+        public void setEventGroupTypeEnum(KstryTypeEnum eventGroupTypeEnum) {
             this.eventGroupTypeEnum = eventGroupTypeEnum;
         }
 

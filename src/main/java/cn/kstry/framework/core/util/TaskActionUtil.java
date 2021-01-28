@@ -22,6 +22,7 @@ import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotInvokeRequest;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.facade.TaskRequestInit;
@@ -29,7 +30,11 @@ import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 import cn.kstry.framework.core.operator.TaskOperatorCreator;
-import cn.kstry.framework.core.route.*;
+import cn.kstry.framework.core.route.EventGroup;
+import cn.kstry.framework.core.route.EventNode;
+import cn.kstry.framework.core.route.RouteEventGroup;
+import cn.kstry.framework.core.route.StrategyRule;
+import cn.kstry.framework.core.route.TaskRouter;
 import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -133,7 +138,12 @@ public class TaskActionUtil {
             if (!Objects.equals(taskAction.getEventGroupName(), taskNode.getEventGroupName())) {
                 return false;
             }
-            return taskAction.getEventGroupTypeEnum() == taskNode.getEventGroupTypeEnum();
+
+            boolean enumEquals = taskAction.getEventGroupTypeEnum() == taskNode.getEventGroupTypeEnum();
+            if (!enumEquals && taskAction.getEventGroupTypeEnum() == KstryTypeEnum.EVENT_GROUP) {
+                enumEquals = taskNode.getEventGroupTypeEnum() == KstryTypeEnum.TASK;
+            }
+            return enumEquals;
         }).collect(Collectors.toList());
         AssertUtil.oneSize(collect, ExceptionEnum.MUST_ONE_TASK_ACTION, "There is one and only one event_group allowed to be matched! taskNode:%s", taskNode);
 

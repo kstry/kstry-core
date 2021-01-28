@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import com.alibaba.fastjson.annotation.JSONField;
 
 import java.util.ArrayList;
@@ -226,7 +226,7 @@ public interface EventStoryDefConfig {
         /**
          * Event Type
          *
-         * @see ComponentTypeEnum
+         * @see KstryTypeEnum
          */
         @JSONField(name = "event_type")
         private String eventType;

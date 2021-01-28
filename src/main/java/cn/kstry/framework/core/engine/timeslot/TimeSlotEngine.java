@@ -19,7 +19,7 @@ package cn.kstry.framework.core.engine.timeslot;
 
 import cn.kstry.framework.core.annotation.IgnoreEventNode;
 import cn.kstry.framework.core.config.GlobalConstant;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.operator.EventOperatorRole;
@@ -122,8 +122,8 @@ public class TimeSlotEngine extends RouteEventGroup implements TimeSlotOperatorR
     }
 
     @Override
-    public ComponentTypeEnum getEventGroupTypeEnum() {
-        return ComponentTypeEnum.TIME_SLOT;
+    public KstryTypeEnum getEventGroupTypeEnum() {
+        return KstryTypeEnum.TIME_SLOT;
     }
 
     @Override

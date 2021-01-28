@@ -21,7 +21,7 @@ import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotOperatorRole;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -99,7 +99,7 @@ public class ConfigResolver implements ApplicationContextAware {
 
         // 为 event_node 设置 TaskActionMethod
         taskNodeMap.values().forEach(node -> node.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(eventGroupList, node)));
-        TaskNode timeSlotTaskNode = new TaskNode(TimeSlotOperatorRole.TIME_SLOT_TASK_ACTION_NAME, TimeSlotOperatorRole.TIME_SLOT_TASK_NAME, ComponentTypeEnum.TIME_SLOT);
+        TaskNode timeSlotTaskNode = new TaskNode(TimeSlotOperatorRole.TIME_SLOT_TASK_ACTION_NAME, TimeSlotOperatorRole.TIME_SLOT_TASK_NAME, KstryTypeEnum.TIME_SLOT);
         timeSlotTaskNode.setTaskActionMethod(TaskActionUtil.getTaskActionMethod(eventGroupList, timeSlotTaskNode));
         this.globalTimeSlotTaskNode = timeSlotTaskNode;
 
@@ -405,7 +405,7 @@ public class ConfigResolver implements ApplicationContextAware {
             value.forEach((kIn, vIn) -> {
                 TaskNode taskNode = new TaskNode();
                 taskNode.setActionName(vIn.getEventAction());
-                taskNode.setEventGroupTypeEnum(GlobalUtil.notEmpty(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType())));
+                taskNode.setEventGroupTypeEnum(GlobalUtil.notEmpty(KstryTypeEnum.getComponentTypeEnumByName(vIn.getEventType())));
                 taskNode.setEventGroupName(key);
                 taskNodeMap.put(kIn, taskNode);
             });

@@ -17,9 +17,9 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.route.EventGroup;
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
+import cn.kstry.framework.core.route.EventGroup;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.Documented;
@@ -58,7 +58,7 @@ public @interface EventGroupComponent {
     /**
      * event action group component type
      */
-    ComponentTypeEnum eventGroupTypeEnum() default ComponentTypeEnum.TASK;
+    KstryTypeEnum eventGroupTypeEnum() default KstryTypeEnum.EVENT_GROUP;
 
     /**
      * Operator 用来实际执行 EventGroup 中定义的 Event

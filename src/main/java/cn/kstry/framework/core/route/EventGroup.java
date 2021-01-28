@@ -18,7 +18,7 @@
 
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.operator.EventOperatorRole;
 
 /**
@@ -53,7 +53,7 @@ public interface EventGroup {
      *
      * @return 类型
      */
-    ComponentTypeEnum getEventGroupTypeEnum();
+    KstryTypeEnum getEventGroupTypeEnum();
 
     /**
      * 获取 Event Operator 的 角色类

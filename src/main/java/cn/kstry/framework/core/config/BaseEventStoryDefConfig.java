@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.enums.ComponentTypeEnum;
+import cn.kstry.framework.core.enums.KstryTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
@@ -437,7 +437,7 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig, Ap
                 AssertUtil.isValidField(vIn.getEventAction(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                         "The assignment of `event_action` in `event_def` is error! key:%s", vIn.getEventAction());
                 AssertUtil.notBlank(vIn.getEventType(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `event_action` in `event_type` is blank!");
-                AssertUtil.present(ComponentTypeEnum.getComponentTypeEnumByName(vIn.getEventType()),
+                AssertUtil.present(KstryTypeEnum.getComponentTypeEnumByName(vIn.getEventType()),
                         ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `event_action` in `event_type` is error! event_type:%s", vIn.getEventType());
                 nodeNameList.add(kIn);
             });
