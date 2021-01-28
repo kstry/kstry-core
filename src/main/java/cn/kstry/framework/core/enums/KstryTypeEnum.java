@@ -87,7 +87,7 @@ public enum KstryTypeEnum {
     /**
      * TIME_SLOT 是 Event 在 Story 中的概念，代表是这些 Event 组成了这个 Story，ROLE 是 Event 另一个维度的分组概念
      *
-     * 一个角色拥有自己的 Event 能力。并且这些能力往往不止一个。就比如 厨师可以做很对种菜，做每一种菜都是一个 Event，那么厨师这个 ROLE 下，就有很多的 Event
+     * 一个角色拥有自己的 Event 能力。并且这些能力往往不止一个。就比如 厨师可以做很多种菜，做每一种菜都是一个 Event，那么厨师这个 ROLE 下，就有很多的 Event
      */
     ROLE(7),
 

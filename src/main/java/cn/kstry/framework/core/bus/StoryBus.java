@@ -208,11 +208,12 @@ public class StoryBus {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Object getResultByTaskNode(TaskNode taskNode) {
         AssertUtil.notNull(taskNode);
         Object lastResult = globalParamAndResult.get(STORY_LAST_NODE_RESULT_KEY.identity());
-        if (lastResult != null) {
-            return lastResult;
+        if (lastResult instanceof List && CollectionUtils.isNotEmpty((List<Object>) lastResult)) {
+            return ((List<Object>) lastResult).get(0);
         }
         return globalParamAndResult.get(taskNode.identity());
     }
