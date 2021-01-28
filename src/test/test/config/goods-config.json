@@ -103,7 +103,7 @@
       {
         "strategy_type": "filter",
         "rule_set": {
-          "notNull-@req.userType": ""
+          "typeCheck-@req.userType": ""
         }
       }
     ],

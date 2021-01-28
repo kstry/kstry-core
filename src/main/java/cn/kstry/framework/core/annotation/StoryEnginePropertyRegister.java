@@ -18,6 +18,8 @@
 package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.config.ConfigResolver;
+import cn.kstry.framework.core.config.EventStoryDefConfig;
+import cn.kstry.framework.core.config.FileEventStoryDefConfig;
 import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEngine;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
@@ -82,6 +84,11 @@ public class StoryEnginePropertyRegister implements ApplicationContextAware {
     @Bean
     public ConfigResolver initConfigResolver() {
         return new ConfigResolver();
+    }
+
+    @Bean
+    public EventStoryDefConfig initEventStoryDefConfig() {
+        return new FileEventStoryDefConfig();
     }
 
     @Override

@@ -18,7 +18,6 @@
 package cn.kstry.framework.core.route.calculate;
 
 import cn.kstry.framework.core.enums.CalculatorEnum;
-import cn.kstry.framework.core.route.StrategyRuleCalculator;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import org.apache.commons.lang3.StringUtils;
@@ -30,10 +29,10 @@ import java.util.List;
  *
  * @author lykan
  */
-public class InCalculator implements StrategyRuleCalculator {
+public class InCalculator extends ConfigStrategyRuleCalculator {
 
     @Override
-    public boolean calculate(Object source, String expected) {
+    public boolean calculateExpected(Object source, String expected) {
         if (source == null) {
             return false;
         }
@@ -62,7 +61,7 @@ public class InCalculator implements StrategyRuleCalculator {
     }
 
     @Override
-    public String getCalculatorName() {
+    public String getName() {
         return CalculatorEnum.IN.getName();
     }
 }

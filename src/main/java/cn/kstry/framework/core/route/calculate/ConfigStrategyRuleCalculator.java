@@ -15,24 +15,39 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.route;
+package cn.kstry.framework.core.route.calculate;
+
+import cn.kstry.framework.core.config.GlobalConstant;
+import cn.kstry.framework.core.util.AssertUtil;
 
 /**
  * 计算触发条件
  *
  * @author lykan
  */
-public interface StrategyRuleCalculator {
+public abstract class ConfigStrategyRuleCalculator implements StrategyRuleCalculator {
 
     /**
      * 计算
      */
-    boolean calculate(Object source, String expected);
+    abstract boolean calculateExpected(Object source, String expected);
 
     /**
-     * 校验预期值规则
+     * 获取规则名称
      */
-    boolean checkExpected(String expected);
+    abstract String getName();
 
-    String getCalculatorName();
+    @Override
+    public boolean calculate(Object source, Object expected) {
+        if (expected == null) {
+            return false;
+        }
+        return calculateExpected(source, expected.toString());
+    }
+
+    @Override
+    public String getCalculatorName() {
+        AssertUtil.notBlank(getName());
+        return GlobalConstant.KSTRY_STRATEGY_CALCULATOR_NAME_PREFIX + getName();
+    }
 }

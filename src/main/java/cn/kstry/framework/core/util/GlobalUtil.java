@@ -20,6 +20,8 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.config.GlobalConstant;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.route.calculate.ConfigStrategyRuleCalculator;
+import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import org.apache.commons.beanutils.BeanUtils;
@@ -29,7 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author lykan
@@ -119,5 +123,22 @@ public class GlobalUtil {
             LOGGER.warn("[{}] BeanUtils Failed to set bean property! target:{}, propertyName:{}, value:{}",
                     ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value, e);
         }
+    }
+
+    public static StrategyRuleCalculator getStrategyRuleCalculators(Map<String, StrategyRuleCalculator> calculatorMap, String strategyName) {
+        AssertUtil.notEmpty(calculatorMap);
+        AssertUtil.notBlank(strategyName);
+        List<StrategyRuleCalculator> calculatorList = calculatorMap.values().stream().filter(strategyRuleCalculator -> {
+            if (strategyRuleCalculator == null) {
+                return false;
+            }
+            String namePrefix = StringUtils.EMPTY;
+            if (strategyRuleCalculator instanceof ConfigStrategyRuleCalculator) {
+                namePrefix = GlobalConstant.KSTRY_STRATEGY_CALCULATOR_NAME_PREFIX;
+            }
+            return (namePrefix + strategyName).equals(strategyRuleCalculator.getCalculatorName());
+        }).collect(Collectors.toList());
+        AssertUtil.oneSize(calculatorList, ExceptionEnum.STRATEGY_RULE_NAME_ERROR);
+        return calculatorList.get(0);
     }
 }

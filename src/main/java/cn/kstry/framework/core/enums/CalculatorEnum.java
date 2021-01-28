@@ -17,16 +17,11 @@
  */
 package cn.kstry.framework.core.enums;
 
-import cn.kstry.framework.core.route.StrategyRuleCalculator;
 import cn.kstry.framework.core.route.calculate.EqualsCalculator;
 import cn.kstry.framework.core.route.calculate.InCalculator;
 import cn.kstry.framework.core.route.calculate.NotNullCalculator;
 import cn.kstry.framework.core.route.calculate.NumberCompareCalculator;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
+import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
 
 /**
  * @author lykan
@@ -71,12 +66,5 @@ public enum CalculatorEnum {
 
     public StrategyRuleCalculator getExpression() {
         return expression;
-    }
-
-    public static Optional<CalculatorEnum> getCalculatorEnumByName(String name) {
-        if (StringUtils.isBlank(name)) {
-            return Optional.empty();
-        }
-        return Stream.of(CalculatorEnum.values()).filter(e -> Objects.equals(e.getName().toUpperCase(), name.trim().toUpperCase())).findFirst();
     }
 }

@@ -17,10 +17,10 @@
  */
 package cn.kstry.framework.core.config;
 
-import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -28,19 +28,21 @@ import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author lykan
  */
-public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
+public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig, ApplicationContextAware {
 
     /**
      * 限制条件：
@@ -181,6 +183,8 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
      */
     private final Set<String> questionFieldNameSet = new HashSet<>();
 
+    private ApplicationContext applicationContext;
+
     @Override
     public StoryDef<String, StoryDefItem<StoryDefItemConfig>> getStoryDef() {
         return storyDef;
@@ -237,6 +241,9 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
             nodeNameList.addAll(stringNodeDefItemConfigEventDefItem.keySet());
         }
 
+        Map<String, StrategyRuleCalculator> calculatorMap = applicationContext.getBeansOfType(StrategyRuleCalculator.class);
+        AssertUtil.notEmpty(calculatorMap);
+
         List<String> storyNameList = Lists.newArrayList(config.getStoryDef().keySet());
         for (String k : config.getStrategyDef().keySet()) {
             AssertUtil.isValidField(k, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of key in `strategy_def` is error! key:%s", k);
@@ -266,15 +273,13 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                         String[] split = kName.split(GlobalConstant.DISTINCT_SIGN);
                         AssertUtil.isTrue(split.length == 2, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
-                        Optional<CalculatorEnum> calculatorEnumOptional = CalculatorEnum.getCalculatorEnumByName(split[0]);
-                        AssertUtil.present(calculatorEnumOptional, ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
+                        StrategyRuleCalculator strategyRuleCalculator = GlobalUtil.getStrategyRuleCalculators(calculatorMap, split[0]);
                         AssertUtil.notBlank(split[1], ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
                         AssertUtil.isTrue(checkStrategyField(nodeNameList, split[1]), ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
                                 "The assignment of `rule_set` key in `strategy_def` is error! rule_set:%s", kName);
                         String expected = strategy.getRuleSet().get(kName);
-                        AssertUtil.isTrue(calculatorEnumOptional.isPresent() && calculatorEnumOptional.get().getExpression().checkExpected(expected),
+                        AssertUtil.isTrue(strategyRuleCalculator.checkExpected(expected),
                                 ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "The assignment of `rule_set` expected value in `strategy_def` is error! expected:%s", expected);
                     });
                 }
@@ -498,5 +503,10 @@ public abstract class BaseEventStoryDefConfig implements EventStoryDefConfig {
                     || nodeNameList.stream().map(String::toUpperCase).anyMatch(fieldNameUpperCase::equals));
         }
         return checkVin;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

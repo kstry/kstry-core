@@ -45,7 +45,8 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileEventStoryDefConfig.class);
 
-    public static EventStoryDefConfig parseEventStoryConfig(String eventStoryConfigName) {
+    @Override
+    public EventStoryDefConfig parseEventStoryConfig(String eventStoryConfigName) {
         AssertUtil.notBlank(eventStoryConfigName, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "config file name blank!");
         try {
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -65,7 +66,7 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
                 configList.add(sb.toString());
                 LOGGER.info("Read using profile {}", r.getFilename());
             }
-            return FileEventStoryDefConfig.doParseEventStoryConfig(mergeFiles(configList));
+            return doParseEventStoryConfig(mergeFiles(configList));
         } catch (Exception e) {
             LOGGER.error("Failed to read or parse a file!", e);
             KstryException.throwException(e);
@@ -73,7 +74,7 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
         }
     }
 
-    private static Map<String, Map<String, JSON>> mergeFiles(List<String> configList) {
+    private Map<String, Map<String, JSON>> mergeFiles(List<String> configList) {
 
         AssertUtil.notEmpty(configList);
         Map<String, Map<String, JSON>> allConfig = new HashMap<>();
@@ -99,40 +100,38 @@ public class FileEventStoryDefConfig extends BaseEventStoryDefConfig implements 
         return allConfig;
     }
 
-    private static EventStoryDefConfig doParseEventStoryConfig(Map<String, Map<String, JSON>> configMap) {
+    private EventStoryDefConfig doParseEventStoryConfig(Map<String, Map<String, JSON>> configMap) {
 
         AssertUtil.notNull(configMap);
-
-        FileEventStoryDefConfig config = new FileEventStoryDefConfig();
         if (MapUtils.isNotEmpty(configMap.get(EVENT_DEF))) {
-            config.setEventDef(JSON.parseObject(JSON.toJSONString(configMap.get(EVENT_DEF)),
+            this.setEventDef(JSON.parseObject(JSON.toJSONString(configMap.get(EVENT_DEF)),
                     new TypeReference<EventDef<String, EventDefItem<String, EventDefItemConfig>>>() {
                     })
             );
         }
 
         if (MapUtils.isNotEmpty(configMap.get(REQUEST_MAPPING_DEF))) {
-            config.setRequestMappingDef(JSON.parseObject(JSON.toJSONString(configMap.get(REQUEST_MAPPING_DEF)),
+            this.setRequestMappingDef(JSON.parseObject(JSON.toJSONString(configMap.get(REQUEST_MAPPING_DEF)),
                     new TypeReference<RequestMappingDef<String, RequestMappingDefItem<String, String>>>() {
                     })
             );
         }
 
         if (MapUtils.isNotEmpty(configMap.get(STORY_DEF))) {
-            config.setStoryDef(JSON.parseObject(JSON.toJSONString(configMap.get(STORY_DEF)),
+            this.setStoryDef(JSON.parseObject(JSON.toJSONString(configMap.get(STORY_DEF)),
                     new TypeReference<StoryDef<String, StoryDefItem<StoryDefItemConfig>>>() {
                     })
             );
         }
 
         if (MapUtils.isNotEmpty(configMap.get(STRATEGY_DEF))) {
-            config.setStrategyDef(JSON.parseObject(JSON.toJSONString(configMap.get(STRATEGY_DEF)),
+            this.setStrategyDef(JSON.parseObject(JSON.toJSONString(configMap.get(STRATEGY_DEF)),
                     new TypeReference<StrategyDef<String, StrategyDefItem<StrategyDefItemConfig>>>() {
                     })
             );
         }
-        config.duplicateKeyCheck(config);
-        LOGGER.info("Use the following configuration file to generate a global map. config:{}", JSON.toJSONString(config));
-        return config;
+        this.duplicateKeyCheck(this);
+        LOGGER.info("Use the following configuration file to generate a global map. config:{}", JSON.toJSONString(this));
+        return this;
     }
 }

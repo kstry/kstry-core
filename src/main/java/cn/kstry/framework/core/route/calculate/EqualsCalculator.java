@@ -18,7 +18,6 @@
 package cn.kstry.framework.core.route.calculate;
 
 import cn.kstry.framework.core.enums.CalculatorEnum;
-import cn.kstry.framework.core.route.StrategyRuleCalculator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -32,12 +31,12 @@ import java.util.Objects;
  *
  * @author lykan
  */
-public class EqualsCalculator implements StrategyRuleCalculator {
+public class EqualsCalculator extends ConfigStrategyRuleCalculator {
 
     private final StrategyRuleCalculator numberCompareCalculator = new NumberCompareCalculator();
 
     @Override
-    public boolean calculate(Object source, String expected) {
+    public boolean calculateExpected(Object source, String expected) {
         if (source == null) {
             return expected == null;
         }
@@ -70,7 +69,7 @@ public class EqualsCalculator implements StrategyRuleCalculator {
     }
 
     @Override
-    public String getCalculatorName() {
+    public String getName() {
         return CalculatorEnum.EQUALS.getName();
     }
 }

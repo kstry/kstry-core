@@ -21,7 +21,6 @@ import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotEventNode;
 import cn.kstry.framework.core.engine.timeslot.TimeSlotOperatorRole;
-import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.enums.ComponentTypeEnum;
 import cn.kstry.framework.core.enums.StrategyTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -29,6 +28,7 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.route.EventGroup;
 import cn.kstry.framework.core.route.EventNode;
 import cn.kstry.framework.core.route.StrategyRule;
+import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.TaskActionUtil;
@@ -38,14 +38,22 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * @author lykan
  */
-public class ConfigResolver {
+public class ConfigResolver implements ApplicationContextAware {
 
     /**
      * 承载 解析后的 配置文件
@@ -67,6 +75,8 @@ public class ConfigResolver {
      */
     private TaskNode globalTimeSlotTaskNode;
 
+    private ApplicationContext applicationContext;
+
     public Map<String, List<EventNode>> getStoryEventNode(List<EventGroup> eventGroupList, String eventStoryConfigName) {
 
         if (CollectionUtils.isEmpty(eventGroupList)) {
@@ -74,7 +84,11 @@ public class ConfigResolver {
         }
 
         // 解析配置文件
-        this.eventStoryDefConfig = FileEventStoryDefConfig.parseEventStoryConfig(getEventStoryConfigName(eventStoryConfigName));
+        Map<String, EventStoryDefConfig> eventStoryDefConfigMap = applicationContext.getBeansOfType(EventStoryDefConfig.class);
+        AssertUtil.notEmpty(eventStoryDefConfigMap, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "EventStoryDefConfig in the container is allowed and must appear once!");
+        AssertUtil.oneSize(eventStoryDefConfigMap.values(), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "EventStoryDefConfig in the container is allowed and must appear once!");
+
+        this.eventStoryDefConfig = eventStoryDefConfigMap.values().iterator().next().parseEventStoryConfig(getEventStoryConfigName(eventStoryConfigName));
         AssertUtil.notNull(this.eventStoryDefConfig);
 
         // 根据 event_def 初始化 task_node(task_node 是 event_node 在执行时的叫法，event_node 是静态定义) 定义
@@ -269,6 +283,8 @@ public class ConfigResolver {
             return strategyRuleList;
         }
 
+        Map<String, StrategyRuleCalculator> calculatorMap = applicationContext.getBeansOfType(StrategyRuleCalculator.class);
+        AssertUtil.notEmpty(calculatorMap);
         strategy.forEach((k, v) -> {
             AssertUtil.notBlank(k);
             String[] splitKeyArray = k.split(GlobalConstant.DISTINCT_SIGN);
@@ -278,7 +294,8 @@ public class ConfigResolver {
             strategyRule.setStrategyTypeEnum(strategyTypeEnum);
             strategyRule.setExpectedValue(v);
             strategyRule.setFieldName(parseStrategyProperty(splitKeyArray[1]));
-            strategyRule.setStrategyRuleCalculator(GlobalUtil.notEmpty(CalculatorEnum.getCalculatorEnumByName(splitKeyArray[0])).getExpression());
+            StrategyRuleCalculator strategyRuleCalculator = GlobalUtil.getStrategyRuleCalculators(calculatorMap, splitKeyArray[0]);
+            strategyRule.setStrategyRuleCalculator(strategyRuleCalculator);
             strategyRuleList.add(strategyRule);
         });
         return strategyRuleList;
@@ -401,6 +418,11 @@ public class ConfigResolver {
             return "event-story-config.json";
         }
         return eventStoryConfigName;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 
     /**

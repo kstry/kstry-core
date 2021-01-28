@@ -18,7 +18,9 @@
 package cn.kstry.framework.core.annotation;
 
 import cn.kstry.framework.core.engine.StoryEngine;
+import cn.kstry.framework.core.enums.CalculatorEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
 import cn.kstry.framework.core.util.AssertUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -61,10 +63,21 @@ public class EnableKstryRegister implements ImportBeanDefinitionRegistrar {
             storyEngineName = String.valueOf(storyEngineNameList.get(0));
         }
 
+        // 注册 StoryEngine
         BeanDefinition beanDefinition = new RootBeanDefinition(StoryEngine.class);
         beanDefinition.setScope(BeanDefinition.SCOPE_SINGLETON);
         beanDefinition.setLazyInit(false);
         registry.registerBeanDefinition(storyEngineName, beanDefinition);
+
+        // 注册 计算规则模型
+        for (CalculatorEnum calculatorEnum : CalculatorEnum.values()) {
+            StrategyRuleCalculator expression = calculatorEnum.getExpression();
+            BeanDefinition calculatorDefinition = new RootBeanDefinition(expression.getClass());
+            beanDefinition.setScope(BeanDefinition.SCOPE_SINGLETON);
+            beanDefinition.setLazyInit(false);
+            AssertUtil.notBlank(expression.getCalculatorName(), ExceptionEnum.STRATEGY_RULE_NAME_ERROR);
+            registry.registerBeanDefinition(expression.getCalculatorName(), calculatorDefinition);
+        }
     }
 
     public static String getKstryConfigPath() {

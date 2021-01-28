@@ -84,4 +84,9 @@ public interface GlobalConstant {
      * @see GlobalConstant#ENGINE_SHUTDOWN_SLEEP_SECONDS
      */
     int ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS = 1;
+
+    /**
+     * 计算规则 名称前缀
+     */
+    String KSTRY_STRATEGY_CALCULATOR_NAME_PREFIX = "KSTRY_CONFIG_STRATEGY_CALCULATOR_";
 }

@@ -71,6 +71,11 @@ public interface EventStoryDefConfig {
      */
     EventDef<String, EventDefItem<String, EventDefItemConfig>> getEventDef();
 
+    /**
+     * 解析配置文件
+     */
+    EventStoryDefConfig parseEventStoryConfig(String eventStoryConfigName);
+
     class StoryDef<String, StoryDefItem> extends HashMap<String, StoryDefItem> {
 
     }

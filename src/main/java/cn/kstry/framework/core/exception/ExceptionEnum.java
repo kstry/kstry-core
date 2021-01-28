@@ -118,6 +118,11 @@ public enum ExceptionEnum {
      */
     TASK_INTERRUPTED_ERROR(ComponentTypeEnum.TASK, "0007", "The current thread is interrupted!"),
 
+    /**
+     * [K1020008] 策略规则名称错误
+     */
+    STRATEGY_RULE_NAME_ERROR(ComponentTypeEnum.TASK, "0008", "Strategy policy rule name!"),
+
     ///////////////////////////////////////////////// Task END /////////////////////////////////////////////////
 
     /**

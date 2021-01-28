@@ -17,27 +17,26 @@
  */
 package cn.kstry.framework.core.route.calculate;
 
-import cn.kstry.framework.core.enums.CalculatorEnum;
-
 /**
- * 计算规则： source != null
+ * 计算触发条件
  *
  * @author lykan
  */
-public class NotNullCalculator extends ConfigStrategyRuleCalculator {
+public interface StrategyRuleCalculator {
 
-    @Override
-    public boolean calculateExpected(Object source, String expected) {
-        return source != null;
-    }
+    /**
+     * 计算
+     */
+    boolean calculate(Object source, Object expected);
 
-    @Override
-    public boolean checkExpected(String expected) {
-        return true;
-    }
+    /**
+     * 校验预期值规则
+     */
+    boolean checkExpected(String expected);
 
-    @Override
-    public String getName() {
-        return CalculatorEnum.NOT_NULL.getName();
-    }
+    /**
+     * 获取计算规则的名称
+     * @return 名称
+     */
+    String getCalculatorName();
 }
