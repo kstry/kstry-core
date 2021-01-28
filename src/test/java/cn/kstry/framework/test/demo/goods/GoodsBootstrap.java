@@ -33,7 +33,6 @@ public class GoodsBootstrap {
         A a = new A();
         a.setUser(new User(null, null, 0));
         TaskResponse<Object> login = storyEngine.fire(buyGoodsRequest, "login", a, Object.class);
-        login = storyEngine.fire(buyGoodsRequest, "login", a, Object.class);
         System.out.println(JSON.toJSONString(login));
         context.close();
 

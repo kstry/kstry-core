@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,6 +77,13 @@ public class StoryBus {
     public static final TaskNode TIMESLOT_TASK_RESULT_WRAPPER_KEY = new TaskNode("BASE", "TIMESLOT_TASK_RESULT_WRAPPER_KEY", ComponentTypeEnum.GROUP);
 
     /**
+     * 保存最后一个被 cn.kstry.framework.core.annotation.LastEventNode 注释的事件节点返回结果，如果存在，返回作为最终结果
+     *
+     * 如果为空，则默认取最后一个执行节点的结果作为最终结果返回
+     */
+    public static final TaskNode STORY_LAST_NODE_RESULT_KEY = new TaskNode("BASE", "STORY_LAST_NODE_RESULT_KEY", ComponentTypeEnum.GROUP);
+
+    /**
      * 全局流转的参数
      */
     private final Map<String, Object> globalParamAndResult;
@@ -95,6 +103,7 @@ public class StoryBus {
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_STABLE_KEY.identity(), (stableDataBox == null) ? new DefaultDataBox() : stableDataBox);
         this.globalParamAndResult.put(DEFAULT_GLOBAL_BUS_VARIABLE_KEY.identity(), (variableDataBox == null) ? new DefaultDataBox() : variableDataBox);
         this.globalParamAndResult.put(TIMESLOT_TASK_RESULT_WRAPPER_KEY.identity(), new ConcurrentHashMap<>());
+        this.globalParamAndResult.put(STORY_LAST_NODE_RESULT_KEY.identity(), new ArrayList<>());
     }
 
     public void setRouter(TaskRouter router) {
@@ -103,7 +112,7 @@ public class StoryBus {
         this.router = router;
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
     public void saveTaskResult(TaskNode taskNode, Object taskResponse) {
         AssertUtil.notNull(taskNode);
         if (taskResponse == null) {
@@ -124,6 +133,7 @@ public class StoryBus {
         }
 
         globalParamAndResult.put(taskNode.identity(), result);
+
         Map<Class<?>, List<NoticeBusDataUtil.NoticeFieldItem>> noticeFieldMap = NoticeBusDataUtil.getNoticeFieldMap(result);
         if (MapUtils.isNotEmpty(noticeFieldMap)) {
             taskResponse = NoticeBusDataUtil.transferNoticeBusTaskResponse(taskResponse, noticeFieldMap);
@@ -132,6 +142,15 @@ public class StoryBus {
         if (taskResponse instanceof NoticeBusTaskResponse) {
             NoticeBusTaskResponse<?> noticeBusTaskResponse = (NoticeBusTaskResponse<?>) taskResponse;
             noticeBusDataChange(noticeBusTaskResponse);
+        }
+
+        if (GlobalUtil.notNull(taskNode.getTaskActionMethod()).isLastEventNode()) {
+            Object objResult = this.globalParamAndResult.get(STORY_LAST_NODE_RESULT_KEY.identity());
+            AssertUtil.notNull(objResult);
+            AssertUtil.notNull(objResult instanceof List);
+            List<Object> objList = (List<Object>) objResult;
+            objList.clear();
+            objList.add(result);
         }
     }
 
@@ -191,6 +210,10 @@ public class StoryBus {
 
     public Object getResultByTaskNode(TaskNode taskNode) {
         AssertUtil.notNull(taskNode);
+        Object lastResult = globalParamAndResult.get(STORY_LAST_NODE_RESULT_KEY.identity());
+        if (lastResult != null) {
+            return lastResult;
+        }
         return globalParamAndResult.get(taskNode.identity());
     }
 
@@ -310,6 +333,7 @@ public class StoryBus {
 
         // 请求入参 分支流程与主流程共享
         // timeSlot 异步任务结果集共享
+        // last Result 共享
         StoryBus cloneStoryBus = new StoryBus(null);
         cloneStoryBus.globalParamAndResult.putAll(this.globalParamAndResult);
         try {

@@ -20,6 +20,7 @@ package cn.kstry.framework.core.route;
 import cn.kstry.framework.core.annotation.EventGroupComponent;
 import cn.kstry.framework.core.annotation.EventGroupParent;
 import cn.kstry.framework.core.annotation.IgnoreEventNode;
+import cn.kstry.framework.core.annotation.LastEventNode;
 import cn.kstry.framework.core.bus.TaskNode;
 import cn.kstry.framework.core.config.TaskActionMethod;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -125,6 +126,7 @@ public abstract class RouteEventGroup implements EventGroup {
             taskActionMethod.setRequestClass(requestClass);
             taskActionMethod.setReturnClass((Class<? extends TaskResponse<?>>) returnClass);
             taskActionMethod.setClassName(method.getDeclaringClass().getName());
+            taskActionMethod.setLastEventNode(method.isAnnotationPresent(LastEventNode.class));
 
             // 不允许方法重载
             AssertUtil.isNull(taskActionMethodHashMap.get(method.getName()), ExceptionEnum.NOT_ALLOWED_OVERLOADS,

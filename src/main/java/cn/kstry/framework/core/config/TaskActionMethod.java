@@ -46,6 +46,11 @@ public class TaskActionMethod {
      */
     private String className;
 
+    /**
+     * 是否为 Story 的最终节点
+     */
+    private boolean lastEventNode;
+
     public String getMethodName() {
         return methodName;
     }
@@ -76,5 +81,13 @@ public class TaskActionMethod {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public boolean isLastEventNode() {
+        return lastEventNode;
+    }
+
+    public void setLastEventNode(boolean lastEventNode) {
+        this.lastEventNode = lastEventNode;
     }
 }
