@@ -115,7 +115,7 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationRole {
 
 ### 2.3 创建配文事件
 
-```json
+```javascript
 // auth.json
 {
   "story_def": { // Story 定义
@@ -144,7 +144,7 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationRole {
 
 ### 2.4 启动 Kstry 引擎，并执行得到结果
 
-``` java
+``` javascript
 @Configuration
 @ComponentScan(basePackageClasses = GoodsBootstrap.class)
 @EnableKstry(configPath = "classpath:config/*.json") // 启动 Kstry 引擎，并指定配置文件的位置
@@ -211,7 +211,7 @@ public class CustomerAuthenticationEventGroupImpl implements AuthenticationEvent
 
 #### 3.3.2 修改配置文件
 
-``` json
+``` javascript
 {
   "story_def": {
     "login": [
@@ -277,7 +277,7 @@ public class CustomerAuthenticationEventGroupImpl implements AuthenticationEvent
 
 **3.2.1 修改配置文件**
 
-``` json
+``` javascript
 {
   "story_def": {
     "login": [
@@ -319,7 +319,7 @@ public class CustomerAuthenticationEventGroupImpl implements AuthenticationEvent
 
 **3.3.1 修改配置文件**
 
-```json
+```javascript
 {
   "story_def": {
     "login": [
@@ -362,7 +362,7 @@ public class CustomerAuthenticationEventGroupImpl implements AuthenticationEvent
 
 > 实现功能：userType 不为空时异步登录，登录时需根据 userType 判断是 user 还是 customer 登录
 
-``` json
+``` javascript
 {
   "story_def": {
     "login": [  //（0）入口
@@ -489,7 +489,7 @@ public class CustomerStrategy implements StrategyRuleCalculator {
 
 **3.5.2 使用规则**
 
-``` json
+``` javascript
 {
   "strategy_def": {
     "login_strategy": [
