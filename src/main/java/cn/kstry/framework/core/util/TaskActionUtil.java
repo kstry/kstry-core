@@ -229,6 +229,8 @@ public class TaskActionUtil {
         if (taskNodeCollect.size() > 1) {
             AssertUtil.oneSize(taskNodeCollect, ExceptionEnum.MUST_ONE_TASK_ACTION, "Only one task is allowed to be executed! list:%s",
                     taskNodeCollect.stream().map(EventNode::getTaskNode).map(TaskNode::identity).collect(Collectors.toList()));
+        } else {
+            AssertUtil.oneSize(taskNodeCollect, ExceptionEnum.MUST_ONE_TASK_ACTION, "Only one task is allowed to be executed!");
         }
         return taskNodeCollect.get(0);
     }

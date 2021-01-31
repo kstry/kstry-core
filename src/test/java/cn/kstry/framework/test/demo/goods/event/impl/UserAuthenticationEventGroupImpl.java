@@ -1,7 +1,6 @@
 package cn.kstry.framework.test.demo.goods.event.impl;
 
 import cn.kstry.framework.core.annotation.EventGroupComponent;
-import cn.kstry.framework.core.annotation.LastEventNode;
 import cn.kstry.framework.core.facade.TaskResponse;
 import cn.kstry.framework.core.facade.TaskResponseBox;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -29,7 +28,6 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
     protected final List<User> userList = Lists.newArrayList(new User(1L, "张三", 10000), new User(2L, "李四", 10000));
 
     @Override
-    @LastEventNode
     public TaskResponse<UserLoginResponse> userLogin(UserLoginRequest userLoginRequest) {
 
         List<User> collect = userList.stream().filter(user -> user.getUserId().equals(userLoginRequest.getUserId())).collect(Collectors.toList());
@@ -58,6 +56,6 @@ public class UserAuthenticationEventGroupImpl implements AuthenticationEventGrou
 
     @Override
     public void safeCheck() {
-        System.out.println(Thread.currentThread().getName()+ " safe check!");
+        System.out.println(Thread.currentThread().getName() + " safe check!");
     }
 }

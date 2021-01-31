@@ -17,8 +17,6 @@
  */
 package cn.kstry.framework.core.route;
 
-import cn.kstry.framework.core.annotation.EventGroupComponent;
-import cn.kstry.framework.core.annotation.EventGroupParent;
 import cn.kstry.framework.core.annotation.IgnoreEventNode;
 import cn.kstry.framework.core.annotation.LastEventNode;
 import cn.kstry.framework.core.bus.TaskNode;
@@ -98,9 +96,7 @@ public abstract class RouteEventGroup implements EventGroup {
 
         for (Method method : methods) {
             Class<?> declaringClass = method.getDeclaringClass();
-            if (!EventGroup.class.isAssignableFrom(declaringClass)
-                    && declaringClass.getAnnotation(EventGroupComponent.class) == null
-                    && declaringClass.getAnnotation(EventGroupParent.class) == null) {
+            if (Object.class.equals(declaringClass)) {
                 continue;
             }
 

@@ -1,6 +1,5 @@
 package cn.kstry.framework.test.demo.goods.facade;
 
-import cn.kstry.framework.core.annotation.NoticeStaAndVar;
 import cn.kstry.framework.test.demo.goods.entity.User;
 
 /**
@@ -9,7 +8,6 @@ import cn.kstry.framework.test.demo.goods.entity.User;
  */
 public class UserLoginResponse {
 
-    @NoticeStaAndVar
     private User user;
 
     public User getUser() {

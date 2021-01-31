@@ -82,7 +82,7 @@ public class TaskRouter {
         // 判断是否需要跳过当前节点
         if (needSkipCurrentNode(node, getStoryBus())) {
             locateNextTaskNode();
-            invokeTaskNode();
+            return invokeTaskNode();
         }
         return currentTaskNode();
     }

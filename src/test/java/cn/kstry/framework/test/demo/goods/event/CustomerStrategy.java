@@ -11,6 +11,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class CustomerStrategy implements StrategyRuleCalculator {
 
+    /**
+     *
+     * @param source
+     * @param expected
+     * @return
+     */
     @Override
     public boolean calculate(Object source, Object expected) {
         return source != null && NumberUtils.toInt(source.toString(), 0) > 0;
