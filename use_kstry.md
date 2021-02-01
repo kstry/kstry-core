@@ -4,13 +4,11 @@
 
 ``` xml
 <dependency>
-    <groupId>cn.kstry.framework</groupId>
-    <artifactId>kstry-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+  <groupId>cn.kstry.framework</groupId>
+  <artifactId>kstry-core</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
-
-> 暂未上传maven公有仓库，需要自己打包源码生成jar上传仓库或本地
 
 ### 1.2 框架依赖
 
