@@ -2,7 +2,7 @@
     <contextName>kstry-core</contextName>
 
     <property name="LOG_PATH" value="/data/logs/kstry-core"/>
-    <property name="OUTPUT_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %class{56}.%M:%L - %msg%n"/>
+    <property name="OUTPUT_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{ks-request-id}] %-5level %class{56}.%M:%L - %msg%n"/>
     <property name="MAXDAY" value="30"/>
     <property name="MAXSIZE" value="64MB"/>
 
@@ -15,7 +15,7 @@
     <appender name="BUSINESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>${LOG_PATH}/kstry-core.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/%d{yyyy-MM-dd}/wx-%d{yyyy-MM-dd}-%i.log.gz</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/%d{yyyy-MM-dd}/kstry-core-%d{yyyy-MM-dd}-%i.log.gz</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>${MAXSIZE}</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -35,5 +35,4 @@
     <root level="WARN">
         <appender-ref ref="BUSINESS"/>
     </root>
-
 </configuration>

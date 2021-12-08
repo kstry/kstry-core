@@ -22,32 +22,55 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
+
+    <name>Kstry Core</name>
+    <description>Kstry Core</description>
+    <url>https://github.com/kstry/kstry-core</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <dependency.spring.version>4.0.9.RELEASE</dependency.spring.version>
+        <dependency.spring.version>4.1.9.RELEASE</dependency.spring.version>
+        <dependency.snakeyaml.version>1.16</dependency.snakeyaml.version>
         <dependency.collections.version>3.2.2</dependency.collections.version>
         <dependency.fastjson.version>1.2.75</dependency.fastjson.version>
         <dependency.lang3.version>3.11</dependency.lang3.version>
         <dependency.guava.version>30.0-jre</dependency.guava.version>
         <dependency.beanutils.version>1.9.4</dependency.beanutils.version>
         <dependency.slf4j.version>1.7.30</dependency.slf4j.version>
+        <dependency.logback-classic.version>1.2.3</dependency.logback-classic.version>
         <dependency.jcl-over-slf4j.version>1.7.30</dependency.jcl-over-slf4j.version>
+        <dependency.validator.version>6.1.7.Final</dependency.validator.version>
+        <dependency.javax.el.version>3.0.0</dependency.javax.el.version>
+        <dependency.camunda.version>7.15.0</dependency.camunda.version>
+        <dependency.reactor.version>3.4.11</dependency.reactor.version>
+        <dependency.junit.version>4.13.2</dependency.junit.version>
+        <jakarta.el.version>3.0.3</jakarta.el.version>
     </properties>
 
     <dependencies>
+        <!-- core dependency -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>${dependency.spring.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${dependency.snakeyaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.camunda.bpm.model</groupId>
+            <artifactId>camunda-bpmn-model</artifactId>
+            <version>${dependency.camunda.version}</version>
+        </dependency>
 
+        <!-- util -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -69,11 +92,6 @@
             <version>${dependency.guava.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${dependency.slf4j.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
             <version>${dependency.beanutils.version}</version>
@@ -89,6 +107,33 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${dependency.validator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.el</groupId>
+            <artifactId>javax.el-api</artifactId>
+            <version>${dependency.javax.el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.el</artifactId>
+            <version>${dependency.javax.el.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${dependency.reactor.version}</version>
+        </dependency>
+
+        <!-- log -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${dependency.slf4j.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <version>${dependency.jcl-over-slf4j.version}</version>
@@ -96,7 +141,20 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
+            <version>${dependency.logback-classic.version}</version>
+        </dependency>
+
+        <!-- test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${dependency.junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${dependency.spring.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -120,6 +178,23 @@
                 <executions>
                     <execution>
                         <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <charset>UTF-8</charset>
+                    <docencoding>UTF-8</docencoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>

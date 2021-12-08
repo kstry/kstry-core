@@ -17,7 +17,10 @@
  */
 package cn.kstry.framework.core.exception;
 
+import cn.kstry.framework.core.enums.ExceptionTypeEnum;
 import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nonnull;
 
 /**
  * 异常
@@ -30,37 +33,59 @@ public class KstryException extends RuntimeException {
 
     private final String errorCode;
 
-    public KstryException(String code, String desc) {
-        super(StringUtils.isBlank(desc) ? "System Error!" : desc);
+    public KstryException(ExceptionEnum exceptionEnum) {
+        this(exceptionEnum.getExceptionCode(), exceptionEnum.getDesc(), null);
+    }
+
+    public KstryException(String code, String desc, Throwable cause) {
+        super(String.format("[%s] %s", StringUtils.isBlank(code)
+                ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? "System Error!" : desc), cause);
         this.errorCode = code;
-    }
-
-    public KstryException(ExceptionEnum errorCodeEnum) {
-        super(errorCodeEnum.getDesc());
-        this.errorCode = errorCodeEnum.getExceptionCode();
-    }
-
-    public KstryException(Throwable cause) {
-        super(String.format("[%s] %s", ExceptionEnum.SYSTEM_ERROR.getExceptionCode(), cause.getMessage()), cause);
-        this.errorCode = ExceptionEnum.SYSTEM_ERROR.getExceptionCode();
     }
 
     public String getErrorCode() {
         return this.errorCode;
     }
 
-    public static void throwException(ExceptionEnum exceptionEnum) {
-        throwException(exceptionEnum.getExceptionCode(), exceptionEnum.getDesc());
+    public static void throwException(@Nonnull ExceptionEnum exceptionEnum) {
+        throwException(exceptionEnum, exceptionEnum.getDesc());
     }
 
-    public static void throwException(String code, String desc) {
-        throw new KstryException(code, String.format("[%s] %s", code, desc));
+    public static void throwException(@Nonnull ExceptionEnum exceptionEnum, String desc) {
+        throwException(null, exceptionEnum, desc);
     }
 
-    public static void throwException(Throwable e) {
-        if (e instanceof KstryException) {
-            throw (KstryException) e;
+    public static void throwException(Exception exception, @Nonnull ExceptionEnum exceptionEnum) {
+        throwException(exception, exceptionEnum, exceptionEnum.getDesc());
+    }
+
+    public static void throwException(Exception exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
+        throw buildException(exception, exceptionEnum, desc);
+    }
+
+    public static KstryException buildException(@Nonnull ExceptionEnum exceptionEnum) {
+        return buildException(null, exceptionEnum, null);
+    }
+
+    public static KstryException buildException(@Nonnull ExceptionEnum exceptionEnum, String desc) {
+        return buildException(null, exceptionEnum, desc);
+    }
+
+    public static KstryException buildException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
+        if (exception instanceof KstryException) {
+            return (KstryException) exception;
         }
-        throw new KstryException(e);
+        if (StringUtils.isBlank(desc)) {
+            desc = exceptionEnum.getDesc();
+        }
+        ExceptionTypeEnum typeEnum = exceptionEnum.getTypeEnum();
+        switch (typeEnum) {
+            case CONFIG:
+                return new ResourceException(exceptionEnum.getExceptionCode(), desc, exception);
+            case ASYNC_TASK:
+                return new TaskAsyncException(exceptionEnum.getExceptionCode(), desc, exception);
+            default:
+                return new KstryException(exceptionEnum.getExceptionCode(), desc, exception);
+        }
     }
 }

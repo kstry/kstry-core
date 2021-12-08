@@ -17,40 +17,30 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.config.GlobalConstant;
+import cn.kstry.framework.core.constant.GlobalProperties;
+import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.route.calculate.ConfigStrategyRuleCalculator;
-import cn.kstry.framework.core.route.calculate.StrategyRuleCalculator;
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.BeanUtilsBean;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
+ * GlobalUtil
+ *
  * @author lykan
  */
 public class GlobalUtil {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalUtil.class);
-
-    /**
-     * 获取解析属性值失败，返回该标识
-     */
-    public static final Object GET_PROPERTY_ERROR_SIGN = new Object();
-
-    private static final List<Character> VALID_FIELD_CHARACTER_LIST = Lists.newArrayList(
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 
     @SuppressWarnings("all")
     public static <T> T notEmpty(Optional<T> optional) {
@@ -70,22 +60,6 @@ public class GlobalUtil {
         return str;
     }
 
-    public static boolean isValidField(String fieldStr) {
-        if (StringUtils.isBlank(fieldStr)) {
-            return false;
-        }
-
-        if (GlobalConstant.RESERVED_WORDS_LIST.contains(fieldStr.trim().toUpperCase())) {
-            return false;
-        }
-        for (Character c : fieldStr.toCharArray()) {
-            if (!VALID_FIELD_CHARACTER_LIST.contains(c)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     @SuppressWarnings("unchecked")
     public static <T> Optional<T> transfer(Object source, Class<T> targetClass) {
         AssertUtil.notNull(targetClass);
@@ -100,45 +74,56 @@ public class GlobalUtil {
         return notEmpty(transfer(source, targetClass));
     }
 
-    public static Optional<Object> getProperty(Object bean, String propertyName) {
-        if (bean == null || StringUtils.isBlank(propertyName)) {
-            return Optional.empty();
+    public static boolean isCollection(Class<?> clazz) {
+        if (clazz == null) {
+            return false;
         }
-        try {
-            return Optional.ofNullable(BeanUtilsBean.getInstance().getPropertyUtils().getProperty(bean, propertyName));
-        } catch (Exception e) {
-            LOGGER.warn("[{}] BeanUtils Failed to get bean property! propertyName:{}", ExceptionEnum.FAILED_GET_PROPERTY.getExceptionCode(), propertyName, e);
-            return Optional.of(GET_PROPERTY_ERROR_SIGN);
-        }
+        return Iterable.class.isAssignableFrom(clazz) || Map.class.isAssignableFrom(clazz) || clazz.isArray();
     }
 
-    public static void setProperty(Object target, String propertyName, Object value) {
-        if (target == null || StringUtils.isBlank(propertyName)) {
-            return;
+    /**
+     * 排序后子类在前，父类在后
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> sortObjExtends(Collection<T> objList) {
+        if (CollectionUtils.isEmpty(objList)) {
+            return Lists.newArrayList();
+        }
+        Object[] objs = objList.stream().filter(Objects::nonNull).toArray();
+        if (objs.length < 2) {
+            return Lists.newArrayList(objList);
         }
 
-        try {
-            BeanUtils.setProperty(target, propertyName, value);
-        } catch (Exception e) {
-            LOGGER.warn("[{}] BeanUtils Failed to set bean property! target:{}, propertyName:{}, value:{}",
-                    ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value, e);
-        }
+        boolean isContinue;
+        do {
+            isContinue = false;
+            for (int i = 0; i < objs.length; i++) {
+                for (int j = i; j < objs.length; j++) {
+                    if (objs[i].getClass() == objs[j].getClass()) {
+                        continue;
+                    }
+                    if (objs[i].getClass().isAssignableFrom(objs[j].getClass())) {
+                        Object o = objs[i];
+                        objs[i] = objs[j];
+                        objs[j] = o;
+                        isContinue = true;
+                    }
+                }
+            }
+        } while (isContinue);
+        return Arrays.stream(objs).map(t -> (T) t).collect(Collectors.toList());
     }
 
-    public static StrategyRuleCalculator getStrategyRuleCalculators(Map<String, StrategyRuleCalculator> calculatorMap, String strategyName) {
-        AssertUtil.notEmpty(calculatorMap);
-        AssertUtil.notBlank(strategyName);
-        List<StrategyRuleCalculator> calculatorList = calculatorMap.values().stream().filter(strategyRuleCalculator -> {
-            if (strategyRuleCalculator == null) {
-                return false;
-            }
-            String namePrefix = StringUtils.EMPTY;
-            if (strategyRuleCalculator instanceof ConfigStrategyRuleCalculator) {
-                namePrefix = GlobalConstant.KSTRY_STRATEGY_CALCULATOR_NAME_PREFIX;
-            }
-            return (namePrefix + strategyName).equals(strategyRuleCalculator.getCalculatorName());
-        }).collect(Collectors.toList());
-        AssertUtil.oneSize(calculatorList, ExceptionEnum.STRATEGY_RULE_NAME_ERROR);
-        return calculatorList.get(0);
+    public static String getOrSetRequestId(StoryRequest<?> storyRequest) {
+        if (StringUtils.isNotBlank(storyRequest.getRequestId())) {
+            return storyRequest.getRequestId();
+        }
+
+        String requestId = MDC.get(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME);
+        if (StringUtils.isBlank(requestId)) {
+            requestId = UUID.randomUUID().toString();
+        }
+        storyRequest.setRequestId(requestId);
+        return requestId;
     }
 }

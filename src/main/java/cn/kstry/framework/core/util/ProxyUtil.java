@@ -17,7 +17,15 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.bus.BasicStoryBus;
+import cn.kstry.framework.core.container.MethodWrapper;
+import cn.kstry.framework.core.kv.KvThreadLocal;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.util.ReflectionUtils;
+
+import java.util.Optional;
+
 
 /**
  * @author lykan
@@ -39,5 +47,19 @@ public class ProxyUtil {
             return candidate.getClass();
         }
         return AopUtils.getTargetClass(candidate);
+    }
+
+    public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target) {
+        return invokeMethod(storyBus, methodWrapper, target, new Object[0]);
+    }
+
+    public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target, Object... args) {
+        String kvScope = Optional.ofNullable(methodWrapper.getKvScope()).filter(StringUtils::isNotBlank).orElse(storyBus.getBusinessId());
+        try {
+            KvThreadLocal.setKvScope(new KvThreadLocal.KvScope(kvScope));
+            return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, args);
+        } finally {
+            KvThreadLocal.clear();
+        }
     }
 }
