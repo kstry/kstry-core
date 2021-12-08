@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.exception;
 
-import cn.kstry.framework.core.enums.KstryTypeEnum;
+import cn.kstry.framework.core.enums.ExceptionTypeEnum;
 
 /**
  * 错误枚举
@@ -29,143 +29,193 @@ public enum ExceptionEnum {
     /**
      * [K1010001] 未捕获异常
      */
-    SYSTEM_ERROR(KstryTypeEnum.GLOBAL, "0001", "System error!"),
+    SYSTEM_ERROR(ExceptionTypeEnum.GLOBAL, "0001", "System error!"),
 
     /**
-     * [K1010002] 不允许为空
+     * [K1010002] 字符串或者对象不允许为空
      */
-    NOT_ALLOW_EMPTY(KstryTypeEnum.GLOBAL, "0002", "The object is not allowed to be empty!"),
+    NOT_ALLOW_EMPTY(ExceptionTypeEnum.GLOBAL, "0002", "The object is not allowed to be empty!"),
 
     /**
      * [K1010003] 集合不允许为空
      */
-    COLLECTION_NOT_ALLOW_EMPTY(KstryTypeEnum.GLOBAL, "0003", "The collection is not allowed to be empty!"),
+    COLLECTION_NOT_ALLOW_EMPTY(ExceptionTypeEnum.GLOBAL, "0003", "The collection is not allowed to be empty!"),
 
     /**
-     * [K1010004] 框架执行中，不被允许的参数出现
+     * [K1010004] 类型转化异常
      */
-    INVALID_SYSTEM_PARAMS(KstryTypeEnum.GLOBAL, "0004", "Invalid system parameters are present!"),
+    TYPE_TRANSFER_ERROR(ExceptionTypeEnum.GLOBAL, "0004", "Type conversion error!"),
 
     /**
-     * [K1010005] 必要的方法未实现
+     * [K1010005] 必须为空
      */
-    NEED_CONFIRM_NECESSARY_METHODS(KstryTypeEnum.GLOBAL, "0005", "Necessary methods not achieved!"),
+    OBJ_MUST_EMPTY(ExceptionTypeEnum.GLOBAL, "0005", "Objects are not allowed to exist!"),
 
-    /**
-     * [K1010006] 类型转化异常
-     */
-    TYPE_TRANSFER_ERROR(KstryTypeEnum.GLOBAL, "0006", "Type conversion anomaly!"),
-
-    /**
-     * [K1010007] 同时只允许一个 Task 被执行，Router 定位出多个时非法
-     */
-    MUST_ONE_TASK_ACTION(KstryTypeEnum.GLOBAL, "0007", "Only one task is allowed to be executed!"),
-
-    /**
-     * [K1010008] 配置文件解析失败
-     */
-    CONFIGURATION_PARSE_FAILURE(KstryTypeEnum.GLOBAL, "0008", "Configuration file parsing failure!"),
-
-    /**
-     * [K1010009] 参数错误
-     */
-    PARAMS_ERROR(KstryTypeEnum.GLOBAL, "0009", "params error!"),
-
-    /**
-     * [K1010010] 必须为空
-     */
-    OBJ_MUST_EMPTY(KstryTypeEnum.GLOBAL, "0010", "Objects are not allowed to exist!"),
-
-    /**
-     * [K1010011] 返回结果错误
-     */
-    RESPONSE_ERROR(KstryTypeEnum.GLOBAL, "0011", "response error!"),
 
     ///////////////////////////////////////////////// Global END /////////////////////////////////////////////////
 
     /**
-     *  [K1020001] Task 被重复定义
+     * [K1020001] EnableKstry 注解在容器中只允许出现一次
      */
-    TASK_IDENTIFY_DUPLICATE_DEFINITION(KstryTypeEnum.TASK, "0001", "event group duplication of definitions is not allowed!"),
+    ENABLE_KSTRY_NUMBER_ERROR(ExceptionTypeEnum.COMPONENT, "0001", "The EnableKstry annotation is allowed to appear only once in the container!"),
 
     /**
-     *  [K1020002] Task 中不允许出现方法重载
+     * [K1020002] 注解使用错误
      */
-    NOT_ALLOWED_OVERLOADS(KstryTypeEnum.TASK, "0002", "Method overloads are not allowed in Task!"),
+    ANNOTATION_USAGE_ERROR(ExceptionTypeEnum.COMPONENT, "0002", "Annotation usage exceptions!"),
 
     /**
-     * [K1020003] Task 获取 bean 属性信息失败
+     * [K1020003] 必须出现的组件属性未被指定
      */
-    FAILED_GET_PROPERTY(KstryTypeEnum.TASK, "0003", "BeanUtils failed to get bean property!"),
+    COMPONENT_ATTRIBUTES_EMPTY(ExceptionTypeEnum.COMPONENT, "0003", "Must-appear component attributes are not specified!"),
+
+    ///////////////////////////////////////////////// ANNOTATION END /////////////////////////////////////////////////
 
     /**
-     * [K1020004] Task 设置 bean 属性信息失败
+     * [K1030001] 配置文件解析失败
      */
-    FAILED_SET_PROPERTY(KstryTypeEnum.TASK, "0004", "BeanUtils failed to set bean property!"),
+    CONFIGURATION_PARSE_FAILURE(ExceptionTypeEnum.CONFIG, "0001", "Configuration file parsing failure!"),
 
     /**
-     * [K1020005] Task 执行结果，必须是 TaskResponse 或者其子类，或者 null
+     * [K1030002] 元素缺少必填的参数
      */
-    TASK_RESULT_TYPE_ERROR(KstryTypeEnum.TASK, "0005", "The result of Task execution must be TaskResponse or its subclass, or null!"),
+    CONFIGURATION_ATTRIBUTES_REQUIRED(ExceptionTypeEnum.CONFIG, "0002", "element is missing a required attributes!"),
 
     /**
-     * [K1020006] 不可变集合中已存在的值不允许被重复设置
+     * [K1030003] 子流程配置存在错误
      */
-    IMMUTABLE_SET_UPDATE(KstryTypeEnum.TASK, "0006", "Values that already exist in the immutable set are not allowed to be set repeatedly!"),
+    CONFIGURATION_SUBPROCESS_ERROR(ExceptionTypeEnum.CONFIG, "0003", "There is an error in the subprocess configuration!"),
 
     /**
-     * [K1020007] 当前线程被中断
+     * [K1030004] 配置文件中存在不支持的 BPMN 元素
      */
-    TASK_INTERRUPTED_ERROR(KstryTypeEnum.TASK, "0007", "The current thread is interrupted!"),
+    CONFIGURATION_UNSUPPORTED_ELEMENT(ExceptionTypeEnum.CONFIG, "0004", "Unsupported bpmn elements are present in the configuration file!"),
 
     /**
-     * [K1020008] 策略规则名称错误
+     *[K1030005] 元素间组成的链路存在错误
      */
-    STRATEGY_RULE_NAME_ERROR(KstryTypeEnum.TASK, "0008", "Strategy policy rule name!"),
-
-    ///////////////////////////////////////////////// Task END /////////////////////////////////////////////////
+    CONFIGURATION_FLOW_ERROR(ExceptionTypeEnum.CONFIG, "0005", "There is an error in the link formed between the elements!"),
 
     /**
-     * [K1030001] time slot 执行期间发生错误
+     * [K1030006] 配置资源读取失败
      */
-    TIME_SLOT_EXECUTION_ERROR(KstryTypeEnum.TIME_SLOT, "0001", "Time slot task An error occurred during execution!"),
+    CONFIGURATION_RESOURCE_ERROR(ExceptionTypeEnum.CONFIG, "0006", "Configuration resource read failure!"),
 
     /**
-     * [K1030002] TimeSlotThreadPoolExecutor 只能在容器中出现一次
+     * [K1030007] kv scope 格式解析错误
      */
-    THREAD_POOL_COUNT_ERROR(KstryTypeEnum.TIME_SLOT, "0002", "Only one TimeSlotThreadPoolExecutor can exist in the container!"),
+    KV_SCOPE_PARSING_ERROR(ExceptionTypeEnum.CONFIG, "0007", "kv scope format parsing error!"),
 
     /**
-     * [K1030003] time slot 线程池已满，任务被丢弃
+     * [K1030008] BusinessRole 不允许被重复定义
      */
-    CONTAINER_QUEUE_FULL_ERROR(KstryTypeEnum.TIME_SLOT, "0003", "Thread pool container queue is full, discard task!"),
+    BUSINESS_ROLE_DUPLICATED_ERROR(ExceptionTypeEnum.CONFIG, "0008", "BusinessRole is not allowed to be repeatedly defined!"),
+
+    ///////////////////////////////////////////////// CONFIG END /////////////////////////////////////////////////
 
     /**
-     * [K1030004] time slot 中出现未定义的异常
+     * [K1040001] Story execution failure
      */
-    TIME_SLOT_SYSTEM_ERROR(KstryTypeEnum.TIME_SLOT, "0004", "Undefined exception in time slot!"),
-
-
-    ///////////////////////////////////////////////// TimeSlot END /////////////////////////////////////////////////
+    STORY_ERROR(ExceptionTypeEnum.STORY, "0001", "Story execution failure!"),
 
     /**
-     * [K1040001] story name 非法
+     * [K1040002] 执行中必须有且只有一个 TaskService 被匹配
      */
-    STORY_NAME_NOT_VALID(KstryTypeEnum.STORY, "0001", "Story name not valid!"),
+    EXECUTION_ONE_RESULT(ExceptionTypeEnum.STORY, "0002", "There must be one and only one TaskService matched in the execution!"),
 
-    ///////////////////////////////////////////////// Story END /////////////////////////////////////////////////
+    /**
+     * [K1040003] 参数错误
+     */
+    PARAMS_ERROR(ExceptionTypeEnum.STORY, "0003", "params error!"),
+
+    /**
+     * [K1040004] TaskService匹配失败
+     */
+    TASK_SERVICE_MATCH_ERROR(ExceptionTypeEnum.STORY, "0004", "No available TaskService matched!"),
+
+    /**
+     * [K1040005] 参数校验错误
+     */
+    PARAM_VERIFICATION_ERROR(ExceptionTypeEnum.STORY, "0005", "Parameter verification error!"),
+
+    /**
+     * [K1040006] Story任务被取消
+     */
+    TASK_CANCELLED(ExceptionTypeEnum.STORY, "0006", "Story task was cancelled!"),
+
+    /**
+     * [K1040007] 流程分支上的表达式执行失败
+     */
+    EXPRESSION_INVOKE_ERROR(ExceptionTypeEnum.STORY, "0007", "Expression execution on process branch failed!"),
+
+    /**
+     * [K1040008] Story flow error
+     */
+    STORY_FLOW_ERROR(ExceptionTypeEnum.STORY, "0008", "Story flow error!"),
+
+    /**
+     * [K1040009] story tracking code
+     */
+    STORY_TRACKING_CODE(ExceptionTypeEnum.STORY, "0009", " story tracking code."),
+
+    /**
+     * [K1040010] TaskService parameter instantiation failed
+     */
+    SERVICE_PARAM_ERROR(ExceptionTypeEnum.STORY, "0010", "TaskService parameter instantiation failed!"),
+
+    ///////////////////////////////////////////////// STORY END /////////////////////////////////////////////////
+
+    /**
+     * [K1050001] Task 获取 bean 属性信息失败
+     */
+    FAILED_GET_PROPERTY(ExceptionTypeEnum.PROPERTY, "0001", "BeanUtils failed to get bean property!"),
+
+    /**
+     * [K1050002] Task 设置 bean 属性信息失败
+     */
+    FAILED_SET_PROPERTY(ExceptionTypeEnum.PROPERTY, "0002", "BeanUtils failed to set bean property!"),
+
+    /**
+     * [K1050003] 不可变集合中已存在的值不允许被重复设置
+     */
+    IMMUTABLE_SET_UPDATE(ExceptionTypeEnum.PROPERTY, "0003", "Values that already exist in the immutable set are not allowed to be set repeatedly!"),
+
+
+    ///////////////////////////////////////////////// PARAMS END /////////////////////////////////////////////////
+
+    /**
+     * [K1060001] 异步节点任务被中断
+     */
+    ASYNC_TASK_INTERRUPTED(ExceptionTypeEnum.ASYNC_TASK, "0001", "Asynchronous node tasks are interrupted!"),
+
+    /**
+     * [K1060002] 异步节点任务超时
+     */
+    ASYNC_TASK_TIMEOUT(ExceptionTypeEnum.ASYNC_TASK, "0002", "Asynchronous node task timeout!"),
+
+    /**
+     * [K1060003] 异步节点任务发生异常
+     */
+    ASYNC_TASK_ERROR(ExceptionTypeEnum.ASYNC_TASK, "0003", "Exception for asynchronous node tasks!"),
+
+    /**
+     * [K1060004] 异步节点任务发生异常
+     */
+    ASYNC_QUEUE_OVERFLOW(ExceptionTypeEnum.ASYNC_TASK, "0004", "kstry asynchronous task queue overflow!"),
+
+    ///////////////////////////////////////////////// ASYNC_TASK END /////////////////////////////////////////////////
     ;
 
-    ExceptionEnum(KstryTypeEnum typeEnum, String code, String desc) {
+    ExceptionEnum(ExceptionTypeEnum typeEnum, String code, String desc) {
         this.typeEnum = typeEnum;
         this.code = code;
         this.desc = desc;
     }
 
     /**
-     * 发生错误的组件类型
+     * typeEnum
      */
-    private final KstryTypeEnum typeEnum;
+    private final ExceptionTypeEnum typeEnum;
 
     /**
      * 错误码
@@ -177,7 +227,7 @@ public enum ExceptionEnum {
      */
     private final String desc;
 
-    public KstryTypeEnum getTypeEnum() {
+    public ExceptionTypeEnum getTypeEnum() {
         return typeEnum;
     }
 

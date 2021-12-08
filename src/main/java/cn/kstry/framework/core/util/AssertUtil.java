@@ -26,16 +26,16 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * 断言工具
  *
  * @author lykan
  */
+@SuppressWarnings("unused")
 public class AssertUtil {
 
     /**
@@ -49,12 +49,36 @@ public class AssertUtil {
      * 判断条件为 true
      */
     public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, Object... desc) {
+        if (desc == null || desc.length == 0) {
+            isTrue(flag, exceptionEnum, null, null);
+        } else if (desc.length == 1) {
+            isTrue(flag, exceptionEnum, (String) desc[0], null);
+        } else {
+            isTrue(flag, exceptionEnum, (String) desc[0], () -> {
+                Object[] targetArray = new Object[desc.length - 1];
+                System.arraycopy(desc, 1, targetArray, 0, desc.length - 1);
+                return Lists.newArrayList(targetArray);
+            });
+        }
+    }
+
+    /**
+     * 判断条件为 true
+     */
+    public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, String desc, Supplier<List<?>> paramsSupplier) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
         }
         if (BooleanUtils.isNotTrue(flag)) {
-            throwCustomException(exceptionEnum, desc);
+            throwCustomException(exceptionEnum, desc, paramsSupplier);
         }
+    }
+
+    /**
+     * 判断条件为 非 true
+     */
+    public static void notTrue(Boolean flag) {
+        notTrue(flag, ExceptionEnum.SYSTEM_ERROR);
     }
 
     /**
@@ -67,15 +91,15 @@ public class AssertUtil {
     /**
      * 判断条件为 equals
      */
+    public static void equals(Object left, Object right) {
+        equals(left, right, null);
+    }
+
+    /**
+     * 判断条件为 equals
+     */
     public static void equals(Object left, Object right, ExceptionEnum exceptionEnum, Object... desc) {
-        if (exceptionEnum == null) {
-            exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
-        }
-        if (left == null) {
-            AssertUtil.isNull(right, exceptionEnum, desc);
-            return;
-        }
-        AssertUtil.isTrue(left.equals(right), exceptionEnum, desc);
+        AssertUtil.isTrue(Objects.equals(left, right), exceptionEnum, desc);
     }
 
     @SuppressWarnings("all")
@@ -85,9 +109,6 @@ public class AssertUtil {
 
     @SuppressWarnings("all")
     public static void present(Optional<?> optional, ExceptionEnum exceptionEnum, Object... desc) {
-        if (exceptionEnum == null) {
-            exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
-        }
         isTrue(optional != null && optional.isPresent(), exceptionEnum, desc);
     }
 
@@ -102,9 +123,6 @@ public class AssertUtil {
      * 必须为空
      */
     public static void isNull(Object object, ExceptionEnum exceptionEnum, Object... desc) {
-        if (exceptionEnum == null) {
-            exceptionEnum = ExceptionEnum.OBJ_MUST_EMPTY;
-        }
         isTrue(object == null, exceptionEnum, desc);
     }
 
@@ -126,9 +144,7 @@ public class AssertUtil {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.NOT_ALLOW_EMPTY;
         }
-        if (object == null) {
-            throwCustomException(exceptionEnum, desc);
-        }
+        isTrue(object != null, exceptionEnum, desc);
     }
 
     /**
@@ -140,6 +156,11 @@ public class AssertUtil {
         notBlank(str, ExceptionEnum.NOT_ALLOW_EMPTY);
     }
 
+    /**
+     * 字符串不允许为空
+     *
+     * @param str str
+     */
     public static void notBlank(String str, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.NOT_ALLOW_EMPTY;
@@ -147,10 +168,20 @@ public class AssertUtil {
         isTrue(StringUtils.isNotBlank(str), exceptionEnum, desc);
     }
 
+    /**
+     * 集合不允许为空
+     *
+     * @param collection collection
+     */
     public static void notEmpty(Collection<?> collection) {
         notEmpty(collection, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
     }
 
+    /**
+     * 集合不允许为空
+     *
+     * @param collection collection
+     */
     public static void notEmpty(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
@@ -158,21 +189,38 @@ public class AssertUtil {
         isTrue(CollectionUtils.isNotEmpty(collection), exceptionEnum, desc);
     }
 
+    /**
+     * 集合必须为空
+     *
+     * @param collection collection
+     */
     public static void isEmpty(Collection<?> collection) {
-        isEmpty(collection, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
+        isEmpty(collection, ExceptionEnum.SYSTEM_ERROR);
     }
 
+    /**
+     * 集合必须为空
+     *
+     * @param collection collection
+     */
     public static void isEmpty(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
-        if (exceptionEnum == null) {
-            exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
-        }
         isTrue(CollectionUtils.isEmpty(collection), exceptionEnum, desc);
     }
 
+    /**
+     * 数组不允许为空
+     *
+     * @param array array
+     */
     public static <T> void notEmpty(T[] array) {
         notEmpty(array, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
     }
 
+    /**
+     * 数组不允许为空
+     *
+     * @param array array
+     */
     public static <T> void notEmpty(T[] array, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
@@ -180,10 +228,20 @@ public class AssertUtil {
         isTrue(array != null && array.length > 0, exceptionEnum, desc);
     }
 
+    /**
+     * Map不允许为空
+     *
+     * @param map map
+     */
     public static void notEmpty(Map<?, ?> map) {
         notEmpty(map, ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY);
     }
 
+    /**
+     * Map不允许为空
+     *
+     * @param map map
+     */
     public static void notEmpty(Map<?, ?> map, ExceptionEnum exceptionEnum, Object... desc) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.COLLECTION_NOT_ALLOW_EMPTY;
@@ -205,6 +263,11 @@ public class AssertUtil {
         }
     }
 
+    /**
+     * 不允许为空
+     *
+     * @param strArray string list
+     */
     public static void anyNotBlank(String... strArray) {
         if (strArray == null || strArray.length == 0) {
             return;
@@ -215,17 +278,12 @@ public class AssertUtil {
     }
 
     /**
-     * 断言：有效字段
+     * 集合只允许一个元素
+     *
+     * @param collection 集合
      */
-    public static void isValidField(String field, ExceptionEnum exceptionEnum, Object... desc) {
-        if (exceptionEnum == null) {
-            exceptionEnum = ExceptionEnum.PARAMS_ERROR;
-        }
-        isTrue(GlobalUtil.isValidField(field), exceptionEnum, desc);
-    }
-
-    public static void oneSize(Collection<?> collection) {
-        oneSize(collection, ExceptionEnum.PARAMS_ERROR);
+    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
+        isTrue(CollectionUtils.isNotEmpty(collection) && collection.size() == 1, exceptionEnum, desc);
     }
 
     /**
@@ -233,34 +291,36 @@ public class AssertUtil {
      *
      * @param collection 集合
      */
-    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum, Object... desc) {
-        if (exceptionEnum == null) {
-            exceptionEnum = ExceptionEnum.PARAMS_ERROR;
-        }
-        if (CollectionUtils.isEmpty(collection) || collection.size() != 1) {
-            throwCustomException(exceptionEnum, desc);
-        }
+    public static void oneSize(Collection<?> collection, ExceptionEnum exceptionEnum, String desc, Supplier<List<?>> paramsSupplier) {
+        isTrue(CollectionUtils.isNotEmpty(collection) && collection.size() == 1, exceptionEnum, desc, paramsSupplier);
     }
 
-    private static void throwCustomException(ExceptionEnum exceptionEnum, Object[] desc) {
-        String exDesc = exceptionEnum.getDesc();
-        if (desc == null || desc.length == 0 || !(desc[0] instanceof String)) {
-            KstryException.throwException(exceptionEnum.getExceptionCode(), exDesc);
+    /**
+     * 集合只允许一个元素
+     *
+     * @param collection 集合
+     */
+    public static void oneSize(Collection<?> collection) {
+        oneSize(collection, ExceptionEnum.SYSTEM_ERROR);
+    }
+
+    private static void throwCustomException(@Nonnull ExceptionEnum exceptionEnum, String desc, Supplier<List<?>> paramsSupplier) {
+        if (StringUtils.isBlank(desc)) {
+            KstryException.throwException(exceptionEnum, exceptionEnum.getDesc());
+            return;
         }
 
-        if (desc.length == 1) {
-            exDesc = (String) desc[0];
-            KstryException.throwException(exceptionEnum.getExceptionCode(), exDesc);
+        if (paramsSupplier == null) {
+            KstryException.throwException(exceptionEnum, desc);
+            return;
         }
 
-        List<String> params = Lists.newLinkedList();
-        for (int i = 1; i < desc.length; i++) {
-            if (desc[i] instanceof String) {
-                params.add((String) desc[i]);
-                continue;
-            }
-            params.add(JSON.toJSONString(desc[i]));
+        List<?> objList = paramsSupplier.get();
+        if (CollectionUtils.isEmpty(objList)) {
+            KstryException.throwException(exceptionEnum, desc);
         }
-        KstryException.throwException(exceptionEnum.getExceptionCode(), String.format((String) desc[0], params.toArray()));
+
+        Object[] params = objList.stream().map(obj -> (obj instanceof String) ? obj : JSON.toJSONString(obj)).toArray();
+        KstryException.throwException(exceptionEnum, String.format(desc, params));
     }
 }
