@@ -84,7 +84,7 @@ public class BasicStartEventContainer implements StartEventContainer {
                     StartEvent existStartEvent = startEventMap.get(event.getId());
                     if (existStartEvent != null) {
                         KstryException.throwException(ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                                String.format("There are duplicate start event ids defined! id:%s, fileName1: %s, fileName2: %s",
+                                GlobalUtil.format("There are duplicate start event ids defined! id:{}, fileName1: {}, fileName2: {}",
                                         event.getId(), cfg.getConfigName(), existStartEvent.getConfig().map(Config::getConfigName).orElse(null)));
                     }
                     startEventMap.put(event.getId(), event);

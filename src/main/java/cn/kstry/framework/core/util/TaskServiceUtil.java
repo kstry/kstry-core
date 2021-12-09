@@ -146,7 +146,7 @@ public class TaskServiceUtil {
                     continue;
                 }
                 AssertUtil.isTrue(r == null || ElementParserUtil.isAssignable(iDef.getParamType(), r.getClass()),
-                        ExceptionEnum.PARAMS_ERROR, "The actual type does not match the expected type! actual: %s, expected: %s", () -> {
+                        ExceptionEnum.PARAMS_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
                             String actual = (r == null) ? "null" : r.getClass().getName();
                             return Lists.newArrayList(actual, iDef.getParamType().getName());
                         });
@@ -177,7 +177,7 @@ public class TaskServiceUtil {
                             return;
                         }
                         AssertUtil.isTrue(value == null || ElementParserUtil.isAssignable(def.getParamType(), value.getClass()),
-                                ExceptionEnum.PARAMS_ERROR, "The actual type does not match the expected type! actual: %s, expected: %s", () -> {
+                                ExceptionEnum.PARAMS_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
                                     String actual = (value == null) ? "null" : value.getClass().getName();
                                     return Lists.newArrayList(actual, def.getParamType().getName());
                                 });

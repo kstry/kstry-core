@@ -423,7 +423,7 @@ public class MethodWrapper {
 
         public TaskFieldProperty(String name, ScopeTypeEnum scopeTypeEnum) {
             AssertUtil.isTrue(GlobalConstant.STORY_DATA_SCOPE.contains(scopeTypeEnum),
-                    ExceptionEnum.ANNOTATION_USAGE_ERROR, "Existence of an impermissible scopeType! scopeType: %s", scopeTypeEnum);
+                    ExceptionEnum.ANNOTATION_USAGE_ERROR, "Existence of an impermissible scopeType! scopeType: {}", scopeTypeEnum);
             this.name = name;
             this.scopeTypeEnum = scopeTypeEnum;
         }

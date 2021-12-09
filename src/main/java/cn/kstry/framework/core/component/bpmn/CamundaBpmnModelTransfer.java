@@ -116,7 +116,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
                 basicInStack.pushList(itemList);
             } else {
                 KstryException.throwException(ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
-                        String.format("There is an error in the bpmn file! fileName: %s", config.getConfigName()));
+                        GlobalUtil.format("There is an error in the bpmn file! fileName: {}", config.getConfigName()));
             }
         }
 
@@ -138,9 +138,9 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
             ElementPropertyUtil.getNodeProperty(flowNode,
                     BpmnConstant.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
             AssertUtil.notBlank(serviceTaskImpl.getTaskService(),
-                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskService cannot be empty! fileName: %s", config.getConfigName());
+                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskService cannot be empty! fileName: {}", config.getConfigName());
             AssertUtil.notBlank(serviceTaskImpl.getTaskComponent(),
-                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskComponent cannot be empty! fileName: %s", config.getConfigName());
+                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskComponent cannot be empty! fileName: {}", config.getConfigName());
             flowElement = serviceTaskImpl;
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.ParallelGateway) {
             BasicAsyncFlowElement asyncFlowElement = new BasicAsyncFlowElement();
@@ -166,19 +166,19 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
             String calledElementId = ((CallActivity) flowNode).getCalledElement();
             AssertUtil.notBlank(calledElementId, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                    "CallActivity element id cannot be empty!, fileName: %s", config.getConfigName());
+                    "CallActivity element id cannot be empty!, fileName: {}", config.getConfigName());
             org.camunda.bpm.model.bpmn.instance.SubProcess subProcess = bpmnModelInstance.getModelElementById(calledElementId);
             flowElement = buildSubProcess(config, bpmnModelInstance, subProcess);
         } else {
             KstryException.throwException(ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
-                    String.format("%s element: %s, fileName: %s", ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT.getDesc(),
+                    GlobalUtil.format("{} element: {}, fileName: {}", ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT.getDesc(),
                             flowNode.getElementType().getTypeName(), config.getConfigName()));
         }
 
         flowElement.setId(flowNode.getId());
         flowElement.setName(flowNode.getName());
         AssertUtil.notBlank(flowElement.getId(),
-                ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The bpmn element id attribute cannot be empty! fileName: %s", config.getConfigName());
+                ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The bpmn element id attribute cannot be empty! fileName: {}", config.getConfigName());
         return flowElement;
     }
 
@@ -187,7 +187,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         sequenceFlow.setId(sf.getId());
         sequenceFlow.setName(sf.getName());
         AssertUtil.notBlank(sequenceFlow.getId(),
-                ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The bpmn element id attribute cannot be empty! fileName: %s", config.getConfigName());
+                ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The bpmn element id attribute cannot be empty! fileName: {}", config.getConfigName());
         if (sf.getConditionExpression() != null && StringUtils.isNotBlank(sf.getConditionExpression().getTextContent())) {
             SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(sf.getConditionExpression().getTextContent());
             sequenceFlowExpression.setId(sf.getConditionExpression().getId());
@@ -205,7 +205,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
             bpmnMappingItemCache.put(element.getId(), item);
         } else {
             AssertUtil.isTrue(GlobalConstant.ELEMENT_MAX_OCCUR_NUMBER >= item.getOccurNumber(), ExceptionEnum.CONFIGURATION_FLOW_ERROR,
-                    "Duplicate calls between elements are not allowed! elementId: %s", item.getKstryElement().getId());
+                    "Duplicate calls between elements are not allowed! elementId: {}", item.getKstryElement().getId());
             item.occurNumberIncrement();
         }
         return item;
@@ -218,11 +218,11 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
 
     private FlowElement buildSubProcess(Config config, BpmnModelInstance bpmnModelInstance, ModelElementInstance modelElementInstance) {
         AssertUtil.notNull(modelElementInstance, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                "No matching subprocesses found in the configuration file! fileName: %s", config.getConfigName());
+                "No matching subprocesses found in the configuration file! fileName: {}", config.getConfigName());
         Collection<org.camunda.bpm.model.bpmn.instance.StartEvent> childElement =
                 modelElementInstance.getChildElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class);
         AssertUtil.oneSize(childElement, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                "Subprocesses are only allowed to also have a start event! fileName: %s", config.getConfigName());
+                "Subprocesses are only allowed to also have a start event! fileName: {}", config.getConfigName());
         StartEvent innerStartEvent = doGetKstryModel(config, bpmnModelInstance,
                 childElement.iterator().next()).orElseThrow(() -> KstryException.buildException(ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR));
         return new SubProcessImpl(innerStartEvent);

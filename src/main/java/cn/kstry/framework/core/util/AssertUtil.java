@@ -321,6 +321,6 @@ public class AssertUtil {
         }
 
         Object[] params = objList.stream().map(obj -> (obj instanceof String) ? obj : JSON.toJSONString(obj)).toArray();
-        KstryException.throwException(exceptionEnum, String.format(desc, params));
+        KstryException.throwException(exceptionEnum, GlobalUtil.format(desc, params));
     }
 }

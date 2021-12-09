@@ -17,15 +17,6 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.constant.GlobalProperties;
-import cn.kstry.framework.core.engine.facade.StoryRequest;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.MDC;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +25,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
+import org.slf4j.helpers.MessageFormatter;
+
+import com.google.common.collect.Lists;
+
+import cn.kstry.framework.core.constant.GlobalProperties;
+import cn.kstry.framework.core.engine.facade.StoryRequest;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.exception.KstryException;
 
 /**
  * GlobalUtil
@@ -58,6 +61,13 @@ public class GlobalUtil {
     public static String notBlank(String str) {
         AssertUtil.notBlank(str);
         return str;
+    }
+
+    public static String format(String str, Object... params) {
+        if (StringUtils.isBlank(str)) {
+            return str;
+        }
+        return MessageFormatter.arrayFormat(str, params).getMessage();
     }
 
     @SuppressWarnings("unchecked")

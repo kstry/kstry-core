@@ -93,14 +93,14 @@ public class BusinessRoleRepository {
                             if (CollectionUtils.isEmpty(br.getBusinessIdList())) {
                                 String key = getKey(null, sId);
                                 AssertUtil.notTrue(keySet.contains(key), ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR,
-                                        ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR.getDesc() + " startId: %s", sId
+                                        ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR.getDesc() + " startId: {}", sId
                                 );
                                 keySet.add(key);
                             }
                             br.getBusinessIdList().forEach(bId -> {
                                 String key = getKey(bId, sId);
                                 AssertUtil.notTrue(keySet.contains(key), ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR,
-                                        ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR.getDesc() + " businessId: %s, startId: %s", bId, sId
+                                        ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR.getDesc() + " businessId: {}, startId: {}", bId, sId
                                 );
                                 keySet.add(key);
                             });

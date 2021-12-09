@@ -1,5 +1,16 @@
 package cn.kstry.framework.test.flow;
 
+import java.util.concurrent.CountDownLatch;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.alibaba.fastjson.JSON;
+
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.engine.facade.ReqBuilder;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
@@ -9,15 +20,6 @@ import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Te4Request;
-import com.alibaba.fastjson.JSON;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  *

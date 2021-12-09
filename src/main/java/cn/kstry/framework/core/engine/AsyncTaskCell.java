@@ -24,6 +24,8 @@ import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +95,7 @@ public class AsyncTaskCell {
         try {
             boolean await = inCountDownLatch.await(timeout, unit);
             if (!await) {
-                throw new TimeoutException(String.format("Async task timeout! maximum time limit: %sms, block task count: %d, block task: %s",
+                throw new TimeoutException(GlobalUtil.format("Async task timeout! maximum time limit: {}ms, block task count: {}, block task: {}",
                         unit.toMillis(timeout), inCountDownLatch.getCount(),
                         beginFlowElementSet.stream().map(FlowElement::getId).collect(Collectors.toList())));
             }

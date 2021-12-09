@@ -51,7 +51,7 @@ public class KValueUtil {
         AssertUtil.notBlank(scope);
         String[] split = scope.split("@");
         AssertUtil.isTrue(split.length > 0 && split.length <= 2, ExceptionEnum.KV_SCOPE_PARSING_ERROR,
-                ExceptionEnum.KV_SCOPE_PARSING_ERROR.getDesc() + " scope: %s", scope);
+                ExceptionEnum.KV_SCOPE_PARSING_ERROR.getDesc() + " scope: {}", scope);
         if (split.length == 1) {
             return new KvScope(split[0], null);
         }
@@ -96,11 +96,11 @@ public class KValueUtil {
                 .collect(Collectors.toMap(e -> e, e -> 1, Integer::sum)).entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey)
                 .collect(Collectors.toList());
         AssertUtil.isEmpty(collect, ExceptionEnum.KV_SCOPE_PARSING_ERROR,
-                "kv scope cannot be defined repeatedly even in different files! scope: %s", collect);
+                "kv scope cannot be defined repeatedly even in different files! scope: {}", collect);
         kValueMap.forEach((k, v) -> {
             KvScope kvScope = KValueUtil.getKvScope(k);
             v.setScope(kvScope.getScope());
-            beanFactory.registerSingleton(String.format(GlobalConstant.KV_SCOPE_DEFAULT_BEAN_NAME, kvScope.getScope()), v);
+            beanFactory.registerSingleton(GlobalUtil.format(GlobalConstant.KV_SCOPE_DEFAULT_BEAN_NAME, kvScope.getScope()), v);
         });
     }
 }

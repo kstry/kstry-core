@@ -86,7 +86,7 @@ public class ElementParserUtil {
         try {
             return Optional.of(clazz.getDeclaredConstructor().newInstance());
         } catch (Exception e) {
-            KstryException.throwException(e, ExceptionEnum.SERVICE_PARAM_ERROR, String.format(ExceptionEnum.SERVICE_PARAM_ERROR.getDesc() + " class: %s", clazz.getName()));
+            KstryException.throwException(e, ExceptionEnum.SERVICE_PARAM_ERROR, GlobalUtil.format(ExceptionEnum.SERVICE_PARAM_ERROR.getDesc() + " class: {}", clazz.getName()));
             return Optional.empty();
         }
     }

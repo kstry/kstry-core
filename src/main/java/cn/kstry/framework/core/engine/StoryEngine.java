@@ -146,7 +146,7 @@ public class StoryEngine {
                 }
                 Object result = storyBus.getReturnResult().get();
                 AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
-                        "Type conversion error! expect: %s, actual: %s", returnType.getName(), result.getClass().getName());
+                        "Type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
                 Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
                 return CompletableFuture.completedFuture((T) result);
             } catch (Exception exception) {
@@ -257,7 +257,7 @@ public class StoryEngine {
         AssertUtil.notBlank(startId, ExceptionEnum.PARAMS_ERROR, "StartId is not allowed to be empty!");
         Optional<StartEvent> startEventOptional = startEventContainer.getStartEventById(startId);
         StartEvent startEvent = startEventOptional.orElseThrow(() -> KstryException
-                .buildException(null, ExceptionEnum.PARAMS_ERROR, String.format("StartId did not match a valid StartEvent! startId: %s", startId)));
+                .buildException(null, ExceptionEnum.PARAMS_ERROR, GlobalUtil.format("StartId did not match a valid StartEvent! startId: {}", startId)));
         return new FlowRegister(startEvent, storyRequest);
     }
 

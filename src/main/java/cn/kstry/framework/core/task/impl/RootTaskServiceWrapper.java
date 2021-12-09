@@ -70,7 +70,7 @@ public class RootTaskServiceWrapper extends AbilityTaskServiceWrapper implements
             abilityList.add(0, this);
         }
         AssertUtil.oneSize(abilityList, ExceptionEnum.EXECUTION_ONE_RESULT,
-                "There must be one and only one ability matched in the execution! abilityId: %s",
+                "There must be one and only one ability matched in the execution! abilityId: {}",
                 () -> Lists.newArrayList(JSON.toJSONString(abilityList.stream().map(TaskServiceWrapper::getIdentityId).collect(Collectors.toList()))));
         return Optional.of(abilityList.get(0));
     }

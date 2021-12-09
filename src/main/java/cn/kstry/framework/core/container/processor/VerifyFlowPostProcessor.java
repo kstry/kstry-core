@@ -57,7 +57,7 @@ public class VerifyFlowPostProcessor implements StartEventPostProcessor {
                 comingCountMap.merge(node, 1, Integer::sum);
                 if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
                     AssertUtil.isTrue(comingCountMap.get(node) < node.comingList().size() && basicInStack.peek().isPresent(),
-                            ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Wrong branch in the path of an element! bpmnId: %s, fileName: %s",
+                            ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Wrong branch in the path of an element! bpmnId: {}, fileName: {}",
                             node.getId(), startEvent.getConfig().map(Config::getConfigName).orElse(null));
                     continue;
                 }
@@ -68,7 +68,7 @@ public class VerifyFlowPostProcessor implements StartEventPostProcessor {
             basicInStack.pushList(node.outingList());
         }
         AssertUtil.oneSize(endEventSet, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
-                "EndEvent must appear and can only appear once! fileName: %s", startEvent.getConfig().map(Config::getConfigName).orElse(null));
+                "EndEvent must appear and can only appear once! fileName: {}", startEvent.getConfig().map(Config::getConfigName).orElse(null));
         return Optional.of(startEvent);
     }
 }

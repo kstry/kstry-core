@@ -203,7 +203,7 @@ public class FlowRegister {
                 .outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextScopeData)).collect(Collectors.toList());
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {
             AssertUtil.notEmpty(flowList, ExceptionEnum.STORY_FLOW_ERROR,
-                    "Match to the next process node as empty! taskId: %s", currentFlowElement.getId());
+                    "Match to the next process node as empty! taskId: {}", currentFlowElement.getId());
         }
 
         // 开启异步流程
@@ -246,7 +246,7 @@ public class FlowRegister {
                         endElement.comingList().stream().filter(e -> e.getFlowTrack().contains(notNeedPeekSequenceFlow.getIndex())).collect(Collectors.toList());
                 if (endElement instanceof ParallelGateway && ((ParallelGateway) endElement).isStrictMode() && CollectionUtils.isNotEmpty(comingList)) {
                     KstryException.throwException(ExceptionEnum.STORY_FLOW_ERROR,
-                            String.format("A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: %s",
+                            GlobalUtil.format("A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: {}",
                                     notNeedPeekSequenceFlow.getId()));
                 }
                 comingList.forEach(coming -> {

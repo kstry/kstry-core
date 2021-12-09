@@ -56,5 +56,5 @@ public interface GlobalConstant {
     /**
      * KValue Bean 注册到 Spring 容器的名字
      */
-    String KV_SCOPE_DEFAULT_BEAN_NAME = "kstry-kv-scope-%s";
+    String KV_SCOPE_DEFAULT_BEAN_NAME = "kstry-kv-scope-{}";
 }

@@ -18,6 +18,8 @@
 package cn.kstry.framework.core.exception;
 
 import cn.kstry.framework.core.enums.ExceptionTypeEnum;
+import cn.kstry.framework.core.util.GlobalUtil;
+
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
@@ -38,7 +40,7 @@ public class KstryException extends RuntimeException {
     }
 
     public KstryException(String code, String desc, Throwable cause) {
-        super(String.format("[%s] %s", StringUtils.isBlank(code)
+        super(GlobalUtil.format("[{}] {}", StringUtils.isBlank(code)
                 ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? "System Error!" : desc), cause);
         this.errorCode = code;
     }
