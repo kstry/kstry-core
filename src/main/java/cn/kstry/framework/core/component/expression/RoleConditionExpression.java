@@ -17,21 +17,32 @@
  */
 package cn.kstry.framework.core.component.expression;
 
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.Permission;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.PermissionUtil;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -41,33 +52,70 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RoleConditionExpression.class);
 
-    private static final Cache<String, Optional<Permission>> rolePermissionCache = CacheBuilder.newBuilder()
+    private static final Cache<String, RoleCondition> rolePermissionCache = CacheBuilder.newBuilder()
             .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterAccess(10, TimeUnit.MINUTES)
             .removalListener(notification -> LOGGER.info("role permission cache lose efficacy. key:{}, value:{}, cause:{}", notification.getKey(), notification.getValue(), notification.getCause()))
             .build();
 
+    private static final ExpressionParser PARSER = new SpelExpressionParser();
+
     @SuppressWarnings("all")
     public RoleConditionExpression() {
         super((scopeData, exp) -> {
-            Optional<Permission> permissionOptional = rolePermissionCache.getIfPresent(exp);
-            AssertUtil.notNull(permissionOptional);
-            Optional<Role> roleOptional = scopeData.getRole();
-            if (!roleOptional.isPresent() || !permissionOptional.isPresent()) {
-                return false;
-            }
-            return roleOptional.get().allowPermission(permissionOptional.get());
+            RoleCondition roleCondition = rolePermissionCache.getIfPresent(exp);
+            AssertUtil.isTrue(roleCondition != null && roleCondition.matched && CollectionUtils.isNotEmpty(roleCondition.permissionList),
+                    ExceptionEnum.STORY_ERROR);
+
+            Boolean[] matchResult = roleCondition.permissionList.stream().map(p -> {
+                Optional<Role> roleOptional = scopeData.getRole();
+                return roleOptional.map(role -> role.allowPermission(p)).orElse(false);
+            }).toArray(Boolean[]::new);
+            return PARSER.parseExpression(MessageFormat.format(roleCondition.expression, matchResult)).getValue(Boolean.class);
         });
     }
 
     @Override
     public boolean match(String expression) {
-        Optional<Permission> permissionOptional = PermissionUtil.parsePermission(expression);
-        rolePermissionCache.put(expression, permissionOptional);
         try {
-            return rolePermissionCache.get(expression, () -> PermissionUtil.parsePermission(expression)).isPresent();
-        } catch (ExecutionException e) {
+            return rolePermissionCache.get(expression, () -> {
+                RoleCondition roleCondition = new RoleCondition();
+                String exp = expression;
+                List<Permission> pList = Lists.newArrayList();
+                List<String> psList = Stream.of(expression.split("[&|!()]")).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                for (int i = 0; i < psList.size(); i++) {
+                    String ps = psList.get(i);
+                    Optional<Permission> permissionOptional = PermissionUtil.parsePermission(ps);
+                    if (!permissionOptional.isPresent()) {
+                        return roleCondition;
+                    }
+                    pList.add(permissionOptional.get());
+                    exp = exp.replace(ps, GlobalUtil.format("{{}}", i));
+                }
+
+                try {
+                    Object[] params = IntStream.range(0, psList.size()).mapToObj(i -> true).toArray(Boolean[]::new);
+                    AssertUtil.notNull(PARSER.parseExpression(MessageFormat.format(exp, params)).getValue(Boolean.class));
+                } catch (Exception e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    return roleCondition;
+                }
+                roleCondition.expression = exp;
+                roleCondition.matched = true;
+                roleCondition.permissionList = pList;
+                return roleCondition;
+            }).matched;
+        } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw KstryException.buildException(ExceptionEnum.STORY_ERROR);
         }
+    }
+
+    private static class RoleCondition {
+
+        private List<Permission> permissionList;
+
+        private String expression;
+
+        private boolean matched = false;
     }
 }
