@@ -46,12 +46,22 @@ public class KvThreadLocal {
 
         private final String scope;
 
+        private String businessId;
+
         public KvScope(String scope) {
             this.scope = Optional.ofNullable(scope).filter(StringUtils::isNotBlank).orElse(GlobalConstant.VARIABLE_SCOPE_DEFAULT);
         }
 
         public String getScope() {
             return scope;
+        }
+
+        public Optional<String> getBusinessId() {
+            return Optional.ofNullable(businessId).filter(StringUtils::isNotBlank);
+        }
+
+        public void setBusinessId(String businessId) {
+            this.businessId = businessId;
         }
     }
 }

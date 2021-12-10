@@ -54,8 +54,8 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
 
     private static final Cache<String, RoleCondition> rolePermissionCache = CacheBuilder.newBuilder()
             .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterAccess(10, TimeUnit.MINUTES)
-            .removalListener(notification -> LOGGER.info("role permission cache lose efficacy. key:{}, value:{}, cause:{}", notification.getKey(), notification.getValue(), notification.getCause()))
-            .build();
+            .removalListener(notification -> LOGGER.info("role permission cache lose efficacy. key:{}, value:{}, cause:{}",
+                    notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     private static final ExpressionParser PARSER = new SpelExpressionParser();
 

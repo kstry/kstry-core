@@ -78,7 +78,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     /**
      * 设置 allowAbsent
      *
-     * @param allowAbsent
+     * @param allowAbsent allowAbsent
      */
     public void setAllowAbsent(String allowAbsent) {
         if (StringUtils.isBlank(allowAbsent)) {

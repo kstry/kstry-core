@@ -3,6 +3,7 @@ package cn.kstry.framework.test.common.service;
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.kv.KvAbility;
+import cn.kstry.framework.core.kv.KvThreadLocal;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +31,6 @@ public class KvService {
         System.out.println("kv user: " + kvAbility.getObject("user", Map.class).map(t -> JSON.toJSONString(t, SerializerFeature.WriteMapNullValue)).orElse(null));
         System.out.println("kv user.name: " + kvAbility.getString("user.name").orElse(null));
         System.out.println("kv ids: " + kvAbility.getObject("ids", List.class).map(JSON::toJSONString).orElse(null));
+        System.out.println("business Id: " + KvThreadLocal.getKvScope().flatMap(KvThreadLocal.KvScope::getBusinessId).orElse(null));
     }
 }

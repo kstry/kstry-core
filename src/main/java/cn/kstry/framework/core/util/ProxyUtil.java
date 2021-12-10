@@ -56,7 +56,9 @@ public class ProxyUtil {
     public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target, Object... args) {
         String kvScope = Optional.ofNullable(methodWrapper.getKvScope()).filter(StringUtils::isNotBlank).orElse(storyBus.getBusinessId());
         try {
-            KvThreadLocal.setKvScope(new KvThreadLocal.KvScope(kvScope));
+            KvThreadLocal.KvScope newKvScope = new KvThreadLocal.KvScope(kvScope);
+            newKvScope.setBusinessId(storyBus.getBusinessId());
+            KvThreadLocal.setKvScope(newKvScope);
             return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, args);
         } finally {
             KvThreadLocal.clear();
