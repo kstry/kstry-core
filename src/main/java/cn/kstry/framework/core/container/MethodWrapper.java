@@ -150,7 +150,7 @@ public class MethodWrapper {
                 injectDefs[i] = injectDef;
             }
         }
-        this.paramInjectDefs = ImmutableList.copyOf(injectDefs);
+        this.paramInjectDefs = Collections.unmodifiableList(Arrays.asList(injectDefs));
     }
 
     private List<ParamInjectDef> getFieldInjectDefs(Class<?> clazz) {
@@ -186,9 +186,8 @@ public class MethodWrapper {
             if (returnResult) {
                 returnTypeNoticeDef.storyResultDef = noticeFieldItem;
             }
-        } else {
-            parseBeanSelf(returnType);
         }
+        parseBeanSelf(returnType);
         parseFields(returnType);
     }
 

@@ -31,10 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -56,7 +58,7 @@ public class BusinessRoleRepository {
             businessRoleList = Lists.newArrayList();
         }
         checkDuplicated(businessRoleList);
-        this.businessRoleList = ImmutableList.copyOf(businessRoleList);
+        this.businessRoleList = ImmutableList.copyOf(businessRoleList.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
     public Optional<Role> getRole(String businessId, String startId) {

@@ -52,6 +52,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -228,7 +229,7 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
         List<ConfigResource> propConfigs = resources.stream()
                 .filter(resource -> resource.getConfigType() == ConfigTypeEnum.PROPERTIES).collect(Collectors.toList());
         ConfigurableEnvironment environment = applicationContext.getEnvironment();
-        List<String> activeProfiles = Lists.newArrayList(environment.getActiveProfiles());
+        List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
         KValueUtil.initKValue(propConfigs, activeProfiles, applicationContext.getBeanFactory());
     }
 }
