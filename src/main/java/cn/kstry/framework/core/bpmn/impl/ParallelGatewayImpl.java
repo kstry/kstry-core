@@ -33,7 +33,8 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
     private final AsyncFlowElement asyncFlowElement;
 
     /**
-     * 允许无效的入度
+     * 控制严格模式，默认情况下是严格模式
+     * 非严格模式下，并行网关允许无效的入度
      */
     private Boolean strictMode;
 

@@ -140,11 +140,11 @@ public class StoryEngine {
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
                 flowRegister.getMonitorTracking().trackingLog();
                 Class<?> returnType = storyRequest.getReturnType();
-                if (returnType == null || !storyBus.getReturnResult().isPresent()) {
+                if (returnType == null || storyBus.getResult() == null) {
                     Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
                     return CompletableFuture.completedFuture(null);
                 }
-                Object result = storyBus.getReturnResult().get();
+                Object result = storyBus.getResult();
                 AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
                         "Type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
                 Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
@@ -187,8 +187,8 @@ public class StoryEngine {
             }
 
             Class<?> returnType = storyRequest.getReturnType();
-            if (returnType != null && storyBus.getReturnResult().isPresent()) {
-                Object result = storyBus.getReturnResult().get();
+            if (returnType != null && storyBus.getResult() != null) {
+                Object result = storyBus.getResult();
                 AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
                 return TaskResponseBox.buildSuccess((T) result);
             }

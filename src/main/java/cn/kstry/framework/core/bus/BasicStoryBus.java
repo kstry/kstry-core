@@ -107,8 +107,8 @@ public class BasicStoryBus implements StoryBus {
     }
 
     @Override
-    public Optional<Object> getReturnResult() {
-        return Optional.ofNullable(returnResult);
+    public Object getResult() {
+        return returnResult;
     }
 
     @Override

@@ -43,7 +43,7 @@ public class FlowCase03Test {
         StoryRequest<Goods> fireRequest = ReqBuilder.returnType(Goods.class).startId("story-def-test_001").request(request)
                 .storyBusHook(storyBus -> {
                     AssertUtil.notNull(storyBus);
-                    AssertUtil.notNull(storyBus.getReturnResult());
+                    AssertUtil.notNull(storyBus.getResult());
                 })
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).build();
         TaskResponse<Goods> fire = storyEngine.fire(fireRequest);
@@ -65,7 +65,7 @@ public class FlowCase03Test {
                     goods.setName("错误");
                     return goods;
                 }).storyBusHook(storyBus -> {
-                    System.out.println(JSON.toJSONString(storyBus.getReturnResult()));
+                    System.out.println(JSON.toJSONString(storyBus.getResult()));
                     System.out.println(storyBus.getValue(ScopeTypeEnum.REQUEST, "activityId").orElse(null));
                     System.out.println(storyBus.getValue(ScopeTypeEnum.STABLE, "name").orElse(null));
                     System.out.println(JSON.toJSONString(storyBus.getMonitorTracking()));

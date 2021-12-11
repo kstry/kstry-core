@@ -159,11 +159,46 @@ public class GoodsController {
 
 # 二、流程编排
 
+## 2.1 并行网关
 
+> 加载商品基础信息之后，假设需要再加载SKU信息、店铺信息，两个加载过程可以并行进行。加载完所有信息之后再对商详信息进行后置处理，流程如图：
 
+![image-20211211184127107](.\img\image-20211211184127107.png) 
 
+### 2.1.1 编写组件代码
 
+```java
+// 初始化 sku信息，GoodsService.java
+@TaskService(name = GoodsCompKey.initSku)
+public InitSkuResponse initSku(@ReqTaskParam("id") Long goodsId) {
+    SkuInfo sku1 = new SkuInfo();
+    sku1.set...
 
+    SkuInfo sku2 = new SkuInfo();
+    sku2.set...
+    return InitSkuResponse.builder().skuInfos(Lists.newArrayList(sku1, sku2)).build();
+}
+
+// 商详信息后置处理，GoodsService.java
+@TaskService(name = GoodsCompKey.detailPostProcess)
+public void detailPostProcess(DetailPostProcessRequest request) {
+
+    GoodsDetail goodsDetail = request.getGoodsDetail();
+    ShopInfo shopInfo = request.getShopInfo();
+    if (shopInfo != null) {
+        goodsDetail.setShopInfo(shopInfo);
+    }
+}
+
+// 加载店铺信息，ShopService.java
+@TaskService(name = ShopCompKey.getShopInfoByGoodsId)
+public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
+    TimeUnit.MILLISECONDS.sleep(200L);
+    return goodsIdShopInfoMapping.get(goodsId);
+}
+```
+
+1. `getShopInfoByGoodsId` 中线程 sleep 了 200ms 模拟耗时较长的任务，**并行网关中，只有全部任务都执行完成之后才会继续向下执行**
 
 
 

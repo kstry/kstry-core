@@ -43,7 +43,7 @@ public interface StoryBus {
      *
      * @return ReturnResult
      */
-    Optional<Object> getReturnResult();
+    Object getResult();
 
     /**
      * 获取 Value

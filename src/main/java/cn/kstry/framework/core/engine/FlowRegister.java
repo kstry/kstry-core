@@ -17,10 +17,7 @@
  */
 package cn.kstry.framework.core.engine;
 
-import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.ParallelGateway;
-import cn.kstry.framework.core.bpmn.SequenceFlow;
-import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.bus.ContextStoryBus;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.component.hook.FlowElementHook;
@@ -93,6 +90,11 @@ public class FlowRegister {
      */
     private MonitorTracking monitorTracking;
 
+    /**
+     * 任务节点在执行中
+     */
+    private boolean taskServiceDoing = false;
+
     private FlowRegister() {
     }
 
@@ -140,6 +142,9 @@ public class FlowRegister {
 
     public Optional<FlowElement> nextElement(StoryBus storyBus) {
         Optional<FlowElement> flowElementOptional = doNextElement(storyBus);
+        if (flowElementOptional.orElse(null) instanceof ServiceTask && !taskServiceDoing) {
+            return nextElement(storyBus);
+        }
         return monitorTracking.trackingNextElement(flowElementOptional.orElse(null));
     }
 
@@ -174,6 +179,13 @@ public class FlowRegister {
         }
 
         AssertUtil.notNull(storyBus);
+        Optional<FlowElement> peekElementOptional = flowElementStack.peek();
+        if (peekElementOptional.orElse(null) instanceof ServiceTask && !taskServiceDoing) {
+            taskServiceDoing = true;
+            return peekElementOptional;
+        }
+        taskServiceDoing = false;
+
         Optional<FlowElement> elementOptional = flowElementStack.pop();
         if (!elementOptional.isPresent()) {
             return Optional.empty();

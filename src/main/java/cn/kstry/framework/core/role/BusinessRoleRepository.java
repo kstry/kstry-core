@@ -48,8 +48,8 @@ public class BusinessRoleRepository {
 
     private static final Cache<String, Optional<BusinessRole>> businessRoleMapping = CacheBuilder.newBuilder()
             .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterAccess(10, TimeUnit.MINUTES)
-            .removalListener(notification -> LOGGER.info("business role cache lose efficacy. key:{}, value:{}, cause:{}", notification.getKey(), notification.getValue(), notification.getCause()))
-            .build();
+            .removalListener(notification -> LOGGER.info("business role cache lose efficacy. key:{}, value:{}, cause:{}",
+                    notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     private final List<BusinessRole> businessRoleList;
 
