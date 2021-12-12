@@ -391,6 +391,56 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 - 子流程是支持嵌套的，A子流程可以依赖B子流程，但是自身依赖自身是非法的。并且子流程中支持开启并发模式
 - 定义`bpmn:callActivity`将定义的子流程引入，程序运行到此时会跳转至子流程执行，子流程执行完成后会跳转回来继续执行
 
+## 2.6 节点控制
+
+### 2.6.1 允许服务为空
+
+> 如果商品渲染时会加载一些广告，我们就要升级Story流程图增加获取广告信息的部分。但是假设我们的Story流程图会被多个系统解析执行，有的系统有加载广告的模块，但有的系统不具备这个能力，如何去解决？
+
+加上广告模块后，Story流程图如下：
+
+![image-20211213005410678](./img/image-20211213005410678.png) 
+
+- 这时候会收到错误信息：`[K1040004] No available TaskService matched! service task id: Activity_0ctfijm, name: 加载广告`
+- 可通过给节点增加：`allow-absent=true`，来解决这个问题，该参数代表允许配置节点找不到对应的服务节点，找不到时不会报错，会跳过继续执行
+
+![image-20211213010642607](./img/image-20211213010642607.png) 
+
+### 2.6.2 异常降级
+
+> 在加载商品时，有着一个步骤是加载运费险信息。假设所依赖的物流系统极不稳定，获取运费险信息时经常出错。但是运费险信息又并非商品渲染流程的核心逻辑。所以在获取运费险失败时不应该中断整个流程，需要对问题节点降级处理，整体流程要继续执行下去
+
+模拟异常
+
+``` java
+@TaskService(name = LogisticCompKey.getLogisticInsurance, noticeScope = ScopeTypeEnum.STABLE)
+public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
+    int i = 1/0;
+    log.info("request source：{}", request.getSource());
+    LogisticInsurance logisticInsurance = new LogisticInsurance();
+    logisticInsurance.setDesc("运费险描述");
+    logisticInsurance.setType(1);
+    return logisticInsurance;
+}
+```
+
+得到错误信息
+
+``` log
+...
+Caused by: java.lang.ArithmeticException: / by zero
+	at cn.kstry.demo.service.LogisticService.getLogisticInsurance(LogisticService.java:40)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	... 5 common frames omitted
+```
+
+- 可通过给节点增加：`strict-mode=false`，来关闭严格模式（并行网关也有一个严格模式，要分清两者作用的不同），跳过异常，让流程得以继续向下执行
+
+![image-20211213011752679](./img/image-20211213011752679.png) 
+
+
+
 # 三、数据流转
 
 > 前面演示了节点、网关、事件如何通过合适的编排来应对业务不断变化带来的挑战。编排好的Story中节点与节点之间并非是完全独立的，风控检查的是商品基础信息的图片，通过入参的来源来判断是否赠送运费险，商品信息的后置处理将前面加载的一系列信息进行统一装配，等等节点间的关联无处不在。承载节点间通信工作的最重要角色就是 **StoryBus** 组件
@@ -530,7 +580,98 @@ public class InitSkuResponse {
 
 - `@NoticeResult`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 bus 中的 result 域中
 
+## 3.3 参数校验
 
+- 服务节点参数如果是自定义对象时，对象中的字段支持JSR303格式校验
+- 直接使用注解标注字段就会生效，如下`@NotBlank`：
+
+``` java
+@TaskComponent(name = LogisticCompKey.logistic)
+public class LogisticService {
+
+    @TaskService(name = LogisticCompKey.getLogisticInsurance, noticeScope = ScopeTypeEnum.STABLE)
+    public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
+        log.info("request source：{}", request.getSource());
+        LogisticInsurance logisticInsurance = new LogisticInsurance();
+        logisticInsurance.setDesc("运费险描述");
+        logisticInsurance.setType(1);
+        return logisticInsurance;
+    }
+}
+
+@Data
+public class GetLogisticInsuranceRequest {
+
+    @NotBlank
+    @ReqTaskField("source")
+    private String source;
+}
+```
+
+
+
+## 3.4 参数生命周期
+
+> 某些场景店铺的标签并非都是店铺服务自己维护的，有一部分需要实际使用到的业务自己决定。但是打店铺标签又是店铺服务列表里的能力点。根据关注点分离原则，商品服务中，如非必要不应该再掺杂的店铺系统的业务。如何才能使用店铺提供的能力点再不违背关注点分离原则的前提下完成业务诉求呢？
+
+在“商详后置处理”的参数中引入 ShopService
+
+``` java
+@TaskService(name = GoodsCompKey.detailPostProcess)
+public void detailPostProcess(DetailPostProcessRequest request) {
+    ...
+}
+
+@Data
+@SpringInitialization
+public class DetailPostProcessRequest {
+
+    @Resource
+    private ShopService shopService;
+
+    @StaTaskField(ShopCompKey.GetShopInfoResponse.shopInfo)
+    private ShopInfo shopInfo;
+}
+```
+
+- 定义 ShopService 变量，正常情况下，该变量是不会被赋值的
+- 参数类上标注`@SpringInitialization`注解，告诉Kstry，这个节点参数需要托管给Spring容器，这样ShopService变量就会被 Spring 容器注入值
+
+增加参数生命周期后置处理器，调用店铺服务能力，完成打标操作
+
+``` java
+@Data
+@SpringInitialization
+public class DetailPostProcessRequest implements ParamLifecycle {
+
+    @Resource
+    private ShopService shopService;
+
+    @StaTaskField(ShopCompKey.GetShopInfoResponse.shopInfo)
+    private ShopInfo shopInfo;
+    
+	...
+        
+    @Override
+    public void before() {
+        ParamLifecycle.super.before();
+    }
+
+    @Override
+    public void after() {
+        if (shopInfo != null) {
+            shopService.makeLabel(shopInfo.getLabels());
+        }
+    }
+}
+```
+
+- 参数实现 `ParamLifecycle` 接口，接口有两个方法可以被重写
+  - `before()`：参数对象创建后就会被调用，发生在字段赋值之前
+  -  `after()`：发生在字段赋值之后，用于对赋值后的参数进行再一步的处理
+- 在 `after()`方法中调用 ShopService 的打标能力进行打标操作
+
+> **注意**：节点方法参数被 @XXXTaskParam 注解修饰时，参数Bean字段装配、字段校验、Spring容器初始化、生命周期方法都会失效。原因是被 @XXXTaskParam 修饰的参数无需进行初始化和任何操作，会被 StoryBus 中获取到的值直接赋值
 
 # 四、异步支持
 

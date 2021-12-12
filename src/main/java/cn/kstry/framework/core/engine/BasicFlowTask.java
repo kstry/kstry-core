@@ -92,7 +92,9 @@ public abstract class BasicFlowTask {
                 continue;
             }
 
-            TaskServiceDef taskServiceDef = taskServiceDefOptional.orElseThrow(() -> KstryException.buildException(ExceptionEnum.TASK_SERVICE_MATCH_ERROR));
+            TaskServiceDef taskServiceDef = taskServiceDefOptional.orElseThrow(() ->
+                    KstryException.buildException(ExceptionEnum.TASK_SERVICE_MATCH_ERROR, ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc()
+                            + GlobalUtil.format(" service task id: {}, name: {}", serviceTask.getId(), serviceTask.getName())));
             flowRegister.getMonitorTracking().getServiceNodeTracking(flowElement).ifPresent(nodeTracking -> {
                 MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
                 nodeTracking.setMethodName(methodWrapper.getMethod().getName());
@@ -190,7 +192,9 @@ public abstract class BasicFlowTask {
         if (!taskServiceDefOptional.isPresent() && serviceTask.allowAbsent()) {
             return;
         }
-        taskServiceDef = taskServiceDefOptional.orElseThrow(() -> KstryException.buildException(ExceptionEnum.TASK_SERVICE_MATCH_ERROR));
+        taskServiceDef = taskServiceDefOptional.orElseThrow(() ->
+                KstryException.buildException(ExceptionEnum.TASK_SERVICE_MATCH_ERROR, ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc()
+                        + GlobalUtil.format(" service task id: {}, name: {}", serviceTask.getId(), serviceTask.getName())));
         doInvokeMethod(serviceTask, taskServiceDef, scopeData, role);
     }
 
