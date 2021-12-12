@@ -387,11 +387,102 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 ```
 
 - 定义`bpmn:process` 将需要分离的子流程包含在内
-
 - 子流程有独立于父流程之外独立的开始事件、结束时间
-
 - 子流程是支持嵌套的，A子流程可以依赖B子流程，但是自身依赖自身是非法的。并且子流程中支持开启并发模式
-
 - 定义`bpmn:callActivity`将定义的子流程引入，程序运行到此时会跳转至子流程执行，子流程执行完成后会跳转回来继续执行
 
-  
+# 三、数据流转
+
+> 前面演示了节点、网关、事件如何通过合适的编排来应对业务不断变化带来的挑战。编排好的Story中节点与节点之间并非是完全独立的，风控检查的是商品基础信息的图片，通过入参的来源来判断是否赠送运费险，商品信息的后置处理将前面加载的一系列信息进行统一装配，等等节点间的关联无处不在。承载节点间通信工作的最重要角色就是 **StoryBus** 组件
+
+## 3.1 StoryBus介绍
+
+![a.drawio (1)](./img/story-bus.png)  
+
+- 每一个任务节点如果有需要，都可以从 StoryBus 中获取需要的参数，执行完之后，将需要的结果通知到 StoryBus
+- StoryBus 中有四个数据域，分别是：
+  - **req**：保存请求传入的request对象，request对象本身不会发生变化。但对象里面的值允许通过后期的变量通知发生更新
+  - **sta**：保存节点执行完成后产生的变量，一经设置，将不再发生变化，如果出现重复设置会有警告日志（如果只有对象引用是sta域的，对象里面的字段也是可以发生更新的，这点与req相同）
+  - **var**：保存节点执行完成后产生的变量，可以被重复替换，对象里面字段性质同上
+  - **result**：保存最终结果，作为 Story 执行完成后最终的结果返回给调用者
+- 条件表达式可以直接引用这四个域做条件判断，如流程编排中出现的：`result.img != null`、`req.source!='app'`
+- 四个作用域被读写锁保护着，get获取读锁，notice获取写锁，防止出现并发问题
+- 开启异步模式后，同时创建的子任务都可以读写StoryBus中的变量，所以**数据方面有前后依赖关系的节点，不能被创建到同一时间段执行的不同子任务中**，可以通过聚合节点来保证节点执行的先后顺序
+
+## 3.2 变量注解
+
+###  3.2.1 获取变量
+
+标注在 TaskService 方法入参上，从StoryBus中获取到变量后，直接赋值给参数字段，例如：
+
+``` java
+@TaskService(name = "get-evaluation-info", noticeScope = ScopeTypeEnum.STABLE)
+public EvaluationInfo getEvaluationInfo(@ReqTaskParam("id") Long goodsId) {
+    EvaluationInfo evaluationInfo = new EvaluationInfo();
+    evaluationInfo.setEvaluateCount(20);
+    log.info("goods id: {}, get EvaluationInfo: {}", goodsId, JSON.toJSONString(evaluationInfo));
+    return evaluationInfo;
+}
+```
+
+- `@TaskParam`：从 StoryBus 的 req、sta、var 域获取变量值，直接赋值给被标注参数
+  - `value`：参数字段名字
+  - `scopeEnum`：指定是从哪个域获取字段，可取参数：`ScopeTypeEnum.STABLE`、`ScopeTypeEnum.VARIABLE`、`ScopeTypeEnum.REQUEST`
+- `@ReqTaskParam`：从 StoryBus 的 req 域获取变量值，直接赋值给被标注参数
+  - `value`：参数字段名字
+  - `reqSelf`：是否将客户端传入的 request 对象整体赋值给该参数，默认为：false
+- `@StaTaskParam`：从 StoryBus 的 sta 域获取变量值，直接赋值给被标注参数
+  - `value`：参数字段名字
+- `@VarTaskParam`：从 StoryBus 的 var 域获取变量值，直接赋值给被标注参数
+  - `value`：参数字段名字
+
+
+
+标注在 TaskService 方法入参对象中的字段上，从StoryBus中获取到变量后，直接赋值给被标注字段，例如：
+
+``` java
+@TaskComponent(name = LogisticCompKey.logistic)
+public class LogisticService {
+
+    @TaskService(name = LogisticCompKey.getLogisticInsurance, noticeScope = ScopeTypeEnum.STABLE)
+    public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
+        log.info("request source：{}", request.getSource());
+        LogisticInsurance logisticInsurance = new LogisticInsurance();
+        logisticInsurance.setDesc("运费险描述");
+        logisticInsurance.setType(1);
+        return logisticInsurance;
+    }
+}
+
+@Data
+public class GetLogisticInsuranceRequest {
+
+    @ReqTaskField("source")
+    private String source;
+}
+```
+
+- `@TaskField`：从 StoryBus 的 req、sta、var 域获取变量值，赋值给被标注字段
+  - `value`：字段名字
+  - `scopeEnum`：指定是从哪个域获取字段，可取参数：`ScopeTypeEnum.STABLE`、`ScopeTypeEnum.VARIABLE`、`ScopeTypeEnum.REQUEST`
+- `@ReqTaskField`：从 StoryBus 的 req 域获取变量值，赋值给被标注字段
+  - `value`：字段名字
+- `@StaTaskField`：从 StoryBus 的 sta 域获取变量值，赋值给被标注字段
+  - `value`：字段名字
+- `@VarTaskField`：从 StoryBus 的 var 域获取变量值，赋值给被标注字段
+  - `value`：字段名字
+
+
+
+### 3.2.2 通知变量
+
+
+
+# 四、异步支持
+
+# 五、RBAC模式
+
+# 六、变量
+
+# 七、链路追踪
+

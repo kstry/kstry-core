@@ -46,6 +46,18 @@ public interface ServiceTask extends Task {
     boolean allowAbsent();
 
     /**
+     * 是否为严格模式
+     * @return 默认 true
+     */
+    boolean strictMode();
+
+    /**
+     * 设置严格模式
+     * @param strictMode strictMode
+     */
+    void setStrictMode(String strictMode);
+
+    /**
      * @return 指定自定义角色模块
      */
     CustomRoleInfo getCustomRoleInfo();

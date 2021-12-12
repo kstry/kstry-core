@@ -135,6 +135,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
             ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
             ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
             ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
+            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.ELEMENT_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
             ElementPropertyUtil.getNodeProperty(flowNode,
                     BpmnConstant.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
             AssertUtil.notBlank(serviceTaskImpl.getTaskService(),

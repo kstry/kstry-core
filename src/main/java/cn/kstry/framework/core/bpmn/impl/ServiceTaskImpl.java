@@ -51,6 +51,12 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      */
     private Boolean allowAbsent;
 
+    /**
+     * 严格模式，控制任务节点执行失败后是否要抛出异常，默认是严格模式，节点抛出异常后结束整个 Story 流程
+     * 关闭严格模式后，节点抛出异常时忽略该节点继续向下执行
+     */
+    private Boolean strictMode;
+
     @Override
     public String getTaskComponent() {
         return taskComponent;
@@ -85,6 +91,19 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
             return;
         }
         this.allowAbsent = BooleanUtils.toBooleanObject(allowAbsent.trim());
+    }
+
+    @Override
+    public boolean strictMode() {
+        return BooleanUtils.isNotFalse(strictMode);
+    }
+
+    @Override
+    public void setStrictMode(String strictMode) {
+        if (StringUtils.isBlank(strictMode)) {
+            return;
+        }
+        this.strictMode = BooleanUtils.toBooleanObject(strictMode.trim());
     }
 
     @Override

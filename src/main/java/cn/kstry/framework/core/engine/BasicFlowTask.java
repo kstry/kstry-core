@@ -33,11 +33,7 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.task.facade.TaskServiceDef;
 import cn.kstry.framework.core.task.impl.TaskComponentRegisterProxy;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementPropertyUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.ProxyUtil;
-import cn.kstry.framework.core.util.TaskServiceUtil;
+import cn.kstry.framework.core.util.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Subscription;
@@ -106,9 +102,13 @@ public abstract class BasicFlowTask {
 
             Object result;
             try {
-                result = doInvokeMethod(flowElement, taskServiceDef, storyBus, role);
+                result = doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);
             } catch (Exception exception) {
                 flowRegister.getMonitorTracking().finishTaskTracking(flowElement, exception);
+                if (!serviceTask.strictMode()) {
+                    LOGGER.warn(exception.getMessage(), exception);
+                    continue;
+                }
                 throw exception;
             }
             if (result instanceof Mono) {
@@ -190,7 +190,7 @@ public abstract class BasicFlowTask {
         if (!taskServiceDefOptional.isPresent() && serviceTask.allowAbsent()) {
             return;
         }
-        taskServiceDef = taskServiceDefOptional.orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+        taskServiceDef = taskServiceDefOptional.orElseThrow(() -> KstryException.buildException(ExceptionEnum.TASK_SERVICE_MATCH_ERROR));
         doInvokeMethod(serviceTask, taskServiceDef, scopeData, role);
     }
 
@@ -214,7 +214,7 @@ public abstract class BasicFlowTask {
         asyncFlowHook.trigger();
     }
 
-    private Object doInvokeMethod(FlowElement flowElement, TaskServiceDef taskServiceDef, BasicStoryBus storyBus, Role role) {
+    private Object doInvokeMethod(ServiceTask serviceTask, TaskServiceDef taskServiceDef, BasicStoryBus storyBus, Role role) {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         TaskComponentRegisterProxy targetProxy = taskServiceDef.getTaskComponentTarget();
         AssertUtil.notNull(methodWrapper.getMethod());
@@ -225,7 +225,7 @@ public abstract class BasicFlowTask {
             return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget());
         }
 
-        Object[] params = TaskServiceUtil.getTaskParams(flowElement, storyBus, role, targetProxy, paramInjectDefs, getParamInitStrategy());
+        Object[] params = TaskServiceUtil.getTaskParams(serviceTask, storyBus, role, targetProxy, paramInjectDefs, getParamInitStrategy());
         return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget(), params);
     }
 
