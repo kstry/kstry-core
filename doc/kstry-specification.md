@@ -102,7 +102,7 @@ public class GoodsService {
 </bpmn:definitions>
 ```
 
-![image-20211211151733111](.\img\image-20211211151733111.png)   
+![image-20211211151733111](./img/image-20211211151733111.png)   
 
 - `bpmn:startEvent` 中的 id属性，指定 Story的执行ID，**全局唯一**
   - id 需要符合一定格式的前缀, 默认是：`story-def-`，可通过配置文件进行修改，如下
@@ -161,7 +161,7 @@ public class GoodsController {
 
 ## 1.3 测试
 
-![image-20211211145528118](.\img\image-20211211145528118.png) 
+![image-20211211145528118](./img/image-20211211145528118.png) 
 
 # 二、流程编排
 
@@ -169,7 +169,7 @@ public class GoodsController {
 
 > 在上传商品图片时，一般会经过风控系统，对所传图片进行筛查，防止有违规图片暴露给用户。暂且忽略性能问题，可以将风控做在商品获取链路中
 
-<img src=".\img\image-20211211230004495.png" alt="image-20211211230004495" style="zoom:80%;" />   
+<img src="./img/image-20211211230004495.png" alt="image-20211211230004495" style="zoom:80%;" />   
 
 新增图片筛查节点：
 
@@ -205,7 +205,7 @@ public class RiskControlService {
 
 > 加载商品基础信息之后，假设需要再加载SKU信息、店铺信息，两个加载过程可以并行进行。加载完所有信息之后再对商详信息进行后置处理，流程如图：
 
-![image-20211211184127107](.\img\image-20211211184127107.png) 
+![image-20211211184127107](./img/image-20211211184127107.png) 
 
 新增SKU初始化任务、商详后置处理任务、店铺加载任务：
 
@@ -247,7 +247,7 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
 将风控组件加到流程之后，得到流程图如下：
 
-![image-20211212002539988](.\img\image-20211212002539988.png) 
+![image-20211212002539988](./img/image-20211212002539988.png) 
 
 - 这时再次执行这个Story会报错，报错信息： `[K1040008] A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: Flow_0attv25`
 
@@ -257,13 +257,13 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
   - 如图关闭并行网关的严格模式：`strict-mode=false`，关闭严格模式的并行网关，不在限制入度必须被执行。关闭严格模式的并行网关与包含网关并非完全等价的。因为并行网关后面支路的判断条件是被忽略的，但是包含网关后面支路的判断条件是会被解析执行起到决策作用的
 
-![image-20211212004020932](.\img\image-20211212004020932.png)  
+![image-20211212004020932](./img/image-20211212004020932.png)  
 
 ## 2.3 排他网关
 
 > 假设为了推广公司app，产品承诺会对app下单用户免费赠送运费险，其他平台没有此优惠
 
-![image-20211212151933456](.\img\image-20211212151933456.png) 
+![image-20211212151933456](./img/image-20211212151933456.png) 
 
 新增运费险任务：
 
@@ -293,7 +293,7 @@ public class LogisticService {
 
 > 假设商品描述中有一些统计信息，比如收藏数、评价数、下单数等，不同的数据统计维护在不同的系统模块中，在商品加载时这些参数需要被加载。但是也并非全部商品都需要加载全部的统计数，比如未开启评价的商品就不需要获取评价数
 
-![image-20211212163533505](.\img\image-20211212163533505.png) 
+![image-20211212163533505](./img/image-20211212163533505.png) 
 
 加载商品基础信息时，加上可以评价的属性：
 
@@ -362,7 +362,7 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 
 > 上面可以看到，数据统计不仅仅在商详展示时会用到，商品列表可能会用到，订单展示也可能会用到，所以统计逻辑是一个可以复用的模块，可以将其抽离进行单独升级进化
 
-![image-20211212165623968](.\img\image-20211212165623968.png)  
+![image-20211212165623968](./img/image-20211212165623968.png)  
 
 ``` xml
 <?xml version="1.0" encoding="UTF-8"?>
