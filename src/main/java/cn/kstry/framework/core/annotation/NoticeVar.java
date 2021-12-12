@@ -39,12 +39,5 @@ public @interface NoticeVar {
      * @return name
      */
     String name() default StringUtils.EMPTY;
-
-    /**
-     * 是否作为最终返回的结果，为 true 时将结果保存在 StoryBus 中的 returnResult 中，作为 Story 最终返回结果使用
-     *
-     * @return returnResult
-     */
-    boolean returnResult() default false;
 }
 

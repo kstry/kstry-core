@@ -519,7 +519,16 @@ public class InitSkuResponse {
 }
 ```
 
+- `@NoticeAll`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 bus 中的 sta 和 var两个域中
+  - `name`：通知到作用域字段的名字
 
+- `@NoticeSta`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 bus 中的 sta 域中
+  - `name`：通知到作用域字段的名字
+
+- `@NoticeVar`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 bus 中的 var 域中
+  - `name`：通知到作用域字段的名字
+
+- `@NoticeResult`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 bus 中的 result 域中
 
 
 
