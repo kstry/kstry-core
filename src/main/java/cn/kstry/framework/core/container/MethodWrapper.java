@@ -17,10 +17,7 @@
  */
 package cn.kstry.framework.core.container;
 
-import cn.kstry.framework.core.annotation.NoticeAll;
-import cn.kstry.framework.core.annotation.NoticeSta;
-import cn.kstry.framework.core.annotation.NoticeVar;
-import cn.kstry.framework.core.annotation.TaskService;
+import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
@@ -30,6 +27,7 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
@@ -48,6 +46,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -175,15 +174,14 @@ public class MethodWrapper {
         // NEED_PARSER_SCOPE 与 noticeScopeList 存在交集
         if (needParser) {
             String className = StringUtils.uncapitalize(returnType.getSimpleName());
-            boolean returnResult = noticeScopeList.contains(ScopeTypeEnum.RESULT);
-            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, null, returnType, true, returnResult);
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, null, returnType, true);
             if (noticeScopeList.contains(ScopeTypeEnum.STABLE)) {
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
             }
             if (noticeScopeList.contains(ScopeTypeEnum.VARIABLE)) {
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             }
-            if (returnResult) {
+            if (noticeScopeList.contains(ScopeTypeEnum.RESULT)) {
                 returnTypeNoticeDef.storyResultDef = noticeFieldItem;
             }
         }
@@ -192,13 +190,12 @@ public class MethodWrapper {
     }
 
     private void parseFields(Class<?> returnType) {
-
         List<Field> noticeVarList = FieldUtils.getFieldsListWithAnnotation(returnType, NoticeVar.class);
         if (CollectionUtils.isNotEmpty(noticeVarList)) {
             noticeVarList.forEach(field -> {
                 NoticeVar annotation = field.getAnnotation(NoticeVar.class);
                 AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false, annotation.returnResult());
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             });
         }
@@ -208,7 +205,7 @@ public class MethodWrapper {
             noticeStaList.forEach(field -> {
                 NoticeSta annotation = field.getAnnotation(NoticeSta.class);
                 AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false, annotation.returnResult());
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
             });
         }
@@ -218,10 +215,19 @@ public class MethodWrapper {
             noticeAllList.forEach(field -> {
                 NoticeAll annotation = field.getAnnotation(NoticeAll.class);
                 AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false, annotation.returnResult());
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             });
+        }
+
+        List<Field> noticeResultList = FieldUtils.getFieldsListWithAnnotation(returnType, NoticeResult.class);
+        if (CollectionUtils.isNotEmpty(noticeResultList) && returnTypeNoticeDef.storyResultDef == null) {
+            AssertUtil.oneSize(noticeResultList, ExceptionEnum.ANNOTATION_USAGE_ERROR,
+                    "@NoticeResult annotation cannot be repeatedly defined! fieldNames: {}", () ->
+                            Lists.newArrayList(JSON.toJSONString(noticeResultList.stream().map(Field::getName).collect(Collectors.toList()))));
+            Field noticeResultField = noticeResultList.get(0);
+            returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(noticeResultField.getName(), null, noticeResultField.getType(), false);
         }
     }
 
@@ -230,19 +236,23 @@ public class MethodWrapper {
         for (Class<?> c = returnType; c != Object.class; c = c.getSuperclass()) {
             NoticeSta noticeSta = AnnotationUtils.findAnnotation(c, NoticeSta.class);
             if (noticeSta != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeSta.name(), returnType, true, noticeSta.returnResult());
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeSta.name(), returnType, true);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
             }
             NoticeVar noticeVar = AnnotationUtils.findAnnotation(c, NoticeVar.class);
             if (noticeVar != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeVar.name(), returnType, true, noticeVar.returnResult());
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeVar.name(), returnType, true);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             }
             NoticeAll noticeAll = AnnotationUtils.findAnnotation(c, NoticeAll.class);
             if (noticeAll != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeAll.name(), returnType, true, noticeAll.returnResult());
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeAll.name(), returnType, true);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
+            }
+            NoticeResult noticeResult = AnnotationUtils.findAnnotation(c, NoticeResult.class);
+            if (noticeResult != null && returnTypeNoticeDef.storyResultDef == null) {
+                returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(className, null, returnType, true);
             }
         }
     }
@@ -372,19 +382,13 @@ public class MethodWrapper {
          */
         private final boolean resultSelf;
 
-        /**
-         * 是否是最终需要返回的结果
-         */
-        private final boolean returnResult;
-
-        public NoticeFieldItem(String fieldName, String targetName, Class<?> fieldClass, boolean resultSelf, boolean returnResult) {
+        public NoticeFieldItem(String fieldName, String targetName, Class<?> fieldClass, boolean resultSelf) {
             super(Optional.ofNullable(targetName).filter(StringUtils::isNotBlank).orElse(fieldName), IdentityTypeEnum.NOTICE_FIELD);
             AssertUtil.notNull(fieldClass);
             this.fieldName = fieldName;
             this.targetName = this.getIdentityId();
             this.fieldClass = fieldClass;
             this.resultSelf = resultSelf;
-            this.returnResult = returnResult;
         }
 
         public String getFieldName() {
@@ -401,10 +405,6 @@ public class MethodWrapper {
 
         public boolean isResultSelf() {
             return resultSelf;
-        }
-
-        public boolean isReturnResult() {
-            return returnResult;
         }
     }
 

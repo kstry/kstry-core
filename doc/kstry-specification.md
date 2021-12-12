@@ -476,6 +476,51 @@ public class GetLogisticInsuranceRequest {
 
 ### 3.2.2 通知变量
 
+TaskService 注解中的 `noticeScope` 属性通知，例如：
+
+``` java
+@TaskComponent(name = "order")
+public class OrderService {
+
+    @TaskService(name = "get-order-info", noticeScope = {ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE})
+    public OrderInfo getOrderInfo(@ReqTaskParam("id") Long goodsId) {
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setOrderedCount(10);
+        log.info("goods id: {}, get OrderInfo: {}", goodsId, JSON.toJSONString(orderInfo));
+        return orderInfo;
+    }
+}
+```
+
+- `noticeScope` 只能控制将方法返回的结果通知到哪些作用域，与结果对象中的字段没有关系
+- `noticeScope` 支持数组类型，有效取值：`ScopeTypeEnum.STABLE`、`ScopeTypeEnum.VARIABLE`、`ScopeTypeEnum.RESULT`
+- 方法返回结果被 `noticeScope` 通知后，如果结果类被**相同域**的 @NoticeXX 注解修饰了，类上的注解将失效，以`noticeScope` 为准
+- `noticeScope` 只能控制通知域，但是控制不了变量名称。默认情况下是方法返回值类名首字母小写作为变量名称
+
+
+
+注解方式向 StoryBus 中通知变量，注解可以标注在结果类上，也可以标注在字段上，例如：
+
+``` java
+@NoticeSta(name = GoodsCompKey.InitBaseInfoResponse.goodsDetail)
+public class GoodsDetail {
+
+    private Long id;
+
+    private String name;
+}
+
+@Data
+@Builder
+public class InitSkuResponse {
+
+    @NoticeSta(name = GoodsCompKey.InitSkuResponse.noticeSkuInfos)
+    private List<SkuInfo> skuInfos;
+}
+```
+
+
+
 
 
 # 四、异步支持

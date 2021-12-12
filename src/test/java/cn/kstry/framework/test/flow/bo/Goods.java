@@ -1,9 +1,12 @@
 package cn.kstry.framework.test.flow.bo;
 
+import cn.kstry.framework.core.annotation.NoticeResult;
 import cn.kstry.framework.core.annotation.ReqTaskField;
 
 import javax.validation.constraints.NotNull;
 
+
+@NoticeResult
 public class Goods {
 
     @NotNull(message = "goods.id 不能为空")

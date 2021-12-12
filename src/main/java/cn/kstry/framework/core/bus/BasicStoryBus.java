@@ -232,10 +232,6 @@ public class BasicStoryBus implements StoryBus {
             }
             PropertyUtil.setProperty(t, fieldName, r);
             monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r));
-            if (def.isReturnResult()) {
-                this.returnResult = r;
-                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), null, ScopeTypeEnum.RESULT, r));
-            }
         });
     }
 
