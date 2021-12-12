@@ -197,7 +197,7 @@ public class RiskControlService {
   - 如果符合权限定义的格式，使用角色解析器解析判断，后面讲到角色权限时会再详细介绍
   - 前两者都不符合时则使用Spel解析器，解析引擎是Spring的Spel解析器，执行格式不对时会报错。返回结果一定是Boolean值。比如上面 `result.img != null`如果result为null时，会抛异常结束
 
-- 事件、网关、任务节点都可以从当前节点引出多个支路，但是**只有并行网关、包含网关、结束事件可以接收并归并多个支路**，其他节点有多个入度时会出现配置文件解析失败的情况
+- 事件、网关、任务节点都可以从当前节点引出多个支路，但是**只有并行网关、包含网关、结束事件可以接收归并多个支路**，其他节点有多个入度时会出现配置文件解析失败的情况
 
 - **一个链路图中有且仅有一个开始事件和结束事件**（子事件中同样有这个限制，外围事件和子链路中的事件是可以共同存在的）。
 
@@ -241,11 +241,8 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 ```
 
 - 并行网关一般分为两部分，前面将一个分支拆解成多个，后面将多个分支进行聚合。并行网关要求，所有入度全部执行完才能向下执行
-
-- 未开启多线程模式时，并行网关拆分出的多个分支还是一个线程逐一执行，开启多线程模式后，几个分支将逐一创建异步任务提交到线程池中执行
-
+- 并行网关支持开启异步流程。未开启多线程模式时，并行网关拆分出的多个分支还是一个线程逐一执行，开启多线程模式后，几个分支将逐一创建异步任务提交到线程池中执行
 - 并行网关后面的支路判断条件会被忽略，无论设置与否都不会解析，都会默认为true
-
 - `getShopInfoByGoodsId` 中线程 sleep 了 200ms 模拟耗时较长的任务，**并行网关中，只有全部任务都执行完成之后才会继续向下执行**
 
 将风控组件加到流程之后，得到流程图如下：
@@ -264,5 +261,137 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
 ## 2.3 排他网关
 
+> 假设为了推广公司app，产品承诺会对app下单用户免费赠送运费险，其他平台没有此优惠
 
+![image-20211212151933456](.\img\image-20211212151933456.png) 
 
+新增运费险任务：
+
+``` java
+@Slf4j
+@TaskComponent(name = LogisticCompKey.logistic)
+public class LogisticService {
+
+    @TaskService(name = LogisticCompKey.getLogisticInsurance, noticeScope = ScopeTypeEnum.STABLE)
+    public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
+        log.info("request source：{}", request.getSource());
+        LogisticInsurance logisticInsurance = new LogisticInsurance();
+        logisticInsurance.setDesc("运费险描述");
+        logisticInsurance.setType(1);
+        return logisticInsurance;
+    }
+}
+```
+
+- 为什么要多加一个包含网关呢？是因为之前有提到过：**只有并行网关、包含网关、结束事件可以接收归并多个支路**，其他节点只能接收一个入度，“送运费险”节点不能直接到“加载店铺信息”节点，因为后者已经有了一个入度，所以增加一个包含网关将多个分支进行合拢
+- 排他网关入度只能有一个，出度可以多个。出度上面的条件表达式会被解析执行，如果没有条件表达式时会默认是true
+- 排他网关多个出度上面表达式被解析成true时，会选择第一个true的继续向下执行，其他的将会被中断。第一个出度与图上的位置没有任何关系，也不能显示控制哪一个出度会被首先执行。所以**如果多个出度都为true时运行结果是不确定的**，应尽量避免这种事情发生
+- 当全部出度上的表达式都解析为false时会抛出异常结束流程，异常信息`：[K1040008] Match to the next process node as empty! taskId: Gateway_15malyv`
+- 由于排他网关最终执行的只有一条链路，所以排他网关是不支持开启异步的
+
+## 2.4 包含网关
+
+> 假设商品描述中有一些统计信息，比如收藏数、评价数、下单数等，不同的数据统计维护在不同的系统模块中，在商品加载时这些参数需要被加载。但是也并非全部商品都需要加载全部的统计数，比如未开启评价的商品就不需要获取评价数
+
+![image-20211212163533505](.\img\image-20211212163533505.png) 
+
+加载商品基础信息时，加上可以评价的属性：
+
+``` java
+@TaskService(name = GoodsCompKey.initBaseInfo, noticeScope = {ScopeTypeEnum.RESULT})
+public GoodsDetail initBaseInfo(@ReqTaskParam(reqSelf = true) GoodsDetailRequest request) {
+    return GoodsDetail.builder().id(request.getId()).name("商品").img("https://xxx.png").needEvaluate(true).build();
+}
+```
+
+新增订单信息获取、评价信息获取、商品扩展信息获取
+
+``` java
+@TaskComponent(name = "order")
+public class OrderService {
+
+    @TaskService(name = "get-order-info", noticeScope = ScopeTypeEnum.STABLE)
+    public OrderInfo getOrderInfo(@ReqTaskParam("id") Long goodsId) {
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setOrderedCount(10);
+        log.info("goods id: {}, get OrderInfo: {}", goodsId, JSON.toJSONString(orderInfo));
+        return orderInfo;
+    }
+}
+
+@TaskComponent(name = "evaluation")
+public class EvaluationService {
+
+    @TaskService(name = "get-evaluation-info", noticeScope = ScopeTypeEnum.STABLE)
+    public EvaluationInfo getEvaluationInfo(@ReqTaskParam("id") Long goodsId) {
+        EvaluationInfo evaluationInfo = new EvaluationInfo();
+        evaluationInfo.setEvaluateCount(20);
+        log.info("goods id: {}, get EvaluationInfo: {}", goodsId, JSON.toJSONString(evaluationInfo));
+        return evaluationInfo;
+    }
+}
+
+@TaskService(name = "get-goods-ext-info", noticeScope = ScopeTypeEnum.STABLE)
+public GoodsExtInfo getGoodsExtInfo(@ReqTaskParam("id") Long goodsId) {
+    GoodsExtInfo goodsExtInfo = new GoodsExtInfo();
+    goodsExtInfo.setCollectCount(30);
+    log.info("goods id: {}, get GoodsExtInfo: {}", goodsId, JSON.toJSONString(goodsExtInfo));
+    return goodsExtInfo;
+}
+```
+
+最终商品信息后置处理时将统计信息汇总：
+
+``` java
+@TaskService(name = GoodsCompKey.detailPostProcess)
+public void detailPostProcess(DetailPostProcessRequest request) {
+    GoodsDetail goodsDetail = request.getGoodsDetail();
+	...
+    GoodsExtInfo goodsExtInfo = request.getGoodsExtInfo();
+    OrderInfo orderInfo = request.getOrderInfo();
+    EvaluationInfo evaluationInfo = request.getEvaluationInfo();
+    goodsDetail.setStatistics(Lists.newArrayList(goodsExtInfo.getCollectCount(), orderInfo.getOrderedCount(), evaluationInfo.getEvaluateCount()));
+}
+```
+
+- 包含网关与并行网关一样，支持开启异步流程，支持接收多个入度
+- 包含网关没有所有入度必须被执行的限制，等待全部入度执行完成或者得知其中可能有部分入度不满足条件不再执行后，会继续向下执行
+- 包含网关后面出度可以设置表达式，表达式解析规则与排他网关出度解析规则一样
+
+## 2.5 子流程
+
+> 上面可以看到，数据统计不仅仅在商详展示时会用到，商品列表可能会用到，订单展示也可能会用到，所以统计逻辑是一个可以复用的模块，可以将其抽离进行单独升级进化
+
+![image-20211212165623968](.\img\image-20211212165623968.png)  
+
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <bpmn:process id="Process_0zcsieh" isExecutable="true">
+    <bpmn:subProcess id="Activity_0melq36" name="商品数据统计">
+      <bpmn:startEvent id="Event_1h3q9xl">
+        <bpmn:outgoing>Flow_0hyd05a</bpmn:outgoing>
+      </bpmn:startEvent>
+      ...
+      <bpmn:endEvent id="Event_10avvlg">
+        <bpmn:incoming>Flow_1ylaoip</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1ylaoip" sourceRef="Gateway_0ay4c64" targetRef="Event_10avvlg" />
+    </bpmn:subProcess>
+    <bpmn:callActivity id="Activity_1w3fhiy" name="商品数据统计" calledElement="Activity_0melq36">
+      <bpmn:incoming>Flow_0hbi1mg</bpmn:incoming>
+      <bpmn:outgoing>Flow_0lmq6ak</bpmn:outgoing>
+    </bpmn:callActivity>
+  </bpmn:process>
+</bpmn:definitions>
+```
+
+- 定义`bpmn:process` 将需要分离的子流程包含在内
+
+- 子流程有独立于父流程之外独立的开始事件、结束时间
+
+- 子流程是支持嵌套的，A子流程可以依赖B子流程，但是自身依赖自身是非法的。并且子流程中支持开启并发模式
+
+- 定义`bpmn:callActivity`将定义的子流程引入，程序运行到此时会跳转至子流程执行，子流程执行完成后会跳转回来继续执行
+
+  
