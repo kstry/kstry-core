@@ -254,12 +254,12 @@ public class FlowRegister {
         notNeedPeekList.forEach(notNeedPeekElement -> {
             SequenceFlow notNeedPeekSequenceFlow = GlobalUtil.transferNotEmpty(notNeedPeekElement, SequenceFlow.class);
             notNeedPeekSequenceFlow.getEndElementList().forEach(endElement -> {
-                List<FlowElement> comingList =
-                        endElement.comingList().stream().filter(e -> e.getFlowTrack().contains(notNeedPeekSequenceFlow.getIndex())).collect(Collectors.toList());
+                List<FlowElement> comingList = endElement.comingList().stream().filter(e ->
+                        e.getFlowTrack().contains(notNeedPeekSequenceFlow.getIndex()) || Objects.equals(e.getIndex(), notNeedPeekSequenceFlow.getIndex())
+                ).collect(Collectors.toList());
                 if (endElement instanceof ParallelGateway && ((ParallelGateway) endElement).isStrictMode() && CollectionUtils.isNotEmpty(comingList)) {
-                    KstryException.throwException(ExceptionEnum.STORY_FLOW_ERROR,
-                            GlobalUtil.format("A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: {}",
-                                    notNeedPeekSequenceFlow.getId()));
+                    KstryException.throwException(ExceptionEnum.STORY_FLOW_ERROR, GlobalUtil.format(
+                            "A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: {}", notNeedPeekSequenceFlow.getId()));
                 }
                 comingList.forEach(coming -> {
                     if (!PeekStrategyRepository.existExpectedComing(endElement, coming, contextScopeData)) {
