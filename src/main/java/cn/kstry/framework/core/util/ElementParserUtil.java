@@ -17,17 +17,7 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.annotation.CustomRole;
-import cn.kstry.framework.core.annotation.ReqTaskField;
-import cn.kstry.framework.core.annotation.ReqTaskParam;
-import cn.kstry.framework.core.annotation.SpringInitialization;
-import cn.kstry.framework.core.annotation.StaTaskField;
-import cn.kstry.framework.core.annotation.StaTaskParam;
-import cn.kstry.framework.core.annotation.TaskComponent;
-import cn.kstry.framework.core.annotation.TaskField;
-import cn.kstry.framework.core.annotation.TaskParam;
-import cn.kstry.framework.core.annotation.VarTaskField;
-import cn.kstry.framework.core.annotation.VarTaskParam;
+import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.container.MethodWrapper;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -86,48 +76,49 @@ public class ElementParserUtil {
         try {
             return Optional.of(clazz.getDeclaredConstructor().newInstance());
         } catch (Exception e) {
-            KstryException.throwException(e, ExceptionEnum.SERVICE_PARAM_ERROR, GlobalUtil.format(ExceptionEnum.SERVICE_PARAM_ERROR.getDesc() + " class: {}", clazz.getName()));
+            KstryException.throwException(e, ExceptionEnum.SERVICE_PARAM_ERROR,
+                    GlobalUtil.format(ExceptionEnum.SERVICE_PARAM_ERROR.getDesc() + " class: {}", clazz.getName()));
             return Optional.empty();
         }
     }
 
-    public static Optional<MethodWrapper.TaskFieldProperty> getTaskParamAnnotation(Parameter p) {
+    public static Optional<MethodWrapper.TaskFieldProperty> getTaskParamAnnotation(Parameter p, String paramName) {
         if (p == null) {
             return Optional.empty();
         }
 
         TaskParam taskParamAnn = p.getAnnotation(TaskParam.class);
         if (taskParamAnn != null) {
-            if (StringUtils.isBlank(taskParamAnn.value())) {
-                return Optional.empty();
+            if (StringUtils.isNotBlank(taskParamAnn.value())) {
+                paramName = taskParamAnn.value();
             }
-            return Optional.of(new MethodWrapper.TaskFieldProperty(taskParamAnn.value(), taskParamAnn.scopeEnum()));
+            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, taskParamAnn.scopeEnum()));
         }
 
         ReqTaskParam reqTaskParamAnn = p.getAnnotation(ReqTaskParam.class);
         if (reqTaskParamAnn != null) {
-            if (StringUtils.isBlank(reqTaskParamAnn.value()) && !reqTaskParamAnn.reqSelf()) {
-                return Optional.empty();
+            if (StringUtils.isNotBlank(reqTaskParamAnn.value())) {
+                paramName = reqTaskParamAnn.value();
             }
-            MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(reqTaskParamAnn.value(), ScopeTypeEnum.REQUEST);
+            MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.REQUEST);
             taskFieldProperty.setInjectSelf(reqTaskParamAnn.reqSelf());
             return Optional.of(taskFieldProperty);
         }
 
         StaTaskParam staTaskParamAnn = p.getAnnotation(StaTaskParam.class);
         if (staTaskParamAnn != null) {
-            if (StringUtils.isBlank(staTaskParamAnn.value())) {
-                return Optional.empty();
+            if (StringUtils.isNotBlank(staTaskParamAnn.value())) {
+                paramName = staTaskParamAnn.value();
             }
-            return Optional.of(new MethodWrapper.TaskFieldProperty(staTaskParamAnn.value(), ScopeTypeEnum.STABLE));
+            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.STABLE));
         }
 
         VarTaskParam varTaskParamAnn = p.getAnnotation(VarTaskParam.class);
         if (varTaskParamAnn != null) {
-            if (StringUtils.isBlank(varTaskParamAnn.value())) {
-                return Optional.empty();
+            if (StringUtils.isNotBlank(varTaskParamAnn.value())) {
+                paramName = varTaskParamAnn.value();
             }
-            return Optional.of(new MethodWrapper.TaskFieldProperty(varTaskParamAnn.value(), ScopeTypeEnum.VARIABLE));
+            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.VARIABLE));
         }
         return Optional.empty();
     }

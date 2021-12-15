@@ -126,7 +126,7 @@ public class MethodWrapper {
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
             injectDefs[i] = null;
-            Optional<TaskFieldProperty> annOptional = ElementParserUtil.getTaskParamAnnotation(p);
+            Optional<TaskFieldProperty> annOptional = ElementParserUtil.getTaskParamAnnotation(p, parameterNames[i]);
             if (GlobalUtil.isCollection(p.getType())) {
                 if (!annOptional.isPresent()) {
                     continue;

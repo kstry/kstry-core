@@ -675,9 +675,756 @@ public class DetailPostProcessRequest implements ParamLifecycle {
 
 # 四、异步支持
 
+> 继续延用上面商品展示的例子，在一个商品展示的Story中系统需要依赖很多服务，有内部的，也有外部的。内部服务毕竟在自己系统里，可控性相对较强，但不能避免的，也会出现一些耗时较高的操作。外部系统就更不用说了，作为研发谁没有吃过外部服务延时高的苦头。一般情况下，我们会引入异步化来尝试优化这些难缠的超时问题，Kstry又是如何做的呢？
+
+## 4.1 超时时间
+
+> Kstry调用执行存在超时时间。不会允许调用一直等待下去
+
+**默认超时时间：**
+
+系统默认超时时间是3s，请求开始执行后，如果3s内没有收到结果，就会报超时异常
+
+```
+cn.kstry.framework.core.exception.TaskAsyncException: [K1060002] Asynchronous node task timeout!
+	at cn.kstry.framework.core.exception.KstryException.buildException(KstryException.java:88)
+	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:107)
+	at cn.kstry.framework.core.engine.StoryEngine.doFire(StoryEngine.java:184)
+	at cn.kstry.framework.core.engine.StoryEngine.fire(StoryEngine.java:90)
+	at cn.kstry.demo.web.GoodsController.showGoods(GoodsController.java:49)
+
+Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum time limit: 3000ms, block task count: 1, block task: [Flow_0rl59u8]
+	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:98)
+	... 52 common frames omitted
+```
+
+**全局配置超时时间：**
+
+``` yaml
+# application.yml
+kstry:
+  story:
+    timeout: 3000 # 全局超时时间为 3000ms
+```
+
+**显示指定超时时间：**
+
+``` java
+StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).timeout(3000).startId(StartIdEnum.GOODS_SHOW.getId()).request(request).build();
+TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
+if (fire.isSuccess()) {
+  return fire.getResult();
+}
+```
+
+- `.timeout(3000)` 显示指定当前请求超时时间 3000ms，显示指定会覆盖全局的超时时间
+
+## 4.2 开启异步
+
+首先使用sleep模拟几个耗时的服务节点：送运费险sleep 100ms，加载店铺信息sleep 200ms，加载评价数sleep 200ms。调用一次接口，看统计日志（后面链路追踪环节会详细讲到，先使用这个功能）中重点需要关注的一些点：
+
+``` json
+[http-nio-8080-exec-3][5837f673-15cd-4aef-97cc-6516ff14cb75] INFO  c.k.f.c.m.MonitorTracking - [K1040009] startId: kstry-demo-goods-show, spend 531ms ...
+
+[{
+	"methodName": "initBaseInfo",
+	"nodeName": "初始化\n基本信息",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 1,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "checkImg",
+	"nodeName": "风控服务",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.RiskControlService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "initSku",
+	"nodeName": "加载SKU信息",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getLogisticInsurance",
+	"nodeName": "送运费险",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 106,
+	"targetName": "cn.kstry.demo.service.LogisticService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getShopInfoByGoodsId",
+	"nodeName": "加载店铺信息",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 205,
+	"targetName": "cn.kstry.demo.service.ShopService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getGoodsExtInfo",
+	"nodeName": "加载收藏数",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getOrderInfo",
+	"nodeName": "加载下单数",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.OrderService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getEvaluationInfo",
+	"nodeName": "加载评价数",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 205,
+	"targetName": "cn.kstry.demo.service.EvaluationService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"nodeName": "加载广告",
+	"nodeType": "SERVICE_TASK",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "detailPostProcess",
+	"nodeName": "商详后置处理",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 1,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-1",
+}]
+```
+
+- 服务节点依次执行，使用到的线程是同一线程：`kstry-task-thread-pool-1`
+- 调用总耗时531ms。送运费险：106ms，加载店铺信息：205ms，加载评价数：205ms，时间基本都花在了这三个节点上，并且是累加计算的
+
+**在子任务中，打开商品数据统计的异步化：**
+
+![image-20211213145202846](./img/image-20211213145202846.png) 
+
+**在主流程中打开店铺、商品、物流服务调用的异步化：** 
+
+![image-20211213145245630](./img/image-20211213145245630.png) 
+
+- 如图所见，开启异步功能就是如此的简单，在网关上配置`open-async=true`即可
+- **目前支持配置异步开启的组件有：并行网关、包含网关两种**，排他网关虽然是允许有多个出度，但最终只有一个出度被执行，所以开启异步的效果不大并未支持开启异步
+- 和普通的多线程使用方式一样，并发度太高也并非一定是好事。每开启一个新线程都要创建新的计算任务，加上线程间的上下文切换，在一些本来就耗时很短的任务节点间开启异步大多时候会得不偿失
+
+开启异步化后的统计日志：
+
+``` json
+[http-nio-8080-exec-8][7900a5a3-3c9c-44e4-914c-ac2d83e2c2f0] INFO  c.k.f.c.m.MonitorTracking - [K1040009] startId: kstry-demo-goods-show, spend 315ms ...
+
+[{
+	"methodName": "initBaseInfo",
+	"nodeName": "初始化\n基本信息",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 2,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-3",
+}, {
+	"methodName": "checkImg",
+	"nodeName": "风控服务",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.RiskControlService",
+	"threadId": "kstry-task-thread-pool-3",
+}, {
+	"methodName": "initSku",
+	"nodeName": "加载SKU信息",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-3",
+}, {
+	"nodeName": "加载广告",
+	"nodeType": "SERVICE_TASK",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getLogisticInsurance",
+	"nodeName": "送运费险",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 102,
+	"targetName": "cn.kstry.demo.service.LogisticService",
+	"threadId": "kstry-task-thread-pool-7",
+}, {
+	"methodName": "getGoodsExtInfo",
+	"nodeName": "加载收藏数",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-6",
+}, {
+	"methodName": "getOrderInfo",
+	"nodeName": "加载下单数",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 0,
+	"targetName": "cn.kstry.demo.service.OrderService",
+	"threadId": "kstry-task-thread-pool-1",
+}, {
+	"methodName": "getEvaluationInfo",
+	"nodeName": "加载评价数",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 201,
+	"targetName": "cn.kstry.demo.service.EvaluationService",
+	"threadId": "kstry-task-thread-pool-3",
+}, {
+	"methodName": "getShopInfoByGoodsId",
+	"nodeName": "加载店铺信息",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 205,
+	"targetName": "cn.kstry.demo.service.ShopService",
+	"threadId": "kstry-task-thread-pool-7",
+}, {
+	"methodName": "detailPostProcess",
+	"nodeName": "商详后置处理",
+	"nodeType": "SERVICE_TASK",
+	"spendTime": 1,
+	"targetName": "cn.kstry.demo.service.GoodsService",
+	"threadId": "kstry-task-thread-pool-7",
+}]
+```
+
+- 总耗时 315ms，比未开启异步前少了大概200ms，可以分析下原因：
+
+  - 耗时的节点有三个：送运费险sleep 100ms，加载店铺信息sleep 200ms，加载评价数sleep 200ms
+
+  - “送运费险” 和 “加载店铺信息” 两个节点是串行执行的，所以耗时是累加的
+
+  - “加载评价数” 虽然在子流程，但是子流程引用与上面两个节点是并行执行的
+
+    <img src="./img/image-20211213195605737.png" alt="image-20211213195605737" style="zoom:30%;" /> 
+
+  - 两个红框并行执行，两个绿框串行执行。两个并行流程中取耗时较大值300ms，所以最终耗时300ms左右
+  
+- 任务流中出现了不止一个的线程id，开启异步化后，任务创建并提交到线程池中，随机分配线程去执行
+
+## 4.3 异步化生命周期
+
+> 在并行网关、包含网关上配置`open-async=true`属性即可开启异步流程。那么异步的开始是什么时候，结束又是在何处呢？
+
+### 4.3.1 异步的开始
+
+开始流程如下：
+
+- 执行引擎检测到并行网关、包含网关上配置`open-async=true`属性后，会将网关后面的出度包装成异步任务
+  - 并行网关会将其后的全部出度包装成异步任务，提交至线程池执行
+  - 包含网关会判断其后的出度是否有表达式，如果有表达式会先解析执行表达式，将表达式结果为true和没有表达式的出度逐一包装成异步任务提交到线程池执行
+- 提交完异步任务的线程会继续执行执行栈中其他节点的任务，不会再顾及异步网关及网关之后的节点，直至执行栈中没有了可执行节点时线程会归还至线程池，等待下一次被调用
+- 线程池随机选择线程执行上述流程中创建的异步任务
+
+### 4.3.2 异步的结束
+
+什么是异步？异步就是同一时间多个线程去做了多个事情，以此来节省需要一个线程做多个事情所花费的时间。有点空间换取时间的味道。Kstry中什么时候结束开启后的异步任务呢？答案是**多个可以同一时间执行的任务被聚合网关聚合后异步流程就结束了**。比如：
+
+- 一个流程被并行网关拆分成了两个异步任务，这两个异步任务都遇到同一聚合节点后，这个异步任务就被聚合节点归拢合并了
+
+- 一个流程被并行网关拆分成了两个异步任务，两个异步任务又分别拆分出了两个异步任务，只有四个异步任务全部聚合时，才算真正意义上的异步流程结束，如下的流程定义是允许的：
+
+  <img src="./img/image-20211215163047312.png" alt="image-20211215163047312" style="zoom:40%;" /> 
+
+**当前聚合节点的元素有：**
+
+- 并行网关
+- 包含网关
+- 结束事件
+
+![image-20211215163704815](./img/image-20211215163704815.png) 
+
+**聚合节点可以随心所欲的聚合多个流程。除聚合节点外的其他节点元素，只允许接收一个入度**
+
+> 之所以除聚合节点外的其他节点元素，只允许接收一个入度是因为：存在多个入度时，如果这些入度是异步的就会有多个线程执行到这个聚集点，假设Task节点可以支持多入度，那么Task节点就可能被执行多次。因为Task节点还不具备聚合节点的能力，不能让前面的流程停下来等待全部流程都到达后再继续
+
+## 4.4 Reactor异步模型
+
+> 开启了异步是否程序就足够健壮了，就可以支持高流量请求了？答案是否定的，看下面的例子
+
+还是上面的商品显示流程，其他节点的sleep模拟耗时全部清除，只留下获取店铺信息sleep 500ms来模拟调用店铺接口时的耗时
+
+``` java
+@TaskService(name = ShopCompKey.getShopInfoByGoodsId)
+public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
+    TimeUnit.MILLISECONDS.sleep(500L);
+    ShopInfo shopInfo = goodsIdShopInfoMapping.get(goodsId);
+    log.info("goods id: {}, getShopInfoByGoodsId: {}", goodsId, JSON.toJSONString(shopInfo));
+    return shopInfo;
+}
+```
+
+进行一波小流量压测：
+
+![2021-12-15_003756](./img/2021-12-15_003756.png) 
+
+测试结果：
+
+![2021-12-15_003737](./img/2021-12-15_003737.png) 
+
+报错如下：
+
+```
+cn.kstry.framework.core.exception.TaskAsyncException: [K1060002] Asynchronous node task timeout!
+	at cn.kstry.framework.core.exception.KstryException.buildException(KstryException.java:88)
+	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:107)
+	at cn.kstry.framework.core.engine.StoryEngine.doFire(StoryEngine.java:184)
+	at cn.kstry.framework.core.engine.StoryEngine.fire(StoryEngine.java:90)
+	at cn.kstry.demo.web.GoodsController.showGoods(GoodsController.java:49)
+
+Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum time limit: 3000ms, block task count: 1, block task: [Flow_0rl59u8]
+	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:98)
+	... 52 common frames omitted
+```
+
+2000个样本，失败率91.1%，服务是基本不可用状态，为什么这样呢，难道是线程池队列满了？查看线程池日志：
+
+![image-20211215170948367](./img/image-20211215170948367.png) 
+
+核心线程数16个，最大线程数32个。整个测试下来，工作线程数一直等于核心线程数，任务队列也没满，所以可以确定不是线程池本身的问题
+
+其实最根本的原因是出在了sleep 500ms的地方，工作线程都被占用了，可以分析下原理：
+
+- 少量请求进来时，创建核心线程处理
+- 核心线程达到阈值后，再有请求进来会放入阻塞队列
+- 理论上线程池中阻塞队列满后才会再次创建线程。但是少量压测请求并未达到阻塞队列的上线，所以工作线程一直是核心线程16个
+- 可以大概将线程处理一个请求的时间看作500ms，一秒之内16个线程可以处理32个请求，其他任务都被放入了队列
+- 放入队列的任务等待3s后，会被超时中断，请求失败。这是大量异常出现的原因，并非队列满了而是等待超时了
+- 如果我们增大超时时间，不难想象，队列任务数会增加。如果任务量足够大、超时时间足够长时，线程池队列也会溢出
+
+要解决上述问题，就得从本质出发：工作线程将时间花费在了sleep 500ms（比如调用外部接口）上，限制了任务的吞吐量。所以耗时的任务就应该交出去，比如在远程调用其他服务时，可以换成使用NIO的方式调用服务端接口，接口返回结果后再通知业务线程。Kstry中这样去做：
+
+``` java
+// 升级前获取店铺信息的任务
+@TaskService(name = ShopCompKey.getShopInfoByGoodsId)
+public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
+    TimeUnit.MILLISECONDS.sleep(500L);
+    ShopInfo shopInfo = goodsIdShopInfoMapping.get(goodsId);
+    log.info("goods id: {}, getShopInfoByGoodsId: {}", goodsId, JSON.toJSONString(shopInfo));
+    return shopInfo;
+}
+
+// 升级后获取店铺信息的任务
+@TaskService(name = ShopCompKey.getShopInfoByGoodsId, returnClassType = ShopInfo.class)
+public Mono<ShopInfo> getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) {
+    CompletableFuture<ShopInfo> future = new CompletableFuture<>();
+    list.add(future);
+    return Mono.fromFuture(future);
+}
+
+@Scheduled(fixedDelay = 500)
+public void init() {
+    List<CompletableFuture<ShopInfo>> completableFutures = Lists.newArrayList(list);
+    list.clear();
+    for (CompletableFuture<ShopInfo> cf : completableFutures) {
+      ShopInfo shopInfo = goodsIdShopInfoMapping.get(1L);
+      log.info("goods id: {}, getShopInfoByGoodsId: {}", 1, JSON.toJSONString(shopInfo));
+      cf.complete(shopInfo);
+    }
+}
+```
+
+> 创建一个每500ms执行一次的定时器，拿到获取店铺信息时保存的CompletableFuture列表并将任务完成，以此来模拟获取店铺信息耗时在500ms以内
+
+原来任务做升级：
+
+- 返回值 ShopInfo 被 Mono 包装
+- `@TaskService`注解增加属性配置：`returnClassType = ShopInfo.class`。之所以如此是因为结果的处理是通过解析返回值的注解来做的，Java编译后泛型会被擦除，找不到返回值类型无法解析判断如何处理返回结果，所以返回类型需要显示指定
+
+> Kstry只支持 Mono，暂不支持 Flux
+
+线程再次调用获取店铺信息节点时会立刻返回Mono。等异步流程执行结束后再反向通知流程继续
+
+同样的压测参数，重新压测：
+
+![2021-12-15_005209](./img/2021-12-15_005209.png)
+
+将获取店铺信息的耗时模拟至1000ms再次测试：
+
+![2021-12-15_005339](./img/2021-12-15_005339.png) 
+
+可见，问题解决了
+
+Kstry 的 StoryEngine 提供了异步调用入口，返回Mono，可与支持Reactor模型的web服务器无缝衔接。比如：SpringFlux
+
+``` java
+public <T> Mono<T> fireAsync(StoryRequest<T> storyRequest) {
+    try {
+        MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, GlobalUtil.getOrSetRequestId(storyRequest));
+        preProcessing(storyRequest);
+        return doFireAsync(storyRequest);
+    } finally {
+        MDC.clear();
+    }
+}
+```
+
+
+
 # 五、RBAC模式
+
+> ​    假设商品查询服务是中台服务，上游有着很多的业务方。对于大多数业务方来说，中台提供的能力是够用的，但是有一个业务方突然站出来说，我这边的平台对信息的违规检查异常严格，你们提供的图片检查能力是不够用的，需要做升级。
+>
+> ​    于是我们找到了专门做图片检查的第三方公司。他们说可以很容易的接入使用，但是得收费，为了满足上游业务方的诉求，我们经过开会讨论和向上申请决定可以使用收费服务。但是领导还要求尽量节省开支，所以要求不严格的渠道还继续使用我们自己的图片检查能力。
+>
+> ​    首先想到的是可以使用排他网关，如果是这个渠道走三方图片检查服务，如果是其他渠道就走默认图片检查。当下这个问题解决了，但是留下了一些问题：
+>
+> - 如果再新增其他渠道是不是还要修改判断逻辑
+> - 如果又有其他渠道要使用新的风控组件检查图片，是不是还得继续新增判断逻辑、修改流程图
+> - 在中台产品看来，商品查询流程图上只有一个图片检查的功能，但是引入排他网关判断后会让商品查询的流程图变得不那么纯粹，不仅复杂难以理解，还包含了上游业务的特殊逻辑在里面变得不易维护
+>
+> 应对这种问题，是时候使用 Kstry 的RBAC（Role-based access control）模式了
+
+## 5.1 RBAC初体验
+
+**增加图片校验服务：**
+
+``` java
+@TaskComponent(name = RiskControlCompKey.riskControl)
+public class RiskControlService {
+
+    // 本地的检测服务
+    @TaskService(name = RiskControlCompKey.checkImg)
+    public void checkImg(CheckInfo checkInfo) {
+
+        AssertUtil.notNull(checkInfo);
+        AssertUtil.notBlank(checkInfo.getImg());
+        log.info("check img: " + checkInfo.getImg());
+    }
+
+  	// 新增的三方校验服务
+    @TaskService(name = RiskControlCompKey.checkImg, ability = RiskControlCompKey.triple)
+    public void tripleCheckImg(CheckInfo checkInfo) {
+
+        AssertUtil.notNull(checkInfo);
+        AssertUtil.notBlank(checkInfo.getImg());
+        log.info("triple check img: " + checkInfo.getImg());
+    }
+}
+```
+
+- 注意`@TaskService`注解增加了`ability = RiskControlCompKey.triple`属性，代表检测服务新增能力点，名字是：triple
+
+**注册角色：**
+
+``` java
+@Component
+public class RoleRegister implements BusinessRoleRegister {
+
+    @Override
+    public List<BusinessRole> register() {
+
+        List<String> list = Lists.newArrayList();
+        list.add("r:init-base-info"); // r:服务名称，服务名称对应 @TaskService 的 name 属性值
+        list.add("r:check-img@triple");// r:服务名称@能力名，能力名对应 @TaskService 的 ability 属性值
+        list.add("r:get-logistic-insurance");
+        list.add("r:get-shopInfo-goodsId");
+        list.add("r:detail-post-process");
+        list.add("r:init-sku");
+        list.add("r:get-evaluation-info");
+        list.add("r:get-goods-ext-info");
+        list.add("r:get-order-info");
+        List<Permission> permissions = PermissionUtil.permissionList(String.join(",", list));
+
+        Role role = new BasicRole();
+        role.addPermission(permissions);
+        // businessId：special-channel
+        // startId：kstry-demo-goods-show
+        BusinessRole businessRole = new BusinessRole("special-channel", "kstry-demo-goods-show", role);
+        return Lists.newArrayList(businessRole);
+    }
+}
+```
+
+- 实现`BusinessRoleRegister`接口，注册角色
+- 注册类需要托管给Spring容器
+
+**修改入参：**
+
+``` java
+@RestController
+@RequestMapping("/goods")
+public class GoodsController {
+
+    @Resource
+    private StoryEngine storyEngine;
+
+    @PostMapping("/show")
+    public GoodsDetail showGoods(@RequestBody GoodsDetailRequest request) {
+
+        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).startId("kstry-demo-goods-show").request(request).build();
+        // 新增部分，如果 businessId 不为空，设置到 Kstry 入参中
+        if (StringUtils.isNotBlank(request.getBusinessId())) {
+            req.setBusinessId(request.getBusinessId());
+        }
+        TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
+        if (fire.isSuccess()) {
+            return fire.getResult();
+        }
+        return null;
+    }
+}
+```
+
+**测试（未设置 businessId 时）：**
+
+``` javascript
+// 入参
+{
+    "id": 1,
+    "source": "app"
+}
+// 日志：check img: https://xxx.png
+```
+
+**测试（设置 businessId 时）：**
+
+``` javascript
+// 入参
+{
+    "id": 1,
+    "source": "app",
+    "businessId": "special-channel"
+}
+// 日志：triple check img: https://xxx.png
+```
+
+- 未传入businessId时，使用的是内部检测服务，传入`businessId=special-channel`后使用三方检测服务
+
+## 5.2 注册角色
+
+### 5.2.1 权限分类
+
+**权限类有两种**：
+
+- `SimplePermission`：基础权限类，构造函数有两个重要属性：
+  - identityType：权限的类型，支持两种：
+    - `IdentityTypeEnum.SERVICE_TASK`  ：代表普通的服务节点比如上述：内部图片检测服务
+    - `IdentityTypeEnum.SERVICE_TASK_ABILITY`：代表能力扩展点，对应于`@TaskService`注解设置了`ability`属性的服务节点，比如上述的：三方图片检测服务
+  - identityId：权限的身份id，取值分两种情况
+    - `identityType == IdentityTypeEnum.SERVICE_TASK`时：取`@TaskService`的name属性
+    - `identityType == IdentityTypeEnum.SERVICE_TASK_ABILITY`：取`@TaskService`的name属性 + '@' + `@TaskService`的`ability`属性，比如：`check-img@triple`
+- `TaskComponentPermission`：`SimplePermission`可以表示普通服务节点和能力扩展点。但是系统中如果存在两个名字一样但在不同`@TaskComponent`的能力点时，使用`SimplePermission`就无法进行区分了，需要使用`TaskComponentPermission`，它在前者的基础上增加了一个属性：
+  - `taskComponentName`：对应 `@TaskComponent` name属性值
+
+上面的角色注册步骤可以修改成如下格式，效果一样：
+
+``` java
+@Component
+public class RoleRegister implements BusinessRoleRegister {
+
+    @Override
+    public List<BusinessRole> register() {
+
+        List<Permission> permissions = Lists.newArrayList();
+        permissions.add(new SimplePermission("init-base-info", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("check-img@triple", IdentityTypeEnum.SERVICE_TASK_ABILITY));
+        permissions.add(new SimplePermission("get-logistic-insurance", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("get-shopInfo-goodsId", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("detail-post-process", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("init-sku", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("get-evaluation-info", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("get-goods-ext-info", IdentityTypeEnum.SERVICE_TASK));
+        permissions.add(new SimplePermission("get-order-info", IdentityTypeEnum.SERVICE_TASK));
+
+        Role role = new BasicRole();
+        role.addPermission(permissions);
+        // businessId：special-channel
+        // startId：kstry-demo-goods-show
+        BusinessRole businessRole = new BusinessRole("special-channel", "kstry-demo-goods-show", role);
+        return Lists.newArrayList(businessRole);
+    }
+}
+```
+
+### 5.2.2 权限解析
+
+**权限的字符串表示方式**：
+
+- 普通服务节点：`r:service-name`或者`pr:service-name`
+- 有能力扩展点的服务节点：`r:service-name@ability`
+- 指定TaskComponent的普通服务节点：`pr:component@service-name`
+- 指定TaskComponent的有能力扩展点的服务节点：`pr:component@service-name@ability`或者`r:component@service-name@ability`
+
+> 使用 `cn.kstry.framework.core.util.PermissionUtil`可以将字符串解析成 Permission 对象
+
+### 3.2.3 角色关系注册
+
+**角色分配权限：**
+
+``` java
+Role role = new BasicRole();
+role.addPermission(permissions);
+```
+
+**注册角色关系：**
+
+- 新建类实现`BusinessRoleRegister`接口代表需要注册角色关系，将该类托管至Spring容器
+
+- 实现接口中`List<BusinessRole> register()`方法，每一个BusinessRole都代表一个 startId、businessId和Role的对应关系
+
+- BusinessRole可以指定：
+
+  - 一个或多个startId与Role的对应关系
+  - 一个或多个businessId和一个或多个startId与Role的对应关系
+
+  ``` java
+  public BusinessRole(String startId, Role role);
+  
+  public BusinessRole(List<String> startIdList, Role role);
+  
+  public BusinessRole(String businessId, String startId, Role role);
+  
+  public BusinessRole(String businessId, List<String> startIdList, Role role);
+  
+  public BusinessRole(List<String> businessIdList, String startId, Role role);
+  
+  public BusinessRole(List<String> businessIdList, List<String> startIdList, Role role);
+  ```
+
+
+
+## 5.3 匹配角色
+
+### 5.3.1 静默匹配
+
+每执行一个Story时，入参中startId是必传参数，businessId参数选填，容器会根据这两个值来匹配BusinessRole，如果匹配成功，拿到的BusinessRole中含有角色对象，角色中又承载着权限，如果角色对象不为空，每将要执行一个节点时，都会判断角色中是否含有当前要执行节点的权限，判断依据是：权限的identityId和identityType与当前服务节点的@TaskService.name、@TaskService.ability 等属性相对应
+
+根据startId、businessId匹配 BusinessRole 情况分类：
+
+- Story入参只传入startId：
+  - 匹配 businessIdList.isEmpty() 并且 startIdList.contains(startId)的BusinessRole，选取第一个匹配成功的返回
+- Story入参传入startId和businessId：
+  - 匹配 businessIdList.contains(businessId) 并且 startIdList.contains(startId)的BusinessRole，选取第一个匹配成功的返回
+  - 如果上一步返回为空，匹配businessIdList.isEmpty() 并且 startIdList.contains(startId)的BusinessRole，选取第一个匹配成功的返回
+
+### 5.3.2 显示指定
+
+``` java
+@RestController
+@RequestMapping("/goods")
+public class GoodsController {
+
+    @Resource
+    private StoryEngine storyEngine;
+
+    @PostMapping("/show")
+    public GoodsDetail showGoods(@RequestBody GoodsDetailRequest request) {
+
+        // 创建角色显示指定
+        Role role = new BasicRole();
+        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).role(role).startId(StartIdEnum.GOODS_SHOW.getId()).request(request).build();
+
+        TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
+        if (fire.isSuccess()) {
+            return fire.getResult();
+        }
+        return null;
+    }
+}
+```
+
+- 开启Story时显示指定角色后，角色的静默匹配会失效
+
+### 5.3.3 角色为空
+
+一个Story中，未显示指定角色并且静默匹配失败后，角色对象为空。为空时一切 @TaskService.ability 不为空的能力扩展服务节点都会失效，只有服务节点可以正常匹配执行。相当于并未开启RBAC模式，上面流程编排的例子全是这种情况
+
+## 5.4 动态修改权限
+
+> 假设在RBAC模式下，有一个需求：当“初始化商品基本信息”后才有权限“加载SKU信息”
+
+角色关系注册时，不再添加”加载SKU信息“服务节点的权限：
+
+``` java
+@Component
+public class RoleRegister implements BusinessRoleRegister {
+
+    @Override
+    public List<BusinessRole> register() {
+
+        List<String> list = Lists.newArrayList();
+        list.add("r:init-base-info");
+        list.add("r:check-img@triple");
+        list.add("r:get-logistic-insurance");
+        list.add("r:get-shopInfo-goodsId");
+        list.add("r:detail-post-process");
+//        list.add("r:init-sku");
+        list.add("r:get-evaluation-info");
+        list.add("r:get-goods-ext-info");
+        list.add("r:get-order-info");
+        List<Permission> permissions = PermissionUtil.permissionList(String.join(",", list));
+
+        Role role = new BasicRole();
+        role.addPermission(permissions);
+        BusinessRole businessRole = new BusinessRole("special-channel", "kstry-demo-goods-show", role);
+        return Lists.newArrayList(businessRole);
+    }
+}
+```
+
+定义角色自定义组件：
+
+``` java
+@CustomRole(name = "goods-custom-role")
+public class GoodsCustomRole {
+
+    @TaskService(name = "goods-detail")
+    public void goodsDetail(@StaTaskParam GoodsDetail goodsDetail, Role role) {
+
+        if (goodsDetail != null && role != null) {
+            BasicRole basicRole = new BasicRole();
+            basicRole.addPermission(PermissionUtil.permissionList("r:init-sku"));
+            role.addParentRole(Sets.newHashSet(basicRole));
+            log.info("add permission: {}", JSON.toJSONString(basicRole));
+        }
+    }
+}
+```
+
+- 使用`@CustomRole`注解声明该类是自定义角色组件类
+- 使用 `@TaskService`声明组件方法，方法不需要有出参，因为出参结果不会进行解析
+- 自定义角色服务节点中在`@TaskService`注解设置的ability属性是无效的
+- 只要服务节点方法参数中有Role类型的变量，会自动注入Story中流转的Role对象，其他类型参数值获取方式同普通的服务节点获取。但普通服务节点（非自定义角色服务节点）参数中如果出现Role类型时不会被赋值，会拿到null
+
+增加自定义角色声明：
+
+![image-20211216003124692](./img/image-20211216003124692.png)
+
+-  定义`custom-role`属性，指定该服务节点执行完成后需要进行一次自定义角色操作。值格式：`component-name@service-name`
+- 除了声明`custom-role`属性外，自定义角色节点也可以像普通服务节点一样在流程图中定义并参与执行
+
+测试日志：
+
+```
+- add permission: {"parentRole":[],"permission":{"SERVICE_TASK":[{"identityId":"init-sku","identityType":"SERVICE_TASK"}]}}
+```
+
+
+
+## 5.5 角色匹配表达式
+
+> 假设公司为了把控成本，要求如果使用了图片检查付费服务时要做好统计，方便后面公司财务做账。也就是说，使用了三方服务的请求需要统计，走内部检查服务的无需统计。换句话说只有使用到了 `r:check-img@triple` 权限的 Story 需要进行统计
+
+定义流程如下：
+
+![image-20211216010953498](./img/image-20211216010953498.png) 
+
+- `r:check-img@triple` 表达式代表当前执行的Story中Role不为空，并且含有该权限
+- `!r:check-img@triple` 表达式代表当前执行的Story中Role为空，或者Role不为空但是不含有该权限
+- 除`!`之外表达式还支持`()&|`四个符号组成的组合运算符。比如：`(r:init-base-info||r:init-sku)&&!r:get-order-info`。翻译就是`：(有加载商品基础信息的权限||有加载商品SKU的权限)&&没有获取订单信息的权限`
 
 # 六、变量
 
 # 七、链路追踪
+
+
+
+
+
+
+
+
+
+
+
+
 
