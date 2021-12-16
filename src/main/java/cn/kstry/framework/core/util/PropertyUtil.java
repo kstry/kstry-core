@@ -22,6 +22,7 @@ import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
@@ -102,7 +103,12 @@ public class PropertyUtil {
         GlobalProperties.START_EVENT_ID_PREFIX = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_PREFIX, GlobalProperties.START_EVENT_ID_PREFIX);
         GlobalProperties.STORY_SUCCESS_CODE = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_SUCCESS_CODE, GlobalProperties.STORY_SUCCESS_CODE);
         GlobalProperties.STORY_MONITOR_TRACKING_TYPE =
-                environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING, GlobalProperties.STORY_MONITOR_TRACKING_TYPE);
+                environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_TYPE, GlobalProperties.STORY_MONITOR_TRACKING_TYPE);
+
+        String kstryStoryTrackingLog = ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_LOG;
+        if (StringUtils.isNotBlank(kstryStoryTrackingLog)) {
+            GlobalProperties.KSTRY_STORY_TRACKING_LOG = BooleanUtils.toBoolean(kstryStoryTrackingLog);
+        }
         GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME =
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_REQUEST_ID_NAME, GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME);
     }

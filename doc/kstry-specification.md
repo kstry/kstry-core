@@ -61,7 +61,7 @@ public class GoodsService {
 - 指定该类是 Kstry 定义 Task 的组件
   - name 指定组件名称，与 bpmn 流程配置文件中 `task-component` 属性进行匹配对应
 
- `@TaskService` 作用：
+`@TaskService` 作用：
 
 - 指定该方法是 Kstry 容器中的 TaskService 节点，也是最小的可编排的执行单元，对应于 bpmn 配置文件中的 `bpmn:serviceTask` 节点
 
@@ -102,7 +102,7 @@ public class GoodsService {
 </bpmn:definitions>
 ```
 
-![image-20211211151733111](./img/image-20211211151733111.png)   
+![image-20211211151733111](./img/image-20211211151733111.png)
 
 - `bpmn:startEvent` 中的 id属性，指定 Story的执行ID，**全局唯一**
   - id 需要符合一定格式的前缀, 默认是：`story-def-`，可通过配置文件进行修改，如下
@@ -161,7 +161,7 @@ public class GoodsController {
 
 ## 1.3 测试
 
-![image-20211211145528118](./img/image-20211211145528118.png) 
+![image-20211211145528118](./img/image-20211211145528118.png)
 
 # 二、流程编排
 
@@ -205,7 +205,7 @@ public class RiskControlService {
 
 > 加载商品基础信息之后，假设需要再加载SKU信息、店铺信息，两个加载过程可以并行进行。加载完所有信息之后再对商详信息进行后置处理，流程如图：
 
-![image-20211211184127107](./img/image-20211211184127107.png) 
+![image-20211211184127107](./img/image-20211211184127107.png)
 
 新增SKU初始化任务、商详后置处理任务、店铺加载任务：
 
@@ -213,31 +213,31 @@ public class RiskControlService {
 // 初始化 sku信息，GoodsService.java
 @TaskService(name = GoodsCompKey.initSku)
 public InitSkuResponse initSku(@ReqTaskParam("id") Long goodsId) {
-    SkuInfo sku1 = new SkuInfo();
-    sku1.set...
+        SkuInfo sku1 = new SkuInfo();
+        sku1.set...
 
-    SkuInfo sku2 = new SkuInfo();
-    sku2.set...
-    return InitSkuResponse.builder().skuInfos(Lists.newArrayList(sku1, sku2)).build();
-}
+        SkuInfo sku2 = new SkuInfo();
+        sku2.set...
+        return InitSkuResponse.builder().skuInfos(Lists.newArrayList(sku1, sku2)).build();
+        }
 
 // 商详信息后置处理，GoodsService.java
 @TaskService(name = GoodsCompKey.detailPostProcess)
 public void detailPostProcess(DetailPostProcessRequest request) {
 
-    GoodsDetail goodsDetail = request.getGoodsDetail();
-    ShopInfo shopInfo = request.getShopInfo();
-    if (shopInfo != null) {
+        GoodsDetail goodsDetail = request.getGoodsDetail();
+        ShopInfo shopInfo = request.getShopInfo();
+        if (shopInfo != null) {
         goodsDetail.setShopInfo(shopInfo);
-    }
-}
+        }
+        }
 
 // 加载店铺信息，ShopService.java
 @TaskService(name = ShopCompKey.getShopInfoByGoodsId)
 public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
-    TimeUnit.MILLISECONDS.sleep(200L);
-    return goodsIdShopInfoMapping.get(goodsId);
-}
+        TimeUnit.MILLISECONDS.sleep(200L);
+        return goodsIdShopInfoMapping.get(goodsId);
+        }
 ```
 
 - 并行网关一般分为两部分，前面将一个分支拆解成多个，后面将多个分支进行聚合。并行网关要求，所有入度全部执行完才能向下执行
@@ -247,7 +247,7 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
 将风控组件加到流程之后，得到流程图如下：
 
-![image-20211212002539988](./img/image-20211212002539988.png) 
+![image-20211212002539988](./img/image-20211212002539988.png)
 
 - 这时再次执行这个Story会报错，报错信息： `[K1040008] A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: Flow_0attv25`
 
@@ -257,13 +257,13 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
   - 如图关闭并行网关的严格模式：`strict-mode=false`，关闭严格模式的并行网关，不在限制入度必须被执行。关闭严格模式的并行网关与包含网关并非完全等价的。因为并行网关后面支路的判断条件是被忽略的，但是包含网关后面支路的判断条件是会被解析执行起到决策作用的
 
-![image-20211212004020932](./img/image-20211212004020932.png)  
+![image-20211212004020932](./img/image-20211212004020932.png)
 
 ## 2.3 排他网关
 
 > 假设为了推广公司app，产品承诺会对app下单用户免费赠送运费险，其他平台没有此优惠
 
-![image-20211212151933456](./img/image-20211212151933456.png) 
+![image-20211212151933456](./img/image-20211212151933456.png)
 
 新增运费险任务：
 
@@ -293,7 +293,7 @@ public class LogisticService {
 
 > 假设商品描述中有一些统计信息，比如收藏数、评价数、下单数等，不同的数据统计维护在不同的系统模块中，在商品加载时这些参数需要被加载。但是也并非全部商品都需要加载全部的统计数，比如未开启评价的商品就不需要获取评价数
 
-![image-20211212163533505](./img/image-20211212163533505.png) 
+![image-20211212163533505](./img/image-20211212163533505.png)
 
 加载商品基础信息时，加上可以评价的属性：
 
@@ -362,7 +362,7 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 
 > 上面可以看到，数据统计不仅仅在商详展示时会用到，商品列表可能会用到，订单展示也可能会用到，所以统计逻辑是一个可以复用的模块，可以将其抽离进行单独升级进化
 
-![image-20211212165623968](./img/image-20211212165623968.png)  
+![image-20211212165623968](./img/image-20211212165623968.png)
 
 ``` xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -399,12 +399,12 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 
 加上广告模块后，Story流程图如下：
 
-![image-20211213005410678](./img/image-20211213005410678.png) 
+![image-20211213005410678](./img/image-20211213005410678.png)
 
 - 这时候会收到错误信息：`[K1040004] No available TaskService matched! service task id: Activity_0ctfijm, name: 加载广告`
 - 可通过给节点增加：`allow-absent=true`，来解决这个问题，该参数代表允许配置节点找不到对应的服务节点，找不到时不会报错，会跳过继续执行
 
-![image-20211213010642607](./img/image-20211213010642607.png) 
+![image-20211213010642607](./img/image-20211213010642607.png)
 
 ### 2.6.2 异常降级
 
@@ -437,17 +437,17 @@ Caused by: java.lang.ArithmeticException: / by zero
 
 - 可通过给节点增加：`strict-mode=false`，来关闭严格模式（并行网关也有一个严格模式，要分清两者作用的不同），跳过异常，让流程得以继续向下执行
 
-![image-20211213011752679](./img/image-20211213011752679.png) 
+![image-20211213011752679](./img/image-20211213011752679.png)
 
 
 
 # 三、数据流转
 
-> 前面演示了节点、网关、事件如何通过合适的编排来应对业务不断变化带来的挑战。编排好的Story中节点与节点之间并非是完全独立的，风控检查的是商品基础信息的图片，通过入参的来源来判断是否赠送运费险，商品信息的后置处理将前面加载的一系列信息进行统一装配，等等节点间的关联无处不在。承载节点间通信工作的最重要角色就是 **StoryBus** 组件
+> 前面演示了节点、网关、事件如何通过合适的编排来应对业务不断变化带来的挑战。编排好的Story中节点与节点之间并非是完全独立的，风控审查的是商品基础信息的图片，通过入参的来源来判断是否赠送运费险，商品信息的后置处理将前面加载的一系列信息进行统一装配，等等节点间的关联无处不在。承载节点间通信工作的最重要角色就是 **StoryBus** 组件
 
 ## 3.1 StoryBus介绍
 
-![a.drawio (1)](./img/story-bus.png)  
+![a.drawio (1)](./img/story-bus.png)
 
 - 每一个任务节点如果有需要，都可以从 StoryBus 中获取需要的参数，执行完之后，将需要的结果通知到 StoryBus
 - StoryBus 中有四个数据域，分别是：
@@ -801,11 +801,11 @@ if (fire.isSuccess()) {
 
 **在子任务中，打开商品数据统计的异步化：**
 
-![image-20211213145202846](./img/image-20211213145202846.png) 
+![image-20211213145202846](./img/image-20211213145202846.png)
 
-**在主流程中打开店铺、商品、物流服务调用的异步化：** 
+**在主流程中打开店铺、商品、物流服务调用的异步化：**
 
-![image-20211213145245630](./img/image-20211213145245630.png) 
+![image-20211213145245630](./img/image-20211213145245630.png)
 
 - 如图所见，开启异步功能就是如此的简单，在网关上配置`open-async=true`即可
 - **目前支持配置异步开启的组件有：并行网关、包含网关两种**，排他网关虽然是允许有多个出度，但最终只有一个出度被执行，所以开启异步的效果不大并未支持开启异步
@@ -897,7 +897,7 @@ if (fire.isSuccess()) {
     <img src="./img/image-20211213195605737.png" alt="image-20211213195605737" style="zoom:30%;" /> 
 
   - 两个红框并行执行，两个绿框串行执行。两个并行流程中取耗时较大值300ms，所以最终耗时300ms左右
-  
+
 - 任务流中出现了不止一个的线程id，开启异步化后，任务创建并提交到线程池中，随机分配线程去执行
 
 ## 4.3 异步化生命周期
@@ -930,7 +930,7 @@ if (fire.isSuccess()) {
 - 包含网关
 - 结束事件
 
-![image-20211215163704815](./img/image-20211215163704815.png) 
+![image-20211215163704815](./img/image-20211215163704815.png)
 
 **聚合节点可以随心所欲的聚合多个流程。除聚合节点外的其他节点元素，只允许接收一个入度**
 
@@ -954,11 +954,11 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
 进行一波小流量压测：
 
-![2021-12-15_003756](./img/2021-12-15_003756.png) 
+![2021-12-15_003756](./img/2021-12-15_003756.png)
 
 测试结果：
 
-![2021-12-15_003737](./img/2021-12-15_003737.png) 
+![2021-12-15_003737](./img/2021-12-15_003737.png)
 
 报错如下：
 
@@ -977,7 +977,7 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 
 2000个样本，失败率91.1%，服务是基本不可用状态，为什么这样呢，难道是线程池队列满了？查看线程池日志：
 
-![image-20211215170948367](./img/image-20211215170948367.png) 
+![image-20211215170948367](./img/image-20211215170948367.png)
 
 核心线程数16个，最大线程数32个。整个测试下来，工作线程数一直等于核心线程数，任务队列也没满，所以可以确定不是线程池本身的问题
 
@@ -1039,7 +1039,7 @@ public void init() {
 
 将获取店铺信息的耗时模拟至1000ms再次测试：
 
-![2021-12-15_005339](./img/2021-12-15_005339.png) 
+![2021-12-15_005339](./img/2021-12-15_005339.png)
 
 可见，问题解决了
 
@@ -1061,15 +1061,15 @@ public <T> Mono<T> fireAsync(StoryRequest<T> storyRequest) {
 
 # 五、RBAC模式
 
-> ​    假设商品查询服务是中台服务，上游有着很多的业务方。对于大多数业务方来说，中台提供的能力是够用的，但是有一个业务方突然站出来说，我这边的平台对信息的违规检查异常严格，你们提供的图片检查能力是不够用的，需要做升级。
+> ​    假设商品查询服务是中台服务，上游有着很多的业务方。对于大多数业务方来说，中台提供的能力是够用的，但是有一个业务方突然站出来说，我这边的平台对信息的违规审查异常严格，你们提供的图片审查能力是不够用的，需要做升级。
 >
-> ​    于是我们找到了专门做图片检查的第三方公司。他们说可以很容易的接入使用，但是得收费，为了满足上游业务方的诉求，我们经过开会讨论和向上申请决定可以使用收费服务。但是领导还要求尽量节省开支，所以要求不严格的渠道还继续使用我们自己的图片检查能力。
+> ​    于是我们找到了专门做图片审查的第三方公司。他们说可以很容易的接入使用，但是得收费，为了满足上游业务方的诉求，我们经过开会讨论和向上申请决定可以使用收费服务。但是领导还要求尽量节省开支，所以要求不严格的渠道还继续使用我们自己的图审查能力。
 >
-> ​    首先想到的是可以使用排他网关，如果是这个渠道走三方图片检查服务，如果是其他渠道就走默认图片检查。当下这个问题解决了，但是留下了一些问题：
+> ​    首先想到的是可以使用排他网关，如果是这个渠道走三方图片审查服务，如果是其他渠道就走默认图片审查。当下这个问题解决了，但是留下了一些问题：
 >
 > - 如果再新增其他渠道是不是还要修改判断逻辑
-> - 如果又有其他渠道要使用新的风控组件检查图片，是不是还得继续新增判断逻辑、修改流程图
-> - 在中台产品看来，商品查询流程图上只有一个图片检查的功能，但是引入排他网关判断后会让商品查询的流程图变得不那么纯粹，不仅复杂难以理解，还包含了上游业务的特殊逻辑在里面变得不易维护
+> - 如果又有其他渠道要使用新的风控组件审查图片，是不是还得继续新增判断逻辑、修改流程图
+> - 在中台产品看来，商品查询流程图上只有一个图片审查的功能，但是引入排他网关判断后会让商品查询的流程图变得不那么纯粹，不仅复杂难以理解，还包含了上游业务的特殊逻辑在里面变得不易维护
 >
 > 应对这种问题，是时候使用 Kstry 的RBAC（Role-based access control）模式了
 
@@ -1402,11 +1402,11 @@ public class GoodsCustomRole {
 
 ## 5.5 角色匹配表达式
 
-> 假设公司为了把控成本，要求如果使用了图片检查付费服务时要做好统计，方便后面公司财务做账。也就是说，使用了三方服务的请求需要统计，走内部检查服务的无需统计。换句话说只有使用到了 `r:check-img@triple` 权限的 Story 需要进行统计
+> 假设公司为了把控成本，要求如果使用了图审查付费服务时要做好统计，方便后面公司财务做账。也就是说，使用了三方服务的请求需要统计，走内部审查服务的无需统计。换句话说只有使用到了 `r:check-img@triple` 权限的 Story 需要进行统计
 
 定义流程如下：
 
-![image-20211216010953498](./img/image-20211216010953498.png) 
+![image-20211216010953498](./img/image-20211216010953498.png)
 
 - `r:check-img@triple` 表达式代表当前执行的Story中Role不为空，并且含有该权限
 - `!r:check-img@triple` 表达式代表当前执行的Story中Role为空，或者Role不为空但是不含有该权限
@@ -1414,11 +1414,744 @@ public class GoodsCustomRole {
 
 # 六、变量
 
+> 成熟的项目中一定存在着繁杂且相互关联的业务逻辑关系，这些业务逻辑形成了服务的基础构架，以此应对着来自业务方、渠道方、甚至系统内部层出不穷的需求挑战。随着时间的推移，慢慢会发现，不同的渠道、不同的业务、甚至不同的生产环境对一些细节点的要求是不一样的。如何在保持原有架构清晰完整的前提下满足各色的业务参数诉求是一个非常严峻的挑战。Kstry提供了灵活的业务变量定义方式，可以在业务域、服务域、和运行环境等维度进行分类定义获取
+
+## 6.1 变量初体验
+
+`@EnableKstry`注解增加`propertiesPath`属性指定配置文件位置
+
+``` java
+@EnableKstry(bpmnPath = "./bpmn/*.bpmn", propertiesPath = "./config/*.yml")
+@SpringBootApplication
+public class KstryDemoApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(KstryDemoApplication.class, args);
+    }
+}
+```
+
+创建配置文件并定义变量
+
+```yaml
+# global-default.yml
+
+default:
+  banner: https://aass.png # 变量1
+  shop-blacklist-ids: # 变量2
+    - 2
+    - 3
+    - 4
+    - 5
+```
+
+- 配置文件后缀名必须是yml、yaml否则无法解析
+- 配置文件本身名字无要求，只要符合`propertiesPath`的定义，都会进行解析
+- `default:`是默认域，如果其他维度都没有解析到key对应的变量，会返回在default域中定义的变量
+
+使用变量
+
+```java
+@TaskComponent(name = GoodsCompKey.goods)
+public class GoodsService {
+
+    @Resource
+    private KvAbility kvAbility;
+
+    @TaskService(name = GoodsCompKey.detailPostProcess)
+    public void detailPostProcess(DetailPostProcessRequest request) {
+
+        // 从 default 域，获取店铺黑名单
+        List<String> list = kvAbility.getList("shop-blacklist-ids", String.class);
+        String banner = kvAbility.getObject("banner", String.class).orElse(null);
+        log.info("shop-blacklist-ids: {}", JSON.toJSONString(list));
+        log.info("banner: {}", banner);
+    }
+}
+
+// 日志：
+// - shop-blacklist-ids: ["2","3","4","5"]
+// - banner: https://aass.png
+```
+
+- `KvAbility`是Kstry提供的获取变量的组件，所有变量都是通过这个组件获取的
+
+## 6.2 服务维度变量
+
+> 假设在加载店铺信息时需要设置店铺的标签信息，而标签信息又是经常变化的，所以应该以变量的形式存在。如果放在default域后面业务变量多了之后会太过混乱，显然是不合适的。这时就应该按照服务维度来划分变量
+
+定义变量
+
+``` yaml
+# goods-config.yml
+
+init-shop-info:
+  labels:
+    - url: https://xxx.png
+      name: L1
+      index: 1
+    - url: https://xxx2.png
+      name: L2
+      index: 2
+```
+
+- 如果将配置信息还放在`global-default.yml`中也是可以执行的，但为了区分开看着更清楚，可以再新建一个专门放商品服务配置的配置文件
+- `init-shop-info`也是一个域，和default属于同一类型。不同的是default是全局默认域，前者则需要指定使用才能起作用
+
+服务维度使用变量
+
+``` java
+@TaskComponent(name = ShopCompKey.shop)
+public class ShopService {
+
+    @Resource
+    private KvAbility kvAbility;
+
+		@TaskService(name = ShopCompKey.getShopInfoByGoodsId, kvScope = "init-shop-info")
+		public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
+  	 	  List<ShopLabel> labels = kvAbility.getList("labels", ShopLabel.class);
+      	...
+		}
+}
+```
+
+- `@TaskService`注解有`kvScope`属性可以指定变量的域，指定该变量后，执行当前服务节点时容器会先从指定域查找变量，找不到时才从default域取
+
+
+
+## 6.3 业务维度变量
+
+> 还是风控审查图片的例子，假设现在有很多业务线都在使用这个图片审查的能力，但是不同业务线对图片尺寸的要求不一样。这时如果只是在`@TaskService`注解中定义`kvScope`属性显然是不行的。因为无法区分是哪个业务线，需要满足什么尺寸的图片。如何才可以在业务维度使用变量呢？
+
+定义变量
+
+```yaml
+# risk-control-config.yml 同样是为了维护和阅读方便才新建的文件
+
+# 风控默认配置
+risk-control:
+  img-max-size: 100
+
+# 业务维度变量配置
+special-channel: # 请求入参传入的businessId（业务域）
+  risk-control: # 在修改风控域变量时（服务域）
+    img-max-size: 200 # 将该字段的风控域默认变量，替换成这个变量的值
+```
+
+- `risk-control`变量域定义了与风控相关的业务变量
+- `special-channel`对应于请求入参传入的businessId。businessId匹配成功后会匹配当前执行的服务节点是否是在`risk-control`域服务域下，如果也匹配成功会做变量的覆盖操作。否则使用`risk-control`域变量如果没有则使用default域变量
+
+业务维度使用变量
+
+``` java
+@TaskComponent(name = RiskControlCompKey.riskControl)
+public class RiskControlService {
+
+    @Resource
+    private KvAbility kvAbility;
+
+    @TaskService(name = RiskControlCompKey.checkImg, kvScope = "risk-control")
+    public void checkImg(CheckInfo checkInfo) {
+
+        AssertUtil.notNull(checkInfo);
+        AssertUtil.notBlank(checkInfo.getImg());
+        log.info("check img: {}, size: {}", checkInfo.getImg(), kvAbility.getString("img-max-size").orElse(null));
+    }
+
+    @TaskService(name = RiskControlCompKey.checkImg, kvScope = "risk-control", ability = RiskControlCompKey.triple)
+    public void tripleCheckImg(CheckInfo checkInfo) {
+
+        AssertUtil.notNull(checkInfo);
+        AssertUtil.notBlank(checkInfo.getImg());
+        log.info("triple check img: {}, size: {}", checkInfo.getImg(), kvAbility.getString("img-max-size").orElse(null));
+    }
+}
+```
+
+- `@TaskService`注解指定`kvScope`属性，说明当前服务节点在`risk-control`域下。如果业务维度没匹配成功则会使用该域的变量
+
+``` java
+@RestController
+@RequestMapping("/goods")
+public class GoodsController {
+
+    @Resource
+    private StoryEngine storyEngine;
+
+    @PostMapping("/show")
+    public GoodsDetail showGoods(@RequestBody GoodsDetailRequest request) {
+
+        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).startId(StartIdEnum.GOODS_SHOW.getId()).request(request).build();
+        if (StringUtils.isNotBlank(request.getBusinessId())) {
+            req.setBusinessId(request.getBusinessId());
+        }
+        TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
+        if (fire.isSuccess()) {
+            return fire.getResult();
+        }
+        return null;
+    }
+}
+```
+
+- 业务维度变量起作用的重点是businessId，此例中`businessId=special-channel`时，匹配`special-channel`域的变量
+
+## 6.4 环境维度变量
+
+> 针对店铺黑名单，生产环境与开发环境不一样，如何满足呢？
+
+定义变量
+
+``` yaml
+# global-default.yml
+
+default:
+  banner: https://aass.png
+  shop-blacklist-ids:
+    - 2
+    - 3
+    - 4
+    - 5
+
+default@dev:
+  shop-blacklist-ids:
+    - 8
+    - 9
+```
+
+- 如`default@dev`，指定域所属环境的格式是：变量域名 + @ + 环境
+- 此处的环境与Spring中的 ActiveProfiles 是对应的
+- 如果dev环境未匹配到，会匹配没有指定环境的同域名的变量
+- 业务维度变量，环境参数同样定义在业务域名字后面
+
+使用变量
+
+```java
+@TaskComponent(name = GoodsCompKey.goods)
+public class GoodsService {
+
+    @Resource
+    private KvAbility kvAbility;
+
+    @TaskService(name = GoodsCompKey.detailPostProcess)
+    public void detailPostProcess(DetailPostProcessRequest request) {
+
+        // 从 default 域，获取店铺黑名单
+        List<String> list = kvAbility.getList("shop-blacklist-ids", String.class);
+        String banner = kvAbility.getObject("banner", String.class).orElse(null);
+        log.info("shop-blacklist-ids: {}", JSON.toJSONString(list));
+        log.info("banner: {}", banner);
+    }
+}
+
+// dev 环境日志
+// - shop-blacklist-ids: ["8","9"]
+// - banner: https://aass.png
+
+// 非 dev 环境日志
+// - shop-blacklist-ids: ["2","3","4","5"]
+// - banner: https://aass.png
+```
+
+## 6.5 获取变量顺序
+
+带businessId获取变量与不带businessId获取变量步骤如图所示：
+
+![a.drawio (4)](./img/a.drawio%20(4).png)
+
+带businessId获取变量：
+
+- 找业务维度中的，环境匹配且服务域也匹配的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找业务维度中的，服务域匹配的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找业务维度中的，环境匹配且是default域的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找业务维度中的，是default域的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找环境匹配且服务域也匹配的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找服务域匹配的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找环境匹配且是default域的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找是default域的变量，如果有返回对应值，结束获取流程，若没有返回空
+
+不带businessId获取变量：
+
+- 找环境匹配且服务域也匹配的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找服务域匹配的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找环境匹配且是default域的变量，如果有返回对应值，结束获取流程，若没有继续下一步
+- 找是default域的变量，如果有返回对应值，结束获取流程，若没有返回空
+
+
+
 # 七、链路追踪
 
+> 研发工作中遇到过最为抓狂的事情可能就是排查生产环境问题了。明显易发现的问题还好，但却有些问题只在生产环境的高并发真实流量场景中才会出现，相同的分支代码放到线下又可以正常运行了，每到此时也不得不以问题很难复现再观察定位的话术来敷衍。那么生产环境问题为什么难定位呢：
+>
+> - 生产环境不能debug，看不到流程的全貌，很多时候流程真正的执行链路需要靠猜测
+> - 虽然可以通过日志查看到很多细节和问题，但日志又不能无限制的使用，不然即影响了开发效率，又影响了代码的可读性，日志打的太多还容易造成生产环境计算资源、存储资源的浪费
+> - 一些极端场景链路或数据，只有生产环境才会出现
+>
+> 为了减少问题排查的复杂程度，Kstry提供了流程回溯功能，流程回溯记录了节点的信息、执行顺序、耗时、入参、出参等重要数据
+
+## 7.1 traceId支持
+
+Kstry内部使用MDC工具，支持设置全链路请求ID
+
+- `StoryEngine.fire`入参中有`requestId`属性可以指定当前请求的唯一ID，如果未指定引擎会使用UUID生成一个
+
+- 日志打印时可以获取traceId来串联当前请求的全部日志，traceId默认名是：`ks-request-id`
+
+  ``` xml
+  <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%X{ks-request-id}] %-5level %logger{20} - %msg%n"/>
+  ```
+
+- traceId默认名可以修改：
+
+  ``` yaml
+  # application.yml
+  kstry:
+    story:
+      request-id: traceId
+  ```
 
 
 
+## 7.2 流程回溯
+
+### 7.2.1 流程回溯类型
+
+Kstry支持五种模式的回溯
+
+- `NONE`：不开启回溯功能
+- `ALL`：开启全部采集点的回溯，包括所有bpmn元素执行，节点信息，节点入参，节点出参，耗时等
+- `NODE`：只采集bpmn节点执行流程，不关注节点执行细节
+- `SERVICE`：只关注bpmn元素中的 ServiceTask 节点，也就是服务任务执行节点，采集节点的信息、耗时、执行顺序等，但是不采集出参入参
+- `SERVICE_DETAIL`：在`SERVICE`的基础上增加了对出参入参的采集
+
+
+
+### 7.2.2 流程回溯使用
+
+执行入参中显示指定：
+
+``` java
+@RestController
+@RequestMapping("/goods")
+public class GoodsController {
+
+    @Resource
+    private StoryEngine storyEngine;
+
+    @PostMapping("/show")
+    public GoodsDetail showGoods(@RequestBody GoodsDetailRequest request) {
+
+        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).startId(StartIdEnum.GOODS_SHOW.getId()).trackingType(TrackingTypeEnum.SERVICE).request(request).build();
+        TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
+        if (fire.isSuccess()) {
+            return fire.getResult();
+        }
+        return null;
+    }
+}
+```
+
+全局默认配置：
+
+``` yaml
+# application.yml
+
+kstry:
+  story:
+    tracking:
+      type: service
+      log: true # 是否打印回溯log，默认为 true
+```
+
+### 7.2.3 回溯日志样例
+
+- `ALL`：
+
+  ``` javascript
+  [K1040009] startId: kstry-demo-goods-show, spend 631ms:  [{
+      "index": 1,
+      "nodeId": "kstry-demo-goods-show",
+      "nodeName": "kstry-demo-goods-show",
+      "nodeType": "START_EVENT",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "startTime": "2021-12-17T01:36:20.926",
+      "threadId": "kstry-task-thread-pool-0",
+      "toNodeIds": ["Flow_1uuw3lx"]
+  }, {
+      "index": 2,
+      "nodeId": "Flow_1uuw3lx",
+      "nodeType": "SEQUENCE_FLOW",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "startTime": "2021-12-17T01:36:20.926",
+      "threadId": "kstry-task-thread-pool-0",
+      "toNodeIds": ["Activity_1t7q7ro"]
+  }, {
+      "endTime": "2021-12-17T01:36:20.993",
+      "index": 3,
+      "methodName": "initBaseInfo",
+      "nodeId": "Activity_1t7q7ro",
+      "nodeName": "初始化\n基本信息",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [{
+          "fieldName": "goodsDetail",
+          "noticeName": "goodsDetail",
+          "noticeScopeType": "STABLE",
+          "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true}"
+      }, {
+          "noticeScopeType": "RESULT",
+          "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true}"
+      }],
+      "paramTracking": [{
+          "paramName": "request",
+          "sourceName": "request",
+          "sourceScopeType": "REQUEST",
+          "value": "{\"businessId\":\"special-channel\",\"id\":1,\"source\":\"app\"}"
+      }, {
+          "paramName": "goodsDetail",
+          "sourceName": "goodsDetail",
+          "sourceScopeType": "STABLE",
+          "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true}"
+      }, {
+          "paramName": "role",
+          "sourceName": "role",
+          "sourceScopeType": "EMPTY",
+          "value": "null"
+      }],
+      "spendTime": 67,
+      "startTime": "2021-12-17T01:36:20.926",
+      "targetName": "cn.kstry.demo.service.GoodsService",
+      "threadId": "kstry-task-thread-pool-0",
+      "toNodeIds": ["Flow_0dt6q7w"]
+  }
+  ......
+  {
+      "endTime": "2021-12-17T01:36:21.549",
+      "index": 46,
+      "methodName": "detailPostProcess",
+      "nodeId": "Activity_1s51gmf",
+      "nodeName": "商详后置处理",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [{
+          "paramName": "request.shopInfo",
+          "sourceName": "shopInfo",
+          "sourceScopeType": "STABLE",
+          "value": "{\"id\":1,\"labels\":[{\"index\":1,\"name\":\"L1\",\"url\":\"https://xxx.png\"},{\"index\":2,\"name\":\"L2\",\"url\":\"https://xxx2.png\"}],\"salesNumMonthly\":22,\"shopName\":\"店铺名称\"}"
+      }, {
+          "paramName": "request.goodsDetail",
+          "sourceName": "goodsDetail",
+          "sourceScopeType": "STABLE",
+          "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true,\"skuInfos\":[{\"img\":\"https://xxx.png\",\"price\":1000,\"skuId\":100,\"skuName\":\"sku1\",\"stock\":10},{\"img\":\"https://xxx2.png\",\"price\":2000,\"skuId\":101,\"skuName\":\"sku2\",\"stock\":20}]}"
+      }, {
+          "paramName": "request.logisticInsurance",
+          "sourceName": "logisticInsurance",
+          "sourceScopeType": "STABLE",
+          "value": "{\"desc\":\"运费险描述\",\"type\":1}"
+      }, {
+          "paramName": "request.evaluationInfo",
+          "sourceName": "evaluationInfo",
+          "sourceScopeType": "STABLE",
+          "value": "{\"evaluateCount\":20}"
+      }, {
+          "paramName": "request.orderInfo",
+          "sourceName": "orderInfo",
+          "sourceScopeType": "STABLE",
+          "value": "{\"orderedCount\":10}"
+      }, {
+          "paramName": "request.goodsExtInfo",
+          "sourceName": "goodsExtInfo",
+          "sourceScopeType": "STABLE",
+          "value": "{\"collectCount\":30}"
+      }],
+      "spendTime": 11,
+      "startTime": "2021-12-17T01:36:21.538",
+      "targetName": "cn.kstry.demo.service.GoodsService",
+      "threadId": "kstry-task-thread-pool-8",
+      "toNodeIds": ["Flow_0rl59u8"]
+  }, {
+      "index": 47,
+      "nodeId": "Flow_0rl59u8",
+      "nodeType": "SEQUENCE_FLOW",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "startTime": "2021-12-17T01:36:21.549",
+      "threadId": "kstry-task-thread-pool-8",
+      "toNodeIds": ["Event_1yjag2c"]
+  }, {
+      "index": 48,
+      "nodeId": "Event_1yjag2c",
+      "nodeType": "END_EVENT",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "startTime": "2021-12-17T01:36:21.550",
+      "threadId": "kstry-task-thread-pool-8",
+      "toNodeIds": []
+  }]
+  ```
+
+- `NODE`：
+
+  ``` javascript
+  [K1040009] startId: kstry-demo-goods-show, spend 772ms: 
+  [{
+      "index": 1,
+      "nodeId": "kstry-demo-goods-show",
+      "nodeName": "kstry-demo-goods-show",
+      "nodeType": "START_EVENT",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "toNodeIds": ["Flow_1uuw3lx"]
+  }, {
+      "index": 2,
+      "nodeId": "Flow_1uuw3lx",
+      "nodeType": "SEQUENCE_FLOW",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "toNodeIds": ["Activity_1t7q7ro"]
+  }, {
+      "index": 3,
+      "nodeId": "Activity_1t7q7ro",
+      "nodeName": "初始化\n基本信息",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "toNodeIds": ["Flow_0dt6q7w"]
+  }
+  ......
+  {
+      "index": 46,
+      "nodeId": "Activity_1s51gmf",
+      "nodeName": "商详后置处理",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "toNodeIds": ["Flow_0rl59u8"]
+  }, {
+      "index": 47,
+      "nodeId": "Flow_0rl59u8",
+      "nodeType": "SEQUENCE_FLOW",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "toNodeIds": ["Event_1yjag2c"]
+  }, {
+      "index": 48,
+      "nodeId": "Event_1yjag2c",
+      "nodeType": "END_EVENT",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "toNodeIds": []
+  }]
+  ```
+
+- `SERVICE`：
+
+  ``` javascript
+  [K1040009] startId: kstry-demo-goods-show, spend 325ms: 
+  [{
+      "endTime": "2021-12-17T01:41:54.152",
+      "index": 3,
+      "methodName": "initBaseInfo",
+      "nodeId": "Activity_1t7q7ro",
+      "nodeName": "初始化\n基本信息",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "spendTime": 57,
+      "startTime": "2021-12-17T01:41:54.095",
+      "targetName": "cn.kstry.demo.service.GoodsService",
+      "threadId": "kstry-task-thread-pool-0",
+      "toNodeIds": ["Activity_1iu4r2e"]
+  }, {
+      "ability": "triple",
+      "endTime": "2021-12-17T01:41:54.190",
+      "index": 5,
+      "methodName": "tripleCheckImg",
+      "nodeId": "Activity_1iu4r2e",
+      "nodeName": "风控服务",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "spendTime": 33,
+      "startTime": "2021-12-17T01:41:54.157",
+      "targetName": "cn.kstry.demo.service.RiskControlService",
+      "threadId": "kstry-task-thread-pool-0",
+      "toNodeIds": ["Activity_1nhha2f"]
+  }
+  ......
+  {
+      "endTime": "2021-12-17T01:41:54.243",
+      "index": 42,
+      "methodName": "getShopInfoByGoodsId",
+      "nodeId": "Activity_019xur8",
+      "nodeName": "加载店铺信息",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "spendTime": 13,
+      "startTime": "2021-12-17T01:41:54.230",
+      "targetName": "cn.kstry.demo.service.ShopService",
+      "threadId": "kstry-task-thread-pool-2",
+      "toNodeIds": ["Activity_1s51gmf"]
+  }, {
+      "endTime": "2021-12-17T01:41:54.409",
+      "index": 46,
+      "methodName": "detailPostProcess",
+      "nodeId": "Activity_1s51gmf",
+      "nodeName": "商详后置处理",
+      "nodeType": "SERVICE_TASK",
+      "noticeTracking": [],
+      "paramTracking": [],
+      "spendTime": 10,
+      "startTime": "2021-12-17T01:41:54.399",
+      "targetName": "cn.kstry.demo.service.GoodsService",
+      "threadId": "kstry-task-thread-pool-8",
+      "toNodeIds": []
+  }]
+  ```
+
+- `SERVICE_DETAIL`：
+
+  ``` javascript
+   [K1040009] startId: kstry-demo-goods-show, spend 284ms:
+   [{
+       "endTime": "2021-12-17T01:43:43.177",
+       "index": 3,
+       "methodName": "initBaseInfo",
+       "nodeId": "Activity_1t7q7ro",
+       "nodeName": "初始化\n基本信息",
+       "nodeType": "SERVICE_TASK",
+       "noticeTracking": [{
+           "fieldName": "goodsDetail",
+           "noticeName": "goodsDetail",
+           "noticeScopeType": "STABLE",
+           "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true}"
+       }, {
+           "noticeScopeType": "RESULT",
+           "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true}"
+       }],
+       "paramTracking": [{
+           "paramName": "request",
+           "sourceName": "request",
+           "sourceScopeType": "REQUEST",
+           "value": "{\"businessId\":\"special-channel\",\"id\":1,\"source\":\"app\"}"
+       }, {
+           "paramName": "goodsDetail",
+           "sourceName": "goodsDetail",
+           "sourceScopeType": "STABLE",
+           "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true}"
+       }, {
+           "paramName": "role",
+           "sourceName": "role",
+           "sourceScopeType": "EMPTY",
+           "value": "null"
+       }],
+       "spendTime": 57,
+       "startTime": "2021-12-17T01:43:43.120",
+       "targetName": "cn.kstry.demo.service.GoodsService",
+       "threadId": "kstry-task-thread-pool-0",
+       "toNodeIds": ["Activity_1iu4r2e"]
+   }, {
+       "ability": "triple",
+       "endTime": "2021-12-17T01:43:43.210",
+       "index": 5,
+       "methodName": "tripleCheckImg",
+       "nodeId": "Activity_1iu4r2e",
+       "nodeName": "风控服务",
+       "nodeType": "SERVICE_TASK",
+       "noticeTracking": [],
+       "paramTracking": [{
+           "paramName": "checkInfo.img",
+           "sourceName": "goodsDetail.img",
+           "sourceScopeType": "STABLE",
+           "value": "https://xxx.png"
+       }],
+       "spendTime": 29,
+       "startTime": "2021-12-17T01:43:43.181",
+       "targetName": "cn.kstry.demo.service.RiskControlService",
+       "threadId": "kstry-task-thread-pool-0",
+       "toNodeIds": ["Activity_1nhha2f"]
+   }
+   ...... 
+   {
+       "endTime": "2021-12-17T01:43:43.260",
+       "index": 42,
+       "methodName": "getShopInfoByGoodsId",
+       "nodeId": "Activity_019xur8",
+       "nodeName": "加载店铺信息",
+       "nodeType": "SERVICE_TASK",
+       "noticeTracking": [{
+           "fieldName": "shopInfo",
+           "noticeName": "shopInfo",
+           "noticeScopeType": "STABLE",
+           "value": "{\"id\":1,\"salesNumMonthly\":22,\"shopName\":\"店铺名称\"}"
+       }],
+       "paramTracking": [{
+           "paramName": "goodsId",
+           "sourceName": "id",
+           "sourceScopeType": "REQUEST",
+           "value": "1"
+       }],
+       "spendTime": 13,
+       "startTime": "2021-12-17T01:43:43.247",
+       "targetName": "cn.kstry.demo.service.ShopService",
+       "threadId": "kstry-task-thread-pool-2",
+       "toNodeIds": ["Activity_1s51gmf"]
+   }, {
+       "endTime": "2021-12-17T01:43:43.394",
+       "index": 46,
+       "methodName": "detailPostProcess",
+       "nodeId": "Activity_1s51gmf",
+       "nodeName": "商详后置处理",
+       "nodeType": "SERVICE_TASK",
+       "noticeTracking": [],
+       "paramTracking": [{
+           "paramName": "request.shopInfo",
+           "sourceName": "shopInfo",
+           "sourceScopeType": "STABLE",
+           "value": "{\"id\":1,\"labels\":[{\"index\":1,\"name\":\"L1\",\"url\":\"https://xxx.png\"},{\"index\":2,\"name\":\"L2\",\"url\":\"https://xxx2.png\"}],\"salesNumMonthly\":22,\"shopName\":\"店铺名称\"}"
+       }, {
+           "paramName": "request.goodsDetail",
+           "sourceName": "goodsDetail",
+           "sourceScopeType": "STABLE",
+           "value": "{\"id\":1,\"img\":\"https://xxx.png\",\"name\":\"商品\",\"needEvaluate\":true,\"skuInfos\":[{\"img\":\"https://xxx.png\",\"price\":1000,\"skuId\":100,\"skuName\":\"sku1\",\"stock\":10},{\"img\":\"https://xxx2.png\",\"price\":2000,\"skuId\":101,\"skuName\":\"sku2\",\"stock\":20}]}"
+       }, {
+           "paramName": "request.logisticInsurance",
+           "sourceName": "logisticInsurance",
+           "sourceScopeType": "STABLE",
+           "value": "{\"desc\":\"运费险描述\",\"type\":1}"
+       }, {
+           "paramName": "request.evaluationInfo",
+           "sourceName": "evaluationInfo",
+           "sourceScopeType": "STABLE",
+           "value": "{\"evaluateCount\":20}"
+       }, {
+           "paramName": "request.orderInfo",
+           "sourceName": "orderInfo",
+           "sourceScopeType": "STABLE",
+           "value": "{\"orderedCount\":10}"
+       }, {
+           "paramName": "request.goodsExtInfo",
+           "sourceName": "goodsExtInfo",
+           "sourceScopeType": "STABLE",
+           "value": "{\"collectCount\":30}"
+       }],
+       "spendTime": 15,
+       "startTime": "2021-12-17T01:43:43.379",
+       "targetName": "cn.kstry.demo.service.GoodsService",
+       "threadId": "kstry-task-thread-pool-8",
+       "toNodeIds": []
+   }]
+  ```
+
+## 7.3 回调检查
+
+回调检查是在链路执行完拿到结果或者出现异常之后调用执行的，可以应对如下问题：
+
+- 自定义流程回溯日志，甚至是出现异常时才打印回溯日志
+- 检查节点执行，参数设置等是否符合预期。有时结果没有报错，并不代表一定是没有问题的
+- 如果链路中有自定义角色的操作，检查最终角色是否符合预期
 
 
 

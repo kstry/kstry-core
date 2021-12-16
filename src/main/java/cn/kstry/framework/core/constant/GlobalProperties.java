@@ -77,4 +77,9 @@ public class GlobalProperties {
      * 链路追踪类型
      */
     public static String STORY_MONITOR_TRACKING_TYPE = "none";
+
+    /**
+     * 是否打印链路追踪日志
+     */
+    public static boolean KSTRY_STORY_TRACKING_LOG = true;
 }

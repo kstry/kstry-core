@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.kv;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,4 +31,6 @@ public interface KvAbility extends KValue {
     <T> Optional<T> getObject(String key, Class<T> clazz);
 
     Optional<String> getString(String key);
+
+    <T> List<T> getList(String key, Class<T> clazz);
 }

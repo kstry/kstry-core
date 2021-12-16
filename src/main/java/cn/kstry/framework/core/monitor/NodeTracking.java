@@ -17,14 +17,17 @@
  */
 package cn.kstry.framework.core.monitor;
 
-import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.util.AssertUtil;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+
+import com.alibaba.fastjson.annotation.JSONField;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 
 /**
  *
@@ -61,6 +64,7 @@ public class NodeTracking {
 
     private final List<NoticeTracking> noticeTracking = Lists.newArrayList();
 
+    @JSONField(serialize = false)
     private Exception taskException;
 
     public String getNodeId() {
@@ -184,6 +188,13 @@ public class NodeTracking {
 
     public Exception getTaskException() {
         return taskException;
+    }
+
+    public String getTaskExceptionCause() {
+        if (taskException == null) {
+            return null;
+        }
+        return GlobalUtil.expToString(taskException);
     }
 
     public void setTaskException(Exception taskException) {

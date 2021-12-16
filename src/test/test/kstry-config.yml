@@ -21,6 +21,7 @@ default@prod:
 
 # newScope 域
 newScope:
-  name: 王五
-  user:
-    id: bbid
+  default:
+    name: 王五
+    user:
+      id: bbid

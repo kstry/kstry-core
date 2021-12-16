@@ -233,6 +233,9 @@ public class MonitorTracking {
     }
 
     public void trackingLog() {
+        if (!GlobalProperties.KSTRY_STORY_TRACKING_LOG) {
+            return;
+        }
         List<NodeTracking> storyTracking = getStoryTracking();
         if (CollectionUtils.isNotEmpty(storyTracking)) {
             LOGGER.info("[{}] startId: {}, spend {}ms: {}",

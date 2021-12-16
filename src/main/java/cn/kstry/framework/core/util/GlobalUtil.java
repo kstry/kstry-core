@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.util;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -135,5 +137,12 @@ public class GlobalUtil {
         }
         storyRequest.setRequestId(requestId);
         return requestId;
+    }
+
+    public static String expToString(Throwable e) {
+        AssertUtil.notNull(e);
+        StringWriter writer = new StringWriter();
+        e.printStackTrace(new PrintWriter(writer, true));
+        return writer.toString();
     }
 }

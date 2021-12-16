@@ -17,11 +17,12 @@
  */
 package cn.kstry.framework.core.kv;
 
-import cn.kstry.framework.core.util.KValueUtil;
-import com.google.common.collect.Maps;
-
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.Maps;
 
 /**
  *
@@ -33,7 +34,10 @@ public class BasicKvSelector implements KvSelector {
 
     @Override
     public Optional<KValue> getKValue(String scope) {
-        return Optional.ofNullable(kValueMap.get(KValueUtil.getKValueIdentityId(scope)));
+        if (StringUtils.isBlank(scope)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(kValueMap.get(scope));
     }
 
     public void addKValue(BasicKValue kValue) {

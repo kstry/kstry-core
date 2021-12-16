@@ -1,15 +1,18 @@
 package cn.kstry.framework.test.common.service;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Assert;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.kv.KvAbility;
 import cn.kstry.framework.core.kv.KvThreadLocal;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -25,9 +28,9 @@ public class KvService {
     @TaskService(name = "kv-service")
     public void kvService() {
         System.out.println("kv service ~");
-        System.out.println("kv newScope name: " + kvAbility.getValue("name").orElse(null));
-        System.out.println("kv default name: " + kvAbility.getValueByScope("default", "name").orElse(null));
-        System.out.println("kv year: " + kvAbility.getString("year").orElse(null));
+        Assert.assertEquals("王五", kvAbility.getValue("name").orElse(null));
+        Assert.assertEquals("王五", kvAbility.getValueByScope("default", "name").orElse(null));
+        Assert.assertEquals("12",  kvAbility.getString("year").orElse(null));
         System.out.println("kv user: " + kvAbility.getObject("user", Map.class).map(t -> JSON.toJSONString(t, SerializerFeature.WriteMapNullValue)).orElse(null));
         System.out.println("kv user.name: " + kvAbility.getString("user.name").orElse(null));
         System.out.println("kv ids: " + kvAbility.getObject("ids", List.class).map(JSON::toJSONString).orElse(null));

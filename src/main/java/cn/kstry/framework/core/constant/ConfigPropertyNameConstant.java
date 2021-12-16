@@ -41,7 +41,12 @@ public interface ConfigPropertyNameConstant {
     /**
      * 链路追踪类型
      */
-    String KSTRY_STORY_TRACKING = "kstry.story.tracking.type";
+    String KSTRY_STORY_TRACKING_TYPE = "kstry.story.tracking.type";
+
+    /**
+     * 是否打印链路追踪
+     */
+    String KSTRY_STORY_TRACKING_LOG = "kstry.story.tracking.log";
 
     /**
      * requestId 名字
