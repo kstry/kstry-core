@@ -18,10 +18,10 @@
 package cn.kstry.framework.core.engine.facade;
 
 import cn.kstry.framework.core.bus.ScopeData;
-import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 
@@ -107,8 +107,8 @@ public class ReqBuilder<T> {
         return this;
     }
 
-    public ReqBuilder<T> storyBusHook(Consumer<StoryBus> storyBusHook) {
-        this.storyRequest.setStoryBusHook(storyBusHook);
+    public ReqBuilder<T> recallStoryHook(Consumer<RecallStory> recallStoryHook) {
+        this.storyRequest.setRecallStoryHook(recallStoryHook);
         return this;
     }
 

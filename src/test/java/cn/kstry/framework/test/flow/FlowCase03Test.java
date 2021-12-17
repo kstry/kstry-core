@@ -41,7 +41,7 @@ public class FlowCase03Test {
         request.setHospitalId(22L);
 
         StoryRequest<Goods> fireRequest = ReqBuilder.returnType(Goods.class).startId("story-def-test_001").request(request)
-                .storyBusHook(storyBus -> {
+                .recallStoryHook(storyBus -> {
                     AssertUtil.notNull(storyBus);
                     AssertUtil.notNull(storyBus.getResult());
                 })
@@ -64,7 +64,7 @@ public class FlowCase03Test {
                     Goods goods = new Goods();
                     goods.setName("错误");
                     return goods;
-                }).storyBusHook(storyBus -> {
+                }).recallStoryHook(storyBus -> {
                     System.out.println(JSON.toJSONString(storyBus.getResult()));
                     System.out.println(storyBus.getValue(ScopeTypeEnum.REQUEST, "activityId").orElse(null));
                     System.out.println(storyBus.getValue(ScopeTypeEnum.STABLE, "name").orElse(null));
