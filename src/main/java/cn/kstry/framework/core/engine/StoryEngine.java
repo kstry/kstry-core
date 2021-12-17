@@ -17,6 +17,19 @@
  */
 package cn.kstry.framework.core.engine;
 
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bus.BasicStoryBus;
 import cn.kstry.framework.core.bus.ScopeData;
@@ -32,24 +45,13 @@ import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.MonitorTracking;
+import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.BusinessRoleRepository;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  *
@@ -128,7 +130,7 @@ public class StoryEngine {
                     asyncTaskCell.cancel();
                     LOGGER.warn(exp.getMessage(), exp);
                     flowRegister.getMonitorTracking().trackingLog();
-                    Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
+                    Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exp, storyBus)));
                 }
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage(), e);
@@ -138,23 +140,23 @@ public class StoryEngine {
         }).thenCompose(t -> {
             try {
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
-                flowRegister.getMonitorTracking().trackingLog();
                 Class<?> returnType = storyRequest.getReturnType();
-                if (returnType == null || storyBus.getResult() == null) {
-                    Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
-                    return CompletableFuture.completedFuture(null);
+                Object result = null;
+                if (returnType != null && storyBus.getResult() != null) {
+                    result = storyBus.getResult();
+                    AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
+                            "Engine asyncFire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
                 }
-                Object result = storyBus.getResult();
-                AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
-                        "Type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
-                Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
+                Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
                 return CompletableFuture.completedFuture((T) result);
             } catch (Exception exception) {
                 LOGGER.warn(exception.getMessage(), exception);
+                Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
                 CompletableFuture<T> completableFuture = new CompletableFuture<>();
                 completableFuture.completeExceptionally(exception);
                 return completableFuture;
             } finally {
+                flowRegister.getMonitorTracking().trackingLog();
                 MDC.clear();
             }
         })).timeout(Duration.ofMillis(timeout), Mono.fromSupplier(() -> {
@@ -163,7 +165,7 @@ public class StoryEngine {
                 asyncTaskCell.cancel();
                 flowRegister.getMonitorTracking().trackingLog();
                 T t = Optional.ofNullable(storyRequest.getMonoTimeoutFallback()).map(Supplier::get).orElse(null);
-                Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
+                Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
                 return t;
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage(), e);
@@ -186,16 +188,20 @@ public class StoryEngine {
                 throw expOptional.get();
             }
 
+            Object result = null;
             Class<?> returnType = storyRequest.getReturnType();
             if (returnType != null && storyBus.getResult() != null) {
-                Object result = storyBus.getResult();
-                AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
-                return TaskResponseBox.buildSuccess((T) result);
+                result = storyBus.getResult();
+                AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
+                        "Engine fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
             }
-            return TaskResponseBox.buildSuccess(null);
+            Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
+            return TaskResponseBox.buildSuccess((T) result);
+        } catch (Exception exception) {
+            Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
+            throw exception;
         } finally {
             flowRegister.getMonitorTracking().trackingLog();
-            Optional.ofNullable(storyRequest.getStoryBusHook()).ifPresent(c -> c.accept(storyBus));
         }
     }
 

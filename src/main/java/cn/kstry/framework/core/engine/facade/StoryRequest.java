@@ -17,18 +17,19 @@
  */
 package cn.kstry.framework.core.engine.facade;
 
-import cn.kstry.framework.core.bus.ScopeData;
-import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.engine.StoryEngine;
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
-import cn.kstry.framework.core.enums.TrackingTypeEnum;
-import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import cn.kstry.framework.core.bus.ScopeData;
+import cn.kstry.framework.core.engine.StoryEngine;
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.enums.TrackingTypeEnum;
+import cn.kstry.framework.core.monitor.RecallStory;
+import cn.kstry.framework.core.role.Role;
+import cn.kstry.framework.core.util.AssertUtil;
 
 /**
  *
@@ -94,14 +95,14 @@ public class StoryRequest<T> {
     private TrackingTypeEnum trackingType;
 
     /**
-     * 任务执行成功之后，会回调这个方法，传入 StoryBus
-     * 通过 StoryBus 可获取：各个作用域变量、角色、最终返回结果、链路追踪器等，可以做如下的事情：
+     * 任务执行成功之后，会回调这个方法，传入 RecallStory
+     * 通过 RecallStory 可获取：各个作用域变量、角色、最终返回结果、链路追踪器等，可以做如下的事情：
      *  - 校验最终结果是否正确
      *  - 判断节点与节点执行关系是否正确，比如：A 节点执行之后 B 节点一定执行。 A、B 节点不能同时执行等
      *  - 判断角色与节点执行关系是否正确，比如：RA 角色出现时，节点 A 一定会出现执行
      *  - 判断过滤耗时高的节点，进行报警
      */
-    private Consumer<StoryBus> storyBusHook;
+    private Consumer<RecallStory> recallStoryHook;
 
     public String getStartId() {
         return startId;
@@ -116,6 +117,9 @@ public class StoryRequest<T> {
     }
 
     public void setReturnType(Class<?> returnType) {
+        if (returnType != null && returnType.isAssignableFrom(Void.class)) {
+            returnType = null;
+        }
         this.returnType = returnType;
     }
 
@@ -178,15 +182,15 @@ public class StoryRequest<T> {
         this.trackingType = trackingType;
     }
 
-    public Consumer<StoryBus> getStoryBusHook() {
-        return storyBusHook;
+    public Consumer<RecallStory> getRecallStoryHook() {
+        return recallStoryHook;
     }
 
-    public void setStoryBusHook(Consumer<StoryBus> storyBusHook) {
-        if (storyBusHook != null) {
-            this.storyBusHook = storyBus -> {
+    public void setRecallStoryHook(Consumer<RecallStory> recallStoryHook) {
+        if (recallStoryHook != null) {
+            this.recallStoryHook = recallStory -> {
                 try {
-                    storyBusHook.accept(storyBus);
+                    recallStoryHook.accept(recallStory);
                 } catch (Exception exception) {
                     LOGGER.warn(exception.getMessage(), exception);
                 }

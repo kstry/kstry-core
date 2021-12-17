@@ -105,7 +105,7 @@ public class PropertyUtil {
         GlobalProperties.STORY_MONITOR_TRACKING_TYPE =
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_TYPE, GlobalProperties.STORY_MONITOR_TRACKING_TYPE);
 
-        String kstryStoryTrackingLog = ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_LOG;
+        String kstryStoryTrackingLog = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_LOG);
         if (StringUtils.isNotBlank(kstryStoryTrackingLog)) {
             GlobalProperties.KSTRY_STORY_TRACKING_LOG = BooleanUtils.toBoolean(kstryStoryTrackingLog);
         }

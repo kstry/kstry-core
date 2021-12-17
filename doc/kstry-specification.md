@@ -27,52 +27,42 @@ public class KstryDemoApplication {
 }
 ```
 
+`@EnableKstry` 注解代表了要启动 Kstry 容器
+
+- bpmnPath： 指定bpmn文件位置。Kstry服务任务节点编排，使用的就是bpmn文件
+
 ### 1.2.2 编写组件代码
 
-- `@EnableKstry` 代表启动 Kstry 容器
-  - bpmnPath： 指定bpmn文件位置
-
 ``` java
-@TaskComponent(name = GoodsCompKey.goods)
+@TaskComponent(name = "goods")
 public class GoodsService {
 
-    @TaskService(name = GoodsCompKey.GOODS.initBaseInfo, noticeScope = {ScopeTypeEnum.RESULT})
+    @TaskService(name = "init-base-info", noticeScope = {ScopeTypeEnum.RESULT})
     public GoodsDetail initBaseInfo(@ReqTaskParam(reqSelf = true) GoodsDetailRequest request) {
         return GoodsDetail.builder().id(request.getId()).name("商品").build();
     }
 }
 ```
 
-> ``` java
-> public interface GoodsCompKey {
-> 
->     String goods = "goods";
-> 
->     interface GOODS {
->         String initBaseInfo = "init-base-info";
->     }
-> }
-> ```
-
 `@TaskComponent` 作用：
 
-- 起到 Spring 容器 `@Component` 注解作用，将组件托管至 Spring 容器中
+- 与 Spring 容器中 `@Component` 注解有着相同的作用，将被标注的类组件托管至 Spring 容器中
 
-- 指定该类是 Kstry 定义 Task 的组件
-  - name 指定组件名称，与 bpmn 流程配置文件中 `task-component` 属性进行匹配对应
+- 指定该类成为了 Kstry 容器可解析的任务组件，可在其中定义服务任务节点（被`@TaskService`注解修饰的方法称为服务任务节点）
+  - `name` ：指定组件名称，与 bpmn 流程配置文件中 `task-component` 属性对应
 
 `@TaskService` 作用：
 
-- 指定该方法是 Kstry 容器中的 TaskService 节点，也是最小的可编排的执行单元，对应于 bpmn 配置文件中的 `bpmn:serviceTask` 节点
+- 指定该方法是 Kstry 容器中的服务任务节点，也是在bpmn配置文件中可编排的最小执行单元，对应于 bpmn 配置文件中的 `bpmn:serviceTask` 节点
+- 该注解只能定义在 Kstry 容器可解析的任务组件类中，否则将不被解析
 
-- 该注解只有标注在 Kstry 组件的类方法上，否则将不被解析
+  - `name` ：指定该服务任务节点的名称，与 bpmn 配置文件中的 `task-service` 属性进行匹配对应
 
-  - name 指定该 service node 的名称，与 bpmn 配置文件中的 `task-service` 属性进行匹配对应
+  - `noticeScope` ：指定执行结果将被通知到 StoryBus 中的哪些作用域中，`ScopeTypeEnum.RESULT` 说明，该方法执行结果将被通知到 result 域，最终作为 Story 的执行结果返回给调用方
+- `@ReqTaskParam` 标注在服务任务节点的方法参数上，用来从 StoryBus 的 req 域获取变量值，并直接赋值给被标注的参数项
+  - `reqSelf` ：只有从 req 域获取参数时才有这个属性，该属性代表将客户端传入的 request 对象直接赋值给被标注的参数项
 
-  - noticeScope 指定执行结果将被通知到 StoryBus 中的哪些作用域中，`ScopeTypeEnum.RESULT` 说明，该方法执行结果将作为 Story 执行的最终返回结果
-
-- `@ReqTaskParam` 标注在 TaskService 的 params 某个参数上，用来从 StoryBus 的 req 域获取变量值，直接赋值给该参数
-  - reqSelf 只有从 req 域获取参数时才有这个属性，代表将客户端传入的request对象直接赋值给被标注的参数
+> StoryBus  是 Story 中的数据总线，负责存取节点产生的结果，后面将详细介绍
 
 ### 1.2.3 定义bpmn配置文件
 
@@ -105,14 +95,10 @@ public class GoodsService {
 ![image-20211211151733111](./img/image-20211211151733111.png)
 
 - `bpmn:startEvent` 中的 id属性，指定 Story的执行ID，**全局唯一**
-  - id 需要符合一定格式的前缀, 默认是：`story-def-`，可通过配置文件进行修改，如下
+  - `id`： 需要符合一定格式的前缀, 默认是：`story-def-`，可通过配置文件进行修改，如下
 
 ``` yaml
 # application.yml
-spring:
-  application:
-    name: kstry-demo
-
 kstry:
   story:
     prefix: kstry-demo- # 指定 Story 的 StartId 前缀
@@ -131,7 +117,7 @@ public class GoodsController {
     @PostMapping("/show")
     public GoodsDetail showGoods(@RequestBody GoodsDetailRequest request) {
 
-        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).startId(StartIdEnum.GOODS_SHOW.getId()).request(request).build();
+        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).startId("kstry-demo-goods-show").request(request).build();
         TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
         if (fire.isSuccess()) {
             return fire.getResult();
@@ -141,27 +127,13 @@ public class GoodsController {
 }
 ```
 
-> ``` java
-> public enum StartIdEnum {
-> 
->     GOODS_SHOW("goods-show");
-> 
->     StartIdEnum(String id) {
->         this.id = "kstry-demo-" + id;
->     }
-> 
->     @Getter
->     private final String id;
-> }
-> ```
-
 - 从 Spring 容器中注入 StoryEngine 执行器
 
-- ReqBuilder 构建执行入参，传入 startId，request。调用 fire，获取最终结果
+- ReqBuilder 构建执行入参，传入 startId，request。调用 fire方法，获取最终结果
 
 ## 1.3 测试
 
-![image-20211211145528118](./img/image-20211211145528118.png)
+![image-20211211145528118](./img/image-20211211145528118.png) 
 
 # 二、流程编排
 
