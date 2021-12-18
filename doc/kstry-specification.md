@@ -2135,13 +2135,49 @@ kstry:
    }]
   ```
 
-## 7.3 回调检查
+## 7.3 回溯自定义
 
-回调检查是在链路执行完拿到结果或者出现异常之后调用执行的，可以应对如下问题：
+回溯自定义是在链路执行完之后，拿到结果或者异常之前，执行的自定义回调方法，可以应对如下问题：
 
 - 自定义流程回溯日志，甚至是出现异常时才打印回溯日志
 - 检查节点执行，参数设置等是否符合预期。有时结果没有报错，并不代表一定是没有问题的
 - 如果链路中有自定义角色的操作，检查最终角色是否符合预期
+
+**举例：**
+
+**按时间维度的先后执行顺序，打印节点名及耗时：**
+
+```java
+@RestController
+@RequestMapping("/goods")
+public class GoodsController {
+
+    @Resource
+    private StoryEngine storyEngine;
+
+    @PostMapping("/show")
+    public GoodsDetail showGoods(@RequestBody GoodsDetailRequest request) {
+
+        StoryRequest<GoodsDetail> req = ReqBuilder.returnType(GoodsDetail.class).startId("kstry-demo-goods-show")
+                .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).build();
+      
+        req.setRecallStoryHook(recallStory -> {
+            MonitorTracking monitorTracking = recallStory.getMonitorTracking();
+            List<NodeTracking> storyTracking = monitorTracking.getStoryTracking();
+            List<String> collect = storyTracking.stream()
+                    .map(nt -> GlobalUtil.format("{}({})", nt.getNodeName(), nt.getSpendTime())).collect(Collectors.toList());
+            System.out.println("name list: " + String.join(",", collect));
+        });
+        TaskResponse<GoodsDetail> fire = storyEngine.fire(req);
+        if (fire.isSuccess()) {
+            return fire.getResult();
+        }
+        return null;
+    }
+}
+
+// 日志： name list: 初始化\n基本信息(73),风控服务(33),三方服务统计(1),加载SKU信息(8),加载广告(null),送运费险(30),加载收藏数(6),加载下单数(6),加载评价数(2),加载店铺信息(19),商详后置处理(15)
+```
 
 
 
