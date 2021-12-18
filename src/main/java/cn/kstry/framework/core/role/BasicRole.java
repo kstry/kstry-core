@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -43,6 +44,11 @@ import java.util.function.Predicate;
 public class BasicRole implements Role {
 
     /**
+     * 角色名称
+     */
+    private String name;
+
+    /**
      * 父级 角色集合
      */
     private final Set<Role> parentRoles = Sets.newHashSet();
@@ -56,6 +62,19 @@ public class BasicRole implements Role {
      * 读写锁
      */
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
+    public BasicRole() {
+
+    }
+
+    public BasicRole(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String getName() {
+        return name == null ? StringUtils.EMPTY : name;
+    }
 
     @Override
     public boolean allowPermission(@Nonnull Permission permission) {

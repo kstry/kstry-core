@@ -30,6 +30,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import java.io.InputStream;
@@ -44,6 +46,8 @@ import java.util.stream.Collectors;
  */
 public class BasicBpmnConfig extends BasicConfig implements BpmnConfig {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicBpmnConfig.class);
+
     private static final BpmnModelTransfer modelTransfer = new CamundaBpmnModelTransfer();
 
     private final List<StartEvent> startEventList = Lists.newArrayList();
@@ -55,6 +59,7 @@ public class BasicBpmnConfig extends BasicConfig implements BpmnConfig {
             setConfigUri(resource.getURI());
 
             parserResource(resource.getInputStream());
+            LOGGER.info("load bpmn resource. path: {}", resource.getURI());
         } catch (Exception e) {
             KstryException.throwException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
         }

@@ -24,6 +24,8 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.core.io.Resource;
 
@@ -36,6 +38,8 @@ import java.util.Map;
  */
 public class PropertiesConfig extends BasicConfig {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PropertiesConfig.class);
+
     private List<BasicKValue> kValueList;
 
     public PropertiesConfig(Resource resource) {
@@ -45,6 +49,7 @@ public class PropertiesConfig extends BasicConfig {
             setConfigUri(resource.getURI());
 
             parserResource(resource);
+            LOGGER.info("load properties resource. path: {}", resource.getURI());
         } catch (Exception e) {
             KstryException.throwException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
         }
