@@ -25,6 +25,7 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 
 /**
@@ -50,15 +51,16 @@ public class ProxyUtil {
     }
 
     public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target) {
-        return invokeMethod(storyBus, methodWrapper, target, new Object[0]);
+        return invokeMethod(storyBus, methodWrapper, target, () -> new Object[0]);
     }
 
-    public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target, Object... args) {
+    public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target, Supplier<Object[]> paramsSupplier) {
         try {
             KvThreadLocal.KvScope newKvScope = new KvThreadLocal.KvScope(methodWrapper.getKvScope());
             newKvScope.setBusinessId(storyBus.getBusinessId());
             KvThreadLocal.setKvScope(newKvScope);
-            return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, args);
+            Object[] params = paramsSupplier.get();
+            return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, params);
         } finally {
             KvThreadLocal.clear();
         }

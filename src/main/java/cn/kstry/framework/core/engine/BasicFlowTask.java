@@ -229,8 +229,8 @@ public abstract class BasicFlowTask {
             return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget());
         }
 
-        Object[] params = TaskServiceUtil.getTaskParams(serviceTask, storyBus, role, targetProxy, paramInjectDefs, getParamInitStrategy());
-        return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget(), params);
+        return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget(),
+                () -> TaskServiceUtil.getTaskParams(serviceTask, storyBus, role, targetProxy, paramInjectDefs, getParamInitStrategy()));
     }
 
     private static abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {

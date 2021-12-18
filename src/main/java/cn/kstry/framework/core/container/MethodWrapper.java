@@ -195,7 +195,7 @@ public class MethodWrapper {
             noticeVarList.forEach(field -> {
                 NoticeVar annotation = field.getAnnotation(NoticeVar.class);
                 AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false);
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.target(), field.getType(), false);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             });
         }
@@ -205,7 +205,7 @@ public class MethodWrapper {
             noticeStaList.forEach(field -> {
                 NoticeSta annotation = field.getAnnotation(NoticeSta.class);
                 AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false);
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.target(), field.getType(), false);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
             });
         }
@@ -215,7 +215,7 @@ public class MethodWrapper {
             noticeAllList.forEach(field -> {
                 NoticeAll annotation = field.getAnnotation(NoticeAll.class);
                 AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.name(), field.getType(), false);
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.target(), field.getType(), false);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             });
@@ -236,17 +236,17 @@ public class MethodWrapper {
         for (Class<?> c = returnType; c != Object.class; c = c.getSuperclass()) {
             NoticeSta noticeSta = AnnotationUtils.findAnnotation(c, NoticeSta.class);
             if (noticeSta != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeSta.name(), returnType, true);
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeSta.target(), returnType, true);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
             }
             NoticeVar noticeVar = AnnotationUtils.findAnnotation(c, NoticeVar.class);
             if (noticeVar != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeVar.name(), returnType, true);
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeVar.target(), returnType, true);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             }
             NoticeAll noticeAll = AnnotationUtils.findAnnotation(c, NoticeAll.class);
             if (noticeAll != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeAll.name(), returnType, true);
+                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeAll.target(), returnType, true);
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
                 returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
             }

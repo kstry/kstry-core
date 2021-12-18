@@ -36,8 +36,8 @@ public @interface NoticeVar {
     /**
      * 字段名称
      *
-     * @return name
+     * @return target
      */
-    String name() default StringUtils.EMPTY;
+    String target() default StringUtils.EMPTY;
 }
 
