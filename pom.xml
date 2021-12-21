@@ -24,7 +24,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <name>Kstry Core</name>
     <description>Kstry Core</description>
@@ -191,6 +191,7 @@
                 <configuration>
                     <charset>UTF-8</charset>
                     <docencoding>UTF-8</docencoding>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
                 <executions>
                     <execution>

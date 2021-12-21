@@ -67,21 +67,28 @@ public class BusinessRoleRepository {
         }
         String key = getKey(businessId, startId);
         try {
-            Optional<BusinessRole> businessRole = businessRoleMapping.get(key,
-                    () -> {
-                        Optional<BusinessRole> firstOptional = businessRoleList.stream().filter(br -> br.priorityMatch(businessId, startId)).findFirst();
-                        if (firstOptional.isPresent() || StringUtils.isBlank(businessId)) {
-                            return firstOptional;
-                        }
-                        // businessId 不为空时，重新按 startId 再匹配一次
-                        return businessRoleList.stream().filter(br -> br.secondMatch(startId)).findFirst();
-                    });
+            Optional<BusinessRole> businessRole = businessRoleMapping.get(key, () -> {
+                Optional<BusinessRole> brOptional = getBusinessRole(businessId, startId);
+                brOptional.ifPresent(br ->
+                        LOGGER.info("business role match. startId: {}, businessId:{}, role name:{}", br.getRole().getName(), startId, businessId)
+                );
+                return brOptional;
+            });
             return businessRole.map(BusinessRole::getRole);
         } catch (ExecutionException e) {
             LOGGER.error(e.getMessage(), e);
             throw KstryException.buildException(e, ExceptionEnum.STORY_ERROR, null);
         }
 
+    }
+
+    private Optional<BusinessRole> getBusinessRole(String businessId, String startId) {
+        Optional<BusinessRole> firstOptional = businessRoleList.stream().filter(br -> br.priorityMatch(businessId, startId)).findFirst();
+        if (firstOptional.isPresent() || StringUtils.isBlank(businessId)) {
+            return firstOptional;
+        }
+        // businessId 不为空时，重新按 startId 再匹配一次
+        return businessRoleList.stream().filter(br -> br.secondMatch(startId)).findFirst();
     }
 
     private String getKey(String businessId, String startId) {

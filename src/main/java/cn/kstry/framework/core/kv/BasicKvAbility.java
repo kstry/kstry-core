@@ -54,7 +54,6 @@ public class BasicKvAbility implements KvAbility {
 
     private final KvSelector kvSelector;
 
-
     public BasicKvAbility(KvSelector kvSelector) {
         AssertUtil.notNull(kvSelector);
         this.kvSelector = kvSelector;

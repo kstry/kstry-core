@@ -17,25 +17,6 @@
  */
 package cn.kstry.framework.core.component.expression;
 
-import java.text.MessageFormat;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Lists;
-
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.Permission;
@@ -43,6 +24,24 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.PermissionUtil;
+import com.alibaba.fastjson.JSON;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  *
@@ -102,11 +101,13 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
                 roleCondition.expression = exp;
                 roleCondition.matched = true;
                 roleCondition.permissionList = pList;
+                LOGGER.info("role permission cache. expression: {}, condition: {}", expression, JSON.toJSONString(roleCondition));
                 return roleCondition;
             }).matched;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            throw KstryException.buildException(ExceptionEnum.STORY_ERROR);
+            KstryException.throwException(e, ExceptionEnum.STORY_ERROR);
+            return false;
         }
     }
 
@@ -117,5 +118,17 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
         private String expression;
 
         private boolean matched = false;
+
+        public List<Permission> getPermissionList() {
+            return permissionList;
+        }
+
+        public String getExpression() {
+            return expression;
+        }
+
+        public boolean isMatched() {
+            return matched;
+        }
     }
 }

@@ -30,6 +30,8 @@ import java.util.Set;
  */
 public interface Role {
 
+    String getName();
+
     /**
      * 判断当前角色是否拥有该权限
      *

@@ -51,7 +51,7 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor {
                     if (r instanceof AsyncFlowTask) {
                         AsyncFlowTask asyncFlowTask = GlobalUtil.transferNotEmpty(r, AsyncFlowTask.class);
                         KstryException kstryException = new KstryException(ExceptionEnum.ASYNC_QUEUE_OVERFLOW);
-                        LOGGER.error(kstryException.getMessage() + " startId:{}", asyncFlowTask.getStartEventId());
+                        LOGGER.error(kstryException.getMessage() + " startId: {}", asyncFlowTask.getStartEventId());
                     }
                 }
         );
