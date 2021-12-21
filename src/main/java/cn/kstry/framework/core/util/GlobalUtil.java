@@ -17,28 +17,20 @@
  */
 package cn.kstry.framework.core.util;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import cn.kstry.framework.core.constant.GlobalProperties;
+import cn.kstry.framework.core.engine.facade.StoryRequest;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.exception.KstryException;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.slf4j.helpers.MessageFormatter;
 
-import com.google.common.collect.Lists;
-
-import cn.kstry.framework.core.constant.GlobalProperties;
-import cn.kstry.framework.core.engine.facade.StoryRequest;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * GlobalUtil
@@ -78,7 +70,8 @@ public class GlobalUtil {
         if (source == null) {
             return Optional.empty();
         }
-        AssertUtil.isTrue(targetClass.isAssignableFrom(source.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
+        AssertUtil.isTrue(targetClass.isAssignableFrom(source.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
+                "{} expect: {}, actual: {}", ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(), targetClass.getName(), source.getClass().getName());
         return Optional.of((T) source);
     }
 

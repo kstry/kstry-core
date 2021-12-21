@@ -59,7 +59,7 @@ public class BasicBpmnConfig extends BasicConfig implements BpmnConfig {
             setConfigUri(resource.getURI());
 
             parserResource(resource.getInputStream());
-            LOGGER.info("load bpmn resource. path: {}", resource.getURI());
+            LOGGER.info("load bpmn resource. path: {}", getConfigUri());
         } catch (Exception e) {
             KstryException.throwException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
         }

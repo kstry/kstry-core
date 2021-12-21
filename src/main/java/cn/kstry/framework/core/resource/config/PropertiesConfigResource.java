@@ -38,8 +38,8 @@ public class PropertiesConfigResource extends BasicConfigResource implements Con
 
     @Override
     public List<Config> getConfigList() {
-        return getResourceList().stream().filter(resource -> YAML_SUFFIX_NAME_LIST.stream().anyMatch(resource.getFilename()::endsWith)).map(PropertiesConfig::new)
-                .collect(Collectors.toList()).stream().map(cfg -> GlobalUtil.transferNotEmpty(cfg, Config.class)).collect(Collectors.toList());
+        return getResourceList().stream().filter(resource -> YAML_SUFFIX_NAME_LIST.stream().anyMatch(resource.getFilename()::endsWith))
+                .map(PropertiesConfig::new).map(cfg -> GlobalUtil.transferNotEmpty(cfg, Config.class)).collect(Collectors.toList());
     }
 
     @Override

@@ -49,7 +49,7 @@ public class PropertiesConfig extends BasicConfig {
             setConfigUri(resource.getURI());
 
             parserResource(resource);
-            LOGGER.info("load properties resource. path: {}", resource.getURI());
+            LOGGER.info("load properties resource. path: {}", getConfigUri());
         } catch (Exception e) {
             KstryException.throwException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
         }

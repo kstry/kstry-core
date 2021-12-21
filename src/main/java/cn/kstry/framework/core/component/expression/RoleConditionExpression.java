@@ -38,6 +38,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,7 +62,13 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
     @SuppressWarnings("all")
     public RoleConditionExpression() {
         super((scopeData, exp) -> {
-            RoleCondition roleCondition = rolePermissionCache.getIfPresent(exp);
+            RoleCondition roleCondition = null;
+            try {
+                roleCondition = rolePermissionCache.get(exp, () -> getRoleCondition(exp));
+            } catch (ExecutionException e) {
+                LOGGER.error(e.getMessage(), e);
+                KstryException.throwException(e, ExceptionEnum.STORY_ERROR);
+            }
             AssertUtil.isTrue(roleCondition != null && roleCondition.matched && CollectionUtils.isNotEmpty(roleCondition.permissionList),
                     ExceptionEnum.STORY_ERROR);
 
@@ -76,39 +83,41 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
     @Override
     public boolean match(String expression) {
         try {
-            return rolePermissionCache.get(expression, () -> {
-                RoleCondition roleCondition = new RoleCondition();
-                String exp = expression;
-                List<Permission> pList = Lists.newArrayList();
-                List<String> psList = Stream.of(expression.split("[&|!()]")).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-                for (int i = 0; i < psList.size(); i++) {
-                    String ps = psList.get(i);
-                    Optional<Permission> permissionOptional = PermissionUtil.parsePermission(ps);
-                    if (!permissionOptional.isPresent()) {
-                        return roleCondition;
-                    }
-                    pList.add(permissionOptional.get());
-                    exp = exp.replace(ps, GlobalUtil.format("{{}}", i));
-                }
-
-                try {
-                    Object[] params = IntStream.range(0, psList.size()).mapToObj(i -> true).toArray(Boolean[]::new);
-                    AssertUtil.notNull(PARSER.parseExpression(MessageFormat.format(exp, params)).getValue(Boolean.class));
-                } catch (Exception e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    return roleCondition;
-                }
-                roleCondition.expression = exp;
-                roleCondition.matched = true;
-                roleCondition.permissionList = pList;
-                LOGGER.info("role permission cache. expression: {}, condition: {}", expression, JSON.toJSONString(roleCondition));
-                return roleCondition;
-            }).matched;
+            return rolePermissionCache.get(expression, () -> getRoleCondition(expression)).matched;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             KstryException.throwException(e, ExceptionEnum.STORY_ERROR);
             return false;
         }
+    }
+
+    public static RoleCondition getRoleCondition(String expression) {
+        RoleCondition roleCondition = new RoleCondition();
+        String exp = expression;
+        List<Permission> pList = Lists.newArrayList();
+        List<String> psList = Stream.of(expression.split("[&|!()]")).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        for (int i = 0; i < psList.size(); i++) {
+            String ps = psList.get(i);
+            Optional<Permission> permissionOptional = PermissionUtil.parsePermission(ps);
+            if (!permissionOptional.isPresent()) {
+                return roleCondition;
+            }
+            pList.add(permissionOptional.get());
+            exp = exp.replace(ps, GlobalUtil.format("{{}}", i));
+        }
+
+        try {
+            Object[] params = IntStream.range(0, psList.size()).mapToObj(i -> true).toArray(Boolean[]::new);
+            AssertUtil.notNull(PARSER.parseExpression(MessageFormat.format(exp, params)).getValue(Boolean.class));
+        } catch (Exception e) {
+            LOGGER.debug(e.getMessage(), e);
+            return roleCondition;
+        }
+        roleCondition.expression = exp;
+        roleCondition.matched = true;
+        roleCondition.permissionList = pList;
+        LOGGER.debug("role permission cache. expression: {}, condition: {}", expression, JSON.toJSONString(roleCondition));
+        return roleCondition;
     }
 
     private static class RoleCondition {

@@ -33,7 +33,6 @@ import cn.kstry.framework.core.role.BusinessRole;
 import cn.kstry.framework.core.role.BusinessRoleRegister;
 import cn.kstry.framework.core.role.BusinessRoleRepository;
 import cn.kstry.framework.core.util.*;
-import com.google.common.collect.Lists;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;

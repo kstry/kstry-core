@@ -30,6 +30,7 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.PropertyUtil;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -228,7 +229,9 @@ public class BasicStoryBus implements StoryBus {
             String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
             if (!(t instanceof Map)) {
                 Field field = FieldUtils.getField(t.getClass(), fieldName, true);
-                AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(field.getType(), def.getFieldClass()), ExceptionEnum.TYPE_TRANSFER_ERROR);
+                AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(field.getType(), def.getFieldClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
+                        "{} expect: {}, actual: {}", ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(),
+                        Optional.ofNullable(field).map(Field::getType).map(Class::getName).orElse(StringUtils.EMPTY), def.getFieldClass().getName());
             }
             PropertyUtil.setProperty(t, fieldName, r);
             monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r));
