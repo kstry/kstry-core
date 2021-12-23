@@ -7,7 +7,7 @@
 **业务隔离和定制化**  
 可以根据业务需要自定义业务角色并给角色赋予权限。业务请求携带角色，匹配满足自身业务特点的服务能力加以执行。  
 
-![rbac](./doc/img/rbac.png)   
+![rbac](./doc/img/rbac.svg)   
 
 详见：[RBAC模式](./doc/kstry-specification.md#%E4%BA%94rbac%E6%A8%A1%E5%BC%8F) 
 
