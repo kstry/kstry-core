@@ -19,7 +19,10 @@ package cn.kstry.framework.core.container;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
+import cn.kstry.framework.core.container.processor.ImmutablePostProcessor;
 import cn.kstry.framework.core.container.processor.MarkIndexPostProcessor;
+import cn.kstry.framework.core.container.processor.RearrangeFlowPostProcessor;
+import cn.kstry.framework.core.container.processor.TileSubProcessPostProcessor;
 import cn.kstry.framework.core.container.processor.VerifyFlowPostProcessor;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.enums.ConfigTypeEnum;
@@ -83,7 +86,10 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
 
         BasicStartEventContainer startEventContainer = new BasicStartEventContainer(resources);
         startEventContainer.registerStartEventPostProcessor(new VerifyFlowPostProcessor());
+        startEventContainer.registerStartEventPostProcessor(new RearrangeFlowPostProcessor());
         startEventContainer.registerStartEventPostProcessor(new MarkIndexPostProcessor());
+        startEventContainer.registerStartEventPostProcessor(new TileSubProcessPostProcessor());
+        startEventContainer.registerStartEventPostProcessor(new ImmutablePostProcessor());
         startEventContainer.initStartEvent();
         return startEventContainer;
     }

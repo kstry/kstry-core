@@ -17,11 +17,12 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.engine.facade.CustomRoleInfo;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * ServiceTaskImpl
@@ -47,7 +48,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
 
     /**
      * 未匹配到 TaskService 时，是否可以忽略
-     * 默认：true 忽略未匹配到的 TaskService 继续执行下一个
+     * 默认：false 忽略未匹配到的 TaskService 时，抛出异常
      */
     private Boolean allowAbsent;
 
@@ -98,7 +99,6 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
         return BooleanUtils.isNotFalse(strictMode);
     }
 
-    @Override
     public void setStrictMode(String strictMode) {
         if (StringUtils.isBlank(strictMode)) {
             return;
@@ -109,6 +109,11 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     @Override
     public CustomRoleInfo getCustomRoleInfo() {
         return customRoleInfo;
+    }
+
+    @Override
+    public boolean validTask() {
+        return !StringUtils.isAnyBlank(taskComponent, taskService);
     }
 
     /**

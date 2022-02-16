@@ -17,7 +17,24 @@
  */
 package cn.kstry.framework.core.engine;
 
-import cn.kstry.framework.core.bpmn.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+
+import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.bpmn.ParallelGateway;
+import cn.kstry.framework.core.bpmn.SequenceFlow;
+import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bus.ContextStoryBus;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.component.hook.FlowElementHook;
@@ -32,17 +49,6 @@ import cn.kstry.framework.core.monitor.TrackingStack;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /**
  * 流程寄存器
@@ -142,7 +148,7 @@ public class FlowRegister {
 
     public Optional<FlowElement> nextElement(StoryBus storyBus) {
         Optional<FlowElement> flowElementOptional = doNextElement(storyBus);
-        if (flowElementOptional.orElse(null) instanceof ServiceTask && !taskServiceDoing) {
+        if (validServiceTask(flowElementOptional.orElse(null))) {
             return nextElement(storyBus);
         }
         return monitorTracking.trackingNextElement(flowElementOptional.orElse(null));
@@ -180,7 +186,7 @@ public class FlowRegister {
 
         AssertUtil.notNull(storyBus);
         Optional<FlowElement> peekElementOptional = flowElementStack.peek();
-        if (peekElementOptional.orElse(null) instanceof ServiceTask && !taskServiceDoing) {
+        if (validServiceTask(peekElementOptional.orElse(null))) {
             taskServiceDoing = true;
             return peekElementOptional;
         }
@@ -271,5 +277,15 @@ public class FlowRegister {
                 });
             });
         });
+    }
+
+    private boolean validServiceTask(FlowElement flowElement) {
+        if (flowElement == null) {
+            return false;
+        }
+        if (!(flowElement instanceof ServiceTask)) {
+            return false;
+        }
+        return !taskServiceDoing;
     }
 }

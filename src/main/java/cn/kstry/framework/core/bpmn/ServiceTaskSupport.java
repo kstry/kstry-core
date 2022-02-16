@@ -17,15 +17,19 @@
  */
 package cn.kstry.framework.core.bpmn;
 
+import java.util.Optional;
+
 /**
- * ParallelGateway
+ * 对 ServiceTask 支持
+ *
+ * @author lykan
  */
-public interface ParallelGateway extends Gateway, AggregationFlowElement, AsyncFlowElement {
+public interface ServiceTaskSupport {
 
     /**
-     * 是否为严格模式，严格模式下的并行节点必须所有入度都得执行到，否则报错
+     * 获取 ServiceTask
      *
-     * @return true 默认：true
+     * @return ServiceTask
      */
-    boolean isStrictMode();
+    Optional<ServiceTask> getServiceTask();
 }

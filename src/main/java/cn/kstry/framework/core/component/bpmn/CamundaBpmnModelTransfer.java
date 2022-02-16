@@ -130,13 +130,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         FlowElement flowElement = null;
         if (org.camunda.bpm.model.bpmn.instance.Task.class.isAssignableFrom(flowNode.getClass())
                 && CAMUNDA_TASK_TYPE_LIST.contains(flowNode.getElementType().getTypeName())) {
-            ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
-            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
-            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
-            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
-            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.ELEMENT_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
-            ElementPropertyUtil.getNodeProperty(flowNode,
-                    BpmnConstant.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
+            ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
             AssertUtil.notBlank(serviceTaskImpl.getTaskService(),
                     ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskService cannot be empty! fileName: {}", config.getConfigName());
             AssertUtil.notBlank(serviceTaskImpl.getTaskComponent(),
@@ -150,11 +144,13 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
                     .ifPresent(strict -> parallelGateway.setStrictMode(BooleanUtils.isNotFalse(BooleanUtils.toBooleanObject(strict))));
             flowElement = parallelGateway;
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.ExclusiveGateway) {
-            flowElement = new ExclusiveGatewayImpl();
+            ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
+            flowElement = new ExclusiveGatewayImpl(serviceTaskImpl);
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.InclusiveGateway) {
             BasicAsyncFlowElement asyncFlowElement = new BasicAsyncFlowElement();
             fillAsyncProperty(flowNode, asyncFlowElement);
-            flowElement = new InclusiveGatewayImpl(asyncFlowElement);
+            ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
+            flowElement = new InclusiveGatewayImpl(asyncFlowElement, serviceTaskImpl);
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.StartEvent) {
             StartEventImpl startEvent = new StartEventImpl();
             startEvent.setConfig(config);
@@ -180,6 +176,17 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         AssertUtil.notBlank(flowElement.getId(),
                 ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The bpmn element id attribute cannot be empty! fileName: {}", config.getConfigName());
         return flowElement;
+    }
+
+    private ServiceTaskImpl getServiceTask(FlowNode flowNode) {
+        ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.ELEMENT_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
+        ElementPropertyUtil.getNodeProperty(flowNode,
+                BpmnConstant.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
+        return serviceTaskImpl;
     }
 
     private SequenceFlow sequenceFlowMapping(Config config, org.camunda.bpm.model.bpmn.instance.SequenceFlow sf) {

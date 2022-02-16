@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0d9puy1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.9.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0d9puy1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:process id="Process_0e3mosn" name="AAC" isExecutable="true">
     <bpmn:serviceTask id="Activity_162jv35" name="打印参数9">
       <bpmn:extensionElements>
@@ -73,7 +73,13 @@
       <bpmn:incoming>Flow_0b7979u</bpmn:incoming>
       <bpmn:outgoing>Flow_1mkboda</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_0gfvm49">
+    <bpmn:exclusiveGateway id="Gateway_0gfvm49" name="排他网关执行任务">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="goods_service" />
+          <camunda:property name="task-service" value="say_request" />
+        </camunda:properties>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_11016uk</bpmn:incoming>
       <bpmn:outgoing>Flow_0kc6tpb</bpmn:outgoing>
       <bpmn:outgoing>Flow_1qohxbc</bpmn:outgoing>
@@ -230,10 +236,12 @@
       <bpmn:sequenceFlow id="Flow_0cdc3tp" sourceRef="Gateway_0dt1rrr" targetRef="Activity_1m62top" />
       <bpmn:sequenceFlow id="Flow_00gylix" sourceRef="Event_0m1jddc" targetRef="Gateway_0dt1rrr" />
       <bpmn:sequenceFlow id="Flow_0xs0z4r" sourceRef="Gateway_0dt1rrr" targetRef="Activity_083vct0" />
-      <bpmn:inclusiveGateway id="Gateway_0a2snve">
+      <bpmn:inclusiveGateway id="Gateway_0a2snve" name="包含网关执行任务">
         <bpmn:extensionElements>
           <camunda:properties>
             <camunda:property name="open-async" value="true" />
+            <camunda:property name="task-component" value="goods_service" />
+            <camunda:property name="task-service" value="say_request" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0trqlsv</bpmn:incoming>
@@ -718,6 +726,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0gfvm49_di" bpmnElement="Gateway_0gfvm49" isMarkerVisible="true">
         <dc:Bounds x="435" y="605" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="476" y="603" width="88" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_1ji13ty_di" bpmnElement="Gateway_1ji13ty">
         <dc:Bounds x="435" y="405" width="50" height="50" />
@@ -821,6 +832,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0vzxphp_di" bpmnElement="Gateway_0a2snve">
         <dc:Bounds x="944" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="846" y="960" width="88" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1y1m0qq_di" bpmnElement="Event_1y1m0qq">
         <dc:Bounds x="1281" y="952" width="36" height="36" />

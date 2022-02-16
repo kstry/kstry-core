@@ -41,12 +41,7 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
         AtomicInteger index = new AtomicInteger(1);
-        Optional<StartEvent> startEventOptional = doPostStartEvent(index, startEvent);
-        startEventOptional.ifPresent(se -> {
-            tileSubProcess(se);
-            immutable(se);
-        });
-        return startEventOptional;
+        return doPostStartEvent(index, startEvent);
     }
 
     private Optional<StartEvent> doPostStartEvent(AtomicInteger index, StartEvent startEvent) {
@@ -136,57 +131,5 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
             outStack.pushList(node.comingList());
         }
         sequenceFlowSet.forEach(SequenceFlow::immutableEndElement);
-    }
-
-    private void tileSubProcess(StartEvent startEvent) {
-        AssertUtil.notNull(startEvent);
-        Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
-        InStack<FlowElement> basicInStack = new BasicInStack<>();
-        basicInStack.push(startEvent);
-        while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
-            List<FlowElement> flowElements = Lists.newArrayList(node.outingList());
-            if (node instanceof SubProcess) {
-                StartEvent subStartEvent = GlobalUtil.transferNotEmpty(node, SubProcess.class).getStartEvent();
-                AssertUtil.notNull(subStartEvent);
-                EndEvent endEvent = subStartEvent.getEndEvent();
-                AssertUtil.notNull(endEvent);
-
-                // 递归平铺 SubProcess
-                tileSubProcess(subStartEvent);
-
-                FlowElement comingFlow = node.comingList().get(0);
-                comingFlow.clearOutingChain();
-                comingFlow.outing(subStartEvent);
-                node.clearOutingChain();
-                flowElements.forEach(endEvent::outing);
-            }
-            if (ElementPropertyUtil.isSupportAggregation(node)) {
-                comingCountMap.merge(node, 1, Integer::sum);
-                if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
-                    continue;
-                }
-            }
-            basicInStack.pushList(flowElements);
-        }
-    }
-
-    private void immutable(StartEvent startEvent) {
-        AssertUtil.notNull(startEvent);
-        Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
-        InStack<FlowElement> basicInStack = new BasicInStack<>();
-        basicInStack.push(startEvent);
-        while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
-            if (ElementPropertyUtil.isSupportAggregation(node)) {
-                comingCountMap.merge(node, 1, Integer::sum);
-                if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
-                    continue;
-                }
-            }
-            AssertUtil.notTrue(node instanceof SubProcess);
-            node.immutable();
-            basicInStack.pushList(node.outingList());
-        }
     }
 }

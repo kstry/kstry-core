@@ -43,7 +43,7 @@ public class FlowCase02Test {
             }
             TaskResponse<Goods> fire = storyEngine.fire(fireRequest);
             Assert.assertTrue(fire.isSuccess());
-            Assert.assertEquals(24, request.getCount());
+            Assert.assertEquals(26, request.getCount());
         });
     }
 }
