@@ -37,7 +37,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <dependency.spring.version>4.1.9.RELEASE</dependency.spring.version>
-        <dependency.snakeyaml.version>1.16</dependency.snakeyaml.version>
+        <dependency.snakeyaml.version>1.30</dependency.snakeyaml.version>
         <dependency.collections.version>3.2.2</dependency.collections.version>
         <dependency.fastjson.version>1.2.75</dependency.fastjson.version>
         <dependency.lang3.version>3.11</dependency.lang3.version>
