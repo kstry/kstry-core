@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.test.role.service;
 
+import cn.kstry.framework.core.annotation.NoticeScope;
 import cn.kstry.framework.core.annotation.ReqTaskParam;
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
@@ -30,27 +31,31 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 @TaskComponent(name = "say_info")
 public class SayInfoAbility extends SayInfo {
 
-    @TaskService(name = "say_number", noticeScope = ScopeTypeEnum.RESULT)
+    @NoticeScope(scope = ScopeTypeEnum.RESULT)
+    @TaskService(name = "say_number")
     public Integer sayNumber(@ReqTaskParam("number") int number) {
         System.out.println("say number: " + number);
         return number;
     }
 
-    @TaskService(name = "say_number", ability = "say_number_increase", noticeScope = ScopeTypeEnum.RESULT)
+    @NoticeScope(scope = ScopeTypeEnum.RESULT)
+    @TaskService(name = "say_number", ability = "say_number_increase")
     public Integer sayNumberIncrease(@ReqTaskParam("number") int number) {
         number = number + 1;
         System.out.println("say increase number: " + number);
         return number;
     }
 
-    @TaskService(name = "say_number", ability = "say_number_square", noticeScope = ScopeTypeEnum.RESULT)
+    @NoticeScope(scope = ScopeTypeEnum.RESULT)
+    @TaskService(name = "say_number", ability = "say_number_square")
     public Integer sayNumberSquare(@ReqTaskParam("number") int number) {
         number = number * number;
         System.out.println("say square number: " + number);
         return number;
     }
 
-    @TaskService(name = "say_number", ability = "say_number_cube", noticeScope = ScopeTypeEnum.RESULT)
+    @NoticeScope(scope = ScopeTypeEnum.RESULT)
+    @TaskService(name = "say_number", ability = "say_number_cube")
     public Integer sayNumberCube(@ReqTaskParam("number") int number) {
         number = number * number * number;
         System.out.println("say cube number : " + number);

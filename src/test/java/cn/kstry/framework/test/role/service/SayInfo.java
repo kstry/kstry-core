@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.test.role.service;
 
+import cn.kstry.framework.core.annotation.NoticeScope;
 import cn.kstry.framework.core.annotation.ReqTaskParam;
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
@@ -30,7 +31,8 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 @TaskComponent(name = "say_info2")
 public class SayInfo {
 
-    @TaskService(name = "say_number", noticeScope = ScopeTypeEnum.RESULT)
+    @NoticeScope(scope = ScopeTypeEnum.RESULT)
+    @TaskService(name = "say_number")
     public Integer sayNumber(@ReqTaskParam("number") int number) {
         System.out.println("say number2: " + number);
         return number;

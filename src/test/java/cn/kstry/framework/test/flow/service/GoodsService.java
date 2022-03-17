@@ -1,9 +1,6 @@
 package cn.kstry.framework.test.flow.service;
 
-import cn.kstry.framework.core.annotation.ReqTaskParam;
-import cn.kstry.framework.core.annotation.StaTaskParam;
-import cn.kstry.framework.core.annotation.TaskComponent;
-import cn.kstry.framework.core.annotation.TaskService;
+import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Hospital;
@@ -15,7 +12,8 @@ import reactor.core.publisher.Mono;
 @TaskComponent(name = "goods_service")
 public class GoodsService {
 
-    @TaskService(name = "get_goods", noticeScope = {ScopeTypeEnum.STABLE}, noticeTarget = "goods")
+    @NoticeScope(scope = {ScopeTypeEnum.STABLE}, target = "goods")
+    @TaskService(name = "get_goods")
     public Goods getGoods(@ReqTaskParam("goodsId") Long id) {
         Goods goods = new Goods();
         goods.setId(id);

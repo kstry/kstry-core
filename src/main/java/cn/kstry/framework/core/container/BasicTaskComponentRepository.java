@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.container;
 
+import cn.kstry.framework.core.annotation.NoticeScope;
+import cn.kstry.framework.core.annotation.NoticeSta;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.role.Role;
@@ -84,7 +86,8 @@ public abstract class BasicTaskComponentRepository implements TaskContainer {
                         registerTaskServiceKey, target.getClass().getName());
                 return;
             }
-            MethodWrapper methodWrapper = new MethodWrapper(method, annotation);
+            NoticeScope noticeScope = method.getAnnotation(NoticeScope.class);
+            MethodWrapper methodWrapper = new MethodWrapper(method, annotation, noticeScope);
             methodWrapper = methodWrapperProcessor(methodWrapper);
 
             AbilityTaskServiceWrapper ability = TaskServiceUtil.buildTaskService(annotation.name(), annotation.ability());
