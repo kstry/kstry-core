@@ -63,6 +63,13 @@ public @interface TaskService {
     ScopeTypeEnum[] noticeScope() default {};
 
     /**
+     * 指定结果到 Scope 时的变量名，配合 cn.kstry.framework.core.annotation.TaskService#noticeScope() 使用
+     *
+     * @return noticeTarget
+     */
+    String noticeTarget() default StringUtils.EMPTY;
+
+    /**
      * 指定节点返回值类型，使用 Mono 且有返回值时需要指定。当指定类型与实际类型不符是会报错
      *
      * @return returnClassType

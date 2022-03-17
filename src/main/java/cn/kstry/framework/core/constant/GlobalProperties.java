@@ -81,5 +81,5 @@ public class GlobalProperties {
     /**
      * 是否打印链路追踪日志
      */
-    public static boolean KSTRY_STORY_TRACKING_LOG = true;
+    public static boolean KSTRY_STORY_TRACKING_LOG = false;
 }

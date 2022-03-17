@@ -70,6 +70,8 @@ public class MethodWrapper {
 
     private final List<ScopeTypeEnum> noticeScopeList;
 
+    private final String noticeTarget;
+
     private final Class<?> returnClassType;
 
     private final String ability;
@@ -81,6 +83,7 @@ public class MethodWrapper {
         this.method = method;
         this.kvScope = annotation.kvScope();
         this.noticeScopeList = ImmutableList.copyOf(annotation.noticeScope());
+        this.noticeTarget = annotation.noticeTarget();
         this.returnClassType = annotation.returnClassType();
         this.ability = annotation.ability();
         methodParser(method);
@@ -174,7 +177,7 @@ public class MethodWrapper {
         // NEED_PARSER_SCOPE 与 noticeScopeList 存在交集
         if (needParser) {
             String className = StringUtils.uncapitalize(returnType.getSimpleName());
-            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, null, returnType, true);
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeTarget, returnType, true);
             if (noticeScopeList.contains(ScopeTypeEnum.STABLE)) {
                 returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
             }

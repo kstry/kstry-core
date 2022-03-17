@@ -26,7 +26,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <name>Kstry Core</name>
     <description>Kstry Core</description>
@@ -111,6 +111,7 @@
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
+            <scope>provided</scope>
             <version>${dependency.validator.version}</version>
         </dependency>
         <dependency>
@@ -143,6 +144,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>provided</scope>
             <version>${dependency.logback-classic.version}</version>
         </dependency>
 

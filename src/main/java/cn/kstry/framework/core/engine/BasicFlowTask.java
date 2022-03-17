@@ -105,7 +105,7 @@ public abstract class BasicFlowTask {
             Object result;
             try {
                 result = doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);
-            } catch (Exception exception) {
+            } catch (Throwable exception) {
                 flowRegister.getMonitorTracking().finishTaskTracking(flowElement, exception);
                 if (!serviceTask.strictMode()) {
                     LOGGER.warn(exception.getMessage(), exception);

@@ -191,7 +191,7 @@ public class StoryRequest<T> {
             this.recallStoryHook = recallStory -> {
                 try {
                     recallStoryHook.accept(recallStory);
-                } catch (Exception exception) {
+                } catch (Throwable exception) {
                     LOGGER.warn(exception.getMessage(), exception);
                 }
             };

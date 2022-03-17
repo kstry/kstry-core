@@ -70,7 +70,7 @@ public class AsyncFlowTask extends BasicFlowTask implements Callable<AsyncTaskSt
                 asyncTaskSwitch.await();
                 doExe(asyncPropertyDef.getRole(), asyncPropertyDef.getStoryBus(), this.flowRegister);
                 return AsyncTaskState.SUCCESS;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 asyncTaskCell.errorNotice(e);
                 asyncTaskCell.cancel();
                 return AsyncTaskState.ERROR;

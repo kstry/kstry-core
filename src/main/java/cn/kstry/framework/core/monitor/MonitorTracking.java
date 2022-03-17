@@ -175,14 +175,14 @@ public class MonitorTracking {
      * @param flowElement flowElement
      * @param exception exception
      */
-    public void finishTaskTracking(FlowElement flowElement, Exception exception) {
+    public void finishTaskTracking(FlowElement flowElement, Throwable exception) {
         getServiceNodeTracking(flowElement).ifPresent(tracking -> {
             tracking.setEndTime(LocalDateTime.now());
             tracking.setTaskException(exception);
             tracking.setSpendTime(Duration.between(tracking.getStartTime(), tracking.getEndTime()).toMillis());
         });
     }
-    
+
     public Optional<NodeTracking> getServiceNodeTracking(FlowElement flowElement) {
         if (!trackingTypeEnum.needServiceTracking()) {
             return Optional.empty();
@@ -221,7 +221,14 @@ public class MonitorTracking {
                         serviceTracking.refreshToNodeIds(idSet);
                     });
         }
-        return nodeTrackingMap.values().stream()
+        return nodeTrackingMap.values().stream().peek(nodeTracking -> {
+                    for (int i = 0; i < 5; i++) {
+                        if (nodeTracking.getSpendTime() != null) {
+                            break;
+                        }
+                        Thread.yield();
+                    }
+                })
                 .filter(nodeTracking -> nodeTracking.getIndex() != null)
                 .filter(nodeTracking -> !trackingTypeEnum.isServiceTracking() || nodeTracking.getNodeType() == BpmnTypeEnum.SERVICE_TASK)
                 .sorted(Comparator.comparing(NodeTracking::getIndex))
@@ -239,7 +246,7 @@ public class MonitorTracking {
         List<NodeTracking> storyTracking = getStoryTracking();
         if (CollectionUtils.isNotEmpty(storyTracking)) {
             LOGGER.info("[{}] startId: {}, spend {}ms: {}",
-                    ExceptionEnum.STORY_TRACKING_CODE.getExceptionCode(), startEvent.getId(), getSpendTime(), JSON.toJSONString(getStoryTracking()));
+                    ExceptionEnum.STORY_TRACKING_CODE.getExceptionCode(), startEvent.getId(), getSpendTime(), JSON.toJSONString(storyTracking));
         }
     }
 }

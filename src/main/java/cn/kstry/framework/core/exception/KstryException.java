@@ -57,11 +57,11 @@ public class KstryException extends RuntimeException {
         throwException(null, exceptionEnum, desc);
     }
 
-    public static void throwException(Exception exception, @Nonnull ExceptionEnum exceptionEnum) {
+    public static void throwException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum) {
         throwException(exception, exceptionEnum, exceptionEnum.getDesc());
     }
 
-    public static void throwException(Exception exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
+    public static void throwException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
         throw buildException(exception, exceptionEnum, desc);
     }
 

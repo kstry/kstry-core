@@ -26,6 +26,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.slf4j.helpers.MessageFormatter;
+import org.springframework.util.ClassUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -38,6 +39,8 @@ import java.util.stream.Collectors;
  * @author lykan
  */
 public class GlobalUtil {
+
+    private static final boolean SUPPORT_VALIDATE = ClassUtils.isPresent("javax.validation.Validator", GlobalUtil.class.getClassLoader());
 
     @SuppressWarnings("all")
     public static <T> T notEmpty(Optional<T> optional) {
@@ -137,5 +140,9 @@ public class GlobalUtil {
         StringWriter writer = new StringWriter();
         e.printStackTrace(new PrintWriter(writer, true));
         return writer.toString();
+    }
+
+    public static boolean supportValidate() {
+        return SUPPORT_VALIDATE;
     }
 }

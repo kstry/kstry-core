@@ -95,7 +95,7 @@ public class StoryEngine {
             GlobalUtil.transferNotEmpty(errorResponse, TaskResponseBox.class).setResultException(exception);
             LOGGER.warn(exception.getMessage(), exception);
             return errorResponse;
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             TaskResponse<T> errorResponse = TaskResponseBox.buildError(ExceptionEnum.SYSTEM_ERROR.getExceptionCode(), ExceptionEnum.SYSTEM_ERROR.getDesc());
             GlobalUtil.transferNotEmpty(errorResponse, TaskResponseBox.class).setResultException(exception);
             LOGGER.warn(exception.getMessage(), exception);
@@ -132,7 +132,7 @@ public class StoryEngine {
                     flowRegister.getMonitorTracking().trackingLog();
                     Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exp, storyBus)));
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOGGER.warn(e.getMessage(), e);
             } finally {
                 MDC.clear();
@@ -149,7 +149,7 @@ public class StoryEngine {
                 }
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
                 return CompletableFuture.completedFuture((T) result);
-            } catch (Exception exception) {
+            } catch (Throwable exception) {
                 LOGGER.warn(exception.getMessage(), exception);
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
                 CompletableFuture<T> completableFuture = new CompletableFuture<>();
@@ -167,7 +167,7 @@ public class StoryEngine {
                 T t = Optional.ofNullable(storyRequest.getMonoTimeoutFallback()).map(Supplier::get).orElse(null);
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
                 return t;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOGGER.warn(e.getMessage(), e);
                 throw e;
             } finally {
@@ -197,7 +197,7 @@ public class StoryEngine {
             }
             Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
             return TaskResponseBox.buildSuccess((T) result);
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
             throw exception;
         } finally {

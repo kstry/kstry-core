@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 @TaskComponent(name = "goods_service")
 public class GoodsService {
 
-    @TaskService(name = "get_goods", noticeScope = {ScopeTypeEnum.STABLE})
+    @TaskService(name = "get_goods", noticeScope = {ScopeTypeEnum.STABLE}, noticeTarget = "goods")
     public Goods getGoods(@ReqTaskParam("goodsId") Long id) {
         Goods goods = new Goods();
         goods.setId(id);

@@ -105,7 +105,7 @@ public class AsyncTaskCell {
         } catch (TimeoutException e) {
             cancel();
             return Optional.of(KstryException.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT, null));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             cancel();
             return Optional.of(KstryException.buildException(e, ExceptionEnum.ASYNC_TASK_ERROR, null));
         }

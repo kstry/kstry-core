@@ -191,8 +191,9 @@ public class TaskServiceUtil {
                 if (o instanceof ParamLifecycle) {
                     ((ParamLifecycle) o).after();
                 }
-
-                RequestValidator.validate(o);
+                if (GlobalUtil.supportValidate()) {
+                    RequestValidator.validate(o);
+                }
                 params[i] = o;
             }
         }
