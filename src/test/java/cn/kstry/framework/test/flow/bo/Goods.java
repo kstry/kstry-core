@@ -5,7 +5,6 @@ import cn.kstry.framework.core.annotation.ReqTaskField;
 
 import javax.validation.constraints.NotNull;
 
-
 @NoticeResult
 public class Goods {
 

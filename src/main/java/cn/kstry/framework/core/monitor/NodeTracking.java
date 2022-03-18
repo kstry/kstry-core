@@ -17,16 +17,17 @@
  */
 package cn.kstry.framework.core.monitor;
 
-import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+
 import com.alibaba.fastjson.annotation.JSONField;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 
 /**
  *
@@ -53,9 +54,9 @@ public class NodeTracking {
 
     private String threadId;
 
-    private LocalDateTime startTime;
+    private volatile LocalDateTime startTime;
 
-    private LocalDateTime endTime;
+    private volatile LocalDateTime endTime;
 
     private volatile Long spendTime;
 
@@ -198,5 +199,12 @@ public class NodeTracking {
 
     public void setTaskException(Throwable taskException) {
         this.taskException = taskException;
+    }
+
+    public boolean finishService() {
+        if (nodeType != BpmnTypeEnum.SERVICE_TASK || startTime == null) {
+            return true;
+        }
+        return spendTime != null;
     }
 }

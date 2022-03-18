@@ -17,6 +17,26 @@
  */
 package cn.kstry.framework.core.monitor;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
@@ -28,19 +48,6 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.apache.commons.collections.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * 链路追踪器
@@ -222,12 +229,11 @@ public class MonitorTracking {
                     });
         }
         return nodeTrackingMap.values().stream().peek(nodeTracking -> {
-                    for (int i = 0; i < 5; i++) {
-                        if (nodeTracking.getSpendTime() != null) {
-                            break;
-                        }
-                        Thread.yield();
+                    if (!trackingTypeEnum.needServiceTracking() || nodeTracking.finishService()) {
+                        return;
                     }
+                    nodeTracking.setEndTime(LocalDateTime.now());
+                    nodeTracking.setSpendTime(Duration.between(nodeTracking.getStartTime(), nodeTracking.getEndTime()).toMillis());
                 })
                 .filter(nodeTracking -> nodeTracking.getIndex() != null)
                 .filter(nodeTracking -> !trackingTypeEnum.isServiceTracking() || nodeTracking.getNodeType() == BpmnTypeEnum.SERVICE_TASK)

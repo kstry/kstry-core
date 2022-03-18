@@ -17,7 +17,8 @@
  */
 package cn.kstry.framework.core.container;
 
-import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.annotation.NoticeScope;
+import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
@@ -27,7 +28,6 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.core.annotation.AnnotationUtils;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nonnull;
@@ -46,7 +45,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -58,8 +56,6 @@ public class MethodWrapper {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
-    private static final List<ScopeTypeEnum> NEED_PARSER_SCOPE = Lists.newArrayList(ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE, ScopeTypeEnum.RESULT);
-
     private final Method method;
 
     private final ReturnTypeNoticeDef returnTypeNoticeDef = new ReturnTypeNoticeDef();
@@ -68,20 +64,21 @@ public class MethodWrapper {
 
     private final String kvScope;
 
-    private final NoticeScope noticeScope;
+    private final NoticeAnnotationWrapper noticeMethodSpecify;
 
     private final Class<?> returnClassType;
 
     private final String ability;
 
-    public MethodWrapper(@Nonnull Method method, @Nonnull TaskService annotation, NoticeScope noticeScope) {
+    public MethodWrapper(@Nonnull Method method, @Nonnull TaskService annotation, @Nonnull NoticeAnnotationWrapper noticeMethodSpecify) {
         AssertUtil.notNull(method);
         AssertUtil.notNull(annotation);
         this.method = method;
         this.kvScope = annotation.kvScope();
-        this.noticeScope = noticeScope;
+        this.noticeMethodSpecify = noticeMethodSpecify;
         this.returnClassType = annotation.returnClassType();
         this.ability = annotation.ability();
+
         methodParser(method);
     }
 
@@ -168,65 +165,17 @@ public class MethodWrapper {
                 returnType = returnClassType;
             }
         }
-        List<ScopeTypeEnum> noticeScopeList = Optional.ofNullable(noticeScope).map(NoticeScope::scope).map(Lists::newArrayList).orElse(Lists.newArrayList());
-        boolean needParser = !Collections.disjoint(NEED_PARSER_SCOPE, noticeScopeList);
 
-        // NEED_PARSER_SCOPE 与 noticeScopeList 存在交集
-        if (needParser) {
-            String className = StringUtils.uncapitalize(returnType.getSimpleName());
-            String noticeTarget = Optional.ofNullable(noticeScope).map(NoticeScope::target).orElse(null);
-            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeTarget, returnType, true);
-            if (noticeScopeList.contains(ScopeTypeEnum.STABLE)) {
-                returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
-            }
-            if (noticeScopeList.contains(ScopeTypeEnum.VARIABLE)) {
-                returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
-            }
-            if (noticeScopeList.contains(ScopeTypeEnum.RESULT)) {
-                returnTypeNoticeDef.storyResultDef = noticeFieldItem;
-            }
-            noticeScopeDef(noticeScope, noticeFieldItem);
-        }
-        parseBeanSelf(returnType);
-        parseFields(returnType);
-    }
+        String className = StringUtils.uncapitalize(returnType.getSimpleName());
+        parseReturnType(noticeMethodSpecify, returnType, className);
 
-    private void parseFields(Class<?> returnType) {
-        List<Field> noticeVarList = FieldUtils.getFieldsListWithAnnotation(returnType, NoticeVar.class);
-        if (CollectionUtils.isNotEmpty(noticeVarList)) {
-            noticeVarList.forEach(field -> {
-                NoticeVar annotation = field.getAnnotation(NoticeVar.class);
-                AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.target(), field.getType(), false);
-                returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
-            });
-        }
+        parseReturnType(new NoticeAnnotationWrapper(returnType), returnType, className);
 
-        List<Field> noticeStaList = FieldUtils.getFieldsListWithAnnotation(returnType, NoticeSta.class);
-        if (CollectionUtils.isNotEmpty(noticeStaList)) {
-            noticeStaList.forEach(field -> {
-                NoticeSta annotation = field.getAnnotation(NoticeSta.class);
-                AssertUtil.notNull(annotation);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.target(), field.getType(), false);
-                returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
-            });
-        }
-
-        List<Field> noticeResultList = FieldUtils.getFieldsListWithAnnotation(returnType, NoticeResult.class);
-        if (CollectionUtils.isNotEmpty(noticeResultList) && returnTypeNoticeDef.storyResultDef == null) {
-            AssertUtil.oneSize(noticeResultList, ExceptionEnum.ANNOTATION_USAGE_ERROR,
-                    "@NoticeResult annotation cannot be repeatedly defined! fieldNames: {}", () ->
-                            Lists.newArrayList(JSON.toJSONString(noticeResultList.stream().map(Field::getName).collect(Collectors.toList()))));
-            Field noticeResultField = noticeResultList.get(0);
-            returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(noticeResultField.getName(), null, noticeResultField.getType(), false);
-        }
-
-        List<Field> noticeAllList = FieldUtils.getFieldsListWithAnnotation(returnType, NoticeScope.class);
-        if (CollectionUtils.isNotEmpty(noticeAllList)) {
-            noticeAllList.forEach(field -> {
-                NoticeScope annotation = field.getAnnotation(NoticeScope.class);
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(field.getName(), annotation.target(), field.getType(), false);
-                noticeScopeDef(annotation, noticeFieldItem);
+        List<Field> fieldsList = FieldUtils.getAllFieldsList(returnType);
+        if (CollectionUtils.isNotEmpty(fieldsList)) {
+            fieldsList.forEach(field -> {
+                NoticeAnnotationWrapper fieldNoticeAnn = new NoticeAnnotationWrapper(field);
+                parseReturnType(fieldNoticeAnn, field.getType(), field.getName());
             });
         }
     }
@@ -251,29 +200,29 @@ public class MethodWrapper {
         }
     }
 
-    private void parseBeanSelf(Class<?> returnType) {
-        String className = StringUtils.uncapitalize(returnType.getSimpleName());
-        for (Class<?> c = returnType; c != Object.class; c = c.getSuperclass()) {
-            NoticeSta noticeSta = AnnotationUtils.findAnnotation(c, NoticeSta.class);
-            if (noticeSta != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeSta.target(), returnType, true);
-                returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
+    private void parseReturnType(NoticeAnnotationWrapper noticeAnn, Class<?> returnType, String fieldName) {
+
+        AssertUtil.notBlank(fieldName);
+        AssertUtil.anyNotNull(noticeAnn, returnType);
+
+        noticeAnn.getNoticeSta().ifPresent(noticeSta -> {
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeSta.target(), returnType, noticeAnn.isNotField());
+            returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
+        });
+        noticeAnn.getNoticeVar().ifPresent(noticeVar -> {
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeVar.target(), returnType, noticeAnn.isNotField());
+            returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
+        });
+        noticeAnn.getNoticeResult().ifPresent(noticeResult -> {
+            if (returnTypeNoticeDef.storyResultDef != null) {
+                return;
             }
-            NoticeVar noticeVar = AnnotationUtils.findAnnotation(c, NoticeVar.class);
-            if (noticeVar != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, noticeVar.target(), returnType, true);
-                returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
-            }
-            NoticeResult noticeResult = AnnotationUtils.findAnnotation(c, NoticeResult.class);
-            if (noticeResult != null && returnTypeNoticeDef.storyResultDef == null) {
-                returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(className, null, returnType, true);
-            }
-            NoticeScope nsAnn = AnnotationUtils.findAnnotation(c, NoticeScope.class);
-            if (nsAnn != null) {
-                NoticeFieldItem noticeFieldItem = new NoticeFieldItem(className, nsAnn.target(), returnType, true);
-                noticeScopeDef(nsAnn, noticeFieldItem);
-            }
-        }
+            returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(fieldName, null, returnType, noticeAnn.isNotField());
+        });
+        noticeAnn.getNoticeScope().ifPresent(noticeScope -> {
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeScope.target(), returnType, noticeAnn.isNotField());
+            noticeScopeDef(noticeScope, noticeFieldItem);
+        });
     }
 
     public static class ParamInjectDef {
