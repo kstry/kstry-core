@@ -115,7 +115,6 @@ public abstract class BasicFlowTask {
             }
             if (result instanceof Mono) {
                 monoResultHandler(role, storyBus, flowRegister, serviceTask, taskServiceDef, result);
-                flowRegister.getMonitorTracking().finishTaskTracking(flowElement, null);
                 break;
             }
             resultHandler(role, storyBus, serviceTask, result, taskServiceDef);
@@ -145,6 +144,7 @@ public abstract class BasicFlowTask {
             @Override
             protected void doNextHook(Object value) {
                 resultHandler(role, scopeData, serviceTask, value, taskServiceDef);
+                flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, null);
                 AsyncFlowTask asyncFlowTask = new AsyncFlowTask(getAsyncPropertyDef(), flowRegister);
                 try {
                     Future<AsyncTaskState> taskFuture = getAsyncThreadPool().submit(asyncFlowTask);
@@ -158,6 +158,7 @@ public abstract class BasicFlowTask {
 
             @Override
             protected void doErrorHook(Throwable throwable) {
+                flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, throwable);
                 flowRegister.getAsyncTaskCell().errorNotice(throwable);
                 flowRegister.getAsyncTaskCell().cancel();
             }
@@ -165,6 +166,7 @@ public abstract class BasicFlowTask {
             @Override
             protected void doCompleteHook() {
                 resultHandler(role, scopeData, serviceTask, null, taskServiceDef);
+                flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, null);
                 AsyncFlowTask asyncFlowTask = new AsyncFlowTask(getAsyncPropertyDef(), flowRegister);
                 try {
                     Future<AsyncTaskState> taskFuture = getAsyncThreadPool().submit(asyncFlowTask);
