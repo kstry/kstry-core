@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * @author lykan
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.FIELD})
+@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 public @interface NoticeVar {
 
     /**
