@@ -238,11 +238,13 @@ public class BasicStoryBus implements StoryBus {
         });
     }
 
-    private ScopeData getVar() {
+    @Override
+    public ScopeData getVar() {
         return varScopeData;
     }
 
-    private ScopeData getSta() {
+    @Override
+    public ScopeData getSta() {
         return staScopeData;
     }
 }

@@ -21,6 +21,8 @@ import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.util.AssertUtil;
 
 import java.util.function.BiPredicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author lykan
@@ -36,6 +38,8 @@ public class ConditionExpressionImpl implements ConditionExpression {
      * 计算表达式行为，由具体业务指定
      */
     private final BiPredicate<StoryBus, String> testCondition;
+
+    private final static Pattern expressionPattern = Pattern.compile("((req)|(sta)|(var)|(result))(\\.\\w+)+");
 
     public ConditionExpressionImpl(BiPredicate<StoryBus, String> testCondition) {
         AssertUtil.notNull(testCondition);
@@ -64,6 +68,16 @@ public class ConditionExpressionImpl implements ConditionExpression {
      */
     public ConditionExpression newWorkConditionExpression(String expression) {
         ConditionExpressionImpl conditionExpression = new ConditionExpressionImpl(this.testCondition);
+        Matcher matcher = expressionPattern.matcher(expression);
+        while (matcher.find()) {
+            String group = matcher.group();
+            String[] split = group.split("\\.");
+            StringBuilder exp = new StringBuilder(split[0]);
+            for (int i = 1; i < split.length; i++) {
+                exp.append("['").append(split[i]).append("']");
+            }
+            expression = expression.replace(group, exp.toString());
+        }
         conditionExpression.expression = expression;
         return conditionExpression;
     }
