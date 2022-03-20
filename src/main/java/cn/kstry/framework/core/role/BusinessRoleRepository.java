@@ -70,7 +70,7 @@ public class BusinessRoleRepository {
             Optional<BusinessRole> businessRole = businessRoleMapping.get(key, () -> {
                 Optional<BusinessRole> brOptional = getBusinessRole(businessId, startId);
                 brOptional.ifPresent(br ->
-                        LOGGER.info("business role match. startId: {}, businessId:{}, role name:{}", br.getRole().getName(), startId, businessId)
+                        LOGGER.debug("business role match. startId: {}, businessId:{}, role name:{}", startId, businessId, br.getRole().getName())
                 );
                 return brOptional;
             });
