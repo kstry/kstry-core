@@ -17,7 +17,6 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.annotation.ElementType;
@@ -58,7 +57,7 @@ public @interface TaskService {
     /**
      * 指定节点返回值类型，使用 Mono 且有返回值时需要指定。当指定类型与实际类型不符是会报错
      *
-     * @return returnClassType
+     * @return targetType
      */
-    Class<?> returnClassType() default Object.class;
+    Class<?> targetType() default Object.class;
 }

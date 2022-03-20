@@ -1,18 +1,20 @@
-# 一、快速开始
+# Kstry使用文档
 
-## 1.1 配置引入
+## 一、快速开始
+
+### 1.1 配置引入
 
 ``` xml
 <dependency>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
-## 1.2 项目引入
+### 1.2 项目引入
 
-### 1.2.1 开启Kstry容器
+#### 1.2.1 开启Kstry容器
 
 > kstry框架与spring容器有较为密切的关联和依赖，当前版本暂时只能在spring环境中运行
 
@@ -31,13 +33,14 @@ public class KstryDemoApplication {
 
 - bpmnPath： 指定bpmn文件位置。Kstry服务任务节点编排，使用的就是bpmn文件
 
-### 1.2.2 编写组件代码
+#### 1.2.2 编写组件代码
 
 ``` java
 @TaskComponent(name = "goods")
 public class GoodsService {
-
-    @TaskService(name = "init-base-info", noticeScope = {ScopeTypeEnum.RESULT})
+    
+	@NoticeResult
+    @TaskService(name = "init-base-info")
     public GoodsDetail initBaseInfo(@ReqTaskParam(reqSelf = true) GoodsDetailRequest request) {
         return GoodsDetail.builder().id(request.getId()).name("商品").build();
     }
@@ -58,13 +61,18 @@ public class GoodsService {
 
   - `name` ：指定该服务任务节点的名称，与 bpmn 配置文件中的 `task-service` 属性进行匹配对应
 
-  - `noticeScope` ：指定执行结果将被通知到 StoryBus 中的哪些作用域中，`ScopeTypeEnum.RESULT` 说明，该方法执行结果将被通知到 result 域，最终作为 Story 的执行结果返回给调用方
+`@NoticeResult` 作用：
+
+- 指定执行结果将被通知到 StoryBus 中的哪些作用域中，`@NoticeResult` 说明，该方法执行结果将被通知到 result 域，最终作为 Story 的执行结果返回给调用方
+
+`@ReqTaskParam` 作用：
+
 - `@ReqTaskParam` 标注在服务任务节点的方法参数上，用来从 StoryBus 的 req 域获取变量值，并直接赋值给被标注的参数项
   - `reqSelf` ：只有从 req 域获取参数时才有这个属性，该属性代表将客户端传入的 request 对象直接赋值给被标注的参数项
 
 > StoryBus  是 Story 中的数据总线，负责存取节点产生的结果，后面将详细介绍
 
-### 1.2.3 定义bpmn配置文件
+#### 1.2.3 定义bpmn配置文件
 
 ``` xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -98,13 +106,13 @@ public class GoodsService {
   - `id`： 需要符合一定格式的前缀, 默认是：`story-def-`，可通过配置文件进行修改，如下
 
 ``` yaml
-# application.yml
+## application.yml
 kstry:
   story:
     prefix: kstry-demo- # 指定 Story 的 StartId 前缀
 ```
 
-### 1.2.4 执行Story
+#### 1.2.4 执行Story
 
 ``` java
 @RestController
@@ -131,23 +139,23 @@ public class GoodsController {
 
 - ReqBuilder 构建执行入参，传入 startId，request。调用 fire方法，获取最终结果
 
-## 1.3 测试
+### 1.3 测试
 
-![image-20211211145528118](./img/image-20211211145528118.png) 
+![image-20211211145528118](./img/image-20211211145528118.png)
 
-# 二、流程编排
+## 二、流程编排
 
 > 流程编排可以让系统提供的服务能力做到可视化。业务逻辑一目了然，支持普通流程图和泳道图
 
 **普通流程图：**
 
-![image-20211219163540179](./img/image-20211219163540179.png) 
+![image-20211219163540179](./img/image-20211219163540179.png)
 
 **泳道图：**
 
-![image-20211219163429668](./img/image-20211219163429668.png) 
+![image-20211219163429668](./img/image-20211219163429668.png)
 
-## 2.1 节点多支路
+### 2.1 节点多支路
 
 > 场景假设： 在上传商品图片时，一般会经过风控系统，对所传图片进行审查，以此防止给用户展示了一些违规图片，所带来的不良社会反映。这里暂且忽略性能问题，将风控审查动作做在了商品获取链路中
 
@@ -183,13 +191,13 @@ public class RiskControlService {
 - **一个链路图中有且仅有一个开始事件和一个结束事件**（子事件中同样有这个限制，外围事件和子流程中的事件是可以共同存在的）
 - 任务（Task）、事件（Event）节点后面的出度如果没有定义表达式时，默认为true。不同类型的网关（Gateway）节点特点不同，后面介绍
 
-## 2.2 并行网关
+### 2.2 并行网关
 
 > 场景假设： 加载商品基础信息之后，假设需要再加载SKU信息、店铺信息。两个加载过程没有前后依赖关系，所以可以并行进行。加载完所有信息之后再对商详信息进行后置处理
 
 **BPMN图示如下：**
 
-![image-20211211184127107](./img/image-20211211184127107.png) 
+![image-20211211184127107](./img/image-20211211184127107.png)
 
 **新增“加载SKU信息”、“加载店铺信息”、“商详后置处理”三个服务任务节点：**
 
@@ -231,7 +239,7 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
 **将风控组件加到流程之后，得到流程图如下：**
 
-![image-20211212002539988](./img/image-20211212002539988.png) 
+![image-20211212002539988](./img/image-20211212002539988.png)
 
 - 此时如果再次执行这个 Story 会报错，报错信息： `[K1040008] A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: Flow_0attv25`
 
@@ -241,15 +249,15 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
   - 如下图，关闭并行网关的严格模式：`strict-mode=false`。关闭严格模式的并行网关，不再限制网关入度必须都被执行。关闭严格模式的并行网关与包含网关也并非是完全等价的。因为并行网关后面出度的条件表达式是被忽略的，但是包含网关后面出度的条件表达式是会被解析执行起到决策作用的
 
-![image-20211212004020932](./img/image-20211212004020932.png)   
+![image-20211212004020932](./img/image-20211212004020932.png)
 
-## 2.3 排他网关
+### 2.3 排他网关
 
 > 场景假设： 为了推广公司app，产品承诺会对app端下单用户免费赠送运费险，其他平台没有此优惠
 
 **BPMN图示如下：**
 
-![image-20211212151933456](./img/image-20211212151933456.png) 
+![image-20211212151933456](./img/image-20211212151933456.png)
 
 **新增“送运费险”服务任务节点：**
 
@@ -258,7 +266,8 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 @TaskComponent(name = "logistic")
 public class LogisticService {
 
-    @TaskService(name = "get-logistic-insurance", noticeScope = ScopeTypeEnum.STABLE)
+    @NoticeSta
+    @TaskService(name = "get-logistic-insurance")
     public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
         log.info("request source：{}", request.getSource());
         LogisticInsurance logisticInsurance = new LogisticInsurance();
@@ -275,18 +284,19 @@ public class LogisticService {
 - 当全部出度上的表达式都解析为false时会抛出异常并结束流程，异常信息`：[K1040008] Match to the next process node as empty! taskId: Gateway_15malyv`
 - 由于排他网关最终执行的只有一条链路，所以排他网关是不支持开启异步的，因为没啥意义
 
-## 2.4 包含网关
+### 2.4 包含网关
 
 > 场景假设： 假设商品描述中有一些统计信息，比如收藏数、评价数、下单数等，不同的数据统计在不同的系统模块中维护，在商品加载时这些统计参数也需要被加载。但也并非是所有商品都需要加载全部的统计参数，比如未开启评价的商品就不需要获取评价数
 
 **BPMN图示如下：**
 
-![image-20211212163533505](./img/image-20211212163533505.png) 
+![image-20211212163533505](./img/image-20211212163533505.png)
 
 **加载商品基础信息时，加上可以评价的属性：**
 
 ``` java
-@TaskService(name = "init-base-info", noticeScope = {ScopeTypeEnum.RESULT})
+@NoticeResult
+@TaskService(name = "init-base-info")
 public GoodsDetail initBaseInfo(@ReqTaskParam(reqSelf = true) GoodsDetailRequest request) {
     // needEvaluate(true)
     return GoodsDetail.builder().id(request.getId()).name("商品").img("https://xxx.png").needEvaluate(true).build();
@@ -299,7 +309,8 @@ public GoodsDetail initBaseInfo(@ReqTaskParam(reqSelf = true) GoodsDetailRequest
 @TaskComponent(name = "order")
 public class OrderService {
 
-    @TaskService(name = "get-order-info", noticeScope = ScopeTypeEnum.STABLE)
+    @NoticeSta
+    @TaskService(name = "get-order-info")
     public OrderInfo getOrderInfo(@ReqTaskParam("id") Long goodsId) {
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setOrderedCount(10);
@@ -311,7 +322,8 @@ public class OrderService {
 @TaskComponent(name = "evaluation")
 public class EvaluationService {
 
-    @TaskService(name = "get-evaluation-info", noticeScope = ScopeTypeEnum.STABLE)
+    @NoticeSta
+    @TaskService(name = "get-evaluation-info")
     public EvaluationInfo getEvaluationInfo(@ReqTaskParam("id") Long goodsId) {
         EvaluationInfo evaluationInfo = new EvaluationInfo();
         evaluationInfo.setEvaluateCount(20);
@@ -320,7 +332,8 @@ public class EvaluationService {
     }
 }
 
-@TaskService(name = "get-goods-ext-info", noticeScope = ScopeTypeEnum.STABLE)
+@NoticeSta
+@TaskService(name = "get-goods-ext-info")
 public GoodsExtInfo getGoodsExtInfo(@ReqTaskParam("id") Long goodsId) {
     GoodsExtInfo goodsExtInfo = new GoodsExtInfo();
     goodsExtInfo.setCollectCount(30);
@@ -335,7 +348,7 @@ public GoodsExtInfo getGoodsExtInfo(@ReqTaskParam("id") Long goodsId) {
 @TaskService(name = GoodsCompKey.detailPostProcess)
 public void detailPostProcess(DetailPostProcessRequest request) {
     GoodsDetail goodsDetail = request.getGoodsDetail();
-	...
+    ...
     GoodsExtInfo goodsExtInfo = request.getGoodsExtInfo();
     OrderInfo orderInfo = request.getOrderInfo();
     EvaluationInfo evaluationInfo = request.getEvaluationInfo();
@@ -347,13 +360,13 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 - 包含网关没有所有入度必须被执行的限制，等待全部入度执行完成或者得知其中可能有部分入度不满足条件不再执行后，会继续向下执行
 - 包含网关后面出度可以设置条件表达式，表达式解析规则与排他网关出度解析规则相同
 
-## 2.5 子流程
+### 2.5 子流程
 
 > 场景假设： 上面可以看到，数据统计不仅仅在商详展示时会用到，商品列表可能会用到，订单展示也可能会用到，所以统计逻辑是一个可以复用的模块，可以将其抽离，以便之后进行单独维护升级。这样也使原来比较复杂的流程图得到了简化，理解起来会更加方便
 
 **BPMN图示如下：**
 
-![image-20211212165623968](./img/image-20211212165623968.png) 
+![image-20211212165623968](./img/image-20211212165623968.png)
 
 **BPMN配置文件：**
 
@@ -386,29 +399,30 @@ public void detailPostProcess(DetailPostProcessRequest request) {
 - 子流程是支持嵌套的，A子流程可以依赖B子流程，但是自身依赖自身是非法的。并且子流程中也支持开启异步模式
 - 定义`bpmn:callActivity`引用子流程，程序运行到此时会跳转至子流程执行，子流程执行完成后会跳转回来继续执行
 
-## 2.6 节点控制
+### 2.6 节点控制
 
-### 2.6.1 允许服务为空
+#### 2.6.1 允许服务为空
 
 > 场景假设： 假设商品渲染时需要加载一些外部的商业广告，这时我们就要升级流程图增加获取广告信息的部分。但是这个流程图又在被多个系统解析执行，一部分系统有加载广告的模块，但有的系统不具备这个能力。这时如果不具备加载广告服务节点的系统解析该流程图时就会报错，原因是代码中找不到与配置文件中节点定义相匹配的服务任务节点
 
 **BPMN图示如下：**
 
-![image-20211213005410678](./img/image-20211213005410678.png) 
+![image-20211213005410678](./img/image-20211213005410678.png)
 
 - 这时候会收到错误信息：`[K1040004] No available TaskService matched! service task id: Activity_0ctfijm, name: 加载广告`
 - 可通过给节点增加：`allow-absent=true`，来解决这个问题，该属性代表：允许配置节点找不到对应的服务任务节点，找不到时不会报错，会跳过继续执行
 
 ![image-20211213010642607](./img/image-20211213010642607.png)
 
-### 2.6.2 异常降级
+#### 2.6.2 异常降级
 
 > 场景假设： 在加载商品时，有着一个步骤是加载运费险信息。假设当下所依赖的物流系统极不稳定，获取运费险信息时经常出错。但是运费险信息又并非商品渲染流程的核心逻辑。所以在获取运费险失败时不应该中断整个流程，此时需要对问题节点降级处理，整体流程要继续向下执行
 
 **代码中模拟异常：**
 
 ``` java
-@TaskService(name = "get-logistic-insurance", noticeScope = ScopeTypeEnum.STABLE)
+@NoticeSta
+@TaskService(name = "get-logistic-insurance")
 public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
     // 模拟异常
     int i = 1/0;
@@ -425,10 +439,10 @@ public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest reques
 ``` log
 ...
 Caused by: java.lang.ArithmeticException: / by zero
-	at cn.kstry.demo.service.LogisticService.getLogisticInsurance(LogisticService.java:40)
-	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-	... 5 common frames omitted
+    at cn.kstry.demo.service.LogisticService.getLogisticInsurance(LogisticService.java:40)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+    ... 5 common frames omitted
 ```
 
 **节点降级处理：**
@@ -439,11 +453,11 @@ Caused by: java.lang.ArithmeticException: / by zero
 
 
 
-# 三、数据流转
+## 三、数据流转
 
 > 前面演示了节点、网关、事件如何通过合适的编排来应对不断地业务变化所带来的挑战。编排好的流程图中节点与节点之间并非是完全独立的。风控审查的是商品基础信息中的图片，通过入参的来源判断是否赠送运费险，商品信息的后置处理将前面加载的一系列信息进行统一装配等等。节点间的关联无处不在。承载节点间通信工作最重要的角色就是 **StoryBus**
 
-## 3.1 StoryBus介绍
+### 3.1 StoryBus介绍
 
 ![a.drawio (1)](./img/story-bus.png)
 
@@ -457,16 +471,17 @@ Caused by: java.lang.ArithmeticException: / by zero
 - 四个作用域被读写锁保护着，get获取读锁，notice获取写锁，防止出现并发问题
 - 开启异步模式后，同时创建的子任务都可以读写 StoryBus 中的变量，所以**数据方面有前后依赖关系的节点，不能被创建到同一时间段执行的不同子任务中**，可以通过聚合节点来保证节点执行时数据依赖的先后顺序
 
-## 3.2 变量注解
+### 3.2 变量注解
 
-### 3.2.1 获取变量
+#### 3.2.1 获取变量
 
 **@XxxTaskParam 注解：**
 
 标注在服务任务节点入参前，从 StoryBus 中获取到变量后，直接赋值给参数变量，例如：
 
 ``` java
-@TaskService(name = "get-evaluation-info", noticeScope = ScopeTypeEnum.STABLE)
+@NoticeSta
+@TaskService(name = "get-evaluation-info")
 public EvaluationInfo getEvaluationInfo(@ReqTaskParam("id") Long goodsId) {
     EvaluationInfo evaluationInfo = new EvaluationInfo();
     evaluationInfo.setEvaluateCount(20);
@@ -496,7 +511,8 @@ public EvaluationInfo getEvaluationInfo(@ReqTaskParam("id") Long goodsId) {
 @TaskComponent(name = "logistic")
 public class LogisticService {
 
-    @TaskService(name = "get-logistic-insurance", noticeScope = ScopeTypeEnum.STABLE)
+    @NoticeSta
+    @TaskService(name = "get-logistic-insurance")
     public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
         log.info("request source：{}", request.getSource());
         LogisticInsurance logisticInsurance = new LogisticInsurance();
@@ -526,17 +542,16 @@ public class GetLogisticInsuranceRequest {
 
 
 
-### 3.2.2 通知变量
+#### 3.2.2 通知变量
 
-**@TaskService注解指定：**
-
-服务任务节点上的`@TaskService`注解中可以设置 `noticeScope` 属性，用以告知容器，方法执行完后的结果被通知到 StoryBus 中的哪些作用域，例如：
+注解可以与`@TaskService` 一起使用，指定服务任务节点的结果返回值通知到 StoryBus 的哪些作用域中
 
 ``` java
 @TaskComponent(name = "order")
 public class OrderService {
 
-    @TaskService(name = "get-order-info", noticeScope = {ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE})
+    @NoticeScope(scope = {ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE})
+    @TaskService(name = "get-order-info")
     public OrderInfo getOrderInfo(@ReqTaskParam("id") Long goodsId) {
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setOrderedCount(10);
@@ -545,15 +560,6 @@ public class OrderService {
     }
 }
 ```
-
-- `noticeScope` 只能控制将方法返回的结果通知到哪些作用域，与结果对象中的字段没有关系
-- `noticeScope` 支持数组类型，有效取值：`ScopeTypeEnum.STABLE`、`ScopeTypeEnum.VARIABLE`、`ScopeTypeEnum.RESULT`
-- 方法返回结果被 `noticeScope` 通知后，如果结果类被**相同域**的 `@NoticeXxx` 注解修饰了，类上的注解将失效，以`noticeScope` 为准
-- `noticeScope` 只能控制通知域，控制不了被通知目标的变量名称。默认情况下是服务任务节点方法返回值类名首字母小写作为变量名
-
-
-
-**方法出参类中注解标注指定：**
 
 注解可以标注在服务任务节点方法的结果类上，也可以标注在结果类的字段上，例如：
 
@@ -575,27 +581,26 @@ public class InitSkuResponse {
 }
 ```
 
-- `@NoticeAll`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 sta 和 var两个域中
+- `@NoticeSta`：可以与`@TaskService` 一起使用，还可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 sta 域中
   - `targrt`：通知到指定作用域的字段名
-
-- `@NoticeSta`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 sta 域中
+- `@NoticeVar`：可以与`@TaskService` 一起使用，还可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 var 域中
   - `targrt`：通知到指定作用域的字段名
-
-- `@NoticeVar`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 var 域中
+- `@NoticeResult`：可以与`@TaskService` 一起使用，还可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 result 域中
+- `@NoticeScope`：可以与`@TaskService` 一起使用，还可以标注在方法返回结果的类上或者类字段上，字段结果默认被通知到 StoryBus 中的 sta 和 var两个域中
   - `targrt`：通知到指定作用域的字段名
+  - `scope`：未指定时，默认将结果通知到 StoryBus 中的 sta 和 var两个域中。指定后以实际指定域为准
 
-- `@NoticeResult`：可以标注在方法返回结果的类上或者类字段上，字段结果被通知到 StoryBus 中的 result 域中
-
-## 3.3 参数校验
+### 3.3 参数校验
 
 - 服务任务节点方法参数如果是自定义对象时，对象中的字段支持JSR303格式校验
-- 直接使用注解标注参数就会生效，如下`@NotBlank`：
+- 项目中需要引入`hibernate-validator`依赖，然后使用注解标注参数就会生效，如下`@NotBlank`：
 
 ``` java
 @TaskComponent(name = "logistic")
 public class LogisticService {
 
-    @TaskService(name = "get-logistic-insurance", noticeScope = ScopeTypeEnum.STABLE)
+    @NoticeSta
+    @TaskService(name = "get-logistic-insurance")
     public LogisticInsurance getLogisticInsurance(GetLogisticInsuranceRequest request) {
         log.info("request source：{}", request.getSource());
         LogisticInsurance logisticInsurance = new LogisticInsurance();
@@ -619,7 +624,7 @@ public class GetLogisticInsuranceRequest {
 
 
 
-## 3.4 参数生命周期
+### 3.4 参数生命周期
 
 > 场景假设： 某些场景中，用户在界面上看到的店铺标签并非都是店铺服务自身维护的，可能有一部分需要实际使用到的业务方自己决定。但是“打店铺标签”这个能力又应该是店铺系统提供的众多服务能力列表中的一点，业务方系统不应该感知具体是怎么打标签的，只需要告知店铺系统打什么标签即可。根据关注点分离原则，商品服务中，如非必要不应该再掺杂店铺系统的能力点。如何才能使用店铺提供的能力在不违背关注点分离原则的前提下完成业务方的自定义诉求呢？
 
@@ -642,7 +647,7 @@ public class DetailPostProcessRequest implements ParamLifecycle {
     @StaTaskField("shopInfo")
     private ShopInfo shopInfo;
     
-	...
+    ...
         
     @Override
     public void before() {
@@ -666,11 +671,11 @@ public class DetailPostProcessRequest implements ParamLifecycle {
 
 > **注意**：节点方法参数被 @XxxTaskParam 注解修饰时，参数Bean字段装配、字段校验、Spring容器初始化、生命周期方法都会失效。原因是被 @XxxTaskParam 修饰的参数无需进行初始化和任何操作，会被 StoryBus 中获取到的值直接赋值
 
-# 四、异步支持
+## 四、异步支持
 
 > 场景假设： 继续延用商品展示的例子，在一个商品展示的 Story 中系统需要依赖很多服务，有内部的，也有外部的。内部服务毕竟在自己系统里，可控性相对较强，但不能避免的，也会出现一些耗时较高的操作。外部系统就更不用说了，作为研发一定吃过外部服务延时高可用性差的苦头。一般情况下，我们会引入异步化来尝试优化这些难缠的超时问题，Kstry又是如何做的呢？
 
-## 4.1 超时时间
+### 4.1 超时时间
 
 > Kstry 调用执行 Story 时，存在超时时间的限制，不会允许调用一直等待下去
 
@@ -680,15 +685,15 @@ public class DetailPostProcessRequest implements ParamLifecycle {
 
 ```
 cn.kstry.framework.core.exception.TaskAsyncException: [K1060002] Asynchronous node task timeout!
-	at cn.kstry.framework.core.exception.KstryException.buildException(KstryException.java:88)
-	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:107)
-	at cn.kstry.framework.core.engine.StoryEngine.doFire(StoryEngine.java:184)
-	at cn.kstry.framework.core.engine.StoryEngine.fire(StoryEngine.java:90)
-	at cn.kstry.demo.web.GoodsController.showGoods(GoodsController.java:49)
+    at cn.kstry.framework.core.exception.KstryException.buildException(KstryException.java:88)
+    at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:107)
+    at cn.kstry.framework.core.engine.StoryEngine.doFire(StoryEngine.java:184)
+    at cn.kstry.framework.core.engine.StoryEngine.fire(StoryEngine.java:90)
+    at cn.kstry.demo.web.GoodsController.showGoods(GoodsController.java:49)
 
 Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum time limit: 3000ms, block task count: 1, block task: [Flow_0rl59u8]
-	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:98)
-	... 52 common frames omitted
+    at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:98)
+    ... 52 common frames omitted
 ```
 
 **Kstry 提供了自定义超时时间的入口：**
@@ -716,7 +721,7 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 
 
 
-## 4.2 开启异步
+### 4.2 开启异步
 
 首先使用 sleep 模拟几个耗时的服务节点：“送运费险” sleep 100ms，“加载店铺信息” sleep 200ms，“加载评价数” sleep 200ms。调用一次接口，查看追踪日志（后面链路追踪环节会详细讲到，先使用这个功能）中重点需要关注的一些点：
 
@@ -724,72 +729,72 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 // [http-nio-8080-exec-3][5837f673-15cd-4aef-97cc-6516ff14cb75] INFO  c.k.f.c.m.MonitorTracking - [K1040009] startId: kstry-demo-goods-show, spend 531ms ...
 
 [{
-	"methodName": "initBaseInfo",
-	"nodeName": "初始化\n基本信息",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 1,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "initBaseInfo",
+    "nodeName": "初始化\n基本信息",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 1,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "checkImg",
-	"nodeName": "风控服务",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.RiskControlService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "checkImg",
+    "nodeName": "风控服务",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.RiskControlService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "initSku",
-	"nodeName": "加载SKU信息",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "initSku",
+    "nodeName": "加载SKU信息",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getLogisticInsurance",
-	"nodeName": "送运费险",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 106,
-	"targetName": "cn.kstry.demo.service.LogisticService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "getLogisticInsurance",
+    "nodeName": "送运费险",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 106,
+    "targetName": "cn.kstry.demo.service.LogisticService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getShopInfoByGoodsId",
-	"nodeName": "加载店铺信息",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 205,
-	"targetName": "cn.kstry.demo.service.ShopService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "getShopInfoByGoodsId",
+    "nodeName": "加载店铺信息",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 205,
+    "targetName": "cn.kstry.demo.service.ShopService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getGoodsExtInfo",
-	"nodeName": "加载收藏数",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "getGoodsExtInfo",
+    "nodeName": "加载收藏数",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getOrderInfo",
-	"nodeName": "加载下单数",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.OrderService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "getOrderInfo",
+    "nodeName": "加载下单数",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.OrderService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getEvaluationInfo",
-	"nodeName": "加载评价数",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 205,
-	"targetName": "cn.kstry.demo.service.EvaluationService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "getEvaluationInfo",
+    "nodeName": "加载评价数",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 205,
+    "targetName": "cn.kstry.demo.service.EvaluationService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"nodeName": "加载广告",
-	"nodeType": "SERVICE_TASK",
-	"threadId": "kstry-task-thread-pool-1",
+    "nodeName": "加载广告",
+    "nodeType": "SERVICE_TASK",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "detailPostProcess",
-	"nodeName": "商详后置处理",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 1,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "detailPostProcess",
+    "nodeName": "商详后置处理",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 1,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-1",
 }]
 ```
 
@@ -798,7 +803,7 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 
 **在子任务中，打开商品数据统计的异步化：**
 
-![image-20211213145202846](./img/image-20211213145202846.png) 
+![image-20211213145202846](./img/image-20211213145202846.png)
 
 **在主流程中打开店铺、商品、物流服务调用的异步化：**
 
@@ -814,72 +819,72 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 // [http-nio-8080-exec-8][7900a5a3-3c9c-44e4-914c-ac2d83e2c2f0] INFO  c.k.f.c.m.MonitorTracking - [K1040009] startId: kstry-demo-goods-show, spend 315ms ...
 
 [{
-	"methodName": "initBaseInfo",
-	"nodeName": "初始化\n基本信息",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 2,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-3",
+    "methodName": "initBaseInfo",
+    "nodeName": "初始化\n基本信息",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 2,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-3",
 }, {
-	"methodName": "checkImg",
-	"nodeName": "风控服务",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.RiskControlService",
-	"threadId": "kstry-task-thread-pool-3",
+    "methodName": "checkImg",
+    "nodeName": "风控服务",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.RiskControlService",
+    "threadId": "kstry-task-thread-pool-3",
 }, {
-	"methodName": "initSku",
-	"nodeName": "加载SKU信息",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-3",
+    "methodName": "initSku",
+    "nodeName": "加载SKU信息",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-3",
 }, {
-	"nodeName": "加载广告",
-	"nodeType": "SERVICE_TASK",
-	"threadId": "kstry-task-thread-pool-1",
+    "nodeName": "加载广告",
+    "nodeType": "SERVICE_TASK",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getLogisticInsurance",
-	"nodeName": "送运费险",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 102,
-	"targetName": "cn.kstry.demo.service.LogisticService",
-	"threadId": "kstry-task-thread-pool-7",
+    "methodName": "getLogisticInsurance",
+    "nodeName": "送运费险",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 102,
+    "targetName": "cn.kstry.demo.service.LogisticService",
+    "threadId": "kstry-task-thread-pool-7",
 }, {
-	"methodName": "getGoodsExtInfo",
-	"nodeName": "加载收藏数",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-6",
+    "methodName": "getGoodsExtInfo",
+    "nodeName": "加载收藏数",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-6",
 }, {
-	"methodName": "getOrderInfo",
-	"nodeName": "加载下单数",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 0,
-	"targetName": "cn.kstry.demo.service.OrderService",
-	"threadId": "kstry-task-thread-pool-1",
+    "methodName": "getOrderInfo",
+    "nodeName": "加载下单数",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 0,
+    "targetName": "cn.kstry.demo.service.OrderService",
+    "threadId": "kstry-task-thread-pool-1",
 }, {
-	"methodName": "getEvaluationInfo",
-	"nodeName": "加载评价数",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 201,
-	"targetName": "cn.kstry.demo.service.EvaluationService",
-	"threadId": "kstry-task-thread-pool-3",
+    "methodName": "getEvaluationInfo",
+    "nodeName": "加载评价数",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 201,
+    "targetName": "cn.kstry.demo.service.EvaluationService",
+    "threadId": "kstry-task-thread-pool-3",
 }, {
-	"methodName": "getShopInfoByGoodsId",
-	"nodeName": "加载店铺信息",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 205,
-	"targetName": "cn.kstry.demo.service.ShopService",
-	"threadId": "kstry-task-thread-pool-7",
+    "methodName": "getShopInfoByGoodsId",
+    "nodeName": "加载店铺信息",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 205,
+    "targetName": "cn.kstry.demo.service.ShopService",
+    "threadId": "kstry-task-thread-pool-7",
 }, {
-	"methodName": "detailPostProcess",
-	"nodeName": "商详后置处理",
-	"nodeType": "SERVICE_TASK",
-	"spendTime": 1,
-	"targetName": "cn.kstry.demo.service.GoodsService",
-	"threadId": "kstry-task-thread-pool-7",
+    "methodName": "detailPostProcess",
+    "nodeName": "商详后置处理",
+    "nodeType": "SERVICE_TASK",
+    "spendTime": 1,
+    "targetName": "cn.kstry.demo.service.GoodsService",
+    "threadId": "kstry-task-thread-pool-7",
 }]
 ```
 
@@ -897,11 +902,11 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 
 - 任务流中出现了不止一个的线程id，开启异步化后，任务创建并提交到线程池中，随机分配线程去执行
 
-## 4.3 异步化生命周期
+### 4.3 异步化生命周期
 
 > 在并行网关、包含网关上配置`open-async=true`属性即可开启异步流程。那么异步的开始是什么时候，结束又是在何处呢？
 
-### 4.3.1 异步的开始
+#### 4.3.1 异步的开始
 
 **开始流程如下：**
 
@@ -911,7 +916,7 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 - 提交完异步任务的线程会继续执行任务栈中的其他节点任务，不会再顾及异步网关出度及出度之后的节点，直至任务栈中没有了可执行节点时线程会归还至线程池，等待下一次被调用
 - 线程池随机选择线程执行上述流程中创建的异步任务
 
-### 4.3.2 异步的结束
+#### 4.3.2 异步的结束
 
 什么是异步？异步就是同一时间多个线程去做了多个事情，以此来节省需要一个线程做多个事情所花费的时间。这种模式有点像算法里面的空间换取时间的味道。Kstry中什么时候结束开启后的异步任务呢？答案是**多个可以同一时间执行的异步任务被聚合网关聚合后异步流程就结束了**。比如：
 
@@ -927,13 +932,13 @@ Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum ti
 - 包含网关
 - 结束事件
 
-![image-20211215163704815](./img/image-20211215163704815.png)  
+![image-20211215163704815](./img/image-20211215163704815.png)
 
 **聚合节点可以随心所欲的聚合多个流程。除聚合节点外的其他节点元素，只允许接收一个入度**
 
 > 之所以除聚合节点外的其他节点元素，只允许接收一个入度是因为：存在多个入度时，如果这些入度是异步的就会有多个线程执行到这个聚集点，假设Task节点可以支持多入度，那么Task节点就可能被执行多次。因为Task节点不具备聚合节点的能力，不能让前面的流程停下来等待全部流程都到达后才继续。换句话说只有聚合节点才能支持多入度
 
-## 4.4 Reactor异步模型
+### 4.4 Reactor异步模型
 
 > 开启了异步后是否程序就足够健壮了，就可以支持高流量请求了？答案是否定的，看下面的例子
 
@@ -951,30 +956,30 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 
 **进行一波小流量压测：**
 
-![2021-12-15_003756](./img/2021-12-15_003756.png)  
+![2021-12-15_003756](./img/2021-12-15_003756.png)
 
 **测试结果：**
 
-![2021-12-15_003737](./img/2021-12-15_003737.png)  
+![2021-12-15_003737](./img/2021-12-15_003737.png)
 
 **报错如下：**
 
 ```
 cn.kstry.framework.core.exception.TaskAsyncException: [K1060002] Asynchronous node task timeout!
-	at cn.kstry.framework.core.exception.KstryException.buildException(KstryException.java:88)
-	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:107)
-	at cn.kstry.framework.core.engine.StoryEngine.doFire(StoryEngine.java:184)
-	at cn.kstry.framework.core.engine.StoryEngine.fire(StoryEngine.java:90)
-	at cn.kstry.demo.web.GoodsController.showGoods(GoodsController.java:49)
+    at cn.kstry.framework.core.exception.KstryException.buildException(KstryException.java:88)
+    at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:107)
+    at cn.kstry.framework.core.engine.StoryEngine.doFire(StoryEngine.java:184)
+    at cn.kstry.framework.core.engine.StoryEngine.fire(StoryEngine.java:90)
+    at cn.kstry.demo.web.GoodsController.showGoods(GoodsController.java:49)
 
 Caused by: java.util.concurrent.TimeoutException: Async task timeout! maximum time limit: 3000ms, block task count: 1, block task: [Flow_0rl59u8]
-	at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:98)
-	... 52 common frames omitted
+    at cn.kstry.framework.core.engine.AsyncTaskCell.get(AsyncTaskCell.java:98)
+    ... 52 common frames omitted
 ```
 
 2000个样本，失败率91.1%，服务基本是不可用状态。为什么会如此呢，难道是线程池队列满了？查看线程池日志：
 
-![image-20211215170948367](./img/image-20211215170948367.png) 
+![image-20211215170948367](./img/image-20211215170948367.png)
 
 核心线程数16个，最大线程数32个。整个测试下来，工作线程数一直等于核心线程数，任务队列也没满，所以可以确定不是线程池本身的问题
 
@@ -1000,7 +1005,7 @@ public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws In
 }
 
 // 升级后获取店铺信息的任务
-@TaskService(name = "get-shopInfo-goodsId", returnClassType = ShopInfo.class)
+@TaskService(name = "get-shopInfo-goodsId", targetType = ShopInfo.class)
 public Mono<ShopInfo> getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) {
     CompletableFuture<ShopInfo> future = new CompletableFuture<>();
     list.add(future);
@@ -1024,7 +1029,7 @@ public void init() {
 **原来任务做升级：**
 
 - 返回值 ShopInfo 被 Mono 包装
-- `@TaskService`注解增加属性配置：`returnClassType = ShopInfo.class`。之所以如此是因为结果的处理是通过解析方法结果类上的注解来做的，Java编译后泛型会被擦除，找不到返回值类型，无法解析判断处理返回结果的逻辑，所以返回值类型需要显示指定
+- `@TaskService`注解增加属性配置：`targetType = ShopInfo.class`。之所以如此是因为结果的处理是通过解析方法结果类上的注解来做的，Java编译后泛型会被擦除，找不到返回值类型，无法解析判断处理返回结果的逻辑，所以返回值类型需要显示指定
 
 > Kstry只支持 Mono，暂不支持 Flux
 
@@ -1056,9 +1061,9 @@ public <T> Mono<T> fireAsync(StoryRequest<T> storyRequest) {
 
 
 
-# 五、RBAC模式
+## 五、RBAC模式
 
-> 场景假设：     
+> 场景假设：
 >
 > ​    假设商品查询服务是中台服务，上游有着很多的业务方。对于大多数业务方来说，中台提供的能力是够用的，但有一个业务方突然站出来说，我这边的平台对信息的违规审查异常严格，你们提供的图片审查能力是不够用的，需要做升级。
 >
@@ -1072,7 +1077,7 @@ public <T> Mono<T> fireAsync(StoryRequest<T> storyRequest) {
 >
 > 应对这种问题，是时候使用 Kstry 的RBAC（Role-based access control）模式了
 
-## 5.1 RBAC初体验
+### 5.1 RBAC初体验
 
 **增加图片校验服务：**
 
@@ -1089,7 +1094,7 @@ public class RiskControlService {
         log.info("check img: " + checkInfo.getImg());
     }
 
-  	// 新增的三方图片审查服务
+    // 新增的三方图片审查服务
     @TaskService(name = "check-img", ability = "triple")
     public void tripleCheckImg(CheckInfo checkInfo) {
 
@@ -1188,9 +1193,9 @@ public class GoodsController {
 
 - 未传入 businessId 时，使用的是内部图片审查服务，传入`businessId=special-channel`后使用三方图片审查服务
 
-## 5.2 注册角色
+### 5.2 注册角色
 
-### 5.2.1 权限分类
+#### 5.2.1 权限分类
 
 **权限类有两种**：
 
@@ -1234,7 +1239,7 @@ public class RoleRegister implements BusinessRoleRegister {
 }
 ```
 
-### 5.2.2 权限解析
+#### 5.2.2 权限解析
 
 **权限的字符串表示方式**：
 
@@ -1245,7 +1250,7 @@ public class RoleRegister implements BusinessRoleRegister {
 
 > 使用 `cn.kstry.framework.core.util.PermissionUtil`可以将字符串解析成 Permission 对象
 
-### 5.2.3 角色关系注册
+#### 5.2.3 角色关系注册
 
 **角色分配权限：**
 
@@ -1281,9 +1286,9 @@ role.addPermission(permissions);
 
 
 
-## 5.3 匹配角色
+### 5.3 匹配角色
 
-### 5.3.1 静默匹配
+#### 5.3.1 静默匹配
 
 每执行一个 Story 时，入参中 startId 是必传参数，businessId 参数选填。容器会根据这两个值来匹配 BusinessRole，如果匹配成功，拿到的 BusinessRole 中含有承载着权限的角色对象，如果角色对象不为空，每将要执行一个节点时，都会判断角色中是否含有当前要执行节点的权限，判断依据是：权限的 identityId 和identityType 与当前服务任务节点的`@TaskService.name`、`@TaskService.ability` 等属性相对应
 
@@ -1295,7 +1300,7 @@ role.addPermission(permissions);
   - 匹配 `businessIdList.contains(businessId)` 并且 `startIdList.contains(startId)` 的 BusinessRole，选取第一个匹配成功的返回
   - 如果上一步返回为空，匹配 `businessIdList.isEmpty()` 并且 `startIdList.contains(startId)` 的 BusinessRole，选取第一个匹配成功的返回
 
-### 5.3.2 显示指定
+#### 5.3.2 显示指定
 
 ``` java
 @RestController
@@ -1323,13 +1328,13 @@ public class GoodsController {
 
 - **执行 Story 前如果显示指定了角色，角色的静默匹配会失效**
 
-### 5.3.3 角色为空
+#### 5.3.3 角色为空
 
 ​        一个Story中，调用前未显示指定角色并且静默匹配也失败时，角色对象为空。为空时一切指定了 `@TaskService.ability` 属性的**服务能力节点**都会失效，只有**服务任务节点**可以正常匹配执行。相当于并未开启RBAC模式，上面流程编排的例子全是这种情况。
 
 ​        如果角色对象不为空，服务节点被调用前都会使用该角色对象进行权限鉴权操作，如果鉴权失败就不会执行当前服务节点。所以**在RBAC模式下增加服务节点时，一定要对 StartId 和 BusinessId 做好权限的分配，否则将出现新增服务节点无法被执行的尴尬**。
 
-## 5.4 动态修改权限
+### 5.4 动态修改权限
 
 > 场景假设： 在RBAC模式下，有一个需求：当“初始化商品基本信息”后流程才有权限“加载SKU信息”
 
@@ -1388,7 +1393,7 @@ public class GoodsCustomRole {
 
 **增加自定义角色声明：**
 
-![image-20211216003124692](./img/image-20211216003124692.png) 
+![image-20211216003124692](./img/image-20211216003124692.png)
 
 -  定义`custom-role`属性，指定该服务任务节点执行完成后需要进行一次自定义角色操作。值格式：`component-name@service-name`
 - 除了声明`custom-role`属性外，自定义角色节点也可以像普通服务节点一样在流程图中定义并参与执行
@@ -1401,7 +1406,7 @@ public class GoodsCustomRole {
 
 
 
-## 5.5 角色匹配表达式
+### 5.5 角色匹配表达式
 
 > 场景假设： 公司为了把控成本，要求如果使用到了图审查付费服务的业务要做好统计工作，记录使用次数，方便后面公司财务做账。也就是说，使用了三方服务的请求需要被统计，走内部审查服务的无需统计。换句话说在RBAC模式下只有使用到了 `r:check-img@triple` 权限的 Story 需要进行统计
 
@@ -1413,11 +1418,11 @@ public class GoodsCustomRole {
 - `!r:check-img@triple` 表达式代表当前执行的Story中Role为空，或者Role不为空但是不含有该权限
 - 除`!`之外表达式还支持`()&|`四个符号组成的组合运算符。比如：`(r:init-base-info||r:init-sku)&&!r:get-order-info`。翻译就是`：(有加载商品基础信息的权限||有加载商品SKU的权限)&&没有获取订单信息的权限`
 
-# 六、变量
+## 六、变量
 
 > 场景假设： 成熟的项目中一定存在着繁杂且相互关联的业务逻辑关系，这些业务逻辑形成了服务的基础构架，以此应对着各种来自业务方、渠道方、甚至系统内部层出不穷的需求挑战。随着时间的推移，慢慢会发现，不同的渠道、不同的业务、甚至不同的生产环境对一些细节点的要求是不一样的。如何在保持原有架构清晰完整的前提下满足各种业务对自定义参数的诉求将是一个非常严峻的挑战。Kstry提供了灵活的业务变量定义方式，可以在业务域、服务域、和运行环境等维度进行分类定义获取
 
-## 6.1 变量初体验
+### 6.1 变量初体验
 
 **`@EnableKstry`注解增加`propertiesPath`属性指定配置文件位置**
 
@@ -1435,7 +1440,7 @@ public class KstryDemoApplication {
 **创建配置文件并定义变量**
 
 ```yaml
-# global-default.yml
+## global-default.yml
 
 default:
   banner: https://aass.png # 变量1
@@ -1476,14 +1481,14 @@ public class GoodsService {
 
 - KvAbility 是 Kstry 提供的获取变量的组件，所有变量都是通过这个组件获取的
 
-## 6.2 服务维度变量
+### 6.2 服务维度变量
 
 > 场景假设： 在加载店铺信息时需要设置店铺的标签信息，而标签信息又是经常变化的，所以应该以变量的形式存在。如果放在default域，后面业务变量多了之后会太过混乱，显然是不合适的。这时就应该按照服务维度来划分变量
 
 **定义变量**
 
 ``` yaml
-# goods-config.yml
+## goods-config.yml
 
 init-shop-info:
   labels:
@@ -1507,11 +1512,11 @@ public class ShopService {
     @Resource
     private KvAbility kvAbility;
 
-		@TaskService(name = "get-shopInfo-goodsId", kvScope = "init-shop-info")
-		public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
-  	 	  List<ShopLabel> labels = kvAbility.getList("labels", ShopLabel.class);
-      	...
-		}
+        @TaskService(name = "get-shopInfo-goodsId", kvScope = "init-shop-info")
+        public ShopInfo getShopInfoByGoodsId(@ReqTaskParam("id") Long goodsId) throws InterruptedException {
+          List<ShopLabel> labels = kvAbility.getList("labels", ShopLabel.class);
+        ...
+        }
 }
 ```
 
@@ -1519,20 +1524,20 @@ public class ShopService {
 
 
 
-## 6.3 业务维度变量
+### 6.3 业务维度变量
 
 > 场景假设： 还是风控审查图片的例子，假设现在有很多业务线都在使用这个图片审查的能力，但是不同业务线对图片尺寸的要求不一样。这时如果只是在`@TaskService`注解中定义`kvScope`属性显然是不行的。因为无法区分是哪个业务线，图片需要满足什么尺寸的要求。如何才可以在业务维度使用变量呢？
 
 **定义变量**
 
 ```yaml
-# risk-control-config.yml 同样是为了维护和阅读方便才新建的文件
+## risk-control-config.yml 同样是为了维护和阅读方便才新建的文件
 
-# 风控默认配置
+## 风控默认配置
 risk-control: # 服务维度
   img-max-size: 100
 
-# 业务维度变量配置
+## 业务维度变量配置
 special-channel: # 对应请求入参传入的businessId（业务域）
   risk-control: # 风控域变量（服务域）
     img-max-size: 200 # 指定变量值
@@ -1596,14 +1601,14 @@ public class GoodsController {
 
 - 业务维度变量起作用的重点是businessId，此例中`businessId=special-channel`时，匹配`special-channel`域的变量
 
-## 6.4 环境维度变量
+### 6.4 环境维度变量
 
 > 场景假设： 针对店铺黑名单，生产环境与开发环境不一样，如何满足呢？
 
 **定义变量**
 
 ``` yaml
-# global-default.yml
+## global-default.yml
 
 default:
   banner: https://aass.png
@@ -1653,11 +1658,11 @@ public class GoodsService {
 // - banner: https://aass.png
 ```
 
-## 6.5 获取变量顺序
+### 6.5 获取变量顺序
 
 **带businessId获取变量与不带businessId获取变量步骤如图所示：**
 
-![a.drawio (4)](./img/a.drawio%20(4).png) 
+![get-var-flow](./img/get-var-flow.png)
 
 **带businessId获取变量：**
 
@@ -1679,7 +1684,7 @@ public class GoodsService {
 
 
 
-# 七、链路追踪
+## 七、链路追踪
 
 > 研发工作中遇到过最为抓狂的事情可能就是排查线上问题了。明显易发现的问题还好，但有些问题只在生产环境的高并发真实流量场景中才会出现，相同的分支代码放到线下又可以正常运行了，每当此时也只能以问题很难复现再观察定位的话术来敷衍。那么生产环境问题为什么难定位呢：
 >
@@ -1689,7 +1694,7 @@ public class GoodsService {
 >
 > 为了减少问题排查的复杂程度，Kstry 提供了流程回溯功能，流程回溯记录了节点的信息、执行顺序、耗时、入参、出参等重要数据
 
-## 7.1 traceId支持
+### 7.1 traceId支持
 
 Kstry 内部使用MDC工具，支持设置全链路请求ID
 
@@ -1712,9 +1717,9 @@ Kstry 内部使用MDC工具，支持设置全链路请求ID
 
 
 
-## 7.2 流程回溯
+### 7.2 流程回溯
 
-### 7.2.1 流程回溯类型
+#### 7.2.1 流程回溯类型
 
 Kstry 支持五种模式的回溯
 
@@ -1726,7 +1731,7 @@ Kstry 支持五种模式的回溯
 
 
 
-### 7.2.2 流程回溯使用
+#### 7.2.2 流程回溯使用
 
 **执行入参中显示指定：**
 
@@ -1754,16 +1759,16 @@ public class GoodsController {
 **全局默认配置：**
 
 ``` yaml
-# application.yml
+## application.yml
 
 kstry:
   story:
     tracking:
       type: service
-      log: true # 是否打印回溯log，默认为 true
+      log: true # 是否打印回溯log，默认为 false
 ```
 
-### 7.2.3 回溯日志样例
+#### 7.2.3 回溯日志样例
 
 - `ALL`：
 
@@ -2145,7 +2150,7 @@ kstry:
    }]
   ```
 
-## 7.3 回溯自定义
+### 7.3 回溯自定义
 
 回溯自定义是在链路执行完之后，拿到结果或者异常之前，执行的自定义回调方法，可以应对如下问题：
 
@@ -2189,9 +2194,9 @@ public class GoodsController {
 // 日志： name list: 初始化\n基本信息(73),风控服务(33),三方服务统计(1),加载SKU信息(8),加载广告(null),送运费险(30),加载收藏数(6),加载下单数(6),加载评价数(2),加载店铺信息(19),商详后置处理(15)
 ```
 
-# 附录
+## 附录
 
-## 附录1
+### 附录1
 
 **Kstry 配置信息**
 
@@ -2211,7 +2216,7 @@ kstry:
   story:
     request-id: traceId # 自定义请求ID名，默认：ks-request-id
     tracking:
-      log: true # 是否开启回溯日志。 默认：true
+      log: true # 是否开启回溯日志。 默认：false
       type: service # 链路回溯策略。 默认：none
     success-code: 200 # Story 执行成功后的 code。 默认：200
     prefix: kstry-demo- # StartEvent ID 前缀。 默认：story-def-

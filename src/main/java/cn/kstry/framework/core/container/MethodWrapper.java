@@ -66,7 +66,7 @@ public class MethodWrapper {
 
     private final NoticeAnnotationWrapper noticeMethodSpecify;
 
-    private final Class<?> returnClassType;
+    private final Class<?> targetType;
 
     private final String ability;
 
@@ -76,7 +76,7 @@ public class MethodWrapper {
         this.method = method;
         this.kvScope = annotation.kvScope();
         this.noticeMethodSpecify = noticeMethodSpecify;
-        this.returnClassType = annotation.returnClassType();
+        this.targetType = annotation.targetType();
         this.ability = annotation.ability();
 
         methodParser(method);
@@ -158,11 +158,11 @@ public class MethodWrapper {
 
     private void returnTypeParser(Class<?> returnType) {
         if (Mono.class.isAssignableFrom(returnType)) {
-            returnType = returnClassType;
+            returnType = targetType;
         } else {
-            AssertUtil.isTrue(ElementParserUtil.isAssignable(returnClassType, returnType), ExceptionEnum.ANNOTATION_USAGE_ERROR);
-            if (returnClassType != Object.class) {
-                returnType = returnClassType;
+            AssertUtil.isTrue(ElementParserUtil.isAssignable(targetType, returnType), ExceptionEnum.ANNOTATION_USAGE_ERROR);
+            if (targetType != Object.class) {
+                returnType = targetType;
             }
         }
 
