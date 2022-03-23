@@ -46,7 +46,7 @@
 
 ![rbac](https://kstry.github.io/assets/img/rbac.322f356d.svg)
 
-*详见：[RBAC模式](https://kstry.github.io/doc/kstry-specification.html#%E4%BA%94rbac%E6%A8%A1%E5%BC%8F)*
+*详见：[RBAC模式](https://kstry.github.io/doc/kstry-specification.html#五、rbac模式)*
 
 #### 流程回溯
 
