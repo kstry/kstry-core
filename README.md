@@ -2,10 +2,6 @@
 
 ### 如果您遇到了以下问题：
 
-<br />
-
-<img src="https://kstry.github.io/assets/img/119821418.d6ac0718.jpg" alt="119821418" style="zoom:30%;" />   
-
 - 代码复杂、模型文档更新不及时，致使新同学和非技术同学不能短时间内了解业务现状。技术和非技术间对同一业务理解存在分歧而不自知。甚至业务Owner也不能很流畅的描述出自己所负责的业务
 - 项目中涉及到许多领域对象，对象间不仅存在复杂的前后依赖关系还相互掺杂没有明显边界，代码多次迭代后更是混乱不堪难以维护
 - 某业务链路由一系列子任务组成，其中需要并行处理一些耗时长且数据间没有依赖的子任务，但苦于没有精简且无代码侵入的并发框架
@@ -17,17 +13,13 @@
 
 ### 那么可以尝试一下Kstry框架，因为其具备：
 
-<br />
-
-<img src="https://kstry.github.io/assets/img/9f9aad009a6a4ca08fdda21d6614c35b.jpeg" alt="img" style="zoom:20%;" />   
-
 #### 可视化
 
 - 框架引入了业界通用的BPMN流程编排语言
 - 使用事件节点、任务节点、网关节点等组件来描述业务动作和执行线路
 - 编排好的图示模型即为代码真实的执行链路，通过所见（ *图示模型* ）即所得（ *代码执行* ）的方式在技术和业务之间架起一道通用语言的桥梁，使彼此之间沟通更加顺畅
 
-![image-20211219163429668.png](https://kstry.github.io/assets/img/image-20211219163429668.png)
+![image-20211219163429668.png](https://kstry.github.io/assets/img/image-20211219163429668.658c73d8.png)
 
 #### 服务编排
 
@@ -36,13 +28,13 @@
 - 输入完成任务所需参数的最小集，输出任务完成的结果或处理后的领域对象
 - 节点间使用箭头符号这种可视化编排手段来保证彼此间的相互作用有序，通过并行网关、包含网关、排他网关等来丰富节点间的执行依赖关系
 
-![image-20211219163540179](https://kstry.github.io/assets/img/image-20211219163540179.png)
+![image-20211219163540179](https://kstry.github.io/assets/img/image-20211219163540179.b88c7d7c.png)
 
 #### 支持并发
 
 - 无需改动代码，仅仅在并行网关或包含网关上配置 *open-async=true*，即可将其后的子链路并行化
 
-![image-20211213145202846](https://kstry.github.io/assets/img/image-20211213145202846.png)
+![image-20211213145202846](https://kstry.github.io/assets/img/image-20211213145202846.be21a902.png)
 
 #### RBAC（ *Role-based access control* ）模式
 
@@ -52,7 +44,7 @@
 - 一批独立的权限对象有着较高的维护成本，所以可依次将某一业务场景所需的全部权限聚合起来组成角色对象
 - 提供平台能力时，根据参数标识判断出具体的业务场景或需求方，并找到与之对应的角色，携带该角色执行预设的链路模型，即可完成定制化的业务诉求
 
-![rbac](https://kstry.github.io/assets/img/rbac.svg)
+![rbac](https://kstry.github.io/assets/img/rbac.322f356d.svg)
 
 *详见：[RBAC模式](http://kstry.cn/doc/kstry-specification.html#%E4%BA%94rbac%E6%A8%A1%E5%BC%8F)*
 
@@ -116,7 +108,7 @@ public class GoodsService {
 
 ### 4、定义bpmn配置文件
 
-<img src="https://kstry.github.io/assets/img/image-20211211151733111.png" alt="image-20211211151733111" style="zoom:70%;" />  
+<img src="https://kstry.github.io/assets/img/image-20211211151733111.d2ff8c5d.png" alt="image-20211211151733111" style="zoom:70%;" />  
 
 ### 5、调用执行
 
@@ -146,11 +138,11 @@ public class GoodsController {
 
 <br />
 
-<img src="https://kstry.github.io/assets/img/image-20211211145528118.png" alt="image-20211211145528118" style="zoom:70%;" />   
+<img src="https://kstry.github.io/assets/img/image-20211211145528118.65f97258.png" alt="image-20211211145528118" style="zoom:70%;" />   
 
 ## Kstry交流探讨：
 
 **微信交流群：**
 
-<img src="https://kstry.github.io/assets/img/kstry_wechat_01.jpg" alt="kstry_wechat_01" style="zoom:30%;" /> 
+<img src="https://kstry.github.io/assets/img/kstry_wechat_01.979f5ffe.jpg" alt="kstry_wechat_01" style="zoom:30%;" /> 
 
