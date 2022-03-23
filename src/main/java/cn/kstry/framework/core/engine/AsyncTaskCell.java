@@ -151,7 +151,7 @@ public class AsyncTaskCell {
         }
         isCancelled.set(true);
         taskFutureSet.stream().filter(f -> !f.isCancelled()).forEach(f -> f.cancel(true));
-        LOGGER.info("[{}] Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), startEvent.getId());
+        LOGGER.warn("[{}] Error occurred. Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), startEvent.getId(), exception);
     }
 
     public boolean isCancelled() {

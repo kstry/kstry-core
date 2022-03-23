@@ -253,7 +253,7 @@ public abstract class BasicFlowTask {
             try {
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
                 if (flowRegister.getAsyncTaskCell().isCancelled()) {
-                    LOGGER.info("[{}] Story task was cancelled! startId: {}",
+                    LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}",
                             ExceptionEnum.TASK_CANCELLED.getExceptionCode(), flowRegister.getStartFlowElement().getId());
                     return;
                 }
@@ -268,7 +268,7 @@ public abstract class BasicFlowTask {
             try {
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
                 if (flowRegister.getAsyncTaskCell().isCancelled()) {
-                    LOGGER.info("[{}] Story task was cancelled! startId: {}",
+                    LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}",
                             ExceptionEnum.TASK_CANCELLED.getExceptionCode(), flowRegister.getStartFlowElement().getId());
                     return;
                 }

@@ -167,7 +167,7 @@ public class FlowRegister {
     public void addTaskFuture(Future<AsyncTaskState> taskFuture) {
         AssertUtil.notNull(taskFuture);
         if (asyncTaskCell.isCancelled()) {
-            LOGGER.info("[{}] Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getStartFlowElement().getId());
+            LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getStartFlowElement().getId());
             return;
         }
         asyncTaskCell.addTaskFuture(taskFuture);
@@ -180,7 +180,7 @@ public class FlowRegister {
 
     private Optional<FlowElement> doNextElement(StoryBus storyBus) {
         if (asyncTaskCell.isCancelled()) {
-            LOGGER.info("[{}] Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getStartFlowElement().getId());
+            LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getStartFlowElement().getId());
             return Optional.empty();
         }
 

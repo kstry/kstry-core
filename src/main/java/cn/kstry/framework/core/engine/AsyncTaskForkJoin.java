@@ -36,7 +36,7 @@ public class AsyncTaskForkJoin extends AsyncPropertyDef {
 
     public void submitTask(FlowRegister flowRegister) {
         if (flowRegister.getAsyncTaskCell().isCancelled()) {
-            LOGGER.info("[{}] Story task was cancelled! startId: {}",
+            LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}",
                     ExceptionEnum.TASK_CANCELLED.getExceptionCode(), flowRegister.getStartFlowElement().getId());
             return;
         }

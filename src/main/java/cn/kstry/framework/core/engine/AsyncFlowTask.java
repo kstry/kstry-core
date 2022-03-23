@@ -62,7 +62,7 @@ public class AsyncFlowTask extends BasicFlowTask implements Callable<AsyncTaskSt
             LOGGER.debug("async story task starts execution. startId: {}", getStartEventId());
             AsyncTaskCell asyncTaskCell = flowRegister.getAsyncTaskCell();
             if (asyncTaskCell.isCancelled()) {
-                LOGGER.info("[{}] Story task was cancelled! startId: {}",
+                LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}",
                         ExceptionEnum.TASK_CANCELLED.getExceptionCode(), flowRegister.getStartFlowElement().getId());
                 return AsyncTaskState.ERROR;
             }
