@@ -138,11 +138,5 @@ public class GoodsController {
 
 <br />
 
-<img src="https://kstry.github.io/assets/img/image-20211211145528118.65f97258.png" alt="image-20211211145528118" style="zoom:70%;" />   
-
-## Kstry交流探讨：
-
-**微信交流群：**
-
-<img src="https://kstry.github.io/assets/img/kstry_wechat_01.979f5ffe.jpg" alt="kstry_wechat_01" style="zoom:30%;" /> 
+<img src="https://kstry.github.io/assets/img/image-20211211145528118.65f97258.png" alt="image-20211211145528118" style="zoom:70%;" />
 
