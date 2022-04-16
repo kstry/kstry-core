@@ -19,7 +19,7 @@
 - 使用事件节点、任务节点、网关节点等组件来描述业务动作和执行线路
 - 编排好的图示模型即为代码真实的执行链路，通过所见（ *图示模型* ）即所得（ *代码执行* ）的方式在技术和业务之间架起一道通用语言的桥梁，使彼此之间沟通更加顺畅
 
-![image-20211219163429668.png](https://kstry.github.io/assets/img/image-20211219163429668.658c73d8.png)
+![image-20211219163429668.png](http://cdn.kstry.cn/doc/img/image-20211219163429668.658c73d8.png)
 
 #### 服务编排
 
@@ -28,13 +28,13 @@
 - 输入完成任务所需参数的最小集，输出任务完成的结果或处理后的领域对象
 - 节点间使用箭头符号这种可视化编排手段来保证彼此间的相互作用有序，通过并行网关、包含网关、排他网关等来丰富节点间的执行依赖关系
 
-![image-20211219163540179](https://kstry.github.io/assets/img/image-20211219163540179.b88c7d7c.png)
+![image-20211219163540179](http://cdn.kstry.cn/doc/img/image-20211219163540179.b88c7d7c.png)
 
 #### 支持并发
 
 - 无需改动代码，仅仅在并行网关或包含网关上配置 *open-async=true*，即可将其后的子链路并行化
 
-![image-20211213145202846](https://kstry.github.io/assets/img/image-20211213145202846.be21a902.png)
+![image-20211213145202846](http://cdn.kstry.cn/doc/img/image-20211213145202846.be21a902.png)
 
 #### RBAC（ *Role-based access control* ）模式
 
@@ -44,9 +44,9 @@
 - 一批独立的权限对象有着较高的维护成本，所以可依次将某一业务场景所需的全部权限聚合起来组成角色对象
 - 提供平台能力时，根据参数标识判断出具体的业务场景或需求方，并找到与之对应的角色，携带该角色执行预设的链路模型，即可完成定制化的业务诉求
 
-![rbac](https://kstry.github.io/assets/img/rbac.322f356d.svg)
+![rbac](http://cdn.kstry.cn/doc/img/rbac.322f356d.svg)
 
-*详见：[RBAC模式](https://kstry.github.io/doc/kstry-specification.html#五、rbac模式)*
+*详见：[RBAC模式](http://kstry.cn/doc/kstry-specification.html#五、rbac模式)*
 
 #### 流程回溯
 
@@ -108,7 +108,7 @@ public class GoodsService {
 
 ### 4、定义bpmn配置文件
 
-<img src="https://kstry.github.io/assets/img/image-20211211151733111.d2ff8c5d.png" alt="image-20211211151733111" style="zoom:70%;" />  
+<img src="http://cdn.kstry.cn/doc/img/image-20211211151733111.d2ff8c5d.png" alt="image-20211211151733111" style="zoom:70%;" />  
 
 ### 5、调用执行
 
@@ -138,5 +138,5 @@ public class GoodsController {
 
 <br />
 
-<img src="https://kstry.github.io/assets/img/image-20211211145528118.65f97258.png" alt="image-20211211145528118" style="zoom:70%;" />
+<img src="http://cdn.kstry.cn/doc/img/image-20211211145528118.65f97258.png" alt="image-20211211145528118" style="zoom:70%;" />
 
