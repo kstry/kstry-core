@@ -17,12 +17,11 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.engine.facade.CustomRoleInfo;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * ServiceTaskImpl
@@ -41,22 +40,14 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
 
     /**
      * 读取配置文件，获取 customRole
-     *
-     * 格式：component@service 指定变更 Role 权限的 Service
      */
-    private CustomRoleInfo customRoleInfo;
+    private ServiceNodeResource customRoleInfo;
 
     /**
-     * 未匹配到 TaskService 时，是否可以忽略
-     * 默认：false 忽略未匹配到的 TaskService 时，抛出异常
+     * 未匹配到子任务时，是否可以忽略当前节点继续向下执行
+     * 默认：false。未匹配到子任务时，抛出异常
      */
     private Boolean allowAbsent;
-
-    /**
-     * 严格模式，控制任务节点执行失败后是否要抛出异常，默认是严格模式，节点抛出异常后结束整个 Story 流程
-     * 关闭严格模式后，节点抛出异常时忽略该节点继续向下执行
-     */
-    private Boolean strictMode;
 
     @Override
     public String getTaskComponent() {
@@ -78,6 +69,34 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     }
 
     @Override
+    public ServiceNodeResource getCustomRoleInfo() {
+        return customRoleInfo;
+    }
+
+    @Override
+    public boolean validTask() {
+        return !StringUtils.isAnyBlank(taskComponent, taskService);
+    }
+
+    /**
+     * 设置角色自定义组件
+     *
+     * @param customRoleInfo 角色自定义组件
+     */
+    public void setCustomRoleInfo(ServiceNodeResource customRoleInfo) {
+        this.customRoleInfo = customRoleInfo;
+    }
+
+    /**
+     * 设置 taskService
+     *
+     * @param taskService taskService
+     */
+    public void setTaskService(String taskService) {
+        this.taskService = taskService;
+    }
+
+    @Override
     public boolean allowAbsent() {
         return BooleanUtils.isTrue(allowAbsent);
     }
@@ -92,46 +111,6 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
             return;
         }
         this.allowAbsent = BooleanUtils.toBooleanObject(allowAbsent.trim());
-    }
-
-    @Override
-    public boolean strictMode() {
-        return BooleanUtils.isNotFalse(strictMode);
-    }
-
-    public void setStrictMode(String strictMode) {
-        if (StringUtils.isBlank(strictMode)) {
-            return;
-        }
-        this.strictMode = BooleanUtils.toBooleanObject(strictMode.trim());
-    }
-
-    @Override
-    public CustomRoleInfo getCustomRoleInfo() {
-        return customRoleInfo;
-    }
-
-    @Override
-    public boolean validTask() {
-        return !StringUtils.isAnyBlank(taskComponent, taskService);
-    }
-
-    /**
-     * 设置角色自定义组件
-     *
-     * @param customRoleInfo 角色自定义组件
-     */
-    public void setCustomRoleInfo(CustomRoleInfo customRoleInfo) {
-        this.customRoleInfo = customRoleInfo;
-    }
-
-    /**
-     * 设置 taskService
-     *
-     * @param taskService taskService
-     */
-    public void setTaskService(String taskService) {
-        this.taskService = taskService;
     }
 
     @Override

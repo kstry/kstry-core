@@ -25,9 +25,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于标注 Class，运行实际任务的 TaskService 对应Java中的方法，TaskComponent 对应方法的类
+ * 只能标注在类上，被标注的类将被视作服务组件类。可以定义服务节点（被 cn.kstry.framework.core.annotation.TaskService 标注的方法 ）
  *
- * 被标注 Class 可以定义被 cn.kstry.framework.core.annotation.TaskService 标注方法
+ * 被 cn.kstry.framework.core.annotation.TaskService 标注的方法被视作服务节点，服务节点只有在服务组件类中才会生效。定义在普通类中不会被容器解析执行
  *
  * @author lykan
  */
@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
 public @interface TaskComponent {
 
     /**
-     * Task Component 名称
+     * 服务组件类名称
      *
      * @return name
      */

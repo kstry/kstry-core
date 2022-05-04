@@ -48,7 +48,7 @@ public class SequenceFlowExpression extends BaseElementImpl implements Expressio
                 return;
             }
         }
-        throw KstryException.buildException(ExceptionEnum.SYSTEM_ERROR);
+        throw KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
     }
 
     @Override

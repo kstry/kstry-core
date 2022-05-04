@@ -19,14 +19,14 @@ package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * InScopeData
  *
  * @author lykan
  */
-public class InScopeData extends HashMap<Object, Object> implements ScopeData {
+public class InScopeData extends ConcurrentHashMap<Object, Object> implements ScopeData {
 
     private final ScopeTypeEnum scopeTypeEnum;
 

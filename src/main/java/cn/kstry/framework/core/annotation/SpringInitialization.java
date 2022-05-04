@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  标注到 TaskService 的 params class 上，代表该参数需要从 Spring 容器中创建
+ *  标注到服务节点入参类上，代表该入参对象需要从 Spring 容器中创建
  *
  * @author lykan
  */

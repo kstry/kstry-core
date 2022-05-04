@@ -25,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 标注在 TaskService params Bean 的字段上，用来在 StoryBus 中获取 sta 域的变量值
+ * 标注在服务节点入参类的字段上，用来在 StoryBus 中获取 sta 域的变量值，容器会以此值初始化被标注的字段变量
  *
  * @author lykan
  */

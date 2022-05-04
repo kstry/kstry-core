@@ -25,7 +25,7 @@ import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.resource.config.Config;
+import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
 import com.google.common.collect.Maps;
@@ -37,6 +37,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * 校验流程是否非法
+ *  - 包含网关、并行网关、结束事件支持多入度，其他元素均不支持多入度
+ *  - 一个流程中有且仅能有一个结束事件
+ *
  * @author lykan
  */
 public class VerifyFlowPostProcessor implements StartEventPostProcessor {
@@ -49,7 +53,7 @@ public class VerifyFlowPostProcessor implements StartEventPostProcessor {
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (node instanceof SubProcess) {
                 postStartEvent(((SubProcess) node).getStartEvent());
             }
@@ -58,7 +62,7 @@ public class VerifyFlowPostProcessor implements StartEventPostProcessor {
                 if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
                     AssertUtil.isTrue(comingCountMap.get(node) < node.comingList().size() && basicInStack.peek().isPresent(),
                             ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Wrong branch in the path of an element! bpmnId: {}, fileName: {}",
-                            node.getId(), startEvent.getConfig().map(Config::getConfigName).orElse(null));
+                            node.getId(), startEvent.getConfig().map(ConfigResource::getConfigName).orElse(null));
                     continue;
                 }
             }
@@ -67,8 +71,13 @@ public class VerifyFlowPostProcessor implements StartEventPostProcessor {
             }
             basicInStack.pushList(node.outingList());
         }
-        AssertUtil.oneSize(endEventSet, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
-                "EndEvent must appear and can only appear once! fileName: {}", startEvent.getConfig().map(Config::getConfigName).orElse(null));
+        AssertUtil.oneSize(endEventSet, ExceptionEnum.CONFIGURATION_FLOW_ERROR, "EndEvent must appear and can only appear once! fileName: {}",
+                startEvent.getConfig().map(ConfigResource::getConfigName).orElse(null));
         return Optional.of(startEvent);
+    }
+
+    @Override
+    public int getOrder() {
+        return 10;
     }
 }

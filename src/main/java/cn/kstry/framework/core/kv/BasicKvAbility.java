@@ -47,7 +47,7 @@ public class BasicKvAbility implements KvAbility {
 
     private static final Cache<String, Optional<Object>> kValueCache = CacheBuilder.newBuilder()
             .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterWrite(10, TimeUnit.MINUTES)
-            .removalListener(notification -> LOGGER.info("kValue cache lose efficacy. key:{}, value:{}, cause:{}",
+            .removalListener(notification -> LOGGER.info("KValue cache lose efficacy. key: {}, value: {}, cause: {}",
                     notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     private final SerializerFeature[] SF = {SerializerFeature.WriteMapNullValue, SerializerFeature.DisableCircularReferenceDetect};
@@ -64,7 +64,8 @@ public class BasicKvAbility implements KvAbility {
         if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+        KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope()
+                .orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         try {
             return kValueCache.get(getCacheKey(key, kvScope), () -> doGetValue(key, kvScope));
         } catch (Exception e) {
@@ -77,7 +78,7 @@ public class BasicKvAbility implements KvAbility {
         if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+        KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         KvThreadLocal.KvScope inKvScope = new KvThreadLocal.KvScope(scope);
         inKvScope.setBusinessId(kvScope.getBusinessId().orElse(null));
         try {
@@ -123,14 +124,14 @@ public class BasicKvAbility implements KvAbility {
             return getScopeAndDefault(key, kvScope.getScope()).filter(v -> v != KValue.KV_NULL);
         }
 
-        String businessId = kvScope.getBusinessId().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+        String businessId = kvScope.getBusinessId().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         if (!kvSelector.getKValue(businessId).isPresent()) {
             return getScopeAndDefault(key, kvScope.getScope()).filter(v -> v != KValue.KV_NULL);
         }
 
         String prefix = kvScope.getScope();
         Optional<Object> kValueOptional = getScopeAndDefault(prefix + "." + key, businessId);
-        if(kValueOptional.isPresent()){
+        if (kValueOptional.isPresent()) {
             return kValueOptional.filter(v -> v != KValue.KV_NULL);
         }
         return getScopeAndDefault(key, kvScope.getScope()).filter(v -> v != KValue.KV_NULL);

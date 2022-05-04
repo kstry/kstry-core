@@ -17,14 +17,18 @@
  */
 package cn.kstry.framework.core.container.processor;
 
-import cn.kstry.framework.core.bpmn.StartEvent;
-
 import java.util.Optional;
 
+import org.springframework.core.Ordered;
+
+import cn.kstry.framework.core.bpmn.StartEvent;
+
 /**
+ * StartEvent 创建过程加工器
+ *
  * @author lykan
  */
-public interface StartEventPostProcessor {
+public interface StartEventPostProcessor extends Ordered {
 
     /**
      * 操作判断是否装载 StartEvent

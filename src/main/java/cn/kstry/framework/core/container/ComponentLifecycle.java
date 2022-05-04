@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.container;
 
 /**
+ * 组件生命周期接口
  *
  * @author lykan
  */
@@ -26,10 +27,24 @@ public interface ComponentLifecycle {
     /**
      * 初始化
      */
-    void init();
+    String INIT = "init";
 
     /**
      * 注销
      */
-    void destroy();
+    String DESTROY = "destroy";
+
+    /**
+     * 初始化
+     */
+    default void init() {
+        // DO NOTHING
+    }
+
+    /**
+     * 注销
+     */
+    default void destroy() {
+        // DO NOTHING
+    }
 }

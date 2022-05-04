@@ -17,12 +17,13 @@
  */
 package cn.kstry.framework.core.resource.identity;
 
-import cn.kstry.framework.core.enums.IdentityTypeEnum;
-import cn.kstry.framework.core.util.AssertUtil;
+import javax.annotation.Nonnull;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import javax.annotation.Nonnull;
+import cn.kstry.framework.core.enums.IdentityTypeEnum;
+import cn.kstry.framework.core.util.AssertUtil;
 
 /**
  * BasicIdentity
@@ -63,9 +64,13 @@ public abstract class BasicIdentity implements Identity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o) {
+            return true;
+        }
 
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         BasicIdentity that = (BasicIdentity) o;
 

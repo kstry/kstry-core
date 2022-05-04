@@ -18,7 +18,8 @@
 package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.engine.AsyncTaskCell;
+import cn.kstry.framework.core.engine.thread.EndTaskPedometer;
+import cn.kstry.framework.core.util.AssertUtil;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +43,7 @@ public class ContextStoryBus {
     /**
      * 保存将要到达执行的入度
      */
-    private ConcurrentHashMap<FlowElement, List<FlowElement>> joinGatewayComingMap;
+    private ConcurrentHashMap<FlowElement, List<ElementArriveRecord>> joinGatewayComingMap;
 
     /**
      * 上一个执行的节点
@@ -50,9 +51,9 @@ public class ContextStoryBus {
     private FlowElement prevElement;
 
     /**
-     * AsyncTaskCell
+     * 结束任务计步器
      */
-    private AsyncTaskCell asyncTaskCell;
+    private EndTaskPedometer endTaskPedometer;
 
     public ContextStoryBus(StoryBus storyBus) {
         this.storyBus = storyBus;
@@ -74,11 +75,11 @@ public class ContextStoryBus {
         this.context.peekCount++;
     }
 
-    public void setJoinGatewayComingMap(ConcurrentHashMap<FlowElement, List<FlowElement>> joinGatewayComingMap) {
+    public void setJoinGatewayComingMap(ConcurrentHashMap<FlowElement, List<ElementArriveRecord>> joinGatewayComingMap) {
         this.joinGatewayComingMap = joinGatewayComingMap;
     }
 
-    public ConcurrentHashMap<FlowElement, List<FlowElement>> getJoinGatewayComingMap() {
+    public ConcurrentHashMap<FlowElement, List<ElementArriveRecord>> getJoinGatewayComingMap() {
         return joinGatewayComingMap;
     }
 
@@ -90,20 +91,64 @@ public class ContextStoryBus {
         this.prevElement = prevElement;
     }
 
-    public StoryBus getScopeData() {
+    public StoryBus getStoryBus() {
         return storyBus;
     }
 
-    public AsyncTaskCell getAsyncTaskCell() {
-        return asyncTaskCell;
+    public EndTaskPedometer getEndTaskPedometer() {
+        return endTaskPedometer;
     }
 
-    public void setAsyncTaskCell(AsyncTaskCell asyncTaskCell) {
-        this.asyncTaskCell = asyncTaskCell;
+    public void setEndTaskPedometer(EndTaskPedometer endTaskPedometer) {
+        this.endTaskPedometer = endTaskPedometer;
     }
 
     public static class Context {
 
         private int peekCount = 0;
+    }
+
+    public static class ElementArriveRecord {
+
+        /**
+         * 元素
+         */
+        private final FlowElement flowElement;
+
+        /**
+         * 是否达到
+         */
+        private boolean arrive;
+
+        /**
+         * 实际到达过
+         */
+        private boolean actualArrive;
+
+        public ElementArriveRecord(FlowElement flowElement) {
+            AssertUtil.notNull(flowElement);
+            this.flowElement = flowElement;
+            this.arrive = false;
+        }
+
+        public boolean isArrive() {
+            return arrive;
+        }
+
+        public boolean isActualArrive() {
+            return actualArrive;
+        }
+
+        public boolean elementArrive(FlowElement flowElement, boolean actualArrive) {
+            if (flowElement != this.flowElement) {
+                return false;
+            }
+            if (this.arrive) {
+                return false;
+            }
+            this.arrive = true;
+            this.actualArrive = actualArrive;
+            return true;
+        }
     }
 }

@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.engine.facade;
 
+import java.util.function.Consumer;
+
 import cn.kstry.framework.core.bus.ScopeData;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
@@ -25,11 +27,7 @@ import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 /**
- *
  * @author lykan
  */
 public class ReqBuilder<T> {
@@ -63,11 +61,11 @@ public class ReqBuilder<T> {
         }
         return this;
     }
+
     public ReqBuilder<T> businessId(String businessId) {
         this.storyRequest.setBusinessId(businessId);
         return this;
     }
-
 
     public ReqBuilder<T> trackingType(TrackingTypeEnum trackingTypeEnum) {
         this.storyRequest.setTrackingType(trackingTypeEnum);
@@ -99,11 +97,6 @@ public class ReqBuilder<T> {
 
     public ReqBuilder<T> timeout(Integer timeout) {
         this.storyRequest.setTimeout(timeout);
-        return this;
-    }
-
-    public ReqBuilder<T> monoTimeoutFallback(Supplier<? extends T> fallback) {
-        this.storyRequest.setMonoTimeoutFallback(fallback);
         return this;
     }
 

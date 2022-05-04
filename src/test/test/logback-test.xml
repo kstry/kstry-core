@@ -4,7 +4,7 @@
     <property name="LOG_PATH" value="/data/logs/kstry-core"/>
     <property name="OUTPUT_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{ks-request-id}] %-5level %class{56}.%M:%L - %msg%n"/>
     <property name="MAXDAY" value="30"/>
-    <property name="MAXSIZE" value="64MB"/>
+    <property name="MAXSIZE" value="256MB"/>
 
     <appender name="_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0c67dqt" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="Process_0wizo78" isExecutable="true">
+    <bpmn:startEvent id="story-def-load_error_002">
+      <bpmn:outgoing>Flow_04c2qz8</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="Gateway_1531tsu">
+      <bpmn:incoming>Flow_04c2qz8</bpmn:incoming>
+      <bpmn:outgoing>Flow_03sj18q</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1xfl7cb</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_04c2qz8" sourceRef="story-def-load_error_002" targetRef="Gateway_1531tsu" />
+    <bpmn:endEvent id="Event_17i56v8">
+      <bpmn:incoming>Flow_1u0we7w</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="Gateway_147ssmp">
+      <bpmn:incoming>Flow_03sj18q</bpmn:incoming>
+      <bpmn:incoming>Flow_1747bko</bpmn:incoming>
+      <bpmn:outgoing>Flow_1u0we7w</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_03sj18q" sourceRef="Gateway_1531tsu" targetRef="Gateway_147ssmp" />
+    <bpmn:sequenceFlow id="Flow_1u0we7w" sourceRef="Gateway_147ssmp" targetRef="Event_17i56v8" />
+    <bpmn:exclusiveGateway id="Gateway_0kw67ge">
+      <bpmn:incoming>Flow_1xfl7cb</bpmn:incoming>
+      <bpmn:outgoing>Flow_1747bko</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1xfl7cb" sourceRef="Gateway_1531tsu" targetRef="Gateway_0kw67ge" />
+    <bpmn:sequenceFlow id="Flow_1747bko" sourceRef="Gateway_0kw67ge" targetRef="Gateway_147ssmp" />
+    <bpmn:textAnnotation id="TextAnnotation_0kfmogz">
+      <bpmn:text>【异常】测试：排他网关有两个入度</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1k541nh" sourceRef="story-def-load_error_002" targetRef="TextAnnotation_0kfmogz" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0wizo78">
+      <bpmndi:BPMNShape id="TextAnnotation_0kfmogz_di" bpmnElement="TextAnnotation_0kfmogz">
+        <dc:Bounds x="160" y="60" width="100" height="54" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1747bko_di" bpmnElement="Flow_1747bko">
+        <di:waypoint x="440" y="135" />
+        <di:waypoint x="440" y="265" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xfl7cb_di" bpmnElement="Flow_1xfl7cb">
+        <di:waypoint x="330" y="155" />
+        <di:waypoint x="330" y="110" />
+        <di:waypoint x="415" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1u0we7w_di" bpmnElement="Flow_1u0we7w">
+        <di:waypoint x="440" y="265" />
+        <di:waypoint x="440" y="232" />
+        <di:waypoint x="542" y="232" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03sj18q_di" bpmnElement="Flow_03sj18q">
+        <di:waypoint x="330" y="205" />
+        <di:waypoint x="330" y="290" />
+        <di:waypoint x="415" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04c2qz8_di" bpmnElement="Flow_04c2qz8">
+        <di:waypoint x="248" y="180" />
+        <di:waypoint x="305" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="story-def-load_error_002">
+        <dc:Bounds x="212" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1531tsu_di" bpmnElement="Gateway_1531tsu" isMarkerVisible="true">
+        <dc:Bounds x="305" y="155" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_17i56v8_di" bpmnElement="Event_17i56v8">
+        <dc:Bounds x="542" y="214" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_147ssmp_di" bpmnElement="Gateway_147ssmp" isMarkerVisible="true">
+        <dc:Bounds x="415" y="265" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0kw67ge_di" bpmnElement="Gateway_0kw67ge" isMarkerVisible="true">
+        <dc:Bounds x="415" y="85" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1k541nh_di" bpmnElement="Association_1k541nh">
+        <di:waypoint x="227" y="163" />
+        <di:waypoint x="217" y="114" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

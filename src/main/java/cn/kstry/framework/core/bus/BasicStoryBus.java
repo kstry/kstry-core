@@ -18,14 +18,14 @@
 package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.container.MethodWrapper;
+import cn.kstry.framework.core.container.component.MethodWrapper;
+import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.task.facade.TaskServiceDef;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.PropertyUtil;
@@ -93,6 +93,11 @@ public class BasicStoryBus implements StoryBus {
      */
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
+    /**
+     * StoryBus 中的数据操作接口
+     */
+    private ScopeDataOperator scopeDataOperator;
+
     public BasicStoryBus(String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         this.role = role;
         this.businessId = businessId;
@@ -105,6 +110,16 @@ public class BasicStoryBus implements StoryBus {
     @Override
     public Object getReq() {
         return reqScopeData;
+    }
+
+    @Override
+    public ScopeData getVar() {
+        return varScopeData;
+    }
+
+    @Override
+    public ScopeData getSta() {
+        return staScopeData;
     }
 
     @Override
@@ -128,17 +143,16 @@ public class BasicStoryBus implements StoryBus {
             } else if (scopeTypeEnum == ScopeTypeEnum.REQUEST) {
                 return PropertyUtil.getProperty(getReq(), key);
             } else {
-                KstryException.throwException(ExceptionEnum.STORY_ERROR);
+                throw KstryException.buildException(null, ExceptionEnum.STORY_ERROR, null);
             }
-            return Optional.empty();
         } finally {
             readLock.unlock();
         }
     }
 
     @Override
-    public Optional<Role> getRole() {
-        return Optional.ofNullable(role);
+    public Role getRole() {
+        return role;
     }
 
     @Override
@@ -153,14 +167,22 @@ public class BasicStoryBus implements StoryBus {
         try {
             doNoticeResult(flowElement, result, returnTypeNoticeDef.getNoticeStaDefSet(), ScopeTypeEnum.STABLE);
             doNoticeResult(flowElement, result, returnTypeNoticeDef.getNoticeVarDefSet(), ScopeTypeEnum.VARIABLE);
-            if (returnTypeNoticeDef.getStoryResultDef() != null) {
-                if (this.returnResult == null) {
-                    this.returnResult = result;
-                    monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, result));
-                } else {
-                    LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}",
-                            ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), taskServiceDef.getName());
-                }
+            if (returnTypeNoticeDef.getStoryResultDef() == null) {
+                return;
+            }
+            MethodWrapper.NoticeFieldItem srDef = returnTypeNoticeDef.getStoryResultDef();
+            Object r;
+            if (srDef.isResultSelf()) {
+                r = result;
+            } else {
+                r = PropertyUtil.getProperty(result, srDef.getFieldName()).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
+            }
+            if (this.returnResult == null) {
+                this.returnResult = r;
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, r));
+            } else {
+                LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}",
+                        ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), taskServiceDef.getName());
             }
         } finally {
             writeLock.unlock();
@@ -178,6 +200,158 @@ public class BasicStoryBus implements StoryBus {
         return businessId;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public ScopeDataOperator getScopeDataOperator() {
+        if (scopeDataOperator != null) {
+            return scopeDataOperator;
+        }
+        ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+        writeLock.lock();
+        try {
+            if (scopeDataOperator != null) {
+                return scopeDataOperator;
+            }
+            this.scopeDataOperator = new ScopeDataOperator() {
+
+                @Override
+                public <T> T getReqScope() {
+                    return (T) BasicStoryBus.this.getReq();
+                }
+
+                @Override
+                public <T extends ScopeData> T getStaScope() {
+                    return (T) BasicStoryBus.this.getSta();
+                }
+
+                @Override
+                public <T extends ScopeData> T getVarScope() {
+                    return (T) BasicStoryBus.this.getVar();
+                }
+
+                @Override
+                public <T> Optional<T> getResult() {
+                    return Optional.ofNullable(BasicStoryBus.this.getResult()).map(r -> (T) r);
+                }
+
+                @Override
+                public Optional<String> getBusinessId() {
+                    return Optional.ofNullable(BasicStoryBus.this.getBusinessId()).filter(StringUtils::isNotBlank);
+                }
+
+                @Override
+                public <T> Optional<T> getReqData(String name) {
+                    if (StringUtils.isBlank(name)) {
+                        return Optional.empty();
+                    }
+                    return BasicStoryBus.this.getValue(ScopeTypeEnum.REQUEST, name).map(r -> (T) r);
+                }
+
+                @Override
+                public <T> Optional<T> getStaData(String name) {
+                    if (StringUtils.isBlank(name)) {
+                        return Optional.empty();
+                    }
+                    return BasicStoryBus.this.getValue(ScopeTypeEnum.STABLE, name).map(r -> (T) r);
+                }
+
+                @Override
+                public <T> Optional<T> getVarData(String name) {
+                    if (StringUtils.isBlank(name)) {
+                        return Optional.empty();
+                    }
+                    return BasicStoryBus.this.getValue(ScopeTypeEnum.VARIABLE, name).map(r -> (T) r);
+                }
+
+                @Override
+                public boolean setStaData(String name, Object target) {
+                    if (target == null || StringUtils.isBlank(name)) {
+                        return false;
+                    }
+                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
+                    wLock.lock();
+                    try {
+                        String[] fieldNameSplit = name.split("\\.");
+                        Object t = BasicStoryBus.this.staScopeData;
+                        for (int i = 0; i < fieldNameSplit.length - 1 && t != null; i++) {
+                            t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
+                        }
+                        if (t == null) {
+                            return false;
+                        }
+                        Optional<Object> oldResult =
+                                PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
+                        if (oldResult.isPresent()) {
+                            return false;
+                        }
+                        String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
+                        PropertyUtil.setProperty(t, fieldName, target);
+                        return true;
+                    } finally {
+                        wLock.unlock();
+                    }
+                }
+
+                @Override
+                public void setVarData(String name, Object target) {
+                    if (StringUtils.isBlank(name)) {
+                        return;
+                    }
+                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
+                    wLock.lock();
+                    try {
+                        Object t = BasicStoryBus.this.varScopeData;
+                        String[] fieldNameSplit = name.split("\\.");
+                        for (int i = 0; i < fieldNameSplit.length - 1 && t != null; i++) {
+                            t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
+                        }
+                        if (t == null) {
+                            return;
+                        }
+                        String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
+                        PropertyUtil.setProperty(t, fieldName, target);
+                    } finally {
+                        wLock.unlock();
+                    }
+                }
+
+                @Override
+                public boolean setResult(Object target) {
+                    if (target == null) {
+                        return false;
+                    }
+                    if (BasicStoryBus.this.returnResult != null) {
+                        return false;
+                    }
+                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
+                    wLock.lock();
+                    try {
+                        if (BasicStoryBus.this.returnResult != null) {
+                            return false;
+                        }
+                        BasicStoryBus.this.returnResult = target;
+                        return true;
+                    } finally {
+                        wLock.unlock();
+                    }
+                }
+
+                @Override
+                public ReentrantReadWriteLock.ReadLock readLock() {
+                    return BasicStoryBus.this.readWriteLock.readLock();
+                }
+
+                @Override
+                public ReentrantReadWriteLock.WriteLock writeLock() {
+                    return BasicStoryBus.this.readWriteLock.writeLock();
+                }
+            };
+            return this.scopeDataOperator;
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
     private void doNoticeResult(FlowElement flowElement, Object result, Set<MethodWrapper.NoticeFieldItem> noticeStaDefSet, ScopeTypeEnum dataEnum) {
         if (CollectionUtils.isEmpty(noticeStaDefSet)) {
             return;
@@ -190,8 +364,7 @@ public class BasicStoryBus implements StoryBus {
         } else if (ScopeTypeEnum.VARIABLE == dataEnum) {
             data = varScopeData;
         } else {
-            KstryException.throwException(ExceptionEnum.STORY_ERROR);
-            return;
+            throw KstryException.buildException(null, ExceptionEnum.STORY_ERROR, null);
         }
 
         noticeStaDefSet.forEach(def -> {
@@ -209,7 +382,7 @@ public class BasicStoryBus implements StoryBus {
                 Optional<Object> oldResult =
                         PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
                 if (oldResult.isPresent()) {
-                    LOGGER.warn("[{}] Existing values in the immutable union are not allowed to be set repeatedly! k:{}, oldV:{}",
+                    LOGGER.warn("[{}] Existing values in the immutable union are not allowed to be set repeatedly! k: {}, oldV: {}",
                             ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), def.getTargetName(), oldResult.get());
                     return;
                 }
@@ -236,15 +409,5 @@ public class BasicStoryBus implements StoryBus {
             PropertyUtil.setProperty(t, fieldName, r);
             monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r));
         });
-    }
-
-    @Override
-    public ScopeData getVar() {
-        return varScopeData;
-    }
-
-    @Override
-    public ScopeData getSta() {
-        return staScopeData;
     }
 }

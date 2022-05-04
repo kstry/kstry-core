@@ -17,16 +17,17 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.container.KstryContextResolver;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Import;
-import org.springframework.scheduling.annotation.EnableScheduling;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+import cn.kstry.framework.core.component.launcher.ComponentImportSelector;
 
 /**
  * 开启 Kstry 框架，通过该注解开启使用 Kstry 框架
@@ -38,7 +39,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @EnableScheduling
-@Import({KstryContextResolver.class})
+@Import({ComponentImportSelector.class})
 public @interface EnableKstry {
 
     /**
@@ -49,8 +50,8 @@ public @interface EnableKstry {
     String bpmnPath() default StringUtils.EMPTY;
 
     /**
+     * 指定配置文件的路径，只支持yml、yaml 后缀名文件
      * 通过 cn.kstry.framework.core.kv.KvAbility 获取yml中定义的变量
-     * 只支持yml、yaml 后缀名文件
      *
      * @return yml 配置文件
      */

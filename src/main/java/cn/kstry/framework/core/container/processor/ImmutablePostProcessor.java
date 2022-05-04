@@ -17,12 +17,6 @@
  */
 package cn.kstry.framework.core.container.processor;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-
-import com.google.common.collect.Maps;
-
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
@@ -32,13 +26,19 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 将元素中的出入度变为不可变对象，防止后面程序修改了出入度导致链路出错
  *
  * @author lykan
  */
-public class ImmutablePostProcessor implements StartEventPostProcessor{
+public class ImmutablePostProcessor implements StartEventPostProcessor {
 
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
@@ -47,17 +47,24 @@ public class ImmutablePostProcessor implements StartEventPostProcessor{
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            if (node instanceof SubProcess) {
+                postStartEvent(GlobalUtil.transferNotEmpty(node, SubProcess.class).getStartEvent());
+            }
             if (ElementPropertyUtil.isSupportAggregation(node)) {
                 comingCountMap.merge(node, 1, Integer::sum);
                 if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
                     continue;
                 }
             }
-            AssertUtil.notTrue(node instanceof SubProcess);
             node.immutable();
             basicInStack.pushList(node.outingList());
         }
         return Optional.of(startEvent);
+    }
+
+    @Override
+    public int getOrder() {
+        return 50;
     }
 }

@@ -25,7 +25,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 该注解修饰的字段，字段结果被通知到 bus 中的 stable 变量集中
+ * 可以标注在服务节点的返回值类上或类字段上，也可与 cn.kstry.framework.core.bpmn.ServiceTask 联用标注在服务节点上
+ *
+ * 用来指定服务节点返回值或字段变量将被通知到 bus 中的 stable 变量集中
  *
  * @author lykan
  */

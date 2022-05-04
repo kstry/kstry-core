@@ -18,12 +18,30 @@
 package cn.kstry.framework.core.enums;
 
 /**
+ * 异步任务执行结果
  *
  * @author lykan
  */
 public enum AsyncTaskState {
 
+    /**
+     * 成功
+     */
     SUCCESS,
 
-    ERROR
+    /**
+     * 失败
+     */
+    ERROR,
+
+    /**
+     * 超时
+     */
+    TIMEOUT,
+
+    /**
+     * 取消
+     */
+    CANCEL
+
 }

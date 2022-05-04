@@ -18,21 +18,17 @@
 package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bus.BasicStoryBus;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.component.validator.RequestValidator;
-import cn.kstry.framework.core.constant.GlobalConstant;
-import cn.kstry.framework.core.container.MethodWrapper;
+import cn.kstry.framework.core.container.component.ParamInjectDef;
+import cn.kstry.framework.core.container.task.impl.TaskComponentProxy;
 import cn.kstry.framework.core.engine.ParamLifecycle;
-import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.ParamTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.task.TaskServiceWrapper;
-import cn.kstry.framework.core.task.impl.AbilityTaskServiceWrapper;
-import cn.kstry.framework.core.task.impl.RootTaskServiceWrapper;
-import cn.kstry.framework.core.task.impl.TaskComponentRegisterProxy;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,7 +48,7 @@ public class TaskServiceUtil {
     /**
      * service name + ability name
      *
-     * @param left service name
+     * @param left  service name
      * @param right ability name
      * @return name
      */
@@ -65,37 +61,10 @@ public class TaskServiceUtil {
     }
 
     /**
-     *
-     * @param name service name
-     * @param ability ability name
-     * @return DefaultTaskServiceWrapper
-     */
-    public static AbilityTaskServiceWrapper buildTaskService(String name, String ability) {
-        AssertUtil.notNull(name);
-        if (StringUtils.isBlank(ability)) {
-            return new RootTaskServiceWrapper(name);
-        }
-        return new AbilityTaskServiceWrapper(name, ability, IdentityTypeEnum.SERVICE_TASK_ABILITY);
-    }
-
-    /**
-     * isTaskService
-     */
-    public static boolean isTaskService(TaskServiceWrapper taskServiceWrapper) {
-        if (taskServiceWrapper == null) {
-            return false;
-        }
-        if (StringUtils.isBlank(taskServiceWrapper.getName())) {
-            return false;
-        }
-        return GlobalConstant.TASK_SERVICE_ENUM_LIST.contains(taskServiceWrapper.getIdentityType());
-    }
-
-    /**
      * 获取目标方法入参
      */
-    public static Object[] getTaskParams(FlowElement flowElement, BasicStoryBus storyBus, Role role, TaskComponentRegisterProxy targetProxy,
-                                         List<MethodWrapper.ParamInjectDef> paramInjectDefs, Function<MethodWrapper.ParamInjectDef, Object> paramInitStrategy) {
+    public static Object[] getTaskParams(FlowElement flowElement, StoryBus storyBus, Role role, TaskComponentProxy targetProxy,
+                                         List<ParamInjectDef> paramInjectDefs, Function<ParamInjectDef, Object> paramInitStrategy) {
         AssertUtil.notNull(flowElement);
         MonitorTracking monitorTracking = storyBus.getMonitorTracking();
         Object[] params = new Object[paramInjectDefs.size()];
@@ -105,7 +74,7 @@ public class TaskServiceUtil {
             params[i] = null;
 
             // 没有参数定义时，取默认值
-            MethodWrapper.ParamInjectDef iDef = paramInjectDefs.get(i);
+            ParamInjectDef iDef = paramInjectDefs.get(i);
             if (iDef == null) {
                 continue;
             }
@@ -122,6 +91,13 @@ public class TaskServiceUtil {
             if (targetProxy.isCustomRole() && Role.class.isAssignableFrom(iDef.getParamType())) {
                 params[i] = role;
                 monitorTracking.trackingNodeParams(flowElement, () -> ParamTracking.build(iDef.getFieldName(), null, ScopeTypeEnum.EMPTY, "role"));
+                continue;
+            }
+
+            // 入参是 ScopeDataOperator 时，注入ScopeDataOperator
+            if (ScopeDataOperator.class.isAssignableFrom(iDef.getParamType())) {
+                params[i] = storyBus.getScopeDataOperator();
+                monitorTracking.trackingNodeParams(flowElement, () -> ParamTracking.build(iDef.getFieldName(), null, ScopeTypeEnum.EMPTY, "dataOperator"));
                 continue;
             }
 
@@ -146,7 +122,7 @@ public class TaskServiceUtil {
                     continue;
                 }
                 AssertUtil.isTrue(r == null || ElementParserUtil.isAssignable(iDef.getParamType(), r.getClass()),
-                        ExceptionEnum.PARAMS_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
+                        ExceptionEnum.SERVICE_PARAM_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
                             String actual = (r == null) ? "null" : r.getClass().getName();
                             return Lists.newArrayList(actual, iDef.getParamType().getName());
                         });
@@ -166,7 +142,7 @@ public class TaskServiceUtil {
                     ((ParamLifecycle) o).before();
                 }
 
-                List<MethodWrapper.ParamInjectDef> fieldInjectDefList = iDef.getFieldInjectDefList();
+                List<ParamInjectDef> fieldInjectDefList = iDef.getFieldInjectDefList();
                 if (CollectionUtils.isNotEmpty(fieldInjectDefList)) {
                     fieldInjectDefList.forEach(def -> {
                         Object value = storyBus.getValue(def.getScopeDataEnum(), def.getTargetName()).orElse(null);
@@ -177,7 +153,7 @@ public class TaskServiceUtil {
                             return;
                         }
                         AssertUtil.isTrue(value == null || ElementParserUtil.isAssignable(def.getParamType(), value.getClass()),
-                                ExceptionEnum.PARAMS_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
+                                ExceptionEnum.SERVICE_PARAM_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
                                     String actual = (value == null) ? "null" : value.getClass().getName();
                                     return Lists.newArrayList(actual, def.getParamType().getName());
                                 });

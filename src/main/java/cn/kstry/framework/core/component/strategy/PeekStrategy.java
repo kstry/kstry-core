@@ -21,6 +21,7 @@ import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bus.ContextStoryBus;
 
 /**
+ * 节点执行策略
  *
  * @author lykan
  */
@@ -37,10 +38,10 @@ public interface PeekStrategy {
      * 是否跳过当前 FlowElement
      *
      * @param flowElement flowElement
-     * @param contextScopeData contextScopeData
+     * @param contextStoryBus contextStoryBus
      * @return true：需要
      */
-    default boolean skip(FlowElement flowElement, ContextStoryBus contextScopeData) {
+    default boolean skip(FlowElement flowElement, ContextStoryBus contextStoryBus) {
         return false;
     }
 
@@ -48,10 +49,10 @@ public interface PeekStrategy {
      * 判断每一个出度子项是否需要被探出
      *
      * @param flowElement flowElement
-     * @param contextScopeData contextScopeData
+     * @param contextStoryBus contextStoryBus
      * @return true：需要
      */
-    boolean needPeek(FlowElement flowElement, ContextStoryBus contextScopeData);
+    boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus);
 
     /**
      * 允许出度为空

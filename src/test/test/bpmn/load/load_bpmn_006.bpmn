@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1mfw59v" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="Process_0yfc5zp" isExecutable="true">
+    <bpmn:startEvent id="story-def-load_error_01">
+      <bpmn:outgoing>Flow_0dq8ufs</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_1cgrbnn" name="打印参数1">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="goods_service" />
+          <camunda:property name="task-service" value="say_request" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0dq8ufs</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dfv6du</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1i68hwa</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0dq8ufs" sourceRef="story-def-load_error_01" targetRef="Activity_1cgrbnn" />
+    <bpmn:serviceTask id="Activity_0bzymz5" name="打印参数1">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="goods_service" />
+          <camunda:property name="task-service" value="say_request" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1dfv6du</bpmn:incoming>
+      <bpmn:incoming>Flow_0hwrsfg</bpmn:incoming>
+      <bpmn:outgoing>Flow_1muw528</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0utamki" name="打印参数1">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="goods_service" />
+          <camunda:property name="task-service" value="say_request" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1i68hwa</bpmn:incoming>
+      <bpmn:outgoing>Flow_0hwrsfg</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1dfv6du" sourceRef="Activity_1cgrbnn" targetRef="Activity_0bzymz5" />
+    <bpmn:sequenceFlow id="Flow_1i68hwa" sourceRef="Activity_1cgrbnn" targetRef="Activity_0utamki" />
+    <bpmn:sequenceFlow id="Flow_0hwrsfg" sourceRef="Activity_0utamki" targetRef="Activity_0bzymz5" />
+    <bpmn:endEvent id="Event_0g90g45">
+      <bpmn:incoming>Flow_1muw528</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1muw528" sourceRef="Activity_0bzymz5" targetRef="Event_0g90g45" />
+    <bpmn:textAnnotation id="TextAnnotation_1hms5f2">
+      <bpmn:text>【异常】测试：任务节点有两个入度</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1bzmrc0" sourceRef="story-def-load_error_01" targetRef="TextAnnotation_1hms5f2" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0yfc5zp">
+      <bpmndi:BPMNShape id="TextAnnotation_1hms5f2_di" bpmnElement="TextAnnotation_1hms5f2">
+        <dc:Bounds x="160" y="120" width="100" height="54" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1muw528_di" bpmnElement="Flow_1muw528">
+        <di:waypoint x="600" y="120" />
+        <di:waypoint x="672" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0hwrsfg_di" bpmnElement="Flow_0hwrsfg">
+        <di:waypoint x="550" y="280" />
+        <di:waypoint x="550" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i68hwa_di" bpmnElement="Flow_1i68hwa">
+        <di:waypoint x="430" y="240" />
+        <di:waypoint x="450" y="240" />
+        <di:waypoint x="450" y="320" />
+        <di:waypoint x="500" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dfv6du_di" bpmnElement="Flow_1dfv6du">
+        <di:waypoint x="430" y="240" />
+        <di:waypoint x="450" y="240" />
+        <di:waypoint x="450" y="120" />
+        <di:waypoint x="500" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dq8ufs_di" bpmnElement="Flow_0dq8ufs">
+        <di:waypoint x="268" y="240" />
+        <di:waypoint x="330" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="story-def-load_error_01">
+        <dc:Bounds x="232" y="222" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1cgrbnn_di" bpmnElement="Activity_1cgrbnn">
+        <dc:Bounds x="330" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0bzymz5_di" bpmnElement="Activity_0bzymz5">
+        <dc:Bounds x="500" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0utamki_di" bpmnElement="Activity_0utamki">
+        <dc:Bounds x="500" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0g90g45_di" bpmnElement="Event_0g90g45">
+        <dc:Bounds x="672" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1bzmrc0_di" bpmnElement="Association_1bzmrc0">
+        <di:waypoint x="244" y="223" />
+        <di:waypoint x="225" y="174" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

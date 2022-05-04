@@ -18,11 +18,12 @@
 package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.annotation.*;
-import cn.kstry.framework.core.container.MethodWrapper;
+import cn.kstry.framework.core.container.component.MethodWrapper;
+import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.task.TaskComponentRegister;
+import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -76,9 +77,8 @@ public class ElementParserUtil {
         try {
             return Optional.of(clazz.getDeclaredConstructor().newInstance());
         } catch (Throwable e) {
-            KstryException.throwException(e, ExceptionEnum.SERVICE_PARAM_ERROR,
+            throw KstryException.buildException(e, ExceptionEnum.SERVICE_PARAM_ERROR,
                     GlobalUtil.format(ExceptionEnum.SERVICE_PARAM_ERROR.getDesc() + " class: {}", clazz.getName()));
-            return Optional.empty();
         }
     }
 
@@ -123,8 +123,8 @@ public class ElementParserUtil {
         return Optional.empty();
     }
 
-    public static List<MethodWrapper.ParamInjectDef> getFieldInjectDefList(Class<?> clazz) {
-        List<MethodWrapper.ParamInjectDef> fieldInjectDefList = Lists.newArrayList();
+    public static List<ParamInjectDef> getFieldInjectDefList(Class<?> clazz) {
+        List<ParamInjectDef> fieldInjectDefList = Lists.newArrayList();
         if (clazz == null) {
             return fieldInjectDefList;
         }
@@ -141,7 +141,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(TaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum());
-                MethodWrapper.ParamInjectDef injectDef = new MethodWrapper.ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -157,7 +157,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(ReqTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.REQUEST);
-                MethodWrapper.ParamInjectDef injectDef = new MethodWrapper.ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -173,7 +173,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(StaTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.STABLE);
-                MethodWrapper.ParamInjectDef injectDef = new MethodWrapper.ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -189,7 +189,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(VarTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.VARIABLE);
-                MethodWrapper.ParamInjectDef injectDef = new MethodWrapper.ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -248,8 +248,7 @@ public class ElementParserUtil {
         } else if (customRoleAnnotation != null) {
             return Optional.of(customRoleAnnotation.name()).filter(StringUtils::isNotBlank);
         } else {
-            KstryException.throwException(ExceptionEnum.SYSTEM_ERROR);
+            throw KstryException.buildException(null, ExceptionEnum.ANNOTATION_USAGE_ERROR, null);
         }
-        return Optional.empty();
     }
 }

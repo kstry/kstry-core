@@ -306,21 +306,19 @@ public class AssertUtil {
 
     private static void throwCustomException(@Nonnull ExceptionEnum exceptionEnum, String desc, Supplier<List<?>> paramsSupplier) {
         if (StringUtils.isBlank(desc)) {
-            KstryException.throwException(exceptionEnum, exceptionEnum.getDesc());
-            return;
+            throw KstryException.buildException(null, exceptionEnum, exceptionEnum.getDesc());
         }
 
         if (paramsSupplier == null) {
-            KstryException.throwException(exceptionEnum, desc);
-            return;
+            throw KstryException.buildException(null, exceptionEnum, desc);
         }
 
         List<?> objList = paramsSupplier.get();
         if (CollectionUtils.isEmpty(objList)) {
-            KstryException.throwException(exceptionEnum, desc);
+            throw KstryException.buildException(null, exceptionEnum, desc);
         }
 
         Object[] params = objList.stream().map(obj -> (obj instanceof String) ? obj : JSON.toJSONString(obj)).toArray();
-        KstryException.throwException(exceptionEnum, GlobalUtil.format(desc, params));
+        throw KstryException.buildException(null, exceptionEnum, GlobalUtil.format(desc, params));
     }
 }

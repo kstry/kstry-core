@@ -17,24 +17,38 @@
  */
 package cn.kstry.framework.core.component.bpmn;
 
-import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.resource.config.Config;
-
+import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
+import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.resource.config.ConfigResource;
+
 /**
+ * 将 BPMN 文件解析成链路流程对象
  *
  * @author lykan
  */
-public interface BpmnModelTransfer {
+public interface BpmnModelTransfer<T> {
 
     /**
      * 从 其他 Bpmn Model 转化为 Kstry Model
      *
-     * @param config  config
-     * @param instance  Bpmn Model
-     * @param startId startId
+     * @param config   config
+     * @param instance Bpmn Model
+     * @param startId  startId
      * @return Bpmn Model
      */
-    Optional<StartEvent> getKstryModel(Config config, Object instance, String startId);
+    Optional<StartEvent> getKstryModel(@Nonnull Map<String, SubProcess> allSubProcess, ConfigResource config, T instance, String startId);
+
+    /**
+     * 获取 子流程
+     *
+     * @param config   config
+     * @param instance Bpmn Model
+     * @return 子流程
+     */
+    Map<String, SubProcess> getAllSubProcess(ConfigResource config, T instance);
 }

@@ -17,22 +17,21 @@
  */
 package cn.kstry.framework.core.engine.facade;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import cn.kstry.framework.core.bus.ScopeData;
+import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
- *
  * @author lykan
  */
 public class StoryRequest<T> {
@@ -80,14 +79,9 @@ public class StoryRequest<T> {
     private Role role;
 
     /**
-     * 任务超时时间，为空时使用全局默认超时时间
+     * 任务超时时间，为空时使用全局默认超时时间，单位 ms
      */
     private Integer timeout;
-
-    /**
-     * 使用 storyEngine.fireAsync 时，如果任务执行超时，可通过指定该 Supplier 获取默认的返回结果
-     */
-    private Supplier<? extends T> monoTimeoutFallback;
 
     /**
      * 链路追踪级别，未指定时使用全局默认配置的级别
@@ -97,10 +91,10 @@ public class StoryRequest<T> {
     /**
      * 任务执行成功之后，会回调这个方法，传入 RecallStory
      * 通过 RecallStory 可获取：各个作用域变量、角色、最终返回结果、链路追踪器等，可以做如下的事情：
-     *  - 校验最终结果是否正确
-     *  - 判断节点与节点执行关系是否正确，比如：A 节点执行之后 B 节点一定执行。 A、B 节点不能同时执行等
-     *  - 判断角色与节点执行关系是否正确，比如：RA 角色出现时，节点 A 一定会出现执行
-     *  - 判断过滤耗时高的节点，进行报警
+     * - 校验最终结果是否正确
+     * - 判断节点与节点执行关系是否正确，比如：A 节点执行之后 B 节点一定执行。 A、B 节点不能同时执行等
+     * - 判断角色与节点执行关系是否正确，比如：RA 角色出现时，节点 A 一定会出现执行
+     * - 判断过滤耗时高的节点，进行报警
      */
     private Consumer<RecallStory> recallStoryHook;
 
@@ -136,7 +130,7 @@ public class StoryRequest<T> {
     }
 
     public void setVarScopeData(ScopeData varScopeData) {
-        AssertUtil.equals(staScopeData.getScopeDataEnum(), ScopeTypeEnum.VARIABLE);
+        AssertUtil.equals(varScopeData.getScopeDataEnum(), ScopeTypeEnum.VARIABLE);
         this.varScopeData = varScopeData;
     }
 
@@ -157,20 +151,12 @@ public class StoryRequest<T> {
         this.role = role;
     }
 
-    public Integer getTimeout() {
-        return timeout;
+    public int getTimeout() {
+        return Optional.ofNullable(timeout).orElse(GlobalProperties.ASYNC_TASK_DEFAULT_TIMEOUT);
     }
 
     public void setTimeout(Integer timeout) {
         this.timeout = timeout;
-    }
-
-    public Supplier<? extends T> getMonoTimeoutFallback() {
-        return monoTimeoutFallback;
-    }
-
-    public void setMonoTimeoutFallback(Supplier<? extends T> monoTimeoutFallback) {
-        this.monoTimeoutFallback = monoTimeoutFallback;
     }
 
     public TrackingTypeEnum getTrackingType() {

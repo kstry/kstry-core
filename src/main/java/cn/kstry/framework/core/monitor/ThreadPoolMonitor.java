@@ -18,11 +18,12 @@
 package cn.kstry.framework.core.monitor;
 
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
+import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.List;
 
 /**
  * 线程池监控
@@ -33,21 +34,18 @@ public class ThreadPoolMonitor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolMonitor.class);
 
-    private final String name;
+    private final List<TaskThreadPoolExecutor> taskThreadPoolExecutor;
 
-    private final ThreadPoolExecutor threadPoolExecutor;
-
-    public ThreadPoolMonitor(String name, ThreadPoolExecutor threadPoolExecutor) {
-        this.name = name;
-        this.threadPoolExecutor = threadPoolExecutor;
+    public ThreadPoolMonitor(List<TaskThreadPoolExecutor> taskThreadPoolExecutor) {
+        this.taskThreadPoolExecutor = taskThreadPoolExecutor;
     }
 
     @Scheduled(fixedDelayString = "${" + ConfigPropertyNameConstant.KSTRY_THREAD_POOL_MONITOR_DELAY + ":10000}")
     public void monitor() {
-        handleExecutor(name, threadPoolExecutor);
+        taskThreadPoolExecutor.forEach(ThreadPoolMonitor::handleExecutor);
     }
 
-    public static void handleExecutor(String name, ThreadPoolExecutor threadPoolExecutor) {
+    public static void handleExecutor(TaskThreadPoolExecutor threadPoolExecutor) {
 
         // 线程池需要执行的任务数
         long taskCount = threadPoolExecutor.getTaskCount();
@@ -73,8 +71,10 @@ public class ThreadPoolMonitor {
         // 当前线程池队列的个数
         int queueSize = threadPoolExecutor.getQueue().size();
 
-        LOGGER.info("thread pool {} monitor. task-count:{}, completed-task-count:{}, largest-pool-size:{}, pool-size:{}, " +
-                        "active-count:{}, core-pool-size:{}, maximum-pool-size:{}, queue-size:{}",
-                name, taskCount, completedTaskCount, largestPoolSize, poolSize, activeCount, corePoolSize, maximumPoolSize, queueSize);
+        if (taskCount > 0) {
+            LOGGER.info("Thread pool {} monitor. task-count: {}, completed-task-count: {}, largest-pool-size: {}, pool-size: {}, " +
+                            "active-count: {}, core-pool-size: {}, maximum-pool-size: {}, queue-size: {}", threadPoolExecutor.getPrefix(),
+                    taskCount, completedTaskCount, largestPoolSize, poolSize, activeCount, corePoolSize, maximumPoolSize, queueSize);
+        }
     }
 }

@@ -46,6 +46,11 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
     private List<FlowElement> comingFlowElementList = Lists.newArrayList();
 
     /**
+     * 不可变标识
+     */
+    private boolean immutable = false;
+
+    /**
      * 从 一个 AggregationFlowElement 到另一个 AggregationFlowElement 之间会经过一些普通节点
      * FlowTrack 保存所有的这些节点索引
      */
@@ -54,11 +59,12 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
     @Override
     public void outing(FlowElement flowElement) {
         AssertUtil.notNull(flowElement);
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR);
         if (outingFlowElementList.contains(flowElement)) {
             return;
         }
-        outingFlowElementList.forEach(flow ->
-                AssertUtil.notTrue(Objects.equals(flowElement, flow), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "flow element id duplication!"));
+
+        outingFlowElementList.forEach(flow -> AssertUtil.notTrue(Objects.equals(flowElement, flow), ExceptionEnum.COMPONENT_DUPLICATION_ERROR));
         boolean flow2Ele = (this instanceof SequenceFlow) && !(flowElement instanceof SequenceFlow);
         boolean ele2Flow = !(this instanceof SequenceFlow) && (flowElement instanceof SequenceFlow);
         AssertUtil.isTrue(flow2Ele || ele2Flow, ExceptionEnum.CONFIGURATION_FLOW_ERROR);
@@ -67,7 +73,7 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
         if (flowElement instanceof FlowElementImpl) {
             ((FlowElementImpl) flowElement).coming(this);
         } else {
-            KstryException.throwException(ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
+            throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
         }
     }
 
@@ -88,6 +94,7 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
 
     @Override
     public void addFlowTrack(List<Integer> flowTrack) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         if (!ElementPropertyUtil.isSupportAggregation(this)) {
             this.flowTrack = ImmutableList.copyOf(flowTrack);
         }
@@ -95,14 +102,36 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
 
     @Override
     public void clearOutingChain() {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         outingFlowElementList.forEach(outNode -> GlobalUtil.transferNotEmpty(outNode, FlowElementImpl.class).comingFlowElementList.remove(this));
         outingFlowElementList.clear();
     }
 
     @Override
     public void immutable() {
+        if (isImmutable()) {
+            return;
+        }
         outingFlowElementList = ImmutableList.copyOf(outingFlowElementList);
         comingFlowElementList = ImmutableList.copyOf(comingFlowElementList);
+        immutable = true;
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return immutable;
+    }
+
+    @Override
+    public void setId(String id) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
+        super.setId(id);
+    }
+
+    @Override
+    public void setIndex(Integer index) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
+        super.setIndex(index);
     }
 
     private void coming(FlowElement flowElement) {

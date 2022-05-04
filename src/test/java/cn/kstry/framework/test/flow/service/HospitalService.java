@@ -2,7 +2,7 @@ package cn.kstry.framework.test.flow.service;
 
 import cn.kstry.framework.core.annotation.ReqTaskParam;
 import cn.kstry.framework.core.annotation.TaskService;
-import cn.kstry.framework.core.task.TaskComponentRegister;
+import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.test.flow.bo.Hospital;
 import com.alibaba.fastjson.JSON;
 import org.springframework.stereotype.Component;

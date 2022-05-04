@@ -19,25 +19,24 @@ package cn.kstry.framework.core.role;
 
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
-import cn.kstry.framework.core.enums.IdentityTypeEnum;
+import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.identity.Identity;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import cn.kstry.framework.core.role.permission.Permission;
+import cn.kstry.framework.core.role.permission.PermissionAuth;
+import com.google.common.collect.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Predicate;
 
 /**
+ * 角色基类
  *
  * @author lykan
  */
@@ -46,7 +45,7 @@ public class BasicRole implements Role {
     /**
      * 角色名称
      */
-    private String name;
+    private final String name;
 
     /**
      * 父级 角色集合
@@ -54,9 +53,9 @@ public class BasicRole implements Role {
     private final Set<Role> parentRoles = Sets.newHashSet();
 
     /**
-     * 权限集合
+     * 权限桶
      */
-    private final Map<IdentityTypeEnum, List<Permission>> permissionMap = Maps.newHashMap();
+    private final Map<ServiceNodeType, List<Permission>> permissionBucket = Maps.newHashMap();
 
     /**
      * 读写锁
@@ -64,7 +63,7 @@ public class BasicRole implements Role {
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     public BasicRole() {
-
+        this(null);
     }
 
     public BasicRole(String name) {
@@ -77,17 +76,15 @@ public class BasicRole implements Role {
     }
 
     @Override
-    public boolean allowPermission(@Nonnull Permission permission) {
+    public boolean allowedUseResource(PermissionAuth permissionAuth) {
         ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
             InStack<Role> roleStack = new BasicInStack<>();
             roleStack.push(this);
             while (!roleStack.isEmpty()) {
-                Role role = roleStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
-                List<Permission> pList = role.getPermission().get(permission.getIdentityType());
-                if (CollectionUtils.isNotEmpty(pList) && pList.stream().filter(filterPermissionPredicate(permission))
-                        .map(Permission::getIdentityId).anyMatch(id -> Objects.equals(id, permission.getIdentityId()))) {
+                Role role = roleStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+                if (permissionAuth.auth(role.getPermission().get(permissionAuth.getServiceNodeType()))) {
                     return true;
                 }
                 if (CollectionUtils.isEmpty(role.getParentRole())) {
@@ -106,6 +103,7 @@ public class BasicRole implements Role {
         if (CollectionUtils.isEmpty(roleSet)) {
             return;
         }
+
         ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
@@ -122,7 +120,7 @@ public class BasicRole implements Role {
         ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-            return Sets.newHashSet(this.parentRoles);
+            return ImmutableSet.copyOf(this.parentRoles);
         } finally {
             readLock.unlock();
         }
@@ -133,13 +131,14 @@ public class BasicRole implements Role {
         if (CollectionUtils.isEmpty(permissionList)) {
             return;
         }
+
         ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
-            permissionList.forEach(resource -> {
-                List<Permission> resourceIdentities = permissionMap.computeIfAbsent(resource.getIdentityType(), k -> Lists.newArrayList());
-                if (resourceIdentities.stream().map(Identity::getIdentityId).noneMatch(id -> Objects.equals(id, resource.getIdentityId()))) {
-                    resourceIdentities.add(resource);
+            permissionList.forEach(permission -> {
+                List<Permission> list = permissionBucket.computeIfAbsent(permission.getPermissionType().getServiceNodeType(), k -> Lists.newArrayList());
+                if (list.stream().map(Identity::getIdentityId).noneMatch(id -> Objects.equals(id, permission.getIdentityId()))) {
+                    list.add(permission);
                 }
             });
         } finally {
@@ -148,11 +147,11 @@ public class BasicRole implements Role {
     }
 
     @Override
-    public Map<IdentityTypeEnum, List<Permission>> getPermission() {
+    public Map<ServiceNodeType, List<Permission>> getPermission() {
         ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-            return Maps.newHashMap(this.permissionMap);
+            return ImmutableMap.copyOf(permissionBucket);
         } finally {
             readLock.unlock();
         }
@@ -165,7 +164,7 @@ public class BasicRole implements Role {
         InStack<Role> roleStack = new BasicInStack<>();
         roleStack.pushCollection(roleSet);
         while (!roleStack.isEmpty()) {
-            Role role = roleStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            Role role = roleStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (Objects.equals(role, checkRole)) {
                 return false;
             }
@@ -175,17 +174,5 @@ public class BasicRole implements Role {
             roleStack.pushCollection(role.getParentRole());
         }
         return true;
-    }
-
-    private Predicate<Permission> filterPermissionPredicate(Permission permission) {
-        return p -> {
-            if (!(p instanceof TaskComponentPermission)) {
-                return true;
-            }
-            if (!(permission instanceof TaskComponentPermission)) {
-                return false;
-            }
-            return Objects.equals(((TaskComponentPermission) p).getTaskComponentName(), ((TaskComponentPermission) permission).getTaskComponentName());
-        };
     }
 }

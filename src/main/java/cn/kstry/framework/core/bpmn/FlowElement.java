@@ -77,4 +77,9 @@ public interface FlowElement extends BpmnElement {
      * 将出度、入度 变成不可变对象
      */
     void immutable();
+
+    /**
+     * 不可变对象
+     */
+    boolean isImmutable();
 }

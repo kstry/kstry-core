@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.bpmn;
 
-import cn.kstry.framework.core.engine.facade.CustomRoleInfo;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 
 /**
  * ServiceTask
@@ -39,23 +39,9 @@ public interface ServiceTask extends Task {
     String getTaskService();
 
     /**
-     * 角色匹配失败后，是否允许跳过当前节点，继续向下执行
-     *
-     * @return allowAbsent 默认不跳过
-     */
-    boolean allowAbsent();
-
-    /**
-     * 是否为严格模式
-     *
-     * @return 默认 true
-     */
-    boolean strictMode();
-
-    /**
      * @return 指定自定义角色模块
      */
-    CustomRoleInfo getCustomRoleInfo();
+    ServiceNodeResource getCustomRoleInfo();
 
     /**
      * 是否是有效的 ServiceTask
@@ -63,4 +49,11 @@ public interface ServiceTask extends Task {
      * @return 判断结果
      */
     boolean validTask();
+
+    /**
+     * 角色匹配失败后，是否允许跳过当前节点，继续向下执行
+     *
+     * @return allowAbsent 默认不跳过
+     */
+    boolean allowAbsent();
 }

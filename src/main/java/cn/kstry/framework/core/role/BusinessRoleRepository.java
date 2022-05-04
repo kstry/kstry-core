@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
+ * 角色资源库，可以根据业务ID决策使用哪个角色
  *
  * @author lykan
  */
@@ -47,8 +48,8 @@ public class BusinessRoleRepository {
     private static final Logger LOGGER = LoggerFactory.getLogger(BusinessRoleRepository.class);
 
     private static final Cache<String, Optional<BusinessRole>> businessRoleMapping = CacheBuilder.newBuilder()
-            .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterAccess(10, TimeUnit.MINUTES)
-            .removalListener(notification -> LOGGER.info("business role cache lose efficacy. key:{}, value:{}, cause:{}",
+            .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterWrite(10, TimeUnit.MINUTES)
+            .removalListener(notification -> LOGGER.info("Business role cache lose efficacy. key: {}, value: {}, cause: {}",
                     notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     private final List<BusinessRole> businessRoleList;
@@ -69,8 +70,8 @@ public class BusinessRoleRepository {
         try {
             Optional<BusinessRole> businessRole = businessRoleMapping.get(key, () -> {
                 Optional<BusinessRole> brOptional = getBusinessRole(businessId, startId);
-                brOptional.ifPresent(br ->
-                        LOGGER.debug("business role match. startId: {}, businessId:{}, role name:{}", startId, businessId, br.getRole().getName())
+                brOptional.ifPresent(br -> LOGGER.debug("business role match. " +
+                        "startId: {}, businessId: {}, role name: {}", startId, businessId, br.getRole().getName())
                 );
                 return brOptional;
             });
@@ -101,15 +102,15 @@ public class BusinessRoleRepository {
                 br.getStartIdList().forEach(sId -> {
                             if (CollectionUtils.isEmpty(br.getBusinessIdList())) {
                                 String key = getKey(null, sId);
-                                AssertUtil.notTrue(keySet.contains(key), ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR,
-                                        ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR.getDesc() + " startId: {}", sId
+                                AssertUtil.notTrue(keySet.contains(key), ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
+                                        "BusinessRole is not allowed to be repeatedly defined! startId: {}", sId
                                 );
                                 keySet.add(key);
                             }
                             br.getBusinessIdList().forEach(bId -> {
                                 String key = getKey(bId, sId);
-                                AssertUtil.notTrue(keySet.contains(key), ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR,
-                                        ExceptionEnum.BUSINESS_ROLE_DUPLICATED_ERROR.getDesc() + " businessId: {}, startId: {}", bId, sId
+                                AssertUtil.notTrue(keySet.contains(key), ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
+                                        "BusinessRole is not allowed to be repeatedly defined! businessId: {}, startId: {}", bId, sId
                                 );
                                 keySet.add(key);
                             });

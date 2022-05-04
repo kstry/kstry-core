@@ -22,4 +22,17 @@ package cn.kstry.framework.core.bpmn;
  */
 public interface Task extends FlowElement {
 
+    /**
+     * 获取超时时间
+     *
+     * @return 超时时间，单位ms
+     */
+    Integer getTimeout();
+
+    /**
+     * 是否为严格模式
+     *
+     * @return 默认 true
+     */
+    boolean strictMode();
 }

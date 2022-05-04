@@ -17,30 +17,35 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.enums.IdentityTypeEnum;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.role.Permission;
-import cn.kstry.framework.core.role.SimplePermission;
-import cn.kstry.framework.core.role.TaskComponentPermission;
-import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.Lists;
+
+import cn.kstry.framework.core.enums.IdentityTypeEnum;
+import cn.kstry.framework.core.enums.PermissionType;
+import cn.kstry.framework.core.enums.ServiceNodeType;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.resource.identity.BasicIdentity;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.role.permission.Permission;
+import cn.kstry.framework.core.role.permission.SimplePermission;
+
 /**
+ * 权限工具类
  *
  * @author lykan
  */
 public class PermissionUtil {
-
-    private static final String R = "r";
-
-    private static final String PR = "pr";
 
     public static List<Permission> permissionList(String source) {
         return permissionList(source, null);
@@ -64,14 +69,28 @@ public class PermissionUtil {
      * @return 权限
      */
     public static Optional<Permission> parsePermission(String permission) {
-        if (StringUtils.isBlank(permission)) {
+        return parseResource(permission).map(Function.identity());
+    }
+
+    /**
+     * 解析资源
+     *
+     * @param resource 资源字符串
+     * @return 资源
+     */
+    public static Optional<InServiceNodeResource> parseResource(String resource) {
+        if (StringUtils.isBlank(resource)) {
             return Optional.empty();
         }
-        String pLowerCase = permission.toLowerCase();
-        if (!pLowerCase.startsWith(R + ":") && !pLowerCase.startsWith(PR + ":")) {
+
+        String r = PermissionType.SERVICE.getPrefix();
+        String pr = PermissionType.COMPONENT_SERVICE.getPrefix();
+        String pLowerCase = resource.toLowerCase();
+        if (!pLowerCase.startsWith(r + ":") && !pLowerCase.startsWith(pr + ":")) {
             return Optional.empty();
         }
-        String[] s1 = permission.split(":");
+
+        String[] s1 = resource.split(":");
         if (s1.length != 2) {
             return Optional.empty();
         }
@@ -80,17 +99,97 @@ public class PermissionUtil {
             return Optional.empty();
         }
         if (s2.length == 1) {
-            return Optional.of(new SimplePermission(s2[0], IdentityTypeEnum.SERVICE_TASK));
+            return Optional.of(new InServiceNodeResource(PermissionType.SERVICE, null, s2[0], null));
         } else if (s2.length == 2) {
-            if (Objects.equals(s1[0].toLowerCase(), R)) {
-                return Optional.of(new SimplePermission(TaskServiceUtil.joinName(s2[0], s2[1]), IdentityTypeEnum.SERVICE_TASK_ABILITY));
-            } else if (Objects.equals(s1[0].toLowerCase(), PR)) {
-                return Optional.of(new TaskComponentPermission(s2[0], s2[1], IdentityTypeEnum.SERVICE_TASK));
+            if (Objects.equals(s1[0].toLowerCase(), r)) {
+                return Optional.of(new InServiceNodeResource(PermissionType.SERVICE_ABILITY, null, s2[0], s2[1]));
+            } else if (Objects.equals(s1[0].toLowerCase(), pr)) {
+                return Optional.of(new InServiceNodeResource(PermissionType.COMPONENT_SERVICE, s2[0], s2[1], null));
             } else {
                 throw new KstryException(ExceptionEnum.SYSTEM_ERROR);
             }
         } else {
-            return Optional.of(new TaskComponentPermission(s2[0], TaskServiceUtil.joinName(s2[1], s2[2]), IdentityTypeEnum.SERVICE_TASK_ABILITY));
+            return Optional.of(new InServiceNodeResource(PermissionType.COMPONENT_SERVICE_ABILITY, s2[0], s2[1], s2[2]));
+        }
+    }
+
+    public static class InServiceNodeResource extends BasicIdentity implements ServiceNodeResource, Permission {
+
+        /**
+         * 权限类型
+         */
+        private final Permission permission;
+
+        /**
+         * 服务组件名
+         */
+        private final String componentName;
+
+        /**
+         * 服务节点名
+         */
+        private final String serviceName;
+
+        /**
+         * 服务能力名
+         */
+        private final String abilityName;
+
+        public InServiceNodeResource(PermissionType permissionType, String componentName, String serviceName, String abilityName) {
+            super(getIdentityId(componentName, serviceName, abilityName), IdentityTypeEnum.SERVICE_NODE_RESOURCE);
+            AssertUtil.notNull(permissionType);
+            this.componentName = componentName;
+            this.serviceName = serviceName;
+            this.abilityName = abilityName;
+            this.permission = new SimplePermission(permissionType, this);
+        }
+
+        @Override
+        public String getComponentName() {
+            return componentName;
+        }
+
+        @Override
+        public String getServiceName() {
+            return serviceName;
+        }
+
+        @Override
+        public String getAbilityName() {
+            return abilityName;
+        }
+
+        @Override
+        public ServiceNodeType getServiceNodeType() {
+            return StringUtils.isBlank(getAbilityName()) ? ServiceNodeType.SERVICE_TASK : ServiceNodeType.SERVICE_TASK_ABILITY;
+        }
+
+        @Override
+        public PermissionType getPermissionType() {
+            return permission.getPermissionType();
+        }
+
+        @Override
+        public boolean auth(Permission permission) {
+            return permission.auth(permission);
+        }
+
+        @Override
+        public boolean auth(List<Permission> permissionList) {
+            return permission.auth(permissionList);
+        }
+
+        @Nonnull
+        @Override
+        public String getIdentityId() {
+            return permission.getIdentityId();
+        }
+
+        private static String getIdentityId(String componentName, String serviceName, String abilityName) {
+            AssertUtil.notTrue(StringUtils.isAllBlank(componentName, serviceName, abilityName));
+            List<String> list = Lists.newArrayList(
+                    componentName, serviceName, abilityName).stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            return String.join("@", list);
         }
     }
 }

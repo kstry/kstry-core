@@ -22,6 +22,9 @@ import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.component.expression.ConditionExpression;
 import cn.kstry.framework.core.component.expression.Expression;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
@@ -44,6 +47,11 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
      */
     private List<FlowElement> endElementList = Lists.newArrayList();
 
+    /**
+     * 不可变标识
+     */
+    private boolean immutable = false;
+
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.SEQUENCE_FLOW;
@@ -60,11 +68,13 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
      * @param expression 表达式
      */
     public void setExpression(Expression expression) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.expression = expression;
     }
 
     @Override
     public void addEndElementList(List<FlowElement> endElementList) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         if (CollectionUtils.isEmpty(endElementList)) {
             return;
         }
@@ -84,5 +94,6 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
     @Override
     public void immutableEndElement() {
         this.endElementList = ImmutableList.copyOf(this.endElementList);
+        immutable = true;
     }
 }

@@ -17,28 +17,35 @@
  */
 package cn.kstry.framework.core.role;
 
-import cn.kstry.framework.core.enums.IdentityTypeEnum;
-
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import cn.kstry.framework.core.enums.ServiceNodeType;
+import cn.kstry.framework.core.role.permission.Permission;
+import cn.kstry.framework.core.role.permission.PermissionAuth;
+
 /**
+ * 角色接口
  *
  * @author lykan
  */
 public interface Role {
 
+    /**
+     * 获取权限名称
+     *
+     * @return 名称
+     */
     String getName();
 
     /**
-     * 判断当前角色是否拥有该权限
+     * 判断当前角色是否被允许使用资源
      *
-     * @param permission 权限
+     * @param permissionAuth 资源
      * @return 允许：true
      */
-    boolean allowPermission(@Nonnull Permission permission);
+    boolean allowedUseResource(PermissionAuth permissionAuth);
 
     /**
      * parent role 中不能出现自身的引用
@@ -66,5 +73,5 @@ public interface Role {
      *
      * @return 权限（副本）
      */
-    Map<IdentityTypeEnum, List<Permission>> getPermission();
+    Map<ServiceNodeType, List<Permission>> getPermission();
 }

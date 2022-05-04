@@ -17,14 +17,12 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.bus.BasicStoryBus;
-import cn.kstry.framework.core.container.MethodWrapper;
+import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.kv.KvThreadLocal;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.util.ReflectionUtils;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 
@@ -50,11 +48,11 @@ public class ProxyUtil {
         return AopUtils.getTargetClass(candidate);
     }
 
-    public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target) {
+    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, Object target) {
         return invokeMethod(storyBus, methodWrapper, target, () -> new Object[0]);
     }
 
-    public static Object invokeMethod(BasicStoryBus storyBus, MethodWrapper methodWrapper, Object target, Supplier<Object[]> paramsSupplier) {
+    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, Object target, Supplier<Object[]> paramsSupplier) {
         try {
             KvThreadLocal.KvScope newKvScope = new KvThreadLocal.KvScope(methodWrapper.getKvScope());
             newKvScope.setBusinessId(storyBus.getBusinessId());

@@ -45,9 +45,9 @@ public enum ExceptionTypeEnum {
     STORY(4),
 
     /**
-     * 属性
+     * 节点执行
      */
-    PROPERTY(5),
+    NODE_INVOKE(5),
 
     /**
      * 异步任务

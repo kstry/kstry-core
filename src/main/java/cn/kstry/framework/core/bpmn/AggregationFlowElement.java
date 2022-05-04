@@ -22,6 +22,6 @@ package cn.kstry.framework.core.bpmn;
  *
  * @author lykan
  */
-public interface AggregationFlowElement extends FlowElement{
+public interface AggregationFlowElement extends FlowElement {
 
 }

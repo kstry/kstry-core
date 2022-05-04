@@ -17,12 +17,12 @@
  */
 package cn.kstry.framework.core.monitor;
 
-import java.util.Optional;
-
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+
+import java.util.Optional;
 
 /**
  * @author lykan
@@ -83,7 +83,7 @@ public class RecallStory {
      *
      * @return 角色
      */
-    public Optional<Role> getRole() {
+    public Role getRole() {
         return storyBus.getRole();
     }
 

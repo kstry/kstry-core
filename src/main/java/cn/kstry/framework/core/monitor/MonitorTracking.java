@@ -17,26 +17,6 @@
  */
 package cn.kstry.framework.core.monitor;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
@@ -48,6 +28,19 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * 链路追踪器
@@ -190,6 +183,10 @@ public class MonitorTracking {
         });
     }
 
+    public void demotionTaskTracking(FlowElement flowElement, DemotionInfo demotionInfo) {
+        getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setDemotionInfo(demotionInfo));
+    }
+
     public Optional<NodeTracking> getServiceNodeTracking(FlowElement flowElement) {
         if (!trackingTypeEnum.needServiceTracking()) {
             return Optional.empty();
@@ -214,7 +211,7 @@ public class MonitorTracking {
                         InStack<String> toNodeIdStack = new BasicInStack<>();
                         toNodeIdStack.pushCollection(serviceTracking.getToNodeIds());
                         while (!toNodeIdStack.isEmpty()) {
-                            String id = toNodeIdStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+                            String id = toNodeIdStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
                             NodeTracking nodeTracking = nodeTrackingMap.get(id);
                             if (nodeTracking == null) {
                                 continue;

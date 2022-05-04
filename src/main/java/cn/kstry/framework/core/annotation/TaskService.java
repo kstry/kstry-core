@@ -25,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 标注在方法上，标识为任务的执行节点
+ * 只能标注在方法上，被标注的方法被视作服务节点，服务节点只有在服务组件类中才会生效。定义在普通类中不会被容器解析执行
  *
  * @author lykan
  */
@@ -60,4 +60,11 @@ public @interface TaskService {
      * @return targetType
      */
     Class<?> targetType() default Object.class;
+
+    /**
+     * 调用服务节点时的调用属性
+     *
+     * @return 调用属性
+     */
+    Invoke invoke() default @Invoke();
 }

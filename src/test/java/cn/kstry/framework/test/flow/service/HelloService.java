@@ -17,13 +17,13 @@
  */
 package cn.kstry.framework.test.flow.service;
 
+import cn.kstry.framework.core.annotation.Invoke;
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- *
  * @author lykan
  */
 @SuppressWarnings("unused")
@@ -36,9 +36,15 @@ public class HelloService {
         System.out.println("say hello ~");
     }
 
-    @TaskService(name = "say_hello1")
-    public void sayHello1() {
-        System.out.println("say hello1 ~");
+    @TaskService(name = "say_hello1", invoke = @Invoke(retry = 2, timeout = 100, demotion = "pr:hello_service@say_hello11"))
+    public void sayHello1(int a) {
+        System.out.println("say hello1 ~ " + a);
+        throw new RuntimeException("aaaaaaaaaaaaaaaaaaa");
+    }
+
+    @TaskService(name = "say_hello11")
+    public void sayHello11(int a) {
+        System.out.println("say hello11 ~ " + a);
     }
 
     @TaskService(name = "say_hello2")

@@ -17,22 +17,7 @@
  */
 package cn.kstry.framework.core.container.processor;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import cn.kstry.framework.core.bpmn.ExclusiveGateway;
-import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.InclusiveGateway;
-import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.ServiceTaskSupport;
-import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.bpmn.impl.FlowElementImpl;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
 import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;
@@ -43,9 +28,14 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import java.util.*;
 
 /**
- * 优化线路
+ * 重排链路
+ *  - 如果排他网关、包含网关中指定了 TaskService，这个流程会把指定的 TaskService 单独拎出来作为执行节点加入到链路中
  *
  * @author lykan
  */
@@ -58,7 +48,7 @@ public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (node instanceof SubProcess) {
                 postStartEvent(((SubProcess) node).getStartEvent());
             }
@@ -121,7 +111,12 @@ public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
             serviceTaskImpl.outing(sequenceFlow);
             sequenceFlow.outing(node);
         } else {
-            KstryException.throwException(ExceptionEnum.SYSTEM_ERROR, "There is a flow analysis that exceeds expectations!");
+            throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, "There is a flow analysis that exceeds expectations!");
         }
+    }
+
+    @Override
+    public int getOrder() {
+        return 20;
     }
 }

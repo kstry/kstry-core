@@ -19,10 +19,10 @@ package cn.kstry.framework.core.exception;
 
 import cn.kstry.framework.core.enums.ExceptionTypeEnum;
 import cn.kstry.framework.core.util.GlobalUtil;
-
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
+import java.util.function.Consumer;
 
 /**
  * 异常
@@ -33,7 +33,15 @@ public class KstryException extends RuntimeException {
 
     private static final long serialVersionUID = 331496378583084864L;
 
+    /**
+     * 错误码
+     */
     private final String errorCode;
+
+    /**
+     * 是否已经进行了日志记录
+     */
+    private volatile boolean alreadyLog;
 
     public KstryException(ExceptionEnum exceptionEnum) {
         this(exceptionEnum.getExceptionCode(), exceptionEnum.getDesc(), null);
@@ -43,34 +51,11 @@ public class KstryException extends RuntimeException {
         super(GlobalUtil.format("[{}] {}", StringUtils.isBlank(code)
                 ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? "System Error!" : desc), cause);
         this.errorCode = code;
+        this.alreadyLog = false;
     }
 
     public String getErrorCode() {
         return this.errorCode;
-    }
-
-    public static void throwException(@Nonnull ExceptionEnum exceptionEnum) {
-        throwException(exceptionEnum, exceptionEnum.getDesc());
-    }
-
-    public static void throwException(@Nonnull ExceptionEnum exceptionEnum, String desc) {
-        throwException(null, exceptionEnum, desc);
-    }
-
-    public static void throwException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum) {
-        throwException(exception, exceptionEnum, exceptionEnum.getDesc());
-    }
-
-    public static void throwException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
-        throw buildException(exception, exceptionEnum, desc);
-    }
-
-    public static KstryException buildException(@Nonnull ExceptionEnum exceptionEnum) {
-        return buildException(null, exceptionEnum, null);
-    }
-
-    public static KstryException buildException(@Nonnull ExceptionEnum exceptionEnum, String desc) {
-        return buildException(null, exceptionEnum, desc);
     }
 
     public static KstryException buildException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
@@ -86,8 +71,22 @@ public class KstryException extends RuntimeException {
                 return new ResourceException(exceptionEnum.getExceptionCode(), desc, exception);
             case ASYNC_TASK:
                 return new TaskAsyncException(exceptionEnum.getExceptionCode(), desc, exception);
+            case COMPONENT:
+                return new KstryComponentException(exceptionEnum.getExceptionCode(), desc, exception);
+            case NODE_INVOKE:
+                return new NodeInvokeException(exceptionEnum.getExceptionCode(), desc, exception);
+            case STORY:
+                return new StoryException(exceptionEnum.getExceptionCode(), desc, exception);
             default:
                 return new KstryException(exceptionEnum.getExceptionCode(), desc, exception);
         }
+    }
+
+    public void log(Consumer<KstryException> doLog) {
+        if (alreadyLog) {
+            return;
+        }
+        alreadyLog = true;
+        doLog.accept(this);
     }
 }

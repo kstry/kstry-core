@@ -37,13 +37,14 @@ public class SimpleHook<T> implements Hook<T> {
     }
 
     @Override
-    public void hook(Consumer<T> hook) {
+    public Hook<T> hook(Consumer<T> hook) {
         AssertUtil.notNull(hook);
         if (this.hook == null) {
             this.hook = hook;
         } else {
             this.hook = hook.andThen(this.hook);
         }
+        return this;
     }
 
     @Override

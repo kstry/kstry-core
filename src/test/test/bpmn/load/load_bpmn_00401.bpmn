@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0g761ui" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="Process_1s6p0fa" isExecutable="true">
+    <bpmn:startEvent id="story-def-load_error_004">
+      <bpmn:outgoing>Flow_1tgsuqa</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_0g4alv5" name="打印参数">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="goods_service" />
+          <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="strict-mode" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1tgsuqa</bpmn:incoming>
+      <bpmn:outgoing>Flow_1t2oi97</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1tgsuqa" sourceRef="story-def-load_error_004" targetRef="Activity_0g4alv5" />
+    <bpmn:endEvent id="Event_0nla66v">
+      <bpmn:incoming>Flow_1t2oi97</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1t2oi97" sourceRef="Activity_0g4alv5" targetRef="Event_0nla66v" />
+    <bpmn:textAnnotation id="TextAnnotation_0bkciep">
+      <bpmn:text>【异常】测试：配置文件中出现两个相同Id的 StartEvent</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0bsqa7r" sourceRef="story-def-load_error_004" targetRef="TextAnnotation_0bkciep" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1s6p0fa">
+      <bpmndi:BPMNShape id="TextAnnotation_0bkciep_di" bpmnElement="TextAnnotation_0bkciep">
+        <dc:Bounds x="160" y="80" width="100" height="68" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1t2oi97_di" bpmnElement="Flow_1t2oi97">
+        <di:waypoint x="450" y="217" />
+        <di:waypoint x="522" y="217" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tgsuqa_di" bpmnElement="Flow_1tgsuqa">
+        <di:waypoint x="285" y="217" />
+        <di:waypoint x="350" y="217" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="story-def-load_error_004">
+        <dc:Bounds x="249" y="199" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0g4alv5_di" bpmnElement="Activity_0g4alv5">
+        <dc:Bounds x="350" y="177" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0nla66v_di" bpmnElement="Event_0nla66v">
+        <dc:Bounds x="522" y="199" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0bsqa7r_di" bpmnElement="Association_0bsqa7r">
+        <di:waypoint x="259" y="201" />
+        <di:waypoint x="235" y="148" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

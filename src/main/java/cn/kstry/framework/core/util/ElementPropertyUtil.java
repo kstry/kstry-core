@@ -29,6 +29,7 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -86,8 +87,9 @@ public class ElementPropertyUtil {
             if (CollectionUtils.isEmpty(ps)) {
                 continue;
             }
-            Optional<String> rOptional = ps.stream()
-                    .filter(p -> Objects.equals(p.getCamundaName(), name)).map(CamundaProperty::getCamundaValue).filter(StringUtils::isNotBlank).findFirst();
+            Optional<String> rOptional = ps.stream().filter(p -> StringUtils.isNotBlank(p.getCamundaName()))
+                    .filter(p -> Objects.equals(p.getCamundaName().trim().toLowerCase(Locale.ROOT), name))
+                    .map(CamundaProperty::getCamundaValue).filter(StringUtils::isNotBlank).map(String::trim).findFirst();
             if (rOptional.isPresent()) {
                 return rOptional;
             }

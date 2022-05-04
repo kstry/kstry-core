@@ -20,6 +20,11 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.util.AssertUtil;
+
+import javax.annotation.Nonnull;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * SubProcessImpl
@@ -29,10 +34,16 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
     /**
      * 开始节点
      */
-    private final StartEvent startEvent;
+    private StartEvent startEvent;
 
-    public SubProcessImpl(StartEvent startEvent) {
-        this.startEvent = startEvent;
+    /**
+     * 开始节点延迟生成器
+     */
+    private final Function<Map<String, SubProcess>, StartEvent> startEventBuilder;
+
+    public SubProcessImpl(Function<Map<String, SubProcess>, StartEvent> startEventBuilder) {
+        AssertUtil.notNull(startEventBuilder);
+        this.startEventBuilder = startEventBuilder;
     }
 
     @Override
@@ -43,5 +54,22 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.SUB_PROCESS;
+    }
+
+    public SubProcess cloneSubProcess(Map<String, SubProcess> allSubProcess) {
+        SubProcessImpl subProcess = new SubProcessImpl(this.startEventBuilder);
+        subProcess.setId(getId());
+        subProcess.setName(getName());
+        subProcess.strictMode = this.strictMode;
+        subProcess.timeout = this.timeout;
+        subProcess.startEvent = startEventBuilder.apply(allSubProcess);
+        return subProcess;
+    }
+
+    public void startEventSupplier(@Nonnull Map<String, SubProcess> allSubProcess) {
+        if (startEvent != null) {
+            return;
+        }
+        this.startEvent = startEventBuilder.apply(allSubProcess);
     }
 }

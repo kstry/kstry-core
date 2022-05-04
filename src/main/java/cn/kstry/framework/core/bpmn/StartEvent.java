@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.bpmn;
 
-import cn.kstry.framework.core.resource.config.Config;
+import cn.kstry.framework.core.resource.config.ConfigResource;
 
 import java.util.Optional;
 
@@ -31,7 +31,7 @@ public interface StartEvent extends Event {
      *
      * @return Config
      */
-    Optional<Config> getConfig();
+    Optional<ConfigResource> getConfig();
 
     /**
      * 获取 EndEvent
@@ -45,7 +45,7 @@ public interface StartEvent extends Event {
      *
      * @param config Config
      */
-    void setConfig(Config config);
+    void setConfig(ConfigResource config);
 
     /**
      * 设置 EndEvent

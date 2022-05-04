@@ -21,6 +21,7 @@ import cn.kstry.framework.core.bpmn.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.ParallelGateway;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * ParallelGatewayImpl
@@ -59,9 +60,13 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
 
     /**
      * 设置严格模式
+     *
      * @param strictMode 严格模式是否开启
      */
-    public void setStrictMode(boolean strictMode) {
-        this.strictMode = strictMode;
+    public void setStrictMode(String strictMode) {
+        if (StringUtils.isBlank(strictMode)) {
+            return;
+        }
+        this.strictMode = BooleanUtils.toBooleanObject(strictMode.trim());
     }
 }

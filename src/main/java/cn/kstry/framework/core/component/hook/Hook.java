@@ -32,7 +32,7 @@ public interface Hook<T> {
      *
      * @param hook 钩子操作
      */
-    void hook(Consumer<T> hook);
+    Hook<T> hook(Consumer<T> hook);
 
     /**
      * 拿到钩子操作

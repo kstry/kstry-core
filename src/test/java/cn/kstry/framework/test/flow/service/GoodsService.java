@@ -1,6 +1,7 @@
 package cn.kstry.framework.test.flow.service;
 
 import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Hospital;
@@ -30,9 +31,9 @@ public class GoodsService {
     }
 
     @TaskService(name = "say_request")
-    public void sayRequest(@ReqTaskParam(reqSelf = true) Te4Request request) {
+    public void sayRequest(ScopeDataOperator operator) {
+        Te4Request request = operator.getReqScope();
         request.increase();
-//        System.out.println("thread ->" + Thread.currentThread().getName() + ", request ->" + JSON.toJSONString(request));
     }
 
     @TaskService(name = "check_params")

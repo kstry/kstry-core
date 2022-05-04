@@ -17,7 +17,6 @@
  */
 package cn.kstry.framework.core.constant;
 
-import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import com.google.common.collect.Lists;
 
@@ -27,11 +26,6 @@ import java.util.List;
  * @author lykan
  */
 public interface GlobalConstant {
-
-    /**
-     * Task Service 类型枚举
-     */
-    List<IdentityTypeEnum> TASK_SERVICE_ENUM_LIST = Lists.newArrayList(IdentityTypeEnum.SERVICE_TASK_ABILITY, IdentityTypeEnum.SERVICE_TASK);
 
     /**
      * KV 默认域名称

@@ -19,8 +19,7 @@ package cn.kstry.framework.core.component.expression;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.role.Permission;
-import cn.kstry.framework.core.role.Role;
+import cn.kstry.framework.core.role.permission.Permission;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.PermissionUtil;
@@ -53,8 +52,8 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
     private static final Logger LOGGER = LoggerFactory.getLogger(RoleConditionExpression.class);
 
     private static final Cache<String, RoleCondition> rolePermissionCache = CacheBuilder.newBuilder()
-            .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterAccess(10, TimeUnit.MINUTES)
-            .removalListener(notification -> LOGGER.info("role permission cache lose efficacy. key:{}, value:{}, cause:{}",
+            .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterWrite(10, TimeUnit.MINUTES)
+            .removalListener(notification -> LOGGER.info("Role permission cache lose efficacy. key: {}, value: {}, cause: {}",
                     notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     private static final ExpressionParser PARSER = new SpelExpressionParser();
@@ -67,14 +66,13 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
                 roleCondition = rolePermissionCache.get(exp, () -> getRoleCondition(exp));
             } catch (ExecutionException e) {
                 LOGGER.error(e.getMessage(), e);
-                KstryException.throwException(e, ExceptionEnum.STORY_ERROR);
+                throw KstryException.buildException(e, ExceptionEnum.STORY_ERROR, null);
             }
             AssertUtil.isTrue(roleCondition != null && roleCondition.matched && CollectionUtils.isNotEmpty(roleCondition.permissionList),
                     ExceptionEnum.STORY_ERROR);
 
             Boolean[] matchResult = roleCondition.permissionList.stream().map(p -> {
-                Optional<Role> roleOptional = scopeData.getRole();
-                return roleOptional.map(role -> role.allowPermission(p)).orElse(false);
+                return Optional.of(scopeData.getRole()).map(role -> role.allowedUseResource(p)).orElse(false);
             }).toArray(Boolean[]::new);
             return PARSER.parseExpression(MessageFormat.format(roleCondition.expression, matchResult)).getValue(Boolean.class);
         });
@@ -86,8 +84,7 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
             return rolePermissionCache.get(expression, () -> getRoleCondition(expression)).matched;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            KstryException.throwException(e, ExceptionEnum.STORY_ERROR);
-            return false;
+            throw KstryException.buildException(e, ExceptionEnum.STORY_ERROR, null);
         }
     }
 
@@ -110,13 +107,13 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
             Object[] params = IntStream.range(0, psList.size()).mapToObj(i -> true).toArray(Boolean[]::new);
             AssertUtil.notNull(PARSER.parseExpression(MessageFormat.format(exp, params)).getValue(Boolean.class));
         } catch (Exception e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.info(e.getMessage(), e);
             return roleCondition;
         }
         roleCondition.expression = exp;
         roleCondition.matched = true;
         roleCondition.permissionList = pList;
-        LOGGER.debug("role permission cache. expression: {}, condition: {}", expression, JSON.toJSONString(roleCondition));
+        LOGGER.debug("Role permission cache. expression: {}, condition: {}", expression, JSON.toJSONString(roleCondition));
         return roleCondition;
     }
 
@@ -134,10 +131,6 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
 
         public String getExpression() {
             return expression;
-        }
-
-        public boolean isMatched() {
-            return matched;
         }
     }
 }

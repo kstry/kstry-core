@@ -17,21 +17,21 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.constant.GlobalConstant;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.kv.BasicKValue;
-import cn.kstry.framework.core.kv.KvScope;
-import cn.kstry.framework.core.resource.config.Config;
-import cn.kstry.framework.core.resource.config.ConfigResource;
-import cn.kstry.framework.core.resource.config.PropertiesConfig;
-import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.SingletonBeanRegistry;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.google.common.collect.Maps;
+
+import cn.kstry.framework.core.constant.GlobalConstant;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.kv.BasicKValue;
+import cn.kstry.framework.core.kv.KValue;
+import cn.kstry.framework.core.kv.KvScope;
 
 /**
  * KValueUtil
@@ -58,26 +58,20 @@ public class KValueUtil {
         return new KvScope(split[0], split[1]);
     }
 
-    public static void initKValue(List<ConfigResource> propConfigs, List<String> activeProfiles, SingletonBeanRegistry beanFactory) {
+    public static void initKValue(List<KValue> kValueList, List<String> activeProfiles, SingletonBeanRegistry beanFactory) {
         AssertUtil.notNull(activeProfiles);
         AssertUtil.notNull(beanFactory);
-        if (CollectionUtils.isEmpty(propConfigs)) {
+        if (CollectionUtils.isEmpty(kValueList)) {
             return;
         }
 
         Map<String, BasicKValue> kValueMap = Maps.newHashMap();
-        propConfigs.forEach(propConfig -> {
-            List<Config> configList = propConfig.getConfigList();
-            configList.stream().map(config -> GlobalUtil.transferNotEmpty(config, PropertiesConfig.class)).forEach(config -> {
-                List<BasicKValue> kValueList = config.getKValueList();
-                kValueList.forEach(kValue -> {
-                    KvScope kvScope = KValueUtil.getKvScope(kValue.getScope());
-                    if (StringUtils.isNotBlank(kvScope.getActiveProfile()) && !activeProfiles.contains(kvScope.getActiveProfile())) {
-                        return;
-                    }
-                    kValueMap.put(kValue.getScope(), kValue);
-                });
-            });
+        kValueList.stream().map(kv -> GlobalUtil.transferNotEmpty(kv, BasicKValue.class)).forEach(kValue -> {
+            KvScope kvScope = KValueUtil.getKvScope(kValue.getScope());
+            if (StringUtils.isNotBlank(kvScope.getActiveProfile()) && !activeProfiles.contains(kvScope.getActiveProfile())) {
+                return;
+            }
+            kValueMap.put(kValue.getScope(), kValue);
         });
 
         Maps.newHashMap(kValueMap).forEach((k, v) -> {

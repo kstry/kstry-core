@@ -17,17 +17,16 @@
  */
 package cn.kstry.framework.core.monitor;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -63,6 +62,8 @@ public class NodeTracking {
     private final List<ParamTracking> paramTracking = Lists.newArrayList();
 
     private final List<NoticeTracking> noticeTracking = Lists.newArrayList();
+
+    private DemotionInfo demotionInfo;
 
     @JSONField(serialize = false)
     private Throwable taskException;
@@ -206,5 +207,13 @@ public class NodeTracking {
             return true;
         }
         return spendTime != null;
+    }
+
+    public DemotionInfo getDemotionInfo() {
+        return demotionInfo;
+    }
+
+    public void setDemotionInfo(DemotionInfo demotionInfo) {
+        this.demotionInfo = demotionInfo;
     }
 }

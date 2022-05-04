@@ -69,6 +69,16 @@ public enum ExceptionEnum {
      */
     COMPONENT_ATTRIBUTES_EMPTY(ExceptionTypeEnum.COMPONENT, "0003", "Must-appear component attributes are not specified!"),
 
+    /**
+     * [K1020004] 组件不可被修改
+     */
+    COMPONENT_IMMUTABLE_ERROR(ExceptionTypeEnum.COMPONENT, "0004", "Component is not modifiable!"),
+
+    /**
+     * [K1020005] 组件不允许重复出现
+     */
+    COMPONENT_DUPLICATION_ERROR(ExceptionTypeEnum.COMPONENT, "0005", "Components are not allowed to be repeated!"),
+
     ///////////////////////////////////////////////// ANNOTATION END /////////////////////////////////////////////////
 
     /**
@@ -77,9 +87,9 @@ public enum ExceptionEnum {
     CONFIGURATION_PARSE_FAILURE(ExceptionTypeEnum.CONFIG, "0001", "Configuration file parsing failure!"),
 
     /**
-     * [K1030002] 元素缺少必填的参数
+     * [K1030002] 元素缺少必须的参数
      */
-    CONFIGURATION_ATTRIBUTES_REQUIRED(ExceptionTypeEnum.CONFIG, "0002", "element is missing a required attributes!"),
+    CONFIGURATION_ATTRIBUTES_REQUIRED(ExceptionTypeEnum.CONFIG, "0002", "Element is missing a required attributes!"),
 
     /**
      * [K1030003] 子流程配置存在错误
@@ -92,7 +102,7 @@ public enum ExceptionEnum {
     CONFIGURATION_UNSUPPORTED_ELEMENT(ExceptionTypeEnum.CONFIG, "0004", "Unsupported bpmn elements are present in the configuration file!"),
 
     /**
-     *[K1030005] 元素间组成的链路存在错误
+     * [K1030005] 元素间组成的链路存在错误
      */
     CONFIGURATION_FLOW_ERROR(ExceptionTypeEnum.CONFIG, "0005", "There is an error in the link formed between the elements!"),
 
@@ -107,9 +117,10 @@ public enum ExceptionEnum {
     KV_SCOPE_PARSING_ERROR(ExceptionTypeEnum.CONFIG, "0007", "kv scope format parsing error!"),
 
     /**
-     * [K1030008] BusinessRole 不允许被重复定义
+     * [K1030008] 链路中元素id被重复定义
      */
-    BUSINESS_ROLE_DUPLICATED_ERROR(ExceptionTypeEnum.CONFIG, "0008", "BusinessRole is not allowed to be repeatedly defined!"),
+    ELEMENT_DUPLICATION_ERROR(ExceptionTypeEnum.CONFIG, "0008", "The element id in the link is repeatedly defined!"),
+
 
     ///////////////////////////////////////////////// CONFIG END /////////////////////////////////////////////////
 
@@ -117,11 +128,6 @@ public enum ExceptionEnum {
      * [K1040001] Story execution failure
      */
     STORY_ERROR(ExceptionTypeEnum.STORY, "0001", "Story execution failure!"),
-
-    /**
-     * [K1040002] 执行中必须有且只有一个 TaskService 被匹配
-     */
-    EXECUTION_ONE_RESULT(ExceptionTypeEnum.STORY, "0002", "There must be one and only one TaskService matched in the execution!"),
 
     /**
      * [K1040003] 参数错误
@@ -149,7 +155,7 @@ public enum ExceptionEnum {
     EXPRESSION_INVOKE_ERROR(ExceptionTypeEnum.STORY, "0007", "Expression execution on process branch failed!"),
 
     /**
-     * [K1040008] Story flow error
+     * [K1040008] Story流程执行中出现错误
      */
     STORY_FLOW_ERROR(ExceptionTypeEnum.STORY, "0008", "Story flow error!"),
 
@@ -158,27 +164,33 @@ public enum ExceptionEnum {
      */
     STORY_TRACKING_CODE(ExceptionTypeEnum.STORY, "0009", " story tracking code."),
 
-    /**
-     * [K1040010] TaskService parameter instantiation failed
-     */
-    SERVICE_PARAM_ERROR(ExceptionTypeEnum.STORY, "0010", "TaskService parameter instantiation failed!"),
 
     ///////////////////////////////////////////////// STORY END /////////////////////////////////////////////////
 
     /**
      * [K1050001] Task 获取 bean 属性信息失败
      */
-    FAILED_GET_PROPERTY(ExceptionTypeEnum.PROPERTY, "0001", "BeanUtils failed to get bean property!"),
+    FAILED_GET_PROPERTY(ExceptionTypeEnum.NODE_INVOKE, "0001", "BeanUtils failed to get bean property!"),
 
     /**
      * [K1050002] Task 设置 bean 属性信息失败
      */
-    FAILED_SET_PROPERTY(ExceptionTypeEnum.PROPERTY, "0002", "BeanUtils failed to set bean property!"),
+    FAILED_SET_PROPERTY(ExceptionTypeEnum.NODE_INVOKE, "0002", "BeanUtils failed to set bean property!"),
 
     /**
      * [K1050003] 不可变集合中已存在的值不允许被重复设置
      */
-    IMMUTABLE_SET_UPDATE(ExceptionTypeEnum.PROPERTY, "0003", "Values that already exist in the immutable set are not allowed to be set repeatedly!"),
+    IMMUTABLE_SET_UPDATE(ExceptionTypeEnum.NODE_INVOKE, "0003", "Values that already exist in the immutable set are not allowed to be set repeatedly!"),
+
+    /**
+     * [K1050004] TaskService入参实例化失败
+     */
+    SERVICE_PARAM_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0004", "There is an error in the TaskService parameter!"),
+
+    /**
+     * [K1050005] 服务节点执行失败
+     */
+    SERVICE_INVOKE_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0005", "Service node execution failure!"),
 
 
     ///////////////////////////////////////////////// PARAMS END /////////////////////////////////////////////////
@@ -199,7 +211,7 @@ public enum ExceptionEnum {
     ASYNC_TASK_ERROR(ExceptionTypeEnum.ASYNC_TASK, "0003", "Exception for asynchronous node tasks!"),
 
     /**
-     * [K1060004] 异步节点任务发生异常
+     * [K1060004] 线程池队列溢出
      */
     ASYNC_QUEUE_OVERFLOW(ExceptionTypeEnum.ASYNC_TASK, "0004", "kstry asynchronous task queue overflow!"),
 

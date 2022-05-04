@@ -17,10 +17,7 @@
  */
 package cn.kstry.framework.test.role.service;
 
-import cn.kstry.framework.core.annotation.NoticeScope;
-import cn.kstry.framework.core.annotation.ReqTaskParam;
-import cn.kstry.framework.core.annotation.TaskComponent;
-import cn.kstry.framework.core.annotation.TaskService;
+import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 
 /**
@@ -39,7 +36,7 @@ public class SayInfoAbility extends SayInfo {
     }
 
     @NoticeScope(scope = ScopeTypeEnum.RESULT)
-    @TaskService(name = "say_number", ability = "say_number_increase")
+    @TaskService(name = "say_number", ability = "say_number_increase", invoke = @Invoke(retry = 1, timeout = 500))
     public Integer sayNumberIncrease(@ReqTaskParam("number") int number) {
         number = number + 1;
         System.out.println("say increase number: " + number);

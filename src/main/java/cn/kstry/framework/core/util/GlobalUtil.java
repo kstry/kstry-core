@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -45,7 +46,7 @@ public class GlobalUtil {
     @SuppressWarnings("all")
     public static <T> T notEmpty(Optional<T> optional) {
         if (!optional.isPresent()) {
-            KstryException.throwException(ExceptionEnum.NOT_ALLOW_EMPTY);
+            throw KstryException.buildException(null, ExceptionEnum.NOT_ALLOW_EMPTY, null);
         }
         return optional.get();
     }
@@ -58,6 +59,11 @@ public class GlobalUtil {
     public static String notBlank(String str) {
         AssertUtil.notBlank(str);
         return str;
+    }
+
+    public static String getTaskName(FlowElement flowElement, String requestId) {
+        AssertUtil.notNull(flowElement);
+        return "tid-" + TaskServiceUtil.joinName(flowElement.getId(), requestId);
     }
 
     public static String format(String str, Object... params) {
@@ -144,5 +150,21 @@ public class GlobalUtil {
 
     public static boolean supportValidate() {
         return SUPPORT_VALIDATE;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getErrFromCause(Throwable err, Class<T> clazz) {
+        if (err == null || clazz == null) {
+            return Optional.empty();
+        }
+
+        Throwable e = err;
+        while (e != null) {
+            if (clazz.isAssignableFrom(e.getClass())) {
+                return Optional.of((T) e);
+            }
+            e = e.getCause();
+        }
+        return Optional.empty();
     }
 }

@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * 用于标注 Class，被标注 Class 可以定义被 cn.kstry.framework.core.annotation.TaskService 标注方法
  * 用来在运行中修改角色所承载的权限集
  *
- * CustomRole 中定义的 TaskService 只能修改 Role 不会将结果通知到 StoryBus
+ * 注意：CustomRole 中定义的 TaskService 只能修改 Role 不会将结果通知到 StoryBus
  *
  * @author lykan
  */

@@ -26,7 +26,6 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.role.BasicRole;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.PermissionUtil;
-import cn.kstry.framework.test.flow.FlowCaseTestContextConfiguration;
 import cn.kstry.framework.test.role.bo.SayInfoRequest;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
@@ -46,7 +45,7 @@ import java.util.function.Consumer;
  * @author lykan
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = FlowCaseTestContextConfiguration.class)
+@ContextConfiguration(classes = RoleConfiguration.class)
 public class RoleCaseTest {
 
     @Autowired
@@ -110,7 +109,7 @@ public class RoleCaseTest {
         TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
         System.out.println(JSON.toJSONString(fire));
         Assert.assertFalse(fire.isSuccess());
-        Assert.assertEquals(fire.getResultCode(), ExceptionEnum.EXECUTION_ONE_RESULT.getExceptionCode());
+        Assert.assertEquals(fire.getResultCode(), ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getExceptionCode());
     }
 
     @Test
@@ -151,8 +150,8 @@ public class RoleCaseTest {
     @Test
     public void testRole002() {
         BasicRole parentRole = new BasicRole();
-
         parentRole.addPermission(PermissionUtil.permissionList("pr:say_info2@say_number", null));
+
         Role role = new BasicRole();
         role.addPermission(PermissionUtil.permissionList("pr:say_info@say_number", null));
         role.addParentRole(Sets.newHashSet(parentRole));

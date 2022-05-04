@@ -17,13 +17,13 @@
  */
 package cn.kstry.framework.core.bus;
 
-import java.util.Optional;
-
 import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.task.facade.TaskServiceDef;
+
+import java.util.Optional;
 
 /**
  * StoryBus
@@ -73,7 +73,7 @@ public interface StoryBus {
      *
      * @return 角色
      */
-    Optional<Role> getRole();
+    Role getRole();
 
     /**
      * 将节点执行结果回填至 ScopeData 中
@@ -96,4 +96,11 @@ public interface StoryBus {
      * @return 业务 ID
      */
     String getBusinessId();
+
+    /**
+     * 获取 ScopeDataOperator
+     *
+     * @return ScopeDataOperator
+     */
+    ScopeDataOperator getScopeDataOperator();
 }

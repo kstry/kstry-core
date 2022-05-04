@@ -55,8 +55,8 @@ public class RequestValidator {
         ViolationException exception = new ViolationException(ExceptionEnum.PARAM_VERIFICATION_ERROR.getExceptionCode(), vNode.getMessage(), null);
         exception.setFieldName(propertyPath.iterator().next().getName());
         exception.setInvalidValue(vNode.getInvalidValue());
-        LOGGER.warn("{}, class: {}, fieldName: {}, invalidValue: {}",
-                exception.getMessage(), request.getClass().getName(), exception.getFieldName(), exception.getInvalidValue());
+        exception.log(e -> LOGGER.warn("{}, class: {}, fieldName: {}, invalidValue: {}",
+                e.getMessage(), request.getClass().getName(), exception.getFieldName(), exception.getInvalidValue()));
         throw exception;
     }
 }

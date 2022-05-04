@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -33,15 +32,14 @@ import com.google.common.collect.Lists;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.ParallelGateway;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
-import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bus.ContextStoryBus;
-import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.component.hook.FlowElementHook;
+import cn.kstry.framework.core.component.hook.AsyncFlowHook;
 import cn.kstry.framework.core.component.strategy.PeekStrategy;
 import cn.kstry.framework.core.component.strategy.PeekStrategyRepository;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
-import cn.kstry.framework.core.enums.AsyncTaskState;
+import cn.kstry.framework.core.engine.future.AdminFuture;
+import cn.kstry.framework.core.enums.ElementAllowNextEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.MonitorTracking;
@@ -81,15 +79,10 @@ public class FlowRegister {
 
     /**
      * 用来保存 并行网关或者包含网关 与 入度的对应关系。
-     *     - 遇到 并行网关或者包含网关 时，保存对应关系。K：网关  V：网关入度列表
-     *     - 网关入度到来且执行成功，Set<FlowElement> 移除当前入度。直到Set成为空集，即可继续执行
+     * - 遇到 并行网关或者包含网关 时，保存对应关系。K：网关  V：网关入度列表
+     * - 网关入度到来且执行成功，Set<FlowElement> 移除当前入度。直到Set成为空集，即可继续执行
      */
-    private ConcurrentHashMap<FlowElement, List<FlowElement>> joinGatewayComingMap = new ConcurrentHashMap<>();
-
-    /**
-     * 流程阻塞器
-     */
-    private AsyncTaskCell asyncTaskCell;
+    private ConcurrentHashMap<FlowElement, List<ContextStoryBus.ElementArriveRecord>> joinGatewayComingMap = new ConcurrentHashMap<>();
 
     /**
      * 链路追踪器
@@ -97,11 +90,22 @@ public class FlowRegister {
     private MonitorTracking monitorTracking;
 
     /**
-     * 任务节点在执行中
+     * TaskFuture 管理类
      */
-    private boolean taskServiceDoing = false;
+    private AdminFuture adminFuture;
+
+    /**
+     * 流程开始事件的ID
+     */
+    private String startEventId;
+
+    /**
+     * 主任务开始事件的ID
+     */
+    private String storyId;
 
     private FlowRegister() {
+
     }
 
     public FlowRegister(FlowElement startEvent, StoryRequest<?> storyRequest) {
@@ -109,6 +113,8 @@ public class FlowRegister {
 
         // init start event
         startElement = startEvent;
+        startEventId = startEvent.getId();
+        storyId = startEvent.getId();
 
         // init requestId
         requestId = GlobalUtil.getOrSetRequestId(storyRequest);
@@ -119,19 +125,18 @@ public class FlowRegister {
         // init stack
         flowElementStack = monitorTracking.newTrackingStack();
         flowElementStack.push(null, startEvent);
-
-        // init asyncTaskCell
-        asyncTaskCell = new AsyncTaskCell((StartEvent) startElement);
     }
 
     public FlowRegister asyncFlowRegister(FlowElement startFlowElement) {
         AssertUtil.isTrue(startFlowElement instanceof SequenceFlow);
         FlowRegister asyncFlowRegister = new FlowRegister();
         asyncFlowRegister.startElement = startFlowElement;
+        asyncFlowRegister.startEventId = this.startEventId;
+        asyncFlowRegister.storyId = this.storyId;
         asyncFlowRegister.monitorTracking = this.monitorTracking;
         asyncFlowRegister.joinGatewayComingMap = this.joinGatewayComingMap;
-        asyncFlowRegister.asyncTaskCell = this.asyncTaskCell;
         asyncFlowRegister.requestId = this.requestId;
+        asyncFlowRegister.adminFuture = this.adminFuture;
 
         // init stack
         asyncFlowRegister.flowElementStack = asyncFlowRegister.monitorTracking.newTrackingStack();
@@ -141,22 +146,18 @@ public class FlowRegister {
         return asyncFlowRegister;
     }
 
-    public FlowElement getStartFlowElement() {
-        AssertUtil.notNull(this.startElement);
-        return this.startElement;
-    }
-
-    public Optional<FlowElement> nextElement(StoryBus storyBus) {
-        Optional<FlowElement> flowElementOptional = doNextElement(storyBus);
-        if (validServiceTask(flowElementOptional.orElse(null))) {
-            return nextElement(storyBus);
-        }
-        return monitorTracking.trackingNextElement(flowElementOptional.orElse(null));
-    }
-
-    public AsyncTaskCell getAsyncTaskCell() {
-        AssertUtil.notNull(asyncTaskCell);
-        return asyncTaskCell;
+    public FlowRegister cloneSubFlowRegister(StartEvent startEvent) {
+        AssertUtil.notNull(startEvent);
+        FlowRegister subFlowRegister = new FlowRegister();
+        subFlowRegister.startElement = startEvent;
+        subFlowRegister.startEventId = startEvent.getId();
+        subFlowRegister.storyId = storyId;
+        subFlowRegister.monitorTracking = this.monitorTracking;
+        subFlowRegister.requestId = this.requestId;
+        subFlowRegister.adminFuture = this.adminFuture;
+        subFlowRegister.flowElementStack = this.monitorTracking.newTrackingStack();
+        subFlowRegister.flowElementStack.push(null, startEvent);
+        return subFlowRegister;
     }
 
     public MonitorTracking getMonitorTracking() {
@@ -164,34 +165,39 @@ public class FlowRegister {
         return monitorTracking;
     }
 
-    public void addTaskFuture(Future<AsyncTaskState> taskFuture) {
-        AssertUtil.notNull(taskFuture);
-        if (asyncTaskCell.isCancelled()) {
-            LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getStartFlowElement().getId());
-            return;
-        }
-        asyncTaskCell.addTaskFuture(taskFuture);
-    }
-
     public String getRequestId() {
         AssertUtil.notBlank(requestId);
         return requestId;
     }
 
-    private Optional<FlowElement> doNextElement(StoryBus storyBus) {
-        if (asyncTaskCell.isCancelled()) {
-            LOGGER.info("[{}] Task interrupted. Story task was cancelled! startId: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getStartFlowElement().getId());
-            return Optional.empty();
-        }
+    public AdminFuture getAdminFuture() {
+        return adminFuture;
+    }
 
-        AssertUtil.notNull(storyBus);
-        Optional<FlowElement> peekElementOptional = flowElementStack.peek();
-        if (validServiceTask(peekElementOptional.orElse(null))) {
-            taskServiceDoing = true;
-            return peekElementOptional;
-        }
-        taskServiceDoing = false;
+    public FlowElement getStartElement() {
+        return startElement;
+    }
 
+    public void setAdminFuture(AdminFuture adminFuture) {
+        AssertUtil.isNull(this.adminFuture);
+        this.adminFuture = adminFuture;
+    }
+
+    public String getStoryId() {
+        return storyId;
+    }
+
+    public String getStartEventId() {
+        return startEventId;
+    }
+
+    public Optional<FlowElement> nextElement(ContextStoryBus contextStoryBus) {
+        return monitorTracking.trackingNextElement(doNextElement(contextStoryBus).orElse(null));
+    }
+
+    private Optional<FlowElement> doNextElement(ContextStoryBus contextStoryBus) {
+        AssertUtil.notTrue(adminFuture.isCancelled(startEventId), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
+                "Task interrupted. Story task was interrupted! taskName: {}", GlobalUtil.getTaskName(getStartElement(), getRequestId()));
         Optional<FlowElement> elementOptional = flowElementStack.pop();
         if (!elementOptional.isPresent()) {
             return Optional.empty();
@@ -204,35 +210,44 @@ public class FlowRegister {
         // 获取执行决策
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
 
-        // build context scope data
-        ContextStoryBus contextScopeData = new ContextStoryBus(storyBus);
-        contextScopeData.setPrevElement(prevElement);
-        contextScopeData.setJoinGatewayComingMap(joinGatewayComingMap);
-        contextScopeData.setAsyncTaskCell(getAsyncTaskCell());
+        // 填充 ContextStoryBus
+        contextStoryBus.setPrevElement(prevElement);
+        contextStoryBus.setJoinGatewayComingMap(joinGatewayComingMap);
+        contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
 
         // 是否跳过当前节点继续执行下一个
-        if (peekStrategy.skip(currentFlowElement, contextScopeData)) {
+        if (peekStrategy.skip(currentFlowElement, contextStoryBus)) {
             prevElement = currentFlowElement;
-            return nextElement(storyBus);
+            return nextElement(new ContextStoryBus(contextStoryBus.getStoryBus()));
+        }
+        return elementOptional;
+    }
+
+    public Optional<AsyncFlowHook<List<FlowElement>>> predictNextElement(ContextStoryBus contextStoryBus, FlowElement currentFlowElement) {
+        AssertUtil.notNull(currentFlowElement);
+        Optional<FlowElement> elementOptional = Optional.of(currentFlowElement);
+        if (contextStoryBus.getEndTaskPedometer() == null) {
+            contextStoryBus.setPrevElement(prevElement);
+            contextStoryBus.setJoinGatewayComingMap(joinGatewayComingMap);
+            contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
         }
 
         // 匹配可参与执行的子分支
-        List<FlowElement> flowList = elementOptional.get()
-                .outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextScopeData)).collect(Collectors.toList());
+        PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
+        List<FlowElement> flowList =
+                elementOptional.get().outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {
-            AssertUtil.notEmpty(flowList, ExceptionEnum.STORY_FLOW_ERROR,
-                    "Match to the next process node as empty! taskId: {}", currentFlowElement.getId());
+            AssertUtil.notEmpty(flowList, ExceptionEnum.STORY_FLOW_ERROR, "Match to the next process node as empty! taskId: {}", currentFlowElement.getId());
         }
 
         // 开启异步流程
         if (ElementPropertyUtil.needOpenAsync(currentFlowElement)) {
             monitorTracking.trackingSequenceFlow(flowList);
-            FlowElementHook<List<FlowElement>> asyncElementHook = new FlowElementHook<>(flowList);
-            asyncElementHook.setId(currentFlowElement.getId());
+            AsyncFlowHook<List<FlowElement>> asyncElementHook = new AsyncFlowHook<>(flowList);
             asyncElementHook.hook(list -> {
                 prevElement = currentFlowElement;
                 if (!Objects.equals(flowList.size(), elementOptional.get().outingList().size())) {
-                    processNotMatchElement(contextScopeData, flowList, elementOptional.get());
+                    processNotMatchElement(contextStoryBus, flowList, elementOptional.get());
                 }
             });
             return Optional.of(asyncElementHook);
@@ -243,49 +258,41 @@ public class FlowRegister {
 
         // 无需执行的子流程，可能会参与驱动之后的流程
         if (!Objects.equals(flowList.size(), elementOptional.get().outingList().size())) {
-            processNotMatchElement(contextScopeData, flowList, elementOptional.get());
+            processNotMatchElement(contextStoryBus, flowList, elementOptional.get());
         }
-        return elementOptional;
+        return Optional.empty();
     }
 
     private PeekStrategy getPeekStrategy(FlowElement currentFlowElement) {
         Optional<PeekStrategy> peekStrategyOptional =
                 PeekStrategyRepository.getPeekStrategy().stream().filter(peekStrategy -> peekStrategy.match(currentFlowElement)).findFirst();
-        return peekStrategyOptional.orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+        return peekStrategyOptional.orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, null));
     }
 
-    private void processNotMatchElement(ContextStoryBus contextScopeData, List<FlowElement> flowList, FlowElement element) {
+    private void processNotMatchElement(ContextStoryBus contextStoryBus, List<FlowElement> flowList, FlowElement element) {
         List<FlowElement> notNeedPeekList = Lists.newArrayList(element.outingList());
         notNeedPeekList.removeAll(flowList);
         notNeedPeekList.forEach(notNeedPeekElement -> {
             SequenceFlow notNeedPeekSequenceFlow = GlobalUtil.transferNotEmpty(notNeedPeekElement, SequenceFlow.class);
             notNeedPeekSequenceFlow.getEndElementList().forEach(endElement -> {
-                List<FlowElement> comingList = endElement.comingList().stream().filter(e ->
-                        e.getFlowTrack().contains(notNeedPeekSequenceFlow.getIndex()) || Objects.equals(e.getIndex(), notNeedPeekSequenceFlow.getIndex())
-                ).collect(Collectors.toList());
+                List<FlowElement> comingList = endElement.comingList().stream().filter(e -> e.getFlowTrack().contains(
+                        notNeedPeekSequenceFlow.getIndex()) || Objects.equals(e.getIndex(), notNeedPeekSequenceFlow.getIndex())).collect(Collectors.toList());
                 if (endElement instanceof ParallelGateway && ((ParallelGateway) endElement).isStrictMode() && CollectionUtils.isNotEmpty(comingList)) {
-                    KstryException.throwException(ExceptionEnum.STORY_FLOW_ERROR, GlobalUtil.format(
+                    throw KstryException.buildException(null, ExceptionEnum.STORY_FLOW_ERROR, GlobalUtil.format(
                             "A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: {}", notNeedPeekSequenceFlow.getId()));
                 }
                 comingList.forEach(coming -> {
-                    if (!PeekStrategyRepository.existExpectedComing(endElement, coming, contextScopeData)) {
+                    ElementAllowNextEnum allowNextEnum = PeekStrategyRepository.allowDoNext(endElement, coming, contextStoryBus, false);
+                    if (allowNextEnum == ElementAllowNextEnum.ALLOW_NEX) {
                         AssertUtil.isTrue(coming instanceof SequenceFlow);
                         flowElementStack.push(coming.comingList().get(0), coming);
-                        LOGGER.debug("The last incoming degree is executed, opening the next event flow! eventId: {}, comingId: {}",
-                                endElement.getId(), coming.getId());
+                        LOGGER.debug("The last incoming degree is executed, " +
+                                "opening the next event flow! eventId: {}, comingId: {}", endElement.getId(), coming.getId());
+                    } else if (allowNextEnum == ElementAllowNextEnum.NOT_ALLOW_NEX_NEED_COMPENSATE) {
+                        processNotMatchElement(contextStoryBus, Lists.newArrayList(), endElement);
                     }
                 });
             });
         });
-    }
-
-    private boolean validServiceTask(FlowElement flowElement) {
-        if (flowElement == null) {
-            return false;
-        }
-        if (!(flowElement instanceof ServiceTask)) {
-            return false;
-        }
-        return !taskServiceDoing;
     }
 }

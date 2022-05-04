@@ -34,6 +34,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * 将节点进行标记
+ *
  * @author lykan
  */
 public class MarkIndexPostProcessor implements StartEventPostProcessor {
@@ -41,33 +43,36 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
         AtomicInteger index = new AtomicInteger(1);
-        return doPostStartEvent(index, startEvent);
+        return doPostStartEvent(index, startEvent, false);
     }
 
-    private Optional<StartEvent> doPostStartEvent(AtomicInteger index, StartEvent startEvent) {
+    private Optional<StartEvent> doPostStartEvent(AtomicInteger index, StartEvent startEvent, boolean subProcess) {
         AssertUtil.notNull(startEvent);
-
+        if (startEvent.isImmutable()) {
+            return Optional.of(startEvent);
+        }
         // 顺序标记
         // 1、标记 index
         // 2、标记 endEvent
         // 3、标记 flowTrack
-        comingMark(index, startEvent);
+        comingMark(index, startEvent, subProcess);
 
         // 逆序标记
         // 1、标记 SequenceFlow 可达的聚合节点
         outingMark(startEvent);
+        startEvent.immutable();
         return Optional.of(startEvent);
     }
 
-    private void comingMark(AtomicInteger index, StartEvent startEvent) {
+    private void comingMark(AtomicInteger index, StartEvent startEvent, boolean subProcess) {
         Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
 
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (node instanceof SubProcess) {
-                doPostStartEvent(index, ((SubProcess) node).getStartEvent());
+                doPostStartEvent(index, ((SubProcess) node).getStartEvent(), true);
             }
             if (ElementPropertyUtil.isSupportAggregation(node)) {
                 comingCountMap.merge(node, 1, Integer::sum);
@@ -79,7 +84,9 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
                 startEvent.setEndEvent(GlobalUtil.transferNotEmpty(node, EndEvent.class));
             }
             node.setIndex(index.getAndIncrement());
-
+            if (subProcess || !(node instanceof StartEvent)) {
+                node.setId(node.getId() + "-" + node.getIndex());
+            }
             List<Integer> flowTrack = Lists.newArrayList(node.getFlowTrack());
             flowTrack.add(node.getIndex());
             node.outingList().forEach(flowElement -> flowElement.addFlowTrack(flowTrack));
@@ -99,7 +106,7 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
         outStack.pushList(flowElements);
         Map<FlowElement, Integer> outingCountMap = Maps.newHashMap();
         while (!outStack.isEmpty()) {
-            FlowElement node = outStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            FlowElement node = outStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (ElementPropertyUtil.isSupportAggregation(node)) {
                 outingCountMap.merge(node, 1, Integer::sum);
                 if (!Objects.equals(outingCountMap.get(node), node.outingList().size())) {
@@ -123,13 +130,18 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
             }
             List<FlowElement> oneSizeComingList = sequenceFlow.comingList().get(0).comingList();
             if (CollectionUtils.isEmpty(oneSizeComingList)) {
-                AssertUtil.isTrue(sequenceFlow.comingList().get(0) instanceof StartEvent, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR);
+                AssertUtil.isTrue(sequenceFlow.comingList().get(0) instanceof StartEvent, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
                 continue;
             }
-            AssertUtil.oneSize(oneSizeComingList, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR);
+            AssertUtil.oneSize(oneSizeComingList, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
             GlobalUtil.transferNotEmpty(oneSizeComingList.get(0), SequenceFlow.class).addEndElementList((sequenceFlow.getEndElementList()));
             outStack.pushList(node.comingList());
         }
         sequenceFlowSet.forEach(SequenceFlow::immutableEndElement);
+    }
+
+    @Override
+    public int getOrder() {
+        return 30;
     }
 }

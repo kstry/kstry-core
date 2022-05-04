@@ -24,6 +24,7 @@ public interface AsyncFlowElement {
 
     /**
      * 是否开启异步
+     *
      * @return openAsync
      */
     boolean openAsync();

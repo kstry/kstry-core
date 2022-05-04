@@ -18,7 +18,6 @@
 package cn.kstry.framework.core.enums;
 
 /**
- *
  * @author lykan
  */
 public enum IdentityTypeEnum {
@@ -29,22 +28,37 @@ public enum IdentityTypeEnum {
     K_V_ABILITY,
 
     /**
-     * 任务组件
+     * 服务组件
      */
     TASK_COMPONENT,
 
     /**
-     * 任务
+     * 服务节点
      */
     SERVICE_TASK,
 
     /**
-     * 任务
+     * 服务能力节点
      */
     SERVICE_TASK_ABILITY,
 
     /**
+     * 子流程
+     */
+    SUB_PROCESS,
+
+    /**
      * 通知字段
      */
-    NOTICE_FIELD
+    NOTICE_FIELD,
+
+    /**
+     * 服务节点资源
+     */
+    SERVICE_NODE_RESOURCE,
+
+    /**
+     * 权限
+     */
+    PERMISSION
 }

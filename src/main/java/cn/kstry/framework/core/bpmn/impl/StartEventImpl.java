@@ -20,7 +20,7 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.EndEvent;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.resource.config.Config;
+import cn.kstry.framework.core.resource.config.ConfigResource;
 
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ public class StartEventImpl extends EventImpl implements StartEvent {
     /**
      * 资源配置信息
      */
-    private Config config;
+    private ConfigResource config;
 
     /**
      * End 节点
@@ -45,12 +45,12 @@ public class StartEventImpl extends EventImpl implements StartEvent {
     }
 
     @Override
-    public void setConfig(Config config) {
+    public void setConfig(ConfigResource config) {
         this.config = config;
     }
 
     @Override
-    public Optional<Config> getConfig() {
+    public Optional<ConfigResource> getConfig() {
         return Optional.ofNullable(config);
     }
 

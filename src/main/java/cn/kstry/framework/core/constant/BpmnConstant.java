@@ -35,9 +35,9 @@ public interface BpmnConstant {
     String SERVICE_TASK_TASK_SERVICE = "task-service";
 
     /**
-     * ServiceTask: allow-absent
+     * Task: allow-absent
      */
-    String SERVICE_TASK_ALLOW_ABSENT = "allow-absent";
+    String TASK_ALLOW_ABSENT = "allow-absent";
 
     /**
      * ServiceTask: custom-role
@@ -50,7 +50,12 @@ public interface BpmnConstant {
     String ASYNC_ELEMENT_OPEN_ASYNC = "open-async";
 
     /**
-     * element: strict-mode
+     * Task: strict-mode
      */
-    String ELEMENT_STRICT_MODE = "strict-mode";
+    String TASK_STRICT_MODE = "strict-mode";
+
+    /**
+     * Task: timeout
+     */
+    String TASK_TIMEOUT = "timeout";
 }

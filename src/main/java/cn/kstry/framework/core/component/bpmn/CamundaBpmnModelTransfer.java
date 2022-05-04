@@ -20,36 +20,41 @@ package cn.kstry.framework.core.component.bpmn;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.impl.*;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.constant.BpmnConstant;
 import cn.kstry.framework.core.constant.GlobalConstant;
-import cn.kstry.framework.core.engine.facade.CustomRoleInfo;
+import cn.kstry.framework.core.util.CustomRoleInfo;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.resource.config.Config;
+import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.impl.BpmnModelConstants;
 import org.camunda.bpm.model.bpmn.instance.CallActivity;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
-import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 
+import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
+ * Camunda 解析器实现
  *
  * @author lykan
  */
-public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
+public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInstance> {
 
     /**
      * Camunda 中定义的 ServiceTask、Task 类型常量
@@ -57,25 +62,46 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
     private final List<String> CAMUNDA_TASK_TYPE_LIST = Lists.newArrayList(BpmnModelConstants.BPMN_ELEMENT_SERVICE_TASK, BpmnModelConstants.BPMN_ELEMENT_TASK);
 
     @Override
-    public Optional<StartEvent> getKstryModel(Config config, Object instance, String startId) {
+    public Optional<StartEvent> getKstryModel(@Nonnull Map<String, SubProcess> allSubProcess,
+                                              ConfigResource config, BpmnModelInstance instance, String startId) {
 
         AssertUtil.notNull(config, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
         if (instance == null || StringUtils.isBlank(startId)) {
             return Optional.empty();
         }
 
-        BpmnModelInstance bpmnModelInstance = GlobalUtil.transferNotEmpty(instance, BpmnModelInstance.class);
-        org.camunda.bpm.model.bpmn.instance.StartEvent camundaStartEvent = bpmnModelInstance.getModelElementById(startId);
-        return doGetKstryModel(config, bpmnModelInstance, camundaStartEvent);
+        org.camunda.bpm.model.bpmn.instance.StartEvent camundaStartEvent = instance.getModelElementById(startId);
+        return doGetKstryModel(allSubProcess, config, camundaStartEvent);
     }
 
-    private Optional<StartEvent> doGetKstryModel(Config config, BpmnModelInstance bpmnModelInstance,
-                                                 org.camunda.bpm.model.bpmn.instance.StartEvent camundaStartEvent) {
+    @Override
+    public Map<String, SubProcess> getAllSubProcess(ConfigResource config, BpmnModelInstance instance) {
+        AssertUtil.notNull(config, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
+        Map<String, SubProcess> subProcessMap = Maps.newHashMap();
+        if (instance == null) {
+            return subProcessMap;
+        }
+        Collection<org.camunda.bpm.model.bpmn.instance.SubProcess> subProcesses =
+                instance.getModelElementsByType(org.camunda.bpm.model.bpmn.instance.SubProcess.class);
+        if (CollectionUtils.isEmpty(subProcesses)) {
+            return subProcessMap;
+        }
+        subProcesses.forEach(sp -> {
+            SubProcess subProcess = getKstrySubProcess(config, sp);
+            AssertUtil.notTrue(subProcessMap.containsKey(subProcess.getId()), ExceptionEnum.ELEMENT_DUPLICATION_ERROR,
+                    "There are duplicate SubProcess ids defined! id: {}, fileName: {}", subProcess.getId(), config.getConfigName());
+            subProcessMap.put(subProcess.getId(), subProcess);
+        });
+        return subProcessMap;
+    }
+
+    private Optional<StartEvent> doGetKstryModel(Map<String, SubProcess> allSubProcess,
+                                                 ConfigResource config, org.camunda.bpm.model.bpmn.instance.StartEvent camundaStartEvent) {
         if (camundaStartEvent == null) {
             return Optional.empty();
         }
 
-        StartEvent startEvent = (StartEvent) elementMapping(config, bpmnModelInstance, camundaStartEvent);
+        StartEvent startEvent = (StartEvent) elementMapping(allSubProcess, config, camundaStartEvent);
         BpmnMappingItem bpmnMappingItem = new BpmnMappingItem(camundaStartEvent, startEvent);
 
         Map<String, BpmnMappingItem> bpmnMappingItemCache = Maps.newHashMap();
@@ -85,7 +111,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         InStack<BpmnMappingItem> basicInStack = new BasicInStack<>();
         basicInStack.push(bpmnMappingItem);
         while (!basicInStack.isEmpty()) {
-            BpmnMappingItem mappingItem = basicInStack.pop().orElseThrow(() -> KstryException.buildException(ExceptionEnum.SYSTEM_ERROR));
+            BpmnMappingItem mappingItem = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (ElementPropertyUtil.isSupportAggregation(mappingItem.getKstryElement())) {
                 comingCountMap.merge(mappingItem.getKstryElement(), 1, Integer::sum);
                 int targetSize = ((FlowNode) mappingItem.getCamundaElement()).getIncoming().size();
@@ -98,7 +124,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
             if (mappingItem.getCamundaElement() instanceof org.camunda.bpm.model.bpmn.instance.SequenceFlow) {
                 FlowNode targetNode = ((org.camunda.bpm.model.bpmn.instance.SequenceFlow) mappingItem.getCamundaElement()).getTarget();
 
-                FlowElement kstryNode = elementMapping(config, bpmnModelInstance, targetNode);
+                FlowElement kstryNode = elementMapping(allSubProcess, config, targetNode);
                 BpmnMappingItem item = getCacheMappingItem(bpmnMappingItemCache, targetNode, kstryNode);
                 mappingItem.getKstryElement().outing(item.getKstryElement());
                 basicInStack.push(item);
@@ -114,7 +140,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
                         .collect(Collectors.toList());
                 basicInStack.pushList(itemList);
             } else {
-                KstryException.throwException(ExceptionEnum.CONFIGURATION_PARSE_FAILURE,
+                throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
                         GlobalUtil.format("There is an error in the bpmn file! fileName: {}", config.getConfigName()));
             }
         }
@@ -122,26 +148,25 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         return Optional.of(startEvent);
     }
 
-    private FlowElement elementMapping(Config config, BpmnModelInstance bpmnModelInstance, FlowNode flowNode) {
+    private FlowElement elementMapping(Map<String, SubProcess> allSubProcess, ConfigResource config, FlowNode flowNode) {
         if (flowNode == null) {
             return null;
         }
 
-        FlowElement flowElement = null;
+        FlowElement flowElement;
         if (org.camunda.bpm.model.bpmn.instance.Task.class.isAssignableFrom(flowNode.getClass())
                 && CAMUNDA_TASK_TYPE_LIST.contains(flowNode.getElementType().getTypeName())) {
             ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
-            AssertUtil.notBlank(serviceTaskImpl.getTaskService(),
-                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskService cannot be empty! fileName: {}", config.getConfigName());
-            AssertUtil.notBlank(serviceTaskImpl.getTaskComponent(),
-                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskComponent cannot be empty! fileName: {}", config.getConfigName());
+            AssertUtil.notBlank(serviceTaskImpl.getTaskService(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
+                    "TaskService cannot be empty! id: {}, fileName: {}", flowNode.getId(), config.getConfigName());
+            AssertUtil.notBlank(serviceTaskImpl.getTaskComponent(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
+                    "TaskComponent cannot be empty! id: {}, fileName: {}", flowNode.getId(), config.getConfigName());
             flowElement = serviceTaskImpl;
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.ParallelGateway) {
             BasicAsyncFlowElement asyncFlowElement = new BasicAsyncFlowElement();
             fillAsyncProperty(flowNode, asyncFlowElement);
             ParallelGatewayImpl parallelGateway = new ParallelGatewayImpl(asyncFlowElement);
-            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.ELEMENT_STRICT_MODE)
-                    .ifPresent(strict -> parallelGateway.setStrictMode(BooleanUtils.isNotFalse(BooleanUtils.toBooleanObject(strict))));
+            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_STRICT_MODE).ifPresent(parallelGateway::setStrictMode);
             flowElement = parallelGateway;
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.ExclusiveGateway) {
             ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
@@ -158,19 +183,15 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.EndEvent) {
             flowElement = new EndEventImpl();
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.SubProcess) {
-            flowElement = buildSubProcess(config, bpmnModelInstance, flowNode);
+            flowElement = getSubProcess(allSubProcess, config, flowNode.getId());
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
             String calledElementId = ((CallActivity) flowNode).getCalledElement();
-            AssertUtil.notBlank(calledElementId, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                    "CallActivity element id cannot be empty!, fileName: {}", config.getConfigName());
-            org.camunda.bpm.model.bpmn.instance.SubProcess subProcess = bpmnModelInstance.getModelElementById(calledElementId);
-            flowElement = buildSubProcess(config, bpmnModelInstance, subProcess);
+            flowElement = getSubProcess(allSubProcess, config, calledElementId);
         } else {
-            KstryException.throwException(ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
+            throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
                     GlobalUtil.format("{} element: {}, fileName: {}", ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT.getDesc(),
                             flowNode.getElementType().getTypeName(), config.getConfigName()));
         }
-
         flowElement.setId(flowNode.getId());
         flowElement.setName(flowNode.getName());
         AssertUtil.notBlank(flowElement.getId(),
@@ -182,14 +203,16 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
         ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
         ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.ELEMENT_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
         ElementPropertyUtil.getNodeProperty(flowNode,
                 BpmnConstant.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_TIMEOUT)
+                .map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(serviceTaskImpl::setTimeout);
         return serviceTaskImpl;
     }
 
-    private SequenceFlow sequenceFlowMapping(Config config, org.camunda.bpm.model.bpmn.instance.SequenceFlow sf) {
+    private SequenceFlow sequenceFlowMapping(ConfigResource config, org.camunda.bpm.model.bpmn.instance.SequenceFlow sf) {
         SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
         sequenceFlow.setId(sf.getId());
         sequenceFlow.setName(sf.getName());
@@ -223,16 +246,46 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
                 .map(BooleanUtils::toBoolean).ifPresent(asyncFlowElement::setOpenAsync);
     }
 
-    private FlowElement buildSubProcess(Config config, BpmnModelInstance bpmnModelInstance, ModelElementInstance modelElementInstance) {
-        AssertUtil.notNull(modelElementInstance, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                "No matching subprocesses found in the configuration file! fileName: {}", config.getConfigName());
-        Collection<org.camunda.bpm.model.bpmn.instance.StartEvent> childElement =
-                modelElementInstance.getChildElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class);
-        AssertUtil.oneSize(childElement, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                "Subprocesses are only allowed to also have a start event! fileName: {}", config.getConfigName());
-        StartEvent innerStartEvent = doGetKstryModel(config, bpmnModelInstance,
-                childElement.iterator().next()).orElseThrow(() -> KstryException.buildException(ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR));
-        return new SubProcessImpl(innerStartEvent);
+    private FlowElement getSubProcess(Map<String, SubProcess> allSubProcess, ConfigResource config, String calledElementId) {
+        AssertUtil.notBlank(calledElementId, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
+                "CallActivity element id cannot be empty!, fileName: {}", config.getConfigName());
+        SubProcess subProcess = allSubProcess.get(calledElementId);
+        AssertUtil.notNull(subProcess, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
+                "CallActivity element id cannot match to SubProcess instance!, fileName: {}, calledElementId: {}", config.getConfigName(), calledElementId);
+        return GlobalUtil.transferNotEmpty(subProcess, SubProcessImpl.class).cloneSubProcess(allSubProcess);
+    }
+
+    private SubProcess getKstrySubProcess(ConfigResource config, org.camunda.bpm.model.bpmn.instance.SubProcess sp) {
+        SubProcessImpl subProcess = new SubProcessImpl(new StartEventBuilder(config, sp));
+        AssertUtil.notBlank(sp.getId());
+        subProcess.setId(sp.getId());
+        subProcess.setName(sp.getName());
+        ElementPropertyUtil.getNodeProperty(sp, BpmnConstant.TASK_STRICT_MODE).ifPresent(subProcess::setStrictMode);
+        ElementPropertyUtil.getNodeProperty(sp, BpmnConstant.TASK_TIMEOUT)
+                .map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(subProcess::setTimeout);
+        return subProcess;
+    }
+
+    public class StartEventBuilder implements Function<Map<String, SubProcess>, StartEvent> {
+
+        private final ConfigResource config;
+
+        private final org.camunda.bpm.model.bpmn.instance.SubProcess sp;
+
+        public StartEventBuilder(ConfigResource config, org.camunda.bpm.model.bpmn.instance.SubProcess sp) {
+            this.config = config;
+            this.sp = sp;
+        }
+
+        @Override
+        public StartEvent apply(Map<String, SubProcess> allSubProcess) {
+            Collection<org.camunda.bpm.model.bpmn.instance.StartEvent> childElementList =
+                    sp.getChildElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class);
+            AssertUtil.oneSize(childElementList, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
+                    "SubProcesses are only allowed to also have a start event! fileName: {}", config.getConfigName());
+            return doGetKstryModel(allSubProcess, config, childElementList.iterator().next())
+                    .orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR, null));
+        }
     }
 
     private static class BpmnMappingItem {
@@ -258,10 +311,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer {
         }
 
         public String getId() {
-            if (kstryElement == null) {
-                KstryException.throwException(ExceptionEnum.SYSTEM_ERROR);
-                return null;
-            }
+            AssertUtil.notNull(kstryElement, ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY);
             return kstryElement.getId();
         }
 

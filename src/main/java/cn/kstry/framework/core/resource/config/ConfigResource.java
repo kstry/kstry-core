@@ -17,26 +17,26 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import cn.kstry.framework.core.enums.ConfigTypeEnum;
-
-import java.util.List;
+import java.net.URI;
 
 /**
+ * 配置文件定义
  *
  * @author lykan
  */
 public interface ConfigResource {
 
     /**
+     * 获取配置文件名称
      *
-     * @return list
+     * @return 配置文件名称
      */
-    List<Config> getConfigList();
-
+    String getConfigName();
 
     /**
+     * 获取配置文件资源符
      *
-     * @return ConfigTypeEnum
+     * @return 配置文件资源符
      */
-    ConfigTypeEnum getConfigType();
+    URI getConfigUri();
 }

@@ -17,9 +17,10 @@
  */
 package cn.kstry.framework.core.role;
 
-import cn.kstry.framework.core.task.TaskComponentRegister;
+import cn.kstry.framework.core.container.task.TaskComponentRegister;
 
 /**
+ * 自定义角色组件声明
  *
  * @author lykan
  */

@@ -17,30 +17,19 @@
  */
 package cn.kstry.framework.core.engine;
 
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bus.BasicStoryBus;
 import cn.kstry.framework.core.bus.ScopeData;
-import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.constant.GlobalProperties;
-import cn.kstry.framework.core.container.MethodWrapper;
-import cn.kstry.framework.core.container.StartEventContainer;
-import cn.kstry.framework.core.container.TaskContainer;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.facade.TaskResponse;
 import cn.kstry.framework.core.engine.facade.TaskResponseBox;
+import cn.kstry.framework.core.engine.future.AdminFuture;
+import cn.kstry.framework.core.engine.future.FlowFuture;
+import cn.kstry.framework.core.engine.future.FlowTaskSubscriber;
+import cn.kstry.framework.core.engine.future.MonoFlowFuture;
+import cn.kstry.framework.core.engine.thread.FlowTask;
+import cn.kstry.framework.core.engine.thread.MonoFlowTask;
 import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -48,12 +37,23 @@ import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.BusinessRoleRepository;
 import cn.kstry.framework.core.role.Role;
+import cn.kstry.framework.core.role.ServiceTaskRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
+ * 执行引擎
  *
  * @author lykan
  */
@@ -61,28 +61,20 @@ public class StoryEngine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StoryEngine.class);
 
-    private final StartEventContainer startEventContainer;
+    /**
+     * StoryEngine 组成模块
+     */
+    private final StoryEngineModule storyEngineModule;
 
-    private final ThreadPoolExecutor asyncThreadPool;
-
-    private final TaskContainer taskContainer;
-
+    /**
+     * 角色资源库，可以根据业务ID决策使用哪个角色
+     */
     private final BusinessRoleRepository businessRoleRepository;
 
-    private final Function<MethodWrapper.ParamInjectDef, Object> paramInitStrategy;
-
-    public StoryEngine(BusinessRoleRepository businessRoleRepository, StartEventContainer startEventContainer,
-                       ThreadPoolExecutor asyncThreadPool, TaskContainer taskContainer, Function<MethodWrapper.ParamInjectDef, Object> paramInitStrategy) {
-        AssertUtil.notNull(businessRoleRepository);
-        AssertUtil.notNull(taskContainer);
-        AssertUtil.notNull(asyncThreadPool);
-        AssertUtil.notNull(paramInitStrategy);
-        AssertUtil.notNull(startEventContainer);
+    public StoryEngine(StoryEngineModule storyEngineModule, BusinessRoleRepository businessRoleRepository) {
+        AssertUtil.anyNotNull(businessRoleRepository, storyEngineModule);
         this.businessRoleRepository = businessRoleRepository;
-        this.asyncThreadPool = asyncThreadPool;
-        this.taskContainer = taskContainer;
-        this.paramInitStrategy = paramInitStrategy;
-        this.startEventContainer = startEventContainer;
+        this.storyEngineModule = storyEngineModule;
     }
 
     public <T> TaskResponse<T> fire(StoryRequest<T> storyRequest) {
@@ -91,9 +83,9 @@ public class StoryEngine {
             preProcessing(storyRequest);
             return doFire(storyRequest);
         } catch (KstryException exception) {
+            exception.log(e -> LOGGER.warn(e.getMessage(), e));
             TaskResponse<T> errorResponse = TaskResponseBox.buildError(exception.getErrorCode(), exception.getMessage());
             GlobalUtil.transferNotEmpty(errorResponse, TaskResponseBox.class).setResultException(exception);
-            LOGGER.warn(exception.getMessage(), exception);
             return errorResponse;
         } catch (Throwable exception) {
             TaskResponse<T> errorResponse = TaskResponseBox.buildError(ExceptionEnum.SYSTEM_ERROR.getExceptionCode(), ExceptionEnum.SYSTEM_ERROR.getDesc());
@@ -102,6 +94,43 @@ public class StoryEngine {
             return errorResponse;
         } finally {
             MDC.clear();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> TaskResponse<T> doFire(StoryRequest<T> storyRequest) throws InterruptedException, TimeoutException {
+        Role role = storyRequest.getRole();
+        FlowRegister flowRegister = getFlowRegister(storyRequest);
+        BasicStoryBus storyBus = getStoryBus(storyRequest, flowRegister, role);
+        FlowTask flowTask = new FlowTask(storyEngineModule, flowRegister, role, storyBus);
+        AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(flowTask);
+        try {
+            int timeout = storyRequest.getTimeout();
+            FlowFuture flowFuture = GlobalUtil.transferNotEmpty(adminFuture.getMainTaskFuture(), FlowFuture.class);
+            boolean await = flowFuture.await(timeout, TimeUnit.MILLISECONDS);
+            if (!await) {
+                throw new TimeoutException(GlobalUtil.format(
+                        "[{}] Target story execution timeout! maximum time limit: {}ms", ExceptionEnum.ASYNC_TASK_TIMEOUT.getExceptionCode(), timeout));
+            }
+            Optional<KstryException> exceptionOptional = adminFuture.getException();
+            if (exceptionOptional.isPresent()) {
+                throw exceptionOptional.get();
+            }
+            Object result = null;
+            Class<?> returnType = storyRequest.getReturnType();
+            if (returnType != null && storyBus.getResult() != null) {
+                result = storyBus.getResult();
+                AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
+                        "Engine fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
+            }
+            Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
+            return TaskResponseBox.buildSuccess((T) result);
+        } catch (Throwable exception) {
+            adminFuture.cancel(flowRegister.getStartEventId());
+            Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
+            throw exception;
+        } finally {
+            flowRegister.getMonitorTracking().trackingLog();
         }
     }
 
@@ -116,152 +145,51 @@ public class StoryEngine {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Mono<T> doFireAsync(StoryRequest<T> storyRequest) {
+    private <T> Mono<T> doFireAsync(StoryRequest<T> storyRequest) {
+        Role role = storyRequest.getRole();
         FlowRegister flowRegister = getFlowRegister(storyRequest);
-        AsyncTaskCell asyncTaskCell = flowRegister.getAsyncTaskCell();
-        CompletableFuture<AsyncTaskState> future = asyncTaskCell.initResultFuture();
-
-        StoryBus storyBus = submitTaskGetBus(storyRequest, flowRegister);
-        int timeout = Optional.ofNullable(storyRequest.getTimeout()).orElse(GlobalProperties.ASYNC_TASK_DEFAULT_TIMEOUT);
-        return Mono.fromFuture(future.whenComplete((result, exp) -> {
-            try {
-                MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
-                if (exp != null && !asyncTaskCell.isCancelled()) {
-                    asyncTaskCell.cancel();
-                    LOGGER.warn(exp.getMessage(), exp);
-                    flowRegister.getMonitorTracking().trackingLog();
-                    Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exp, storyBus)));
-                }
-            } catch (Throwable e) {
-                LOGGER.warn(e.getMessage(), e);
-            } finally {
-                MDC.clear();
+        BasicStoryBus storyBus = getStoryBus(storyRequest, flowRegister, role);
+        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
+                true, storyRequest.getTimeout(), flowRegister, GlobalUtil.getTaskName(flowRegister.getStartElement(), flowRegister.getRequestId())) {
+            @Override
+            protected void doErrorHook(Throwable throwable) {
+                flowRegister.getMonitorTracking().trackingLog();
+                Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(throwable, storyBus)));
             }
-        }).thenCompose(t -> {
+        };
+        MonoFlowTask monoFlowTask = new MonoFlowTask(storyEngineModule, flowRegister, role, storyBus, flowTaskSubscriber);
+        AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(monoFlowTask);
+        MonoFlowFuture monoFlowFuture = GlobalUtil.transferNotEmpty(adminFuture.getMainTaskFuture(), MonoFlowFuture.class);
+        return monoFlowFuture.getMonoFuture().mapNotNull(t -> {
             try {
+                if (!Objects.equals(t, AsyncTaskState.SUCCESS)) {
+                    return null;
+                }
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
                 Class<?> returnType = storyRequest.getReturnType();
                 Object result = null;
                 if (returnType != null && storyBus.getResult() != null) {
                     result = storyBus.getResult();
                     AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
-                            "Engine asyncFire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
+                            "Engine async fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
                 }
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
-                return CompletableFuture.completedFuture((T) result);
+                return result == null ? null : (T) result;
             } catch (Throwable exception) {
                 LOGGER.warn(exception.getMessage(), exception);
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
-                CompletableFuture<T> completableFuture = new CompletableFuture<>();
-                completableFuture.completeExceptionally(exception);
-                return completableFuture;
+                return null;
             } finally {
                 flowRegister.getMonitorTracking().trackingLog();
                 MDC.clear();
             }
-        })).timeout(Duration.ofMillis(timeout), Mono.fromSupplier(() -> {
-            try {
-                MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
-                asyncTaskCell.cancel();
-                flowRegister.getMonitorTracking().trackingLog();
-                T t = Optional.ofNullable(storyRequest.getMonoTimeoutFallback()).map(Supplier::get).orElse(null);
-                Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
-                return t;
-            } catch (Throwable e) {
-                LOGGER.warn(e.getMessage(), e);
-                throw e;
-            } finally {
-                MDC.clear();
-            }
-        }));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> TaskResponse<T> doFire(StoryRequest<T> storyRequest) {
-        FlowRegister flowRegister = getFlowRegister(storyRequest);
-        StoryBus storyBus = submitTaskGetBus(storyRequest, flowRegister);
-        try {
-            AsyncTaskCell asyncTaskCell1 = flowRegister.getAsyncTaskCell();
-            long timeout = Optional.ofNullable(storyRequest.getTimeout()).orElse(GlobalProperties.ASYNC_TASK_DEFAULT_TIMEOUT);
-            Optional<KstryException> expOptional = asyncTaskCell1.get(timeout, TimeUnit.MILLISECONDS);
-            if (expOptional.isPresent()) {
-                throw expOptional.get();
-            }
-
-            Object result = null;
-            Class<?> returnType = storyRequest.getReturnType();
-            if (returnType != null && storyBus.getResult() != null) {
-                result = storyBus.getResult();
-                AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
-                        "Engine fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
-            }
-            Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
-            return TaskResponseBox.buildSuccess((T) result);
-        } catch (Throwable exception) {
-            Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
-            throw exception;
-        } finally {
-            flowRegister.getMonitorTracking().trackingLog();
-        }
-    }
-
-    /**
-     * 注销
-     */
-    public void destroy() {
-        if (asyncThreadPool != null) {
-            LOGGER.info("begin shutdown time slot thread pool! active count: {}", asyncThreadPool.getActiveCount());
-            asyncThreadPool.shutdown();
-            try {
-                TimeUnit.MILLISECONDS.sleep(GlobalProperties.ENGINE_SHUTDOWN_SLEEP_SECONDS);
-            } catch (Exception e) {
-                LOGGER.warn("time slot thread pool close task are interrupted on shutdown!", e);
-            }
-            if (asyncThreadPool.isShutdown() && asyncThreadPool.getActiveCount() == 0) {
-                LOGGER.info("[shutdown] interrupting tasks in the thread pool success! thread pool close success!");
-                return;
-            } else {
-                LOGGER.info("interrupting tasks in the thread pool that have not yet finished! begin shutdownNow! active count: {}",
-                        asyncThreadPool.getActiveCount());
-                asyncThreadPool.shutdownNow();
-            }
-            try {
-                TimeUnit.MILLISECONDS.sleep(GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS);
-            } catch (Exception e) {
-                LOGGER.warn("time slot thread pool close task are interrupted on shutdown!", e);
-            }
-            if (asyncThreadPool.isShutdown() && asyncThreadPool.getActiveCount() == 0) {
-                LOGGER.info("[shutdownNow] interrupting tasks in the thread pool success! thread pool close success!");
-            } else {
-                LOGGER.error("[shutdownNow] interrupting tasks in the thread pool error! thread pool close error!");
-            }
-        }
-    }
-
-    private <T> StoryBus submitTaskGetBus(StoryRequest<T> storyRequest, FlowRegister flowRegister) {
-        // build story bus
-        Role role = storyRequest.getRole();
-        String businessId = storyRequest.getBusinessId();
-        ScopeData varScopeData = storyRequest.getVarScopeData();
-        ScopeData staScopeData = storyRequest.getStaScopeData();
-        MonitorTracking monitorTracking = flowRegister.getMonitorTracking();
-        BasicStoryBus storyBus = new BasicStoryBus(businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
-
-        // submit task
-        AsyncTaskForkJoin asyncForkJoin = new AsyncTaskForkJoin();
-        asyncForkJoin.setRole(role);
-        asyncForkJoin.setStoryBus(storyBus);
-        asyncForkJoin.setTaskContainer(taskContainer);
-        asyncForkJoin.setParamInitStrategy(paramInitStrategy);
-        asyncForkJoin.setAsyncThreadPool(asyncThreadPool);
-        asyncForkJoin.submitTask(flowRegister);
-        return storyBus;
+        });
     }
 
     private <T> FlowRegister getFlowRegister(StoryRequest<T> storyRequest) {
         String startId = storyRequest.getStartId();
         AssertUtil.notBlank(startId, ExceptionEnum.PARAMS_ERROR, "StartId is not allowed to be empty!");
-        Optional<StartEvent> startEventOptional = startEventContainer.getStartEventById(startId);
+        Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(startId);
         StartEvent startEvent = startEventOptional.orElseThrow(() -> KstryException
                 .buildException(null, ExceptionEnum.PARAMS_ERROR, GlobalUtil.format("StartId did not match a valid StartEvent! startId: {}", startId)));
         return new FlowRegister(startEvent, storyRequest);
@@ -272,7 +200,15 @@ public class StoryEngine {
         Role role = storyRequest.getRole();
         if (StringUtils.isNotBlank(startId) && role == null) {
             String businessId = storyRequest.getBusinessId();
-            businessRoleRepository.getRole(businessId, startId).ifPresent(storyRequest::setRole);
+            storyRequest.setRole(businessRoleRepository.getRole(businessId, startId).orElse(new ServiceTaskRole()));
         }
+    }
+
+    private <T> BasicStoryBus getStoryBus(StoryRequest<T> storyRequest, FlowRegister flowRegister, Role role) {
+        String businessId = storyRequest.getBusinessId();
+        ScopeData varScopeData = storyRequest.getVarScopeData();
+        ScopeData staScopeData = storyRequest.getStaScopeData();
+        MonitorTracking monitorTracking = flowRegister.getMonitorTracking();
+        return new BasicStoryBus(businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
     }
 }

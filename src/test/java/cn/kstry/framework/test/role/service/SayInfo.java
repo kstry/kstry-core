@@ -23,8 +23,9 @@ import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- *
  * @author lykan
  */
 @SuppressWarnings("unused")
@@ -35,6 +36,12 @@ public class SayInfo {
     @TaskService(name = "say_number")
     public Integer sayNumber(@ReqTaskParam("number") int number) {
         System.out.println("say number2: " + number);
+        return number;
+    }
+
+    @TaskService(name = "ss_exception")
+    public Integer ss(int number) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
         return number;
     }
 }
