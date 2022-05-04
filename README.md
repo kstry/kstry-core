@@ -75,6 +75,7 @@
 >
 > - [Kstry 使用文档](http://kstry.cn/doc/kstry-specification.html)
 > - [Kstry 使用demo](https://gitee.com/kstry/kstry-demo)
+> - [功能测试](https://github.com/kstry/kstry-core/tree/master/src/test/java/cn/kstry/framework/test)
 
 ### 1、配置引入
 
