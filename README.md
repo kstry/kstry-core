@@ -45,7 +45,7 @@
 - 一批独立的权限对象有着较高的维护成本，所以可依次将某一业务场景所需的全部权限聚合起来组成角色对象
 - 提供平台能力时，根据参数标识判断出具体的业务场景或需求方，并找到与之对应的角色，携带该角色执行预设的链路模型，即可完成定制化的业务诉求
 
-![rbac](./doc/img/rbac.svg)
+![rbac](http://cdn.kstry.cn/doc/img/rbac.svg)
 
 *详见：[RBAC模式](http://kstry.cn/doc/kstry-specification.html#五、rbac模式)*
 
