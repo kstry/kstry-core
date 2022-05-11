@@ -353,11 +353,9 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                     }
                 } else {
-                    if (i > 0) {
-                        DemotionInfo demotionInfo = new DemotionInfo();
-                        demotionInfo.setRetryTimes(i);
-                        flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
-                    }
+                    DemotionInfo demotionInfo = new DemotionInfo();
+                    demotionInfo.setRetryTimes(i + 1);
+                    flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                 }
             }
         }
