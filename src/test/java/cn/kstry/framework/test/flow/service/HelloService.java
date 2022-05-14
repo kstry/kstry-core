@@ -30,10 +30,15 @@ import java.util.concurrent.TimeUnit;
 @TaskComponent(name = "hello_service")
 public class HelloService {
 
-    @TaskService(name = "say_hello")
+    @TaskService(name = "say_hello", invoke = @Invoke(demotion = "pr:hello_service@say_hello_demotion"))
     public void sayHello() throws InterruptedException {
         TimeUnit.MILLISECONDS.sleep(200);
         System.out.println("say hello ~");
+    }
+
+    @TaskService(name = "say_hello_demotion")
+    public int sayHelloDemotion() {
+        return -1;
     }
 
     @TaskService(name = "say_hello1", invoke = @Invoke(retry = 2, timeout = 100, demotion = "pr:hello_service@say_hello11"))

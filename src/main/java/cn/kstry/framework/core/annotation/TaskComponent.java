@@ -42,4 +42,11 @@ public @interface TaskComponent {
      * @return name
      */
     String name();
+
+    /**
+     * 扫描父类文件
+     *
+     * @return 默认 true 除当前类文件，也会扫描父类中的服务节点。为 false 时只会扫描当前类中的服务节点
+     */
+    boolean scanSuper() default true;
 }

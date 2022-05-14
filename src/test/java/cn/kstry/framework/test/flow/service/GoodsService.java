@@ -23,7 +23,7 @@ public class GoodsService {
         return goods;
     }
 
-    @TaskService(name = "fill_goods")
+    @TaskService(name = "fill_goods", invoke = @Invoke(demotion = "pr:goods_service@XXX"))
     public Mono<Void> fillGoods(@StaTaskParam("goods") Goods goods, Hospital hospital) {
         goods.setHospital(hospital);
         System.out.println("thread ->" + Thread.currentThread().getName() + ", fill goods ->" + JSON.toJSONString(goods));

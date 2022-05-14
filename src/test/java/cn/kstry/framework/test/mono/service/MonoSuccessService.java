@@ -113,22 +113,6 @@ public class MonoSuccessService {
         }, Executors.newFixedThreadPool(1)));
     }
 
-    @TaskService(name = "say_empty_info3_demotion", ability = "ability")
-    public Mono<Void> sayEmptyInfo3Demotion(@ReqTaskParam(reqSelf = true) SayInfoRequest request,
-                                            @ReqTaskParam int a, @ReqTaskParam Boolean b, @ReqTaskParam String c) {
-        System.out.println("say_empty_info3_demotion...");
-        Assert.assertTrue(a - 345 >= 0);
-        Assert.assertEquals(true, b);
-        Assert.assertEquals("Mono测试", c);
-        return Mono.fromFuture(CompletableFuture.runAsync(() -> {
-            try {
-                TimeUnit.MILLISECONDS.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, Executors.newFixedThreadPool(1)));
-    }
-
     @TaskService(name = "say_empty_info4", invoke = @Invoke(retry = 3, demotion = "pr:mono-service@say_empty_info4_demotion"))
     public Mono<Void> sayEmptyInfo4(@ReqTaskParam(reqSelf = true) SayInfoRequest request,
                                     @ReqTaskParam int a, @ReqTaskParam Boolean b, @ReqTaskParam String c) {
@@ -145,16 +129,6 @@ public class MonoSuccessService {
                 e.printStackTrace();
             }
         }, Executors.newFixedThreadPool(1)));
-    }
-
-    @TaskService(name = "say_empty_info4_demotion")
-    public Mono<Void> sayEmptyInfo4Demotion(@ReqTaskParam(reqSelf = true) SayInfoRequest request,
-                                            @ReqTaskParam int a, @ReqTaskParam Boolean b, @ReqTaskParam String c) {
-        System.out.println("say_empty_info4_demotion...");
-        Assert.assertTrue(a - 345 >= 0);
-        Assert.assertEquals(true, b);
-        Assert.assertEquals("Mono测试", c);
-        throw new RuntimeException("测试非严格模式");
     }
 
     @TaskService(name = "say_empty_info5", invoke = @Invoke(demotion = "pr:mono-service@say_empty_info3_demotion@ability"))
@@ -184,17 +158,6 @@ public class MonoSuccessService {
         return Mono.fromFuture(CompletableFuture.supplyAsync(() -> {
             throw new RuntimeException("测试Mono方法体执行失败后的降级");
         }, Executors.newFixedThreadPool(1)));
-    }
-
-    @TaskService(name = "say_info2_demotion")
-    public Mono<SayInfoRequest> sayInfo2Demotion(@ReqTaskParam(reqSelf = true) SayInfoRequest request,
-                                                 @ReqTaskParam int a, @ReqTaskParam Boolean b, @ReqTaskParam String c) {
-        Assert.assertTrue(a - 345 >= 0);
-        Assert.assertEquals(true, b);
-        Assert.assertEquals("Mono测试", c);
-        System.out.println("say_info2_demotion...");
-        request.setD(100);
-        return Mono.just(request);
     }
 
     @TaskService(name = "say_empty_info6")

@@ -136,8 +136,7 @@ public class PermissionUtil {
         private final String abilityName;
 
         public InServiceNodeResource(PermissionType permissionType, String componentName, String serviceName, String abilityName) {
-            super(getIdentityId(componentName, serviceName, abilityName), IdentityTypeEnum.SERVICE_NODE_RESOURCE);
-            AssertUtil.notNull(permissionType);
+            super(getIdentityId(permissionType, componentName, serviceName, abilityName), IdentityTypeEnum.SERVICE_NODE_RESOURCE);
             this.componentName = componentName;
             this.serviceName = serviceName;
             this.abilityName = abilityName;
@@ -185,11 +184,12 @@ public class PermissionUtil {
             return permission.getIdentityId();
         }
 
-        private static String getIdentityId(String componentName, String serviceName, String abilityName) {
+        private static String getIdentityId(PermissionType permissionType, String componentName, String serviceName, String abilityName) {
+            AssertUtil.notNull(permissionType);
             AssertUtil.notTrue(StringUtils.isAllBlank(componentName, serviceName, abilityName));
             List<String> list = Lists.newArrayList(
                     componentName, serviceName, abilityName).stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            return String.join("@", list);
+            return permissionType.getPrefix() + ":" + String.join("@", list);
         }
     }
 }

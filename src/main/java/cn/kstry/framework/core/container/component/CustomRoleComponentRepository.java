@@ -51,7 +51,7 @@ public class CustomRoleComponentRepository extends SpringTaskComponentRepository
                 CustomRoleRegister v = (CustomRoleRegister) target;
                 AssertUtil.notBlank(v.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
                         "CustomRoleRegister name cannot be empty! className: {}", v.getClass().getName());
-                doInit(v, v.getClass(), v.getName());
+                doInit(v, v.getClass(), v.getName(), true);
                 return;
             }
             Class<?> targetClass = ProxyUtil.noneProxyClass(target);
@@ -59,7 +59,7 @@ public class CustomRoleComponentRepository extends SpringTaskComponentRepository
             AssertUtil.notNull(taskComponent);
             AssertUtil.notBlank(taskComponent.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
                     "CustomRole name cannot be empty! className: {}", targetClass.getName());
-            doInit(target, targetClass, taskComponent.name());
+            doInit(target, targetClass, taskComponent.name(), taskComponent.scanSuper());
         });
         super.init();
     }

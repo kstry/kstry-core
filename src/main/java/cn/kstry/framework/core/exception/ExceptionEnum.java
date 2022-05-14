@@ -79,6 +79,11 @@ public enum ExceptionEnum {
      */
     COMPONENT_DUPLICATION_ERROR(ExceptionTypeEnum.COMPONENT, "0005", "Components are not allowed to be repeated!"),
 
+    /**
+     * [K1020006] 服务节点降级策略未生效
+     */
+    DEMOTION_DEFINITION_ERROR(ExceptionTypeEnum.COMPONENT, "0006", "Service node demotion policy not in effect!"),
+
     ///////////////////////////////////////////////// ANNOTATION END /////////////////////////////////////////////////
 
     /**

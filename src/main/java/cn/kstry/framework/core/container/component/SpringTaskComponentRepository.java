@@ -62,7 +62,7 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
                 TaskComponentRegister v = (TaskComponentRegister) target;
                 AssertUtil.notBlank(v.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
                         "TaskComponentRegister name cannot be empty! className: {}", v.getClass().getName());
-                doInit(v, v.getClass(), v.getName());
+                doInit(v, v.getClass(), v.getName(), true);
                 return;
             }
             Class<?> targetClass = ProxyUtil.noneProxyClass(target);
@@ -70,8 +70,9 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
             AssertUtil.notNull(taskComponent);
             AssertUtil.notBlank(taskComponent.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
                     "TaskComponent name cannot be empty! className: {}", targetClass.getName());
-            doInit(target, targetClass, taskComponent.name());
+            doInit(target, targetClass, taskComponent.name(), taskComponent.scanSuper());
         });
+        repositoryPostProcessor();
     }
 
     @Override
