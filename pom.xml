@@ -3,7 +3,7 @@
 <!--
  ~  /*
  ~   *
- ~   *  * Copyright (c) 2020-2021, Lykan (jiashuomeng@gmail.com).
+ ~   *  * Copyright (c) 2020-2022, Lykan (jiashuomeng@gmail.com).
  ~   *  * <p>
  ~   *  * Licensed under the Apache License, Version 2.0 (the "License");
  ~   *  * you may not use this file except in compliance with the License.
@@ -174,12 +174,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
                 <configuration>
                     <source>8</source>
                     <target>8</target>
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.0.1</version>
                 <configuration>
