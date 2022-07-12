@@ -26,7 +26,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
 
     <name>Kstry Core</name>
     <description>Kstry Core</description>

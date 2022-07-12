@@ -175,7 +175,8 @@ public class MethodWrapper {
             returnType = targetType;
             monoResult = true;
         } else {
-            AssertUtil.isTrue(ElementParserUtil.isAssignable(targetType, returnType), ExceptionEnum.TYPE_TRANSFER_ERROR);
+            AssertUtil.isTrue(targetType.isAssignableFrom(Object.class) ||
+                    ElementParserUtil.isAssignable(targetType, returnType), ExceptionEnum.TYPE_TRANSFER_ERROR);
             if (targetType != Object.class) {
                 returnType = targetType;
             }

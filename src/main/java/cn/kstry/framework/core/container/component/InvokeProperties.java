@@ -36,6 +36,8 @@ public class InvokeProperties {
 
     private final boolean strictMode;
 
+    private boolean validDemotion;
+
     public InvokeProperties(Invoke invoke) {
         this.retry = invoke.retry();
         this.timeout = invoke.timeout();
@@ -43,6 +45,7 @@ public class InvokeProperties {
         this.demotionResource = PermissionUtil.parseResource(invoke.demotion())
                 .filter(p -> p.getPermissionType() == PermissionType.COMPONENT_SERVICE || p.getPermissionType() == PermissionType.COMPONENT_SERVICE_ABILITY)
                 .orElse(null);
+        this.validDemotion = this.demotionResource != null;
     }
 
     public int getRetry() {
@@ -54,10 +57,14 @@ public class InvokeProperties {
     }
 
     public ServiceNodeResource getDemotionResource() {
-        return demotionResource;
+        return validDemotion ? demotionResource : null;
     }
 
     public boolean isStrictMode() {
         return strictMode;
+    }
+
+    void invalidDemotion() {
+        this.validDemotion = false;
     }
 }

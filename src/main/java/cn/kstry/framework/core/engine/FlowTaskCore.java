@@ -174,7 +174,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                                 @Override
                                 protected void hookOnError(@Nonnull Throwable e) {
                                     LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
-                                            ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
+                                            ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
                                     dispose();
                                 }
 
@@ -190,7 +190,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                         return;
                     } catch (Throwable e) {
                         LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
-                                ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
+                                ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
                     } finally {
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                     }
@@ -345,7 +345,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                         return retryInvokeMethod(pedometer, serviceTask, serviceDefOptional.get(), storyBus, role);
                     } catch (Throwable ex) {
                         demotionInfo.setDemotionSuccess(false);
-                        KstryException kex = KstryException.buildException(ex, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
+                        KstryException kex = KstryException.buildException(ex, ExceptionEnum.DEMOTION_DEFINITION_ERROR, null);
                         kex.log(e -> LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
                                 e.getErrorCode(), taskName, ex.getMessage(), e));
                         throw kex;
@@ -353,11 +353,9 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                     }
                 } else {
-                    if (i > 0) {
-                        DemotionInfo demotionInfo = new DemotionInfo();
-                        demotionInfo.setRetryTimes(i);
-                        flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
-                    }
+                    DemotionInfo demotionInfo = new DemotionInfo();
+                    demotionInfo.setRetryTimes(i + 1);
+                    flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                 }
             }
         }
@@ -371,7 +369,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 if (demotionResource == null) {
                     return Optional.empty();
                 }
-                return engineModule.getTaskContainer()
+                Optional<TaskServiceDef> resultOptional = engineModule.getTaskContainer()
                         .getTaskServiceDef(demotionResource.getComponentName(), demotionResource.getServiceName(), role)
                         .filter(def -> {
                             String an1 = def.getGetServiceNodeResource().getAbilityName();
@@ -381,6 +379,9 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                             def.setDemotionNode(true);
                             return def;
                         });
+                LOGGER.warn("[{}] {} demotion: {}", ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(),
+                        ExceptionEnum.DEMOTION_DEFINITION_ERROR.getDesc(), demotionResource.getIdentityId());
+                return resultOptional;
             } catch (Throwable e) {
                 LOGGER.warn(e.getMessage(), e);
                 return Optional.empty();
