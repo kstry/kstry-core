@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import com.google.common.collect.Lists;
 
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 
 /**
@@ -65,7 +65,7 @@ public class BasicKvAbility implements KvAbility {
             return Optional.empty();
         }
         KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope()
-                .orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+                .orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         try {
             return kValueCache.get(getCacheKey(key, kvScope), () -> doGetValue(key, kvScope));
         } catch (Exception e) {
@@ -78,7 +78,7 @@ public class BasicKvAbility implements KvAbility {
         if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+        KvThreadLocal.KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         KvThreadLocal.KvScope inKvScope = new KvThreadLocal.KvScope(scope);
         inKvScope.setBusinessId(kvScope.getBusinessId().orElse(null));
         try {
@@ -124,7 +124,7 @@ public class BasicKvAbility implements KvAbility {
             return getScopeAndDefault(key, kvScope.getScope()).filter(v -> v != KValue.KV_NULL);
         }
 
-        String businessId = kvScope.getBusinessId().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+        String businessId = kvScope.getBusinessId().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         if (!kvSelector.getKValue(businessId).isPresent()) {
             return getScopeAndDefault(key, kvScope.getScope()).filter(v -> v != KValue.KV_NULL);
         }

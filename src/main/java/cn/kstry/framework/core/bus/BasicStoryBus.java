@@ -22,13 +22,10 @@ import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
-import cn.kstry.framework.core.util.PropertyUtil;
+import cn.kstry.framework.core.util.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -143,7 +140,7 @@ public class BasicStoryBus implements StoryBus {
             } else if (scopeTypeEnum == ScopeTypeEnum.REQUEST) {
                 return PropertyUtil.getProperty(getReq(), key);
             } else {
-                throw KstryException.buildException(null, ExceptionEnum.STORY_ERROR, null);
+                throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_ERROR, null);
             }
         } finally {
             readLock.unlock();
@@ -364,7 +361,7 @@ public class BasicStoryBus implements StoryBus {
         } else if (ScopeTypeEnum.VARIABLE == dataEnum) {
             data = varScopeData;
         } else {
-            throw KstryException.buildException(null, ExceptionEnum.STORY_ERROR, null);
+            throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_ERROR, null);
         }
 
         noticeStaDefSet.forEach(def -> {

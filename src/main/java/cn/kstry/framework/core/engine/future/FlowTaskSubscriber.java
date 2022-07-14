@@ -23,6 +23,7 @@ import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -171,7 +172,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
     }
 
     protected AsyncTaskState doTimeoutHook() {
-        KstryException timeoutException = KstryException.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
+        KstryException timeoutException = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
                 GlobalUtil.format("Async task timeout! maximum time limit: {}ms, taskName: {}", timeout, taskName));
         try {
             onError(timeoutException);

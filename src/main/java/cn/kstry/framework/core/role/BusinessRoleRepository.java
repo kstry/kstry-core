@@ -18,8 +18,8 @@
 package cn.kstry.framework.core.role;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
@@ -78,7 +78,7 @@ public class BusinessRoleRepository {
             return businessRole.map(BusinessRole::getRole);
         } catch (ExecutionException e) {
             LOGGER.error(e.getMessage(), e);
-            throw KstryException.buildException(e, ExceptionEnum.STORY_ERROR, null);
+            throw ExceptionUtil.buildException(e, ExceptionEnum.STORY_ERROR, null);
         }
 
     }

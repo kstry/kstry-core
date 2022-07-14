@@ -18,7 +18,6 @@
 package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
@@ -306,19 +305,19 @@ public class AssertUtil {
 
     private static void throwCustomException(@Nonnull ExceptionEnum exceptionEnum, String desc, Supplier<List<?>> paramsSupplier) {
         if (StringUtils.isBlank(desc)) {
-            throw KstryException.buildException(null, exceptionEnum, exceptionEnum.getDesc());
+            throw ExceptionUtil.buildException(null, exceptionEnum, exceptionEnum.getDesc());
         }
 
         if (paramsSupplier == null) {
-            throw KstryException.buildException(null, exceptionEnum, desc);
+            throw ExceptionUtil.buildException(null, exceptionEnum, desc);
         }
 
         List<?> objList = paramsSupplier.get();
         if (CollectionUtils.isEmpty(objList)) {
-            throw KstryException.buildException(null, exceptionEnum, desc);
+            throw ExceptionUtil.buildException(null, exceptionEnum, desc);
         }
 
         Object[] params = objList.stream().map(obj -> (obj instanceof String) ? obj : JSON.toJSONString(obj)).toArray();
-        throw KstryException.buildException(null, exceptionEnum, GlobalUtil.format(desc, params));
+        throw ExceptionUtil.buildException(null, exceptionEnum, GlobalUtil.format(desc, params));
     }
 }

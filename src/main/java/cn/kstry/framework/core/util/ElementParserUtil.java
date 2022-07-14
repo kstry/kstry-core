@@ -22,7 +22,6 @@ import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -77,7 +76,7 @@ public class ElementParserUtil {
         try {
             return Optional.of(clazz.getDeclaredConstructor().newInstance());
         } catch (Throwable e) {
-            throw KstryException.buildException(e, ExceptionEnum.SERVICE_PARAM_ERROR,
+            throw ExceptionUtil.buildException(e, ExceptionEnum.SERVICE_PARAM_ERROR,
                     GlobalUtil.format(ExceptionEnum.SERVICE_PARAM_ERROR.getDesc() + " class: {}", clazz.getName()));
         }
     }
@@ -248,7 +247,7 @@ public class ElementParserUtil {
         } else if (customRoleAnnotation != null) {
             return Optional.of(customRoleAnnotation.name()).filter(StringUtils::isNotBlank);
         } else {
-            throw KstryException.buildException(null, ExceptionEnum.ANNOTATION_USAGE_ERROR, null);
+            throw ExceptionUtil.buildException(null, ExceptionEnum.ANNOTATION_USAGE_ERROR, null);
         }
     }
 }

@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,6 @@ import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.future.AdminFuture;
 import cn.kstry.framework.core.enums.ElementAllowNextEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.TrackingStack;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -266,7 +266,7 @@ public class FlowRegister {
     private PeekStrategy getPeekStrategy(FlowElement currentFlowElement) {
         Optional<PeekStrategy> peekStrategyOptional =
                 PeekStrategyRepository.getPeekStrategy().stream().filter(peekStrategy -> peekStrategy.match(currentFlowElement)).findFirst();
-        return peekStrategyOptional.orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, null));
+        return peekStrategyOptional.orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, null));
     }
 
     private void processNotMatchElement(ContextStoryBus contextStoryBus, List<FlowElement> flowList, FlowElement element) {
@@ -278,7 +278,7 @@ public class FlowRegister {
                 List<FlowElement> comingList = endElement.comingList().stream().filter(e -> e.getFlowTrack().contains(
                         notNeedPeekSequenceFlow.getIndex()) || Objects.equals(e.getIndex(), notNeedPeekSequenceFlow.getIndex())).collect(Collectors.toList());
                 if (endElement instanceof ParallelGateway && ((ParallelGateway) endElement).isStrictMode() && CollectionUtils.isNotEmpty(comingList)) {
-                    throw KstryException.buildException(null, ExceptionEnum.STORY_FLOW_ERROR, GlobalUtil.format(
+                    throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_FLOW_ERROR, GlobalUtil.format(
                             "A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: {}", notNeedPeekSequenceFlow.getId()));
                 }
                 comingList.forEach(coming -> {

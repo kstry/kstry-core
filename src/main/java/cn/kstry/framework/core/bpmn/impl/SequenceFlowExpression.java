@@ -20,8 +20,8 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.component.expression.*;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class SequenceFlowExpression extends BaseElementImpl implements Expressio
                 return;
             }
         }
-        throw KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
+        throw ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
     }
 
     @Override

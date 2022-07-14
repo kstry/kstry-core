@@ -17,11 +17,8 @@
  */
 package cn.kstry.framework.core.exception;
 
-import cn.kstry.framework.core.enums.ExceptionTypeEnum;
-import cn.kstry.framework.core.util.GlobalUtil;
-import org.apache.commons.lang3.StringUtils;
+import cn.kstry.framework.core.util.ExceptionUtil;
 
-import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 /**
@@ -48,38 +45,13 @@ public class KstryException extends RuntimeException {
     }
 
     public KstryException(String code, String desc, Throwable cause) {
-        super(GlobalUtil.format("[{}] {}", StringUtils.isBlank(code)
-                ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? "System Error!" : desc), cause);
+        super(ExceptionUtil.getExcMessage(code, desc), cause);
         this.errorCode = code;
         this.alreadyLog = false;
     }
 
     public String getErrorCode() {
         return this.errorCode;
-    }
-
-    public static KstryException buildException(Throwable exception, @Nonnull ExceptionEnum exceptionEnum, String desc) {
-        if (exception instanceof KstryException) {
-            return (KstryException) exception;
-        }
-        if (StringUtils.isBlank(desc)) {
-            desc = exceptionEnum.getDesc();
-        }
-        ExceptionTypeEnum typeEnum = exceptionEnum.getTypeEnum();
-        switch (typeEnum) {
-            case CONFIG:
-                return new ResourceException(exceptionEnum.getExceptionCode(), desc, exception);
-            case ASYNC_TASK:
-                return new TaskAsyncException(exceptionEnum.getExceptionCode(), desc, exception);
-            case COMPONENT:
-                return new KstryComponentException(exceptionEnum.getExceptionCode(), desc, exception);
-            case NODE_INVOKE:
-                return new NodeInvokeException(exceptionEnum.getExceptionCode(), desc, exception);
-            case STORY:
-                return new StoryException(exceptionEnum.getExceptionCode(), desc, exception);
-            default:
-                return new KstryException(exceptionEnum.getExceptionCode(), desc, exception);
-        }
     }
 
     public void log(Consumer<KstryException> doLog) {

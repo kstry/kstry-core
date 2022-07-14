@@ -23,8 +23,8 @@ import cn.kstry.framework.core.component.bpmn.BpmnModelTransfer;
 import cn.kstry.framework.core.component.bpmn.CamundaBpmnModelTransfer;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
@@ -67,7 +67,7 @@ public class BasicBpmnConfigResource extends AbstractConfigResource implements B
             this.modelInstance = Bpmn.readModelFromStream(inputStream);
             AssertUtil.notNull(this.modelInstance);
         } catch (Exception e) {
-            throw KstryException.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}", getConfigName()));
+            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}", getConfigName()));
         }
     }
 

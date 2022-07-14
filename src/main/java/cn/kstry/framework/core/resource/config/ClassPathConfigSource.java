@@ -19,6 +19,7 @@ package cn.kstry.framework.core.resource.config;
 
 import java.util.List;
 
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -26,7 +27,6 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import com.google.common.collect.Lists;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 
 /**
@@ -52,7 +52,7 @@ public abstract class ClassPathConfigSource implements ConfigSource {
         try {
             resources = resolver.getResources(configName);
         } catch (Exception e) {
-            throw KstryException.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
+            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
         }
         if (resources == null || resources.length == 0) {
             return Lists.newArrayList();

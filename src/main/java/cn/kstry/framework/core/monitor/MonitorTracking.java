@@ -25,8 +25,8 @@ import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
@@ -211,7 +211,7 @@ public class MonitorTracking {
                         InStack<String> toNodeIdStack = new BasicInStack<>();
                         toNodeIdStack.pushCollection(serviceTracking.getToNodeIds());
                         while (!toNodeIdStack.isEmpty()) {
-                            String id = toNodeIdStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+                            String id = toNodeIdStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
                             NodeTracking nodeTracking = nodeTrackingMap.get(id);
                             if (nodeTracking == null) {
                                 continue;

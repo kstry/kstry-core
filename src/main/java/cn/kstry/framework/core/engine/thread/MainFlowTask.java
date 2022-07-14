@@ -26,9 +26,9 @@ import cn.kstry.framework.core.engine.future.AdminFuture;
 import cn.kstry.framework.core.engine.future.MainTaskFuture;
 import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 
 import java.util.concurrent.Future;
@@ -54,7 +54,7 @@ public class MainFlowTask extends FragmentTask {
 
     @Override
     public MainTaskFuture buildTaskFuture(Future<AsyncTaskState> future) {
-        throw KstryException.buildException(null, ExceptionEnum.ASYNC_TASK_ERROR, null);
+        throw ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_ERROR, null);
     }
 
     /**

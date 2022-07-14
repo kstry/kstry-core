@@ -20,9 +20,9 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -73,7 +73,7 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
         if (flowElement instanceof FlowElementImpl) {
             ((FlowElementImpl) flowElement).coming(this);
         } else {
-            throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
+            throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
         }
     }
 

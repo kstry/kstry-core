@@ -21,9 +21,9 @@ import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -70,7 +70,7 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (node instanceof SubProcess) {
                 doPostStartEvent(index, ((SubProcess) node).getStartEvent(), true);
             }
@@ -106,7 +106,7 @@ public class MarkIndexPostProcessor implements StartEventPostProcessor {
         outStack.pushList(flowElements);
         Map<FlowElement, Integer> outingCountMap = Maps.newHashMap();
         while (!outStack.isEmpty()) {
-            FlowElement node = outStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            FlowElement node = outStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (ElementPropertyUtil.isSupportAggregation(node)) {
                 outingCountMap.merge(node, 1, Integer::sum);
                 if (!Objects.equals(outingCountMap.get(node), node.outingList().size())) {

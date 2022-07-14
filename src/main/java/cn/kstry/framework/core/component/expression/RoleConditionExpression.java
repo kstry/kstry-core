@@ -18,9 +18,9 @@
 package cn.kstry.framework.core.component.expression;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.permission.Permission;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.PermissionUtil;
 import com.alibaba.fastjson.JSON;
@@ -66,7 +66,7 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
                 roleCondition = rolePermissionCache.get(exp, () -> getRoleCondition(exp));
             } catch (ExecutionException e) {
                 LOGGER.error(e.getMessage(), e);
-                throw KstryException.buildException(e, ExceptionEnum.STORY_ERROR, null);
+                throw ExceptionUtil.buildException(e, ExceptionEnum.STORY_ERROR, null);
             }
             AssertUtil.isTrue(roleCondition != null && roleCondition.matched && CollectionUtils.isNotEmpty(roleCondition.permissionList),
                     ExceptionEnum.STORY_ERROR);
@@ -84,7 +84,7 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
             return rolePermissionCache.get(expression, () -> getRoleCondition(expression)).matched;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            throw KstryException.buildException(e, ExceptionEnum.STORY_ERROR, null);
+            throw ExceptionUtil.buildException(e, ExceptionEnum.STORY_ERROR, null);
         }
     }
 

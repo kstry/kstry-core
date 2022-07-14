@@ -19,10 +19,10 @@ package cn.kstry.framework.core.enums;
 
 import java.util.Optional;
 
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.TaskServiceUtil;
@@ -103,7 +103,7 @@ public enum PermissionType {
                 }
                 return Optional.of(getPrefix() + ":" + TaskServiceUtil.joinName(resource.getServiceName(), resource.getAbilityName()));
             default:
-                throw KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
+                throw ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
         }
     }
 }

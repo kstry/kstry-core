@@ -21,10 +21,10 @@ import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.identity.Identity;
 import cn.kstry.framework.core.role.permission.Permission;
 import cn.kstry.framework.core.role.permission.PermissionAuth;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import com.google.common.collect.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -83,7 +83,7 @@ public class BasicRole implements Role {
             InStack<Role> roleStack = new BasicInStack<>();
             roleStack.push(this);
             while (!roleStack.isEmpty()) {
-                Role role = roleStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+                Role role = roleStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
                 if (permissionAuth.auth(role.getPermission().get(permissionAuth.getServiceNodeType()))) {
                     return true;
                 }
@@ -164,7 +164,7 @@ public class BasicRole implements Role {
         InStack<Role> roleStack = new BasicInStack<>();
         roleStack.pushCollection(roleSet);
         while (!roleStack.isEmpty()) {
-            Role role = roleStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            Role role = roleStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (Objects.equals(role, checkRole)) {
                 return false;
             }

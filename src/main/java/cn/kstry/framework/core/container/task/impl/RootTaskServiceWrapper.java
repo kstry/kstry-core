@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import com.google.common.collect.Sets;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
@@ -89,7 +89,7 @@ public class RootTaskServiceWrapper extends BasicIdentity implements RootTaskSer
                 AssertUtil.notTrue(taskServiceAbilitySet.contains(taskService));
                 taskServiceAbilitySet.add(taskService);
             } else {
-                throw KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
+                throw ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
             }
         } finally {
             writeLock.unlock();

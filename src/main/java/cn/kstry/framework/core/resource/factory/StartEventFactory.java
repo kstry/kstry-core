@@ -22,10 +22,10 @@ import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.config.BpmnConfigResource;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -82,7 +82,7 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
         if (CollectionUtils.isNotEmpty(duplicateList)) {
             StartEvent es = duplicateList.get(0);
             String fileName = es.getConfig().map(ConfigResource::getConfigName).orElse(null);
-            throw KstryException.buildException(null, ExceptionEnum.ELEMENT_DUPLICATION_ERROR,
+            throw ExceptionUtil.buildException(null, ExceptionEnum.ELEMENT_DUPLICATION_ERROR,
                     GlobalUtil.format("There are duplicate start event ids defined! id: {}, fileName: {}", es.getId(), fileName));
         }
         return list;

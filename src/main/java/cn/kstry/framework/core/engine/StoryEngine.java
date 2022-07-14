@@ -40,6 +40,7 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.role.ServiceTaskRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -190,7 +191,7 @@ public class StoryEngine {
         String startId = storyRequest.getStartId();
         AssertUtil.notBlank(startId, ExceptionEnum.PARAMS_ERROR, "StartId is not allowed to be empty!");
         Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(startId);
-        StartEvent startEvent = startEventOptional.orElseThrow(() -> KstryException
+        StartEvent startEvent = startEventOptional.orElseThrow(() -> ExceptionUtil
                 .buildException(null, ExceptionEnum.PARAMS_ERROR, GlobalUtil.format("StartId did not match a valid StartEvent! startId: {}", startId)));
         return new FlowRegister(startEvent, storyRequest);
     }

@@ -18,10 +18,9 @@
 package cn.kstry.framework.core.engine.future;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,15 +42,15 @@ public class MethodInvokeFuture extends FragmentTaskFuture<Object> implements In
             return future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             future.cancel(true);
-            throw KstryException.buildException(e, ExceptionEnum.ASYNC_TASK_INTERRUPTED,
+            throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_INTERRUPTED,
                     GlobalUtil.format("Task interrupted. method invoke was interrupted! taskName: {}", getTaskName()));
         } catch (TimeoutException e) {
             future.cancel(true);
-            throw KstryException.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT,
+            throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT,
                     GlobalUtil.format("Async invoke method timeout! taskName: {}, maximum time limit: {}ms", getTaskName(), timeout));
         } catch (Exception e) {
             future.cancel(true);
-            throw KstryException.buildException(e, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
+            throw ExceptionUtil.buildException(e, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
         }
     }
 }

@@ -20,8 +20,7 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.exception.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +45,7 @@ public class GlobalUtil {
     @SuppressWarnings("all")
     public static <T> T notEmpty(Optional<T> optional) {
         if (!optional.isPresent()) {
-            throw KstryException.buildException(null, ExceptionEnum.NOT_ALLOW_EMPTY, null);
+            throw ExceptionUtil.buildException(null, ExceptionEnum.NOT_ALLOW_EMPTY, null);
         }
         return optional.get();
     }
@@ -167,4 +166,5 @@ public class GlobalUtil {
         }
         return Optional.empty();
     }
+
 }

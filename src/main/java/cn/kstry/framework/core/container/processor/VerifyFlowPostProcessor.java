@@ -24,10 +24,10 @@ import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -53,7 +53,7 @@ public class VerifyFlowPostProcessor implements StartEventPostProcessor {
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (node instanceof SubProcess) {
                 postStartEvent(((SubProcess) node).getStartEvent());
             }

@@ -24,9 +24,9 @@ import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -48,7 +48,7 @@ public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);
         while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (node instanceof SubProcess) {
                 postStartEvent(((SubProcess) node).getStartEvent());
             }
@@ -111,7 +111,7 @@ public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
             serviceTaskImpl.outing(sequenceFlow);
             sequenceFlow.outing(node);
         } else {
-            throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, "There is a flow analysis that exceeds expectations!");
+            throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, "There is a flow analysis that exceeds expectations!");
         }
     }
 

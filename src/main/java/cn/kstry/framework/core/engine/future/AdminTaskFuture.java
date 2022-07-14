@@ -22,6 +22,7 @@ import cn.kstry.framework.core.engine.thread.EndTaskPedometer;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -137,7 +138,7 @@ public class AdminTaskFuture implements AdminFuture {
 
     @Override
     public synchronized void errorNotice(Throwable exception, String startEventId) {
-        KstryException ke = KstryException.buildException(exception, ExceptionEnum.ASYNC_TASK_ERROR, null);
+        KstryException ke = ExceptionUtil.buildException(exception, ExceptionEnum.ASYNC_TASK_ERROR, null);
         if (Objects.equals(mainTaskFuture.getEndTaskPedometer().getStartEventId(), startEventId)) {
             errorNotice(ke);
             return;

@@ -19,11 +19,11 @@ package cn.kstry.framework.core.container.task.impl;
 
 import cn.kstry.framework.core.annotation.CustomRole;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.CustomRoleRegister;
 import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.springframework.core.annotation.AnnotationUtils;
 
 /**
@@ -43,7 +43,7 @@ public class TaskComponentProxy implements TaskComponentRegister {
         this.target = target;
         this.isCustomRole = (target instanceof CustomRoleRegister) || AnnotationUtils.findAnnotation(target.getClass(), CustomRole.class) != null;
         this.name = ElementParserUtil.getTaskComponentName(target)
-                .orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, null));
+                .orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, null));
     }
 
     public Object getTarget() {

@@ -17,8 +17,6 @@
  */
 package cn.kstry.framework.core.engine.facade;
 
-import java.util.function.Consumer;
-
 import cn.kstry.framework.core.bus.ScopeData;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
@@ -26,6 +24,8 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+
+import java.util.function.Consumer;
 
 /**
  * @author lykan
@@ -41,6 +41,12 @@ public class ReqBuilder<T> {
     public static <T> ReqBuilder<T> returnType(Class<T> returnType) {
         ReqBuilder<T> builder = new ReqBuilder<>();
         builder.result(returnType);
+        return builder;
+    }
+
+    public static <T> ReqBuilder<T> returnType(T returnInstance) {
+        ReqBuilder<T> builder = new ReqBuilder<>();
+        builder.result(returnInstance.getClass());
         return builder;
     }
 

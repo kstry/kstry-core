@@ -26,13 +26,9 @@ import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.constant.BpmnConstant;
 import cn.kstry.framework.core.constant.GlobalConstant;
-import cn.kstry.framework.core.util.CustomRoleInfo;
+import cn.kstry.framework.core.util.*;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.config.ConfigResource;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementPropertyUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
@@ -111,7 +107,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         InStack<BpmnMappingItem> basicInStack = new BasicInStack<>();
         basicInStack.push(bpmnMappingItem);
         while (!basicInStack.isEmpty()) {
-            BpmnMappingItem mappingItem = basicInStack.pop().orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+            BpmnMappingItem mappingItem = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
             if (ElementPropertyUtil.isSupportAggregation(mappingItem.getKstryElement())) {
                 comingCountMap.merge(mappingItem.getKstryElement(), 1, Integer::sum);
                 int targetSize = ((FlowNode) mappingItem.getCamundaElement()).getIncoming().size();
@@ -140,7 +136,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
                         .collect(Collectors.toList());
                 basicInStack.pushList(itemList);
             } else {
-                throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
+                throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
                         GlobalUtil.format("There is an error in the bpmn file! fileName: {}", config.getConfigName()));
             }
         }
@@ -188,7 +184,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
             String calledElementId = ((CallActivity) flowNode).getCalledElement();
             flowElement = getSubProcess(allSubProcess, config, calledElementId);
         } else {
-            throw KstryException.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
+            throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
                     GlobalUtil.format("{} element: {}, fileName: {}", ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT.getDesc(),
                             flowNode.getElementType().getTypeName(), config.getConfigName()));
         }
@@ -284,7 +280,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
             AssertUtil.oneSize(childElementList, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
                     "SubProcesses are only allowed to also have a start event! fileName: {}", config.getConfigName());
             return doGetKstryModel(allSubProcess, config, childElementList.iterator().next())
-                    .orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR, null));
+                    .orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR, null));
         }
     }
 

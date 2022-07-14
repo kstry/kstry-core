@@ -21,9 +21,9 @@ import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.PermissionType;
 import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class SimplePermission extends BasicIdentity implements Permission {
 
     public SimplePermission(PermissionType permissionType, ServiceNodeResource resource) {
         super(permissionType.getPermissionId(resource)
-                .orElseThrow(() -> KstryException.buildException(null, ExceptionEnum.SYSTEM_ERROR, null)), IdentityTypeEnum.PERMISSION);
+                .orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null)), IdentityTypeEnum.PERMISSION);
         this.permissionType = permissionType;
     }
 

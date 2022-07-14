@@ -20,6 +20,7 @@ package cn.kstry.framework.core.resource.config;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -58,7 +59,7 @@ public class AbstractConfigResource implements ConfigResource {
         } catch (KstryException e) {
             throw e;
         } catch (Exception e) {
-            throw KstryException.buildException(e, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR, e.getMessage());
+            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR, e.getMessage());
         }
     }
 
