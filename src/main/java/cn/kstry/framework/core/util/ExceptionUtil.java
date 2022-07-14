@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -67,5 +68,12 @@ public class ExceptionUtil {
         }
         return GlobalUtil.format("[{}] {}", StringUtils.isBlank(code)
                 ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? defErrorDesc : desc);
+    }
+
+    public static Optional<String> tryGetCode(Throwable throwable) {
+        if (throwable instanceof KstryException) {
+            return Optional.ofNullable(GlobalUtil.transferNotEmpty(throwable, KstryException.class).getErrorCode());
+        }
+        return Optional.empty();
     }
 }
