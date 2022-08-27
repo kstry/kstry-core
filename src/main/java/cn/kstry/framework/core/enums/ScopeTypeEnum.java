@@ -32,45 +32,55 @@ public enum ScopeTypeEnum {
     /**
      * request
      */
-    REQUEST("req"),
+    REQUEST("req", true),
 
     /**
      * 可变变量
      */
-    VARIABLE("var"),
+    VARIABLE("var", false),
 
     /**
      * 不可变变量，一经赋值，不再发生变更
      */
-    STABLE("sta"),
+    STABLE("sta", false),
 
     /**
      * result 域
      */
-    RESULT("result"),
+    RESULT("result", false),
 
     /**
      * empty
      */
-    EMPTY("empty");
+    EMPTY("empty", true);
 
     /**
-     *
+     * 键
      */
-    private final String abbr;
+    private final String key;
 
-    ScopeTypeEnum(String abbr) {
-        this.abbr = abbr;
+    /**
+     * 不可被编辑
+     */
+    private final boolean notEdit;
+
+    ScopeTypeEnum(String key, boolean notEdit) {
+        this.key = key;
+        this.notEdit = notEdit;
     }
 
-    public static Optional<ScopeTypeEnum> of(String abbr) {
-        if (StringUtils.isBlank(abbr)) {
+    public static Optional<ScopeTypeEnum> of(String key) {
+        if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        return Stream.of(values()).filter(e -> Objects.equals(abbr.toUpperCase(), e.getAbbr().toUpperCase())).findFirst();
+        return Stream.of(values()).filter(e -> Objects.equals(key.trim().toUpperCase(), e.getKey().toUpperCase())).findFirst();
     }
 
-    public String getAbbr() {
-        return abbr;
+    public String getKey() {
+        return key;
+    }
+
+    public boolean isNotEdit() {
+        return notEdit;
     }
 }

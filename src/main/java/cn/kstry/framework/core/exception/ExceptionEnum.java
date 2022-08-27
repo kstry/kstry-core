@@ -126,6 +126,10 @@ public enum ExceptionEnum {
      */
     ELEMENT_DUPLICATION_ERROR(ExceptionTypeEnum.CONFIG, "0008", "The element id in the link is repeatedly defined!"),
 
+    /**
+     * [K1030009] BPMN元素属性无效
+     */
+    BPMN_ATTRIBUTE_INVALID(ExceptionTypeEnum.CONFIG, "0009", "The bpmn element attribute is invalid!"),
 
     ///////////////////////////////////////////////// CONFIG END /////////////////////////////////////////////////
 
@@ -196,6 +200,11 @@ public enum ExceptionEnum {
      * [K1050005] 服务节点执行失败
      */
     SERVICE_INVOKE_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0005", "Service node execution failure!"),
+
+    /**
+     * [K1050006] 迭代项执行失败
+     */
+    ITERATE_ITEM_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0006", "Iteration item execution failure!"),
 
 
     ///////////////////////////////////////////////// PARAMS END /////////////////////////////////////////////////

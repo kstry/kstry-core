@@ -63,6 +63,7 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
         subProcess.strictMode = this.strictMode;
         subProcess.timeout = this.timeout;
         subProcess.startEvent = startEventBuilder.apply(allSubProcess);
+        subProcess.elementIterable = this.elementIterable;
         return subProcess;
     }
 

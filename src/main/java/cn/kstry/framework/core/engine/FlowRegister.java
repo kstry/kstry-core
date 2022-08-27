@@ -241,7 +241,7 @@ public class FlowRegister {
         }
 
         // 开启异步流程
-        if (ElementPropertyUtil.needOpenAsync(currentFlowElement)) {
+        if (ElementPropertyUtil.needGatewayOpenAsync(currentFlowElement)) {
             monitorTracking.trackingSequenceFlow(flowList);
             AsyncFlowHook<List<FlowElement>> asyncElementHook = new AsyncFlowHook<>(flowList);
             asyncElementHook.hook(list -> {

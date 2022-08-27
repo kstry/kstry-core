@@ -51,7 +51,7 @@ public abstract class ClassPathConfigSource implements ConfigSource {
         Resource[] resources;
         try {
             resources = resolver.getResources(configName);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
         }
         if (resources == null || resources.length == 0) {

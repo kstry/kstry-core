@@ -17,14 +17,9 @@
  */
 package cn.kstry.framework.core.component.launcher;
 
+import cn.kstry.framework.core.container.processor.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-
-import cn.kstry.framework.core.container.processor.ImmutablePostProcessor;
-import cn.kstry.framework.core.container.processor.MarkIndexPostProcessor;
-import cn.kstry.framework.core.container.processor.RearrangeFlowPostProcessor;
-import cn.kstry.framework.core.container.processor.StartEventPostProcessor;
-import cn.kstry.framework.core.container.processor.VerifyFlowPostProcessor;
 
 /**
  * Spring 容器中注册组件
@@ -44,6 +39,11 @@ public class ComponentImportSelector {
     @Bean
     public StartEventPostProcessor getMarkIndexPostProcessor() {
         return new MarkIndexPostProcessor();
+    }
+
+    @Bean
+    public StartEventPostProcessor getIterablePostProcessor() {
+        return new IterablePostProcessor();
     }
 
     @Bean

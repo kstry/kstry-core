@@ -55,7 +55,7 @@ public class PropertyUtil {
             LOGGER.warn("[{}] Error accessing a non-existent variable! propertyName: {}, class: {}",
                     ExceptionEnum.FAILED_GET_PROPERTY.getExceptionCode(), propertyName, bean.getClass());
             return Optional.of(GET_PROPERTY_ERROR_SIGN);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.warn("[{}] BeanUtils Failed to get bean property! propertyName: {}", ExceptionEnum.FAILED_GET_PROPERTY.getExceptionCode(), propertyName, e);
             return Optional.of(GET_PROPERTY_ERROR_SIGN);
         }
@@ -70,7 +70,7 @@ public class PropertyUtil {
         } catch (NoSuchMethodException e) {
             LOGGER.warn("[{}] Unknown property to set bean property! target: {}, propertyName: {}, value: {}",
                     ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.warn("[{}] BeanUtils Failed to set bean property! target: {}, propertyName: {}, value: {}",
                     ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value, e);
         }

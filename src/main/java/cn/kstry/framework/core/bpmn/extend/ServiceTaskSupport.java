@@ -15,13 +15,23 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
+package cn.kstry.framework.core.bpmn.extend;
 
-import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
+import cn.kstry.framework.core.bpmn.ServiceTask;
+
+import java.util.Optional;
 
 /**
- * EndEvent
+ * 对 ServiceTask 支持
+ *
+ * @author lykan
  */
-public interface EndEvent extends Event, AggregationFlowElement {
+public interface ServiceTaskSupport {
 
+    /**
+     * 获取 ServiceTask
+     *
+     * @return ServiceTask
+     */
+    Optional<ServiceTask> getServiceTask();
 }

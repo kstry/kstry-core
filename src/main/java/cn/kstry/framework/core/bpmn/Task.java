@@ -17,10 +17,12 @@
  */
 package cn.kstry.framework.core.bpmn;
 
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+
 /**
  * Task
  */
-public interface Task extends FlowElement {
+public interface Task extends FlowElement, ElementIterable {
 
     /**
      * 获取超时时间

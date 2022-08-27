@@ -18,21 +18,35 @@
 package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.container.task.impl.TaskComponentProxy;
+import cn.kstry.framework.core.engine.thread.IteratorThreadLocal;
 import cn.kstry.framework.core.engine.thread.Task;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import cn.kstry.framework.core.util.TaskServiceUtil;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 方法调用核心
@@ -40,6 +54,13 @@ import java.util.function.Function;
  * @author lykan
  */
 public abstract class BasicTaskCore<T> implements Task<T> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicTaskCore.class);
+
+    /**
+     * 目标方法执行失败的错误标志
+     */
+    private static final Object INVOKE_ERROR_SIGN = new Object();
 
     /**
      * StoryEngine 组成模块
@@ -99,11 +120,81 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         TaskComponentProxy targetProxy = taskServiceDef.getTaskComponentTarget();
         List<ParamInjectDef> paramInjectDefs = methodWrapper.getParamInjectDefs();
-        if (CollectionUtils.isEmpty(paramInjectDefs)) {
-            return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget());
+
+        if (!serviceTask.iterable()) {
+            return doInvokeMethod(true, null, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
         }
-        Function<ParamInjectDef, Object> paramInitStrategy = engineModule.getParamInitStrategy();
-        return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget(),
-                () -> TaskServiceUtil.getTaskParams(serviceTask, storyBus, role, targetProxy, paramInjectDefs, paramInitStrategy));
+        Optional<Object> iteData = storyBus.getScopeDataOperator().getData(serviceTask.getIteSource()).map(d -> {
+            if (!d.getClass().isArray()) {
+                return d;
+            }
+            Object[] dArray = (Object[]) d;
+            return Stream.of(dArray).filter(Objects::nonNull).collect(Collectors.toList());
+        }).filter(d -> d instanceof Iterable);
+        if (!iteData.isPresent()) {
+            LOGGER.info("[{}] {} taskName:{}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
+                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.getName());
+            return null;
+        }
+        Iterator<?> iterator = GlobalUtil.transferNotEmpty(iteData.get(), Iterable.class).iterator();
+        if (!iterator.hasNext()) {
+            LOGGER.info("[{}] {} taskName:{}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
+                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.getName());
+            return null;
+        }
+
+        if (BooleanUtils.isNotTrue(serviceTask.openAsync()) || serviceTask.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS) {
+            Object result = null;
+            for (int i = 0; iterator.hasNext(); i++) {
+                Object r = doInvokeMethod(i == 0, iterator.next(), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+                if (r == INVOKE_ERROR_SIGN) {
+                    continue;
+                }
+                if (serviceTask.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS) {
+                    return r;
+                }
+                result = r;
+            }
+            return result;
+        }
+        List<CompletableFuture<Object>> futureList = Lists.newArrayList();
+        iterator.forEachRemaining(next -> {
+            CompletableFuture<Object> f = CompletableFuture.supplyAsync(
+                    () -> doInvokeMethod(futureList.isEmpty(), next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs),
+                    engineModule.getIteratorThreadPool());
+            futureList.add(f);
+        });
+        CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
+        for (CompletableFuture<Object> f : futureList) {
+            try {
+                if (f.get() != INVOKE_ERROR_SIGN) {
+                    return f.get();
+                }
+            } catch (Throwable e) {
+                // IGNORE
+            }
+        }
+        return null;
+    }
+
+    private Object doInvokeMethod(boolean tracking, Object itemData, ServiceTask serviceTask, StoryBus storyBus,
+                                  Role role, MethodWrapper methodWrapper, TaskComponentProxy targetProxy, List<ParamInjectDef> paramInjectDefs) {
+        try {
+            IteratorThreadLocal.setDataItem(itemData);
+            if (CollectionUtils.isEmpty(paramInjectDefs)) {
+                return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget());
+            }
+            Function<ParamInjectDef, Object> paramInitStrategy = engineModule.getParamInitStrategy();
+            return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget(),
+                    () -> TaskServiceUtil.getTaskParams(tracking, serviceTask, storyBus, role, targetProxy, paramInjectDefs, paramInitStrategy));
+        } catch (Throwable e) {
+            if (!serviceTask.iterable() || serviceTask.getIteStrategy() == null || serviceTask.getIteStrategy() == IterateStrategyEnum.ALL_SUCCESS) {
+                throw e;
+            }
+            LOGGER.warn("[{}] {} taskName:{}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(), ExceptionEnum.ITERATE_ITEM_ERROR.getDesc(), serviceTask.getName(), e);
+            return INVOKE_ERROR_SIGN;
+        } finally {
+            IteratorThreadLocal.clear();
+        }
     }
 }

@@ -18,11 +18,12 @@
 package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
+import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -33,10 +34,8 @@ import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -211,7 +210,7 @@ public class ElementParserUtil {
             } else if (!left.isPrimitive() && right.isPrimitive()) {
                 return left.getField("TYPE").get(null) == right;
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // ignore
         }
         return false;
@@ -249,5 +248,15 @@ public class ElementParserUtil {
         } else {
             throw ExceptionUtil.buildException(null, ExceptionEnum.ANNOTATION_USAGE_ERROR, null);
         }
+    }
+
+    public static boolean isValidDataExpression(String expression) {
+        if (StringUtils.isBlank(expression)) {
+            return false;
+        }
+        if (Objects.equals(ScopeTypeEnum.RESULT.getKey(), expression)) {
+            return true;
+        }
+        return Pattern.matches(GlobalConstant.VALID_DATA_EXPRESSION_PATTERN, expression);
     }
 }

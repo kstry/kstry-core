@@ -43,7 +43,7 @@ public interface StoryBus {
      *
      * @return ReturnResult
      */
-    Object getResult();
+    Optional<Object> getResult();
 
     /**
      * 获取 Var 域变量

@@ -19,10 +19,10 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import java.util.Optional;
 
-import cn.kstry.framework.core.bpmn.AsyncFlowElement;
+import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.InclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.ServiceTaskSupport;
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 
 /**
@@ -60,7 +60,7 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
     }
 
     @Override
-    public boolean openAsync() {
+    public Boolean openAsync() {
         return asyncFlowElement.openAsync();
     }
 

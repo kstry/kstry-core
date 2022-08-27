@@ -82,7 +82,7 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
     public boolean match(String expression) {
         try {
             return rolePermissionCache.get(expression, () -> getRoleCondition(expression)).matched;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
             throw ExceptionUtil.buildException(e, ExceptionEnum.STORY_ERROR, null);
         }
@@ -106,7 +106,7 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
         try {
             Object[] params = IntStream.range(0, psList.size()).mapToObj(i -> true).toArray(Boolean[]::new);
             AssertUtil.notNull(PARSER.parseExpression(MessageFormat.format(exp, params)).getValue(Boolean.class));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.info(e.getMessage(), e);
             return roleCondition;
         }

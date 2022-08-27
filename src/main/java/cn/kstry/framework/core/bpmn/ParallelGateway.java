@@ -17,6 +17,9 @@
  */
 package cn.kstry.framework.core.bpmn;
 
+import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
+import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
+
 /**
  * ParallelGateway
  */

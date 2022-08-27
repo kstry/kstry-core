@@ -17,10 +17,6 @@
  */
 package cn.kstry.framework.core.engine;
 
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.element.StartEventContainer;
@@ -29,6 +25,10 @@ import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
+
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * StoryEngine 组成模块
@@ -67,6 +67,11 @@ public class StoryEngineModule {
      */
     private final TaskThreadPoolExecutor methodThreadPool;
 
+    /**
+     * 迭代器执行线程池
+     */
+    private final TaskThreadPoolExecutor iteratorThreadPool;
+
     public StoryEngineModule(List<TaskThreadPoolExecutor> threadPoolExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
                              Function<ParamInjectDef, Object> paramInitStrategy, SubProcessInterceptorRepository subInterceptorRepository) {
         AssertUtil.anyNotNull(threadPoolExecutors, taskContainer, paramInitStrategy, startEventContainer);
@@ -75,10 +80,14 @@ public class StoryEngineModule {
                 threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
         List<TaskThreadPoolExecutor> taskThreadPoolList =
                 threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.TASK).collect(Collectors.toList());
+        List<TaskThreadPoolExecutor> iteratorThreadPoolList =
+                threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.ITERATOR).collect(Collectors.toList());
         AssertUtil.oneSize(methodThreadPoolList, ExceptionEnum.COMPONENT_DUPLICATION_ERROR);
         AssertUtil.oneSize(taskThreadPoolList, ExceptionEnum.COMPONENT_DUPLICATION_ERROR);
+        AssertUtil.oneSize(iteratorThreadPoolList, ExceptionEnum.COMPONENT_DUPLICATION_ERROR);
         this.methodThreadPool = methodThreadPoolList.get(0);
         this.taskThreadPool = taskThreadPoolList.get(0);
+        this.iteratorThreadPool = iteratorThreadPoolList.get(0);
         this.taskContainer = taskContainer;
         this.paramInitStrategy = paramInitStrategy;
         this.startEventContainer = startEventContainer;
@@ -107,5 +116,9 @@ public class StoryEngineModule {
 
     public TaskThreadPoolExecutor getMethodThreadPool() {
         return methodThreadPool;
+    }
+
+    public TaskThreadPoolExecutor getIteratorThreadPool() {
+        return iteratorThreadPool;
     }
 }

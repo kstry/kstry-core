@@ -58,7 +58,7 @@ public class AbstractConfigResource implements ConfigResource {
             inputStream.close();
         } catch (KstryException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR, e.getMessage());
         }
     }

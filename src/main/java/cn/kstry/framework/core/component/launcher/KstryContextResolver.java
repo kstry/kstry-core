@@ -110,6 +110,12 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
         return TaskThreadPoolExecutor.buildDefaultExecutor(ExecutorType.METHOD, "kstry-method-thread-pool");
     }
 
+    @Bean(destroyMethod = ComponentLifecycle.DESTROY)
+    @Conditional(MissingIteratorThreadPoolExecutor.class)
+    public TaskThreadPoolExecutor getIteratorThreadPoolExecutor() {
+        return TaskThreadPoolExecutor.buildDefaultExecutor(ExecutorType.ITERATOR, "kstry-iterator-thread-pool");
+    }
+
     @Bean
     public StoryEngine getFlowEngine(StartEventContainer startEventContainer,
                                      TaskContainer taskContainer, List<TaskThreadPoolExecutor> taskThreadPoolExecutor) {
@@ -175,6 +181,14 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
         public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
             Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList()));
+        }
+    }
+
+    private static class MissingIteratorThreadPoolExecutor implements Condition {
+        @Override
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
+            return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.ITERATOR).collect(Collectors.toList()));
         }
     }
 

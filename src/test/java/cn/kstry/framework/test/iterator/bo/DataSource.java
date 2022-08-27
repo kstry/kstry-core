@@ -15,17 +15,18 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
+package cn.kstry.framework.test.iterator.bo;
+
+import lombok.Data;
+
+import java.util.List;
 
 /**
- * 异步节点
+ *
+ * @author lykan
  */
-public interface AsyncFlowElement {
+@Data
+public class DataSource {
 
-    /**
-     * 是否开启异步
-     *
-     * @return openAsync
-     */
-    boolean openAsync();
+    private Integer[] numList;
 }

@@ -48,7 +48,7 @@ public class MethodInvokeFuture extends FragmentTaskFuture<Object> implements In
             future.cancel(true);
             throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT,
                     GlobalUtil.format("Async invoke method timeout! taskName: {}, maximum time limit: {}ms", getTaskName(), timeout));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             future.cancel(true);
             throw ExceptionUtil.buildException(e, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
         }

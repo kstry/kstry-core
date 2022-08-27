@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.component.hook;
 
-import cn.kstry.framework.core.bpmn.AsyncFlowElement;
+import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 
 /**
  * 异步流程开启回调
@@ -31,7 +31,7 @@ public class AsyncFlowHook<T> extends SimpleHook<T> implements AsyncFlowElement 
     }
 
     @Override
-    public boolean openAsync() {
+    public Boolean openAsync() {
         return true;
     }
 }

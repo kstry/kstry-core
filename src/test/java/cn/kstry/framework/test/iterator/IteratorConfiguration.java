@@ -15,13 +15,21 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
+package cn.kstry.framework.test.iterator;
 
-import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
+import cn.kstry.framework.core.annotation.EnableKstry;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 /**
- * EndEvent
+ *
+ * @author lykan
  */
-public interface EndEvent extends Event, AggregationFlowElement {
+@Configuration
+@EnableKstry(bpmnPath = "./bpmn/iterator/*.bpmn")
+@PropertySource("classpath:application.properties")
+@ComponentScan(basePackageClasses = IteratorConfiguration.class)
+public class IteratorConfiguration {
 
 }

@@ -21,14 +21,15 @@ import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.impl.*;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
-import cn.kstry.framework.core.constant.BpmnConstant;
+import cn.kstry.framework.core.constant.BpmnElementProperties;
 import cn.kstry.framework.core.constant.GlobalConstant;
-import cn.kstry.framework.core.util.*;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
+import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
@@ -39,6 +40,8 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.impl.BpmnModelConstants;
 import org.camunda.bpm.model.bpmn.instance.CallActivity;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -51,6 +54,8 @@ import java.util.stream.Collectors;
  * @author lykan
  */
 public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInstance> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CamundaBpmnModelTransfer.class);
 
     /**
      * Camunda 中定义的 ServiceTask、Task 类型常量
@@ -150,19 +155,19 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         }
 
         FlowElement flowElement;
-        if (org.camunda.bpm.model.bpmn.instance.Task.class.isAssignableFrom(flowNode.getClass())
-                && CAMUNDA_TASK_TYPE_LIST.contains(flowNode.getElementType().getTypeName())) {
+        if (org.camunda.bpm.model.bpmn.instance.Task.class.isAssignableFrom(flowNode.getClass()) && CAMUNDA_TASK_TYPE_LIST.contains(flowNode.getElementType().getTypeName())) {
             ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
-            AssertUtil.notBlank(serviceTaskImpl.getTaskService(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
-                    "TaskService cannot be empty! id: {}, fileName: {}", flowNode.getId(), config.getConfigName());
-            AssertUtil.notBlank(serviceTaskImpl.getTaskComponent(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
-                    "TaskComponent cannot be empty! id: {}, fileName: {}", flowNode.getId(), config.getConfigName());
+            AssertUtil.notBlank(serviceTaskImpl.getTaskService(),
+                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskService cannot be empty! id: {}, fileName: {}", flowNode.getId(), config.getConfigName());
+            AssertUtil.notBlank(serviceTaskImpl.getTaskComponent(),
+                    ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskComponent cannot be empty! id: {}, fileName: {}", flowNode.getId(), config.getConfigName());
             flowElement = serviceTaskImpl;
+            fillIterableProperty(config, flowNode, GlobalUtil.transferNotEmpty(flowElement, TaskImpl.class).buildElementIterable());
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.ParallelGateway) {
             BasicAsyncFlowElement asyncFlowElement = new BasicAsyncFlowElement();
             fillAsyncProperty(flowNode, asyncFlowElement);
             ParallelGatewayImpl parallelGateway = new ParallelGatewayImpl(asyncFlowElement);
-            ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_STRICT_MODE).ifPresent(parallelGateway::setStrictMode);
+            ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.TASK_STRICT_MODE).ifPresent(parallelGateway::setStrictMode);
             flowElement = parallelGateway;
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.ExclusiveGateway) {
             ServiceTaskImpl serviceTaskImpl = getServiceTask(flowNode);
@@ -183,6 +188,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         } else if (flowNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
             String calledElementId = ((CallActivity) flowNode).getCalledElement();
             flowElement = getSubProcess(allSubProcess, config, calledElementId);
+            fillIterableProperty(config, flowNode, GlobalUtil.transferNotEmpty(flowElement, TaskImpl.class).buildElementIterable());
         } else {
             throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
                     GlobalUtil.format("{} element: {}, fileName: {}", ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT.getDesc(),
@@ -197,13 +203,13 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
 
     private ServiceTaskImpl getServiceTask(FlowNode flowNode) {
         ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
         ElementPropertyUtil.getNodeProperty(flowNode,
-                BpmnConstant.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.TASK_TIMEOUT)
+                BpmnElementProperties.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.TASK_ALLOW_ABSENT).ifPresent(serviceTaskImpl::setAllowAbsent);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.TASK_STRICT_MODE).ifPresent(serviceTaskImpl::setStrictMode);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.TASK_TIMEOUT)
                 .map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(serviceTaskImpl::setTimeout);
         return serviceTaskImpl;
     }
@@ -237,11 +243,6 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         return item;
     }
 
-    private void fillAsyncProperty(FlowNode flowNode, BasicAsyncFlowElement asyncFlowElement) {
-        ElementPropertyUtil.getNodeProperty(flowNode, BpmnConstant.ASYNC_ELEMENT_OPEN_ASYNC)
-                .map(BooleanUtils::toBoolean).ifPresent(asyncFlowElement::setOpenAsync);
-    }
-
     private FlowElement getSubProcess(Map<String, SubProcess> allSubProcess, ConfigResource config, String calledElementId) {
         AssertUtil.notBlank(calledElementId, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
                 "CallActivity element id cannot be empty!, fileName: {}", config.getConfigName());
@@ -256,10 +257,31 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         AssertUtil.notBlank(sp.getId());
         subProcess.setId(sp.getId());
         subProcess.setName(sp.getName());
-        ElementPropertyUtil.getNodeProperty(sp, BpmnConstant.TASK_STRICT_MODE).ifPresent(subProcess::setStrictMode);
-        ElementPropertyUtil.getNodeProperty(sp, BpmnConstant.TASK_TIMEOUT)
-                .map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(subProcess::setTimeout);
+        ElementPropertyUtil.getNodeProperty(sp, BpmnElementProperties.TASK_STRICT_MODE).ifPresent(subProcess::setStrictMode);
+        ElementPropertyUtil.getNodeProperty(sp, BpmnElementProperties.TASK_TIMEOUT).map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(subProcess::setTimeout);
+        BasicElementIterable basicElementIterable = subProcess.buildElementIterable();
+        fillIterableProperty(config, sp, basicElementIterable);
         return subProcess;
+    }
+
+    private void fillAsyncProperty(FlowNode flowNode, BasicAsyncFlowElement asyncFlowElement) {
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC).map(BooleanUtils::toBoolean).ifPresent(asyncFlowElement::setOpenAsync);
+    }
+
+    private void fillIterableProperty(ConfigResource config, FlowNode flowNode, BasicElementIterable elementIterable) {
+        Optional<String> iteSourceProperty = ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.ITERATE_SOURCE);
+        if (iteSourceProperty.filter(s -> {
+            if (ElementParserUtil.isValidDataExpression(s)) {
+                return true;
+            }
+            LOGGER.warn("[{}] The set ite-source being iterated over is invalid. fileName: {}, calledElementId: {}",
+                    ExceptionEnum.BPMN_ATTRIBUTE_INVALID.getExceptionCode(), config.getConfigName(), flowNode.getId());
+            return false;
+        }).map(StringUtils::isNotBlank).orElse(false)) {
+            elementIterable.setIteSource(iteSourceProperty.get());
+        }
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.ITERATE_ASYNC).map(BooleanUtils::toBoolean).ifPresent(elementIterable::setOpenAsync);
+        ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.ITERATE_STRATEGY).flatMap(IterateStrategyEnum::of).ifPresent(elementIterable::setIteStrategy);
     }
 
     public class StartEventBuilder implements Function<Map<String, SubProcess>, StartEvent> {

@@ -15,13 +15,15 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
+package cn.kstry.framework.core.bpmn.extend;
 
-import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
+import cn.kstry.framework.core.bpmn.FlowElement;
 
 /**
- * EndEvent
+ * 聚合节点
+ *
+ * @author lykan
  */
-public interface EndEvent extends Event, AggregationFlowElement {
+public interface AggregationFlowElement extends FlowElement {
 
 }

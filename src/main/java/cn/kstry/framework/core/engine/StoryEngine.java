@@ -119,8 +119,8 @@ public class StoryEngine {
             }
             Object result = null;
             Class<?> returnType = storyRequest.getReturnType();
-            if (returnType != null && storyBus.getResult() != null) {
-                result = storyBus.getResult();
+            if (returnType != null && storyBus.getResult().isPresent()) {
+                result = storyBus.getResult().get();
                 AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
                         "Engine fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
             }
@@ -169,8 +169,8 @@ public class StoryEngine {
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
                 Class<?> returnType = storyRequest.getReturnType();
                 Object result = null;
-                if (returnType != null && storyBus.getResult() != null) {
-                    result = storyBus.getResult();
+                if (returnType != null && storyBus.getResult().isPresent()) {
+                    result = storyBus.getResult().get();
                     AssertUtil.isTrue(ElementParserUtil.isAssignable(returnType, result.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
                             "Engine async fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
                 }

@@ -19,6 +19,7 @@ package cn.kstry.framework.core.bus;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 /**
  * 用于暴露给使用方，作为操作 StoryBus 中数据的入口
@@ -87,6 +88,31 @@ public interface ScopeDataOperator {
     <T> Optional<T> getVarData(String name);
 
     /**
+     * 使用取值表达式获取数据
+     *
+     * @param expression 取值表达式
+     * @return 数据结果
+     */
+    <T> Optional<T> getData(String expression);
+
+    /**
+     * 使用取值表达式获取数据, 如果不存在会创建并赋值到表达式指定位置，创建失败或指定位置失败返回空值
+     *
+     * @param expression 取值表达式
+     * @param supplier 没有获取到目标值时调用获取默认值
+     *
+     * @return 数据结果
+     */
+    <T> Optional<T> computeIfAbsent(String expression, Supplier<T> supplier);
+
+    /**
+     * 遍历执行迭代器的每一项数据时，获取当前项数据
+     *
+     * @return 数据结果
+     */
+    <T> Optional<T> iterDataItem();
+
+    /**
      * 设置 Sta 域变量
      *
      * @param name 变量名
@@ -101,8 +127,10 @@ public interface ScopeDataOperator {
      *
      * @param name 变量名
      * @param target 变量值
+     *
+     * @return 是否设置成功
      */
-    void setVarData(String name, Object target);
+    boolean setVarData(String name, Object target);
 
     /**
      * 设置 Result

@@ -135,7 +135,7 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
         asyncThreadPool.shutdown();
         try {
             TimeUnit.MILLISECONDS.sleep(GlobalProperties.ENGINE_SHUTDOWN_SLEEP_SECONDS);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.warn("Time slot thread pool close task are interrupted on shutdown!", e);
         }
         if (asyncThreadPool.isShutdown() && asyncThreadPool.getActiveCount() == 0) {
@@ -148,7 +148,7 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
         }
         try {
             TimeUnit.MILLISECONDS.sleep(GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.warn("time slot thread pool close task are interrupted on shutdown!", e);
         }
         if (asyncThreadPool.isShutdown() && asyncThreadPool.getActiveCount() == 0) {

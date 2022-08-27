@@ -32,5 +32,10 @@ public enum ExecutorType {
     /**
      * 方法
      */
-    METHOD
+    METHOD,
+
+    /**
+     * 集合迭代使用
+     */
+    ITERATOR
 }

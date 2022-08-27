@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.expression;
 
 import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.util.AssertUtil;
 
 import java.util.function.BiPredicate;
@@ -39,7 +40,7 @@ public class ConditionExpressionImpl implements ConditionExpression {
      */
     private final BiPredicate<StoryBus, String> testCondition;
 
-    private final static Pattern expressionPattern = Pattern.compile("((req)|(sta)|(var)|(result))(\\.\\w+)+");
+    private final static Pattern expressionPattern = Pattern.compile(GlobalConstant.VALID_DATA_EXPRESSION_PATTERN);
 
     public ConditionExpressionImpl(BiPredicate<StoryBus, String> testCondition) {
         AssertUtil.notNull(testCondition);

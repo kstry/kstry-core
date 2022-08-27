@@ -63,7 +63,7 @@ public class RecallStory {
      *
      * @return ReturnResult
      */
-    public Object getResult() {
+    public Optional<Object> getResult() {
         return storyBus.getResult();
     }
 

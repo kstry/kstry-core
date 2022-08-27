@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
-import cn.kstry.framework.core.bpmn.AsyncFlowElement;
+import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.ParallelGateway;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import org.apache.commons.lang3.BooleanUtils;
@@ -49,7 +49,7 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
     }
 
     @Override
-    public boolean openAsync() {
+    public Boolean openAsync() {
         return asyncFlowElement.openAsync();
     }
 

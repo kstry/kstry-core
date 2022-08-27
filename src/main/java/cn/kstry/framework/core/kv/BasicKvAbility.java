@@ -68,7 +68,7 @@ public class BasicKvAbility implements KvAbility {
                 .orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         try {
             return kValueCache.get(getCacheKey(key, kvScope), () -> doGetValue(key, kvScope));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
@@ -83,7 +83,7 @@ public class BasicKvAbility implements KvAbility {
         inKvScope.setBusinessId(kvScope.getBusinessId().orElse(null));
         try {
             return kValueCache.get(getCacheKey(key, inKvScope), () -> doGetValue(key, kvScope));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }

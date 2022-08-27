@@ -17,11 +17,13 @@
  */
 package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.bpmn.AggregationFlowElement;
-import cn.kstry.framework.core.bpmn.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.BpmnElement;
 import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.bpmn.Gateway;
+import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
+import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
@@ -58,12 +60,12 @@ public class ElementPropertyUtil {
      * @param flowElement flowElement
      * @return boolean
      */
-    public static boolean needOpenAsync(FlowElement flowElement) {
-        if (!(flowElement instanceof AsyncFlowElement)) {
+    public static boolean needGatewayOpenAsync(FlowElement flowElement) {
+        if (!(flowElement instanceof AsyncFlowElement && flowElement instanceof Gateway)) {
             return false;
         }
         AsyncFlowElement asyncFlowElement = GlobalUtil.transferNotEmpty(flowElement, AsyncFlowElement.class);
-        return asyncFlowElement.openAsync();
+        return BooleanUtils.isTrue(asyncFlowElement.openAsync());
     }
 
     public static Optional<String> getNodeProperty(FlowNode flowNode, String name) {

@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
-import cn.kstry.framework.core.bpmn.AsyncFlowElement;
+import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 
 /**
  * 对异步节点的支持
@@ -27,10 +27,10 @@ public class BasicAsyncFlowElement implements AsyncFlowElement {
     /**
      * 是否开启异步
      */
-    private boolean openAsync;
+    private Boolean openAsync;
 
     @Override
-    public boolean openAsync() {
+    public Boolean openAsync() {
         return openAsync;
     }
 

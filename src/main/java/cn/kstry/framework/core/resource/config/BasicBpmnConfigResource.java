@@ -66,7 +66,7 @@ public class BasicBpmnConfigResource extends AbstractConfigResource implements B
         try {
             this.modelInstance = Bpmn.readModelFromStream(inputStream);
             AssertUtil.notNull(this.modelInstance);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}", getConfigName()));
         }
     }

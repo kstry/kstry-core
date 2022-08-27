@@ -22,7 +22,7 @@ package cn.kstry.framework.core.constant;
  *
  * @author lykan
  */
-public interface BpmnConstant {
+public interface BpmnElementProperties {
 
     /**
      * ServiceTask: task-component
@@ -35,7 +35,7 @@ public interface BpmnConstant {
     String SERVICE_TASK_TASK_SERVICE = "task-service";
 
     /**
-     * Task: allow-absent
+     * ServiceTask: allow-absent
      */
     String TASK_ALLOW_ABSENT = "allow-absent";
 
@@ -45,17 +45,32 @@ public interface BpmnConstant {
     String SERVICE_TASK_CUSTOM_ROLE = "custom-role";
 
     /**
-     * AsyncElement: open-async
+     * AsyncFlowElement(InclusiveGateway/ParallelGateway/ElementIterator(SubProcess/ServiceTask)): open-async
      */
     String ASYNC_ELEMENT_OPEN_ASYNC = "open-async";
 
     /**
-     * Task: strict-mode
+     * SubProcess/ParallelGateway/ServiceTask: strict-mode
      */
     String TASK_STRICT_MODE = "strict-mode";
 
     /**
-     * Task: timeout
+     * SubProcess/ServiceTask: timeout
      */
     String TASK_TIMEOUT = "timeout";
+
+    /**
+     * ElementIterator(SubProcess/ServiceTask): ite-source
+     */
+    String ITERATE_SOURCE = "ite-source";
+
+    /**
+     * ElementIterator(SubProcess/ServiceTask): ite-async
+     */
+    String ITERATE_ASYNC = "ite-async";
+
+    /**
+     * ElementIterator(SubProcess/ServiceTask): ite-strategy
+     */
+    String ITERATE_STRATEGY = "ite-strategy";
 }

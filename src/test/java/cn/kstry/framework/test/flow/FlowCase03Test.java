@@ -40,7 +40,7 @@ public class FlowCase03Test {
         StoryRequest<Goods> fireRequest = ReqBuilder.returnType(Goods.class).startId("story-def-test_001").request(request)
                 .recallStoryHook(storyBus -> {
                     AssertUtil.notNull(storyBus);
-                    AssertUtil.notNull(storyBus.getResult());
+                    AssertUtil.isTrue(storyBus.getResult().isPresent());
                     System.out.println(JSON.toJSONString(storyBus.getMonitorTracking()));
                 })
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).build();

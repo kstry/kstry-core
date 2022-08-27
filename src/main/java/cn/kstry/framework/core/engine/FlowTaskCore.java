@@ -39,6 +39,7 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +76,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 break;
             }
             Optional<AsyncFlowHook<List<FlowElement>>> asyncFlowHook = flowRegister.predictNextElement(csd, flowElement);
-            if (asyncFlowHook.isPresent() && asyncFlowHook.get().openAsync()) {
+            if (asyncFlowHook.isPresent() && BooleanUtils.isTrue(asyncFlowHook.get().openAsync())) {
                 submitAsyncTask(role, storyBus, flowRegister, asyncFlowHook.get());
             }
         }
@@ -299,7 +300,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
     private void doNextElement(FlowRegister flowRegister, FlowElement flowElement, StoryBus storyBus, Role role) {
         flowRegister.getMonitorTracking().finishTaskTracking(flowElement, null);
         Optional<AsyncFlowHook<List<FlowElement>>> asyncFlowHook = flowRegister.predictNextElement(new ContextStoryBus(storyBus), flowElement);
-        if (asyncFlowHook.isPresent() && asyncFlowHook.get().openAsync()) {
+        if (asyncFlowHook.isPresent() && BooleanUtils.isTrue(asyncFlowHook.get().openAsync())) {
             submitAsyncTask(role, storyBus, flowRegister, asyncFlowHook.get());
         } else {
             FragmentTask fragmentTask = new FragmentTask(engineModule, flowRegister, role, storyBus);
@@ -335,8 +336,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     if (!serviceDefOptional.isPresent()) {
                         throw ke;
                     }
-                    MethodInvokeTask.MethodInvokePedometer pedometer = new MethodInvokeTask.MethodInvokePedometer(
-                            0, needDemotionSupplier, true, invokeProperties.isStrictMode());
+                    MethodInvokeTask.MethodInvokePedometer pedometer = new MethodInvokeTask.MethodInvokePedometer(0, needDemotionSupplier, true, invokeProperties.isStrictMode());
                     DemotionInfo demotionInfo = new DemotionInfo();
                     demotionInfo.setRetryTimes(i);
                     demotionInfo.setDemotionNodeId(serviceDefOptional.get().getGetServiceNodeResource().getIdentityId());

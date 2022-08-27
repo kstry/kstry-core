@@ -21,7 +21,7 @@ import java.util.Optional;
 
 import cn.kstry.framework.core.bpmn.ExclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.ServiceTaskSupport;
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 
 /**

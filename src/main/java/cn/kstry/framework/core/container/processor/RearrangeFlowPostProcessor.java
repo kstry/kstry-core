@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.container.processor;
 
 import cn.kstry.framework.core.bpmn.*;
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.impl.FlowElementImpl;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
 import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;

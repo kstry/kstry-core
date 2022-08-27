@@ -17,11 +17,14 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
+import cn.kstry.framework.core.bpmn.Task;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import cn.kstry.framework.core.bpmn.Task;
-import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import java.util.Optional;
 
 /**
  * TaskImpl
@@ -38,6 +41,11 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
      * 关闭严格模式后，子任务抛出异常时忽略继续向下执行
      */
     protected Boolean strictMode;
+
+    /**
+     * BPMN元素迭代器
+     */
+    protected BasicElementIterable elementIterable;
 
     @Override
     public BpmnTypeEnum getElementType() {
@@ -63,5 +71,33 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
 
     public void setTimeout(Integer timeout) {
         this.timeout = timeout;
+    }
+
+    @Override
+    public String getIteSource() {
+        return Optional.ofNullable(elementIterable).map(ElementIterable::getIteSource).orElse(null);
+    }
+
+    @Override
+    public Boolean openAsync() {
+        return Optional.ofNullable(elementIterable).map(ElementIterable::openAsync).orElse(false);
+    }
+
+    @Override
+    public IterateStrategyEnum getIteStrategy() {
+        return Optional.ofNullable(elementIterable).map(ElementIterable::getIteStrategy).orElse(null);
+    }
+
+    @Override
+    public boolean iterable() {
+        return Optional.ofNullable(elementIterable).map(ElementIterable::iterable).orElse(false);
+    }
+
+    public BasicElementIterable buildElementIterable() {
+        if (elementIterable != null) {
+            return elementIterable;
+        }
+        elementIterable = new BasicElementIterable();
+        return elementIterable;
     }
 }

@@ -15,13 +15,17 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
+package cn.kstry.framework.core.bpmn.extend;
 
 /**
- * 聚合节点
- *
- * @author lykan
+ * 异步节点
  */
-public interface AggregationFlowElement extends FlowElement {
+public interface AsyncFlowElement {
 
+    /**
+     * 是否开启异步
+     *
+     * @return openAsync
+     */
+    Boolean openAsync();
 }

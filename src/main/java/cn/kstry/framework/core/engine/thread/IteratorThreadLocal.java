@@ -15,21 +15,29 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
+package cn.kstry.framework.core.engine.thread;
 
 import java.util.Optional;
 
 /**
- * 对 ServiceTask 支持
  *
  * @author lykan
  */
-public interface ServiceTaskSupport {
+public class IteratorThreadLocal {
 
-    /**
-     * 获取 ServiceTask
-     *
-     * @return ServiceTask
-     */
-    Optional<ServiceTask> getServiceTask();
+    private static final ThreadLocal<Object> ITERATOR_THREAD_LOCAL = new ThreadLocal<>();
+
+    public static void setDataItem(Object data) {
+        if (data != null) {
+            ITERATOR_THREAD_LOCAL.set(data);
+        }
+    }
+
+    public static Optional<Object> getDataItem() {
+        return Optional.ofNullable(ITERATOR_THREAD_LOCAL.get());
+    }
+
+    public static void clear() {
+        ITERATOR_THREAD_LOCAL.remove();
+    }
 }

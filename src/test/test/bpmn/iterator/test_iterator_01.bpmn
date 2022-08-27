@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_167yaf6" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="Process_166h1q5" isExecutable="true">
+    <bpmn:startEvent id="story-def-iterate-test_001" name="story-def-iterate-test_001">
+      <bpmn:outgoing>Flow_0ring1r</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_1l0c2q9" name="对列表求平方">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="calculate-service" />
+          <camunda:property name="task-service" value="square" />
+          <camunda:property name="ite-source" value="req.numList" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ring1r</bpmn:incoming>
+      <bpmn:outgoing>Flow_0vpan1r</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0ring1r" sourceRef="story-def-iterate-test_001" targetRef="Activity_1l0c2q9" />
+    <bpmn:endEvent id="Event_0bxvke2">
+      <bpmn:incoming>Flow_0vpan1r</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0vpan1r" sourceRef="Activity_1l0c2q9" targetRef="Event_0bxvke2" />
+    <bpmn:task id="Activity_0922fwa" name="对列表求平方">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="calculate-service" />
+          <camunda:property name="task-service" value="square-best-strategy" />
+          <camunda:property name="ite-source" value="req.numList" />
+          <camunda:property name="ite-strategy" value="best" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1k4gs6h</bpmn:incoming>
+      <bpmn:outgoing>Flow_1czj0m2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_104wt3z">
+      <bpmn:incoming>Flow_1czj0m2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="story-def-iterate-test_002" name="story-def-iterate-test_002">
+      <bpmn:outgoing>Flow_1k4gs6h</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1k4gs6h" sourceRef="story-def-iterate-test_002" targetRef="Activity_0922fwa" />
+    <bpmn:sequenceFlow id="Flow_1czj0m2" sourceRef="Activity_0922fwa" targetRef="Event_104wt3z" />
+    <bpmn:task id="Activity_17qrd60" name="对列表求平方">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="calculate-service" />
+          <camunda:property name="task-service" value="square-any-strategy" />
+          <camunda:property name="ite-source" value="req.numList" />
+          <camunda:property name="ite-strategy" value="any" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1r6033o</bpmn:incoming>
+      <bpmn:outgoing>Flow_0dn1nl6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_0rnodxr">
+      <bpmn:incoming>Flow_0dn1nl6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="story-def-iterate-test_003" name="story-def-iterate-test_003">
+      <bpmn:outgoing>Flow_1r6033o</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1r6033o" sourceRef="story-def-iterate-test_003" targetRef="Activity_17qrd60" />
+    <bpmn:sequenceFlow id="Flow_0dn1nl6" sourceRef="Activity_17qrd60" targetRef="Event_0rnodxr" />
+    <bpmn:task id="Activity_03t1fcs" name="对列表求平方">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="calculate-service" />
+          <camunda:property name="task-service" value="square" />
+          <camunda:property name="ite-source" value="req.numList" />
+          <camunda:property name="ite-async" value="y  " />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1tjwv3y</bpmn:incoming>
+      <bpmn:outgoing>Flow_082ldga</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_1epkkpe">
+      <bpmn:incoming>Flow_082ldga</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="story-def-iterate-test_004" name="story-def-iterate-test_004">
+      <bpmn:outgoing>Flow_1tjwv3y</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_035jo4k" name="对列表求平方">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="calculate-service" />
+          <camunda:property name="task-service" value="square-best-strategy" />
+          <camunda:property name="ite-source" value="req.numList" />
+          <camunda:property name="ite-strategy" value="best" />
+          <camunda:property name="ite-async" value="y" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0t3k9qq</bpmn:incoming>
+      <bpmn:outgoing>Flow_0k5tom1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_1ojsn44">
+      <bpmn:incoming>Flow_0k5tom1</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="story-def-iterate-test_005" name="story-def-iterate-test_005">
+      <bpmn:outgoing>Flow_0t3k9qq</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_0qvmreh" name="对列表求平方">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="calculate-service" />
+          <camunda:property name="task-service" value="square-any-strategy" />
+          <camunda:property name="ite-source" value="req.numList" />
+          <camunda:property name="ite-strategy" value="any" />
+          <camunda:property name="ite-async" value="y" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_07uckx0</bpmn:incoming>
+      <bpmn:outgoing>Flow_18itmk8</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Event_0va5s30">
+      <bpmn:incoming>Flow_18itmk8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="story-def-iterate-test_006" name="story-def-iterate-test_006">
+      <bpmn:outgoing>Flow_07uckx0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1tjwv3y" sourceRef="story-def-iterate-test_004" targetRef="Activity_03t1fcs" />
+    <bpmn:sequenceFlow id="Flow_082ldga" sourceRef="Activity_03t1fcs" targetRef="Event_1epkkpe" />
+    <bpmn:sequenceFlow id="Flow_0t3k9qq" sourceRef="story-def-iterate-test_005" targetRef="Activity_035jo4k" />
+    <bpmn:sequenceFlow id="Flow_0k5tom1" sourceRef="Activity_035jo4k" targetRef="Event_1ojsn44" />
+    <bpmn:sequenceFlow id="Flow_07uckx0" sourceRef="story-def-iterate-test_006" targetRef="Activity_0qvmreh" />
+    <bpmn:sequenceFlow id="Flow_18itmk8" sourceRef="Activity_0qvmreh" targetRef="Event_0va5s30" />
+    <bpmn:textAnnotation id="TextAnnotation_1c78o5h">
+      <bpmn:text>测试同步方法迭代，all_sucess策略（默认策略）</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0vjzm3o" sourceRef="story-def-iterate-test_001" targetRef="TextAnnotation_1c78o5h" />
+    <bpmn:textAnnotation id="TextAnnotation_1rn15bg">
+      <bpmn:text>测试同步方法迭代，best_sucess策略</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_02ddq6h" sourceRef="story-def-iterate-test_002" targetRef="TextAnnotation_1rn15bg" />
+    <bpmn:textAnnotation id="TextAnnotation_0ixmjmt">
+      <bpmn:text>测试同步方法迭代，any_sucess策略</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_11chxzz" sourceRef="story-def-iterate-test_003" targetRef="TextAnnotation_0ixmjmt" />
+    <bpmn:textAnnotation id="TextAnnotation_1shxhbq">
+      <bpmn:text>测试异步方法迭代，all_sucess策略（默认策略）</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="TextAnnotation_1sj7lew">
+      <bpmn:text>测试异步方法迭代，best_sucess策略</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="TextAnnotation_121akm8">
+      <bpmn:text>测试异步方法迭代，any_sucess策略</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_03nf4fd" sourceRef="story-def-iterate-test_004" targetRef="TextAnnotation_1shxhbq" />
+    <bpmn:association id="Association_0dbwfq5" sourceRef="story-def-iterate-test_005" targetRef="TextAnnotation_1sj7lew" />
+    <bpmn:association id="Association_0scyk7h" sourceRef="story-def-iterate-test_006" targetRef="TextAnnotation_121akm8" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_166h1q5">
+      <bpmndi:BPMNShape id="TextAnnotation_1c78o5h_di" bpmnElement="TextAnnotation_1c78o5h">
+        <dc:Bounds x="170" y="80" width="430" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1rn15bg_di" bpmnElement="TextAnnotation_1rn15bg">
+        <dc:Bounds x="160" y="260" width="310" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1w9d9xw" bpmnElement="TextAnnotation_0ixmjmt">
+        <dc:Bounds x="160" y="450" width="310" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1v38tp1" bpmnElement="TextAnnotation_1shxhbq">
+        <dc:Bounds x="170" y="630" width="430" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_02isr0t" bpmnElement="TextAnnotation_1sj7lew">
+        <dc:Bounds x="160" y="810" width="310" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0w8n96q" bpmnElement="TextAnnotation_121akm8">
+        <dc:Bounds x="160" y="1000" width="310" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0ring1r_di" bpmnElement="Flow_0ring1r">
+        <di:waypoint x="448" y="180" />
+        <di:waypoint x="510" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0vpan1r_di" bpmnElement="Flow_0vpan1r">
+        <di:waypoint x="610" y="180" />
+        <di:waypoint x="672" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0eu0plk" bpmnElement="Flow_1k4gs6h">
+        <di:waypoint x="448" y="340" />
+        <di:waypoint x="510" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_12n58k5" bpmnElement="Flow_1czj0m2">
+        <di:waypoint x="610" y="340" />
+        <di:waypoint x="672" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0mcxm98" bpmnElement="Flow_1r6033o">
+        <di:waypoint x="448" y="530" />
+        <di:waypoint x="510" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1jxfw65" bpmnElement="Flow_0dn1nl6">
+        <di:waypoint x="610" y="530" />
+        <di:waypoint x="672" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0k44uxl" bpmnElement="Flow_1tjwv3y">
+        <di:waypoint x="448" y="730" />
+        <di:waypoint x="510" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0wsbhle" bpmnElement="Flow_082ldga">
+        <di:waypoint x="610" y="730" />
+        <di:waypoint x="672" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0swr0u7" bpmnElement="Flow_0t3k9qq">
+        <di:waypoint x="448" y="890" />
+        <di:waypoint x="510" y="890" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_15ru0fk" bpmnElement="Flow_0k5tom1">
+        <di:waypoint x="610" y="890" />
+        <di:waypoint x="672" y="890" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_15u47ax" bpmnElement="Flow_07uckx0">
+        <di:waypoint x="448" y="1080" />
+        <di:waypoint x="510" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0hbc24d" bpmnElement="Flow_18itmk8">
+        <di:waypoint x="610" y="1080" />
+        <di:waypoint x="672" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="story-def-iterate-test_001">
+        <dc:Bounds x="412" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="205" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1l0c2q9_di" bpmnElement="Activity_1l0c2q9">
+        <dc:Bounds x="510" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0bxvke2_di" bpmnElement="Event_0bxvke2">
+        <dc:Bounds x="672" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1osoukg" bpmnElement="Activity_0922fwa">
+        <dc:Bounds x="510" y="300" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1952isq" bpmnElement="Event_104wt3z">
+        <dc:Bounds x="672" y="322" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_00f9rg8" bpmnElement="story-def-iterate-test_002">
+        <dc:Bounds x="412" y="322" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="365" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1oqq1ey" bpmnElement="Activity_17qrd60">
+        <dc:Bounds x="510" y="490" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1nopm3x" bpmnElement="Event_0rnodxr">
+        <dc:Bounds x="672" y="512" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0ju9alg" bpmnElement="story-def-iterate-test_003">
+        <dc:Bounds x="412" y="512" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="555" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0oloyua" bpmnElement="Activity_03t1fcs">
+        <dc:Bounds x="510" y="690" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_080f42w" bpmnElement="Event_1epkkpe">
+        <dc:Bounds x="672" y="712" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1angiji" bpmnElement="story-def-iterate-test_004">
+        <dc:Bounds x="412" y="712" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="755" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0gy3svy" bpmnElement="Activity_035jo4k">
+        <dc:Bounds x="510" y="850" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1fx0x97" bpmnElement="Event_1ojsn44">
+        <dc:Bounds x="672" y="872" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0rs6bga" bpmnElement="story-def-iterate-test_005">
+        <dc:Bounds x="412" y="872" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="915" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_18pk9ub" bpmnElement="Activity_0qvmreh">
+        <dc:Bounds x="510" y="1040" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_069jc12" bpmnElement="Event_0va5s30">
+        <dc:Bounds x="672" y="1062" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1t66kzk" bpmnElement="story-def-iterate-test_006">
+        <dc:Bounds x="412" y="1062" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="389" y="1105" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0vjzm3o_di" bpmnElement="Association_0vjzm3o">
+        <di:waypoint x="414" y="173" />
+        <di:waypoint x="257" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_02ddq6h_di" bpmnElement="Association_02ddq6h">
+        <di:waypoint x="413" y="335" />
+        <di:waypoint x="261" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0faqtjp" bpmnElement="Association_11chxzz">
+        <di:waypoint x="413" y="525" />
+        <di:waypoint x="261" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1neqpxq" bpmnElement="Association_03nf4fd">
+        <di:waypoint x="414" y="723" />
+        <di:waypoint x="257" y="660" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0vovth7" bpmnElement="Association_0dbwfq5">
+        <di:waypoint x="413" y="885" />
+        <di:waypoint x="261" y="840" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_14rp1hw" bpmnElement="Association_0scyk7h">
+        <di:waypoint x="413" y="1075" />
+        <di:waypoint x="261" y="1030" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

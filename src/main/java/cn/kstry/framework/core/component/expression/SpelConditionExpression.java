@@ -42,7 +42,7 @@ public class SpelConditionExpression extends ConditionExpressionImpl implements 
             Boolean value;
             try {
                 value = PARSER.parseExpression(exp).getValue(evaluationContext, Boolean.class);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 throw new ExpressionException(ExceptionEnum.EXPRESSION_INVOKE_ERROR, e);
             }
             return BooleanUtils.isTrue(value);
