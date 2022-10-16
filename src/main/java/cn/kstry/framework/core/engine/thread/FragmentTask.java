@@ -59,6 +59,8 @@ public class FragmentTask extends FlowTaskCore<AsyncTaskState> implements Task<A
     @Override
     public AsyncTaskState call() {
         AdminFuture adminFuture = null;
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
             asyncTaskSwitch.await();
@@ -80,7 +82,7 @@ public class FragmentTask extends FlowTaskCore<AsyncTaskState> implements Task<A
             }
             return AsyncTaskState.ERROR;
         } finally {
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 }

@@ -85,7 +85,7 @@ public class MethodWrapper {
         this.monoResult = false;
         this.invokeProperties = new InvokeProperties(annotation.invoke());
 
-        methodParser(method);
+        methodParser(method, annotation.name());
     }
 
     public Method getMethod() {
@@ -116,10 +116,10 @@ public class MethodWrapper {
         return invokeProperties;
     }
 
-    private void methodParser(Method method) {
+    private void methodParser(Method method, String taskServiceName) {
         Class<?> returnType = method.getReturnType();
         if (!Objects.equals(GlobalConstant.VOID, returnType.getName())) {
-            returnTypeParser(returnType);
+            returnTypeParser(returnType, taskServiceName);
         }
 
         Parameter[] parameters = method.getParameters();
@@ -170,13 +170,14 @@ public class MethodWrapper {
         return ElementParserUtil.getFieldInjectDefList(clazz);
     }
 
-    private void returnTypeParser(Class<?> returnType) {
+    private void returnTypeParser(Class<?> returnType, String taskServiceName) {
         if (Mono.class.isAssignableFrom(returnType)) {
             returnType = targetType;
             monoResult = true;
         } else {
-            AssertUtil.isTrue(targetType.isAssignableFrom(Object.class) ||
-                    ElementParserUtil.isAssignable(targetType, returnType), ExceptionEnum.TYPE_TRANSFER_ERROR);
+            AssertUtil.isTrue(targetType.isAssignableFrom(Object.class) || ElementParserUtil.isAssignable(targetType, returnType), ExceptionEnum.TYPE_TRANSFER_ERROR,
+                    "The actual type of the taskService return value does not match the specified type. expected: {}, actual: {}, taskService: {}",
+                    targetType, returnType, taskServiceName);
             if (targetType != Object.class) {
                 returnType = targetType;
             }

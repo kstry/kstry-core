@@ -122,11 +122,7 @@ public class TaskServiceUtil {
                             ParamTracking.build(iDef.getFieldName(), primitiveFinalObj, iDef.getScopeDataEnum(), iDef.getTargetName())));
                     continue;
                 }
-                AssertUtil.isTrue(r == null || ElementParserUtil.isAssignable(iDef.getParamType(), r.getClass()),
-                        ExceptionEnum.SERVICE_PARAM_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
-                            String actual = (r == null) ? "null" : r.getClass().getName();
-                            return Lists.newArrayList(actual, iDef.getParamType().getName());
-                        });
+                checkParamType(flowElement, iDef, r);
                 params[i] = r;
                 trackingOptional.ifPresent(mt -> mt.trackingNodeParams(flowElement, () ->
                         ParamTracking.build(iDef.getFieldName(), r, iDef.getScopeDataEnum(), iDef.getTargetName())));
@@ -153,11 +149,7 @@ public class TaskServiceUtil {
                                     ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), BAD_VALUE, def.getScopeDataEnum(), def.getTargetName())));
                             return;
                         }
-                        AssertUtil.isTrue(value == null || ElementParserUtil.isAssignable(def.getParamType(), value.getClass()),
-                                ExceptionEnum.SERVICE_PARAM_ERROR, "The actual type does not match the expected type! actual: {}, expected: {}", () -> {
-                                    String actual = (value == null) ? "null" : value.getClass().getName();
-                                    return Lists.newArrayList(actual, def.getParamType().getName());
-                                });
+                        checkParamType(flowElement, def, value);
                         PropertyUtil.setProperty(o, def.getFieldName(), value);
                         trackingOptional.ifPresent(mt -> mt.trackingNodeParams(flowElement, () ->
                                 ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), value, def.getScopeDataEnum(), def.getTargetName())));
@@ -175,5 +167,15 @@ public class TaskServiceUtil {
             }
         }
         return params;
+    }
+
+    private static void checkParamType(FlowElement flowElement, ParamInjectDef def, Object value) {
+        boolean correctType = (value == null) || ElementParserUtil.isAssignable(def.getParamType(), value.getClass());
+        AssertUtil.isTrue(correctType, ExceptionEnum.SERVICE_PARAM_ERROR, "The actual type does not match the expected type! nodeName: {}, actual: {}, expected: {}",
+                () -> {
+                    String actual = (value == null) ? "null" : value.getClass().getName();
+                    return Lists.newArrayList(flowElement.getName(), actual, def.getParamType().getName());
+                }
+        );
     }
 }

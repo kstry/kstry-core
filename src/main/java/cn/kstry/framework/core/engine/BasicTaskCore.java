@@ -28,10 +28,7 @@ import cn.kstry.framework.core.engine.thread.IteratorThreadLocal;
 import cn.kstry.framework.core.engine.thread.Task;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.ProxyUtil;
-import cn.kstry.framework.core.util.TaskServiceUtil;
+import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -171,7 +168,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                     return f.get();
                 }
             } catch (Throwable e) {
-                // IGNORE
+                throw ExceptionUtil.buildException(e, ExceptionEnum.ITERATE_ITEM_ERROR, null);
             }
         }
         return null;
@@ -182,10 +179,10 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         try {
             IteratorThreadLocal.setDataItem(itemData);
             if (CollectionUtils.isEmpty(paramInjectDefs)) {
-                return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget());
+                return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget());
             }
             Function<ParamInjectDef, Object> paramInitStrategy = engineModule.getParamInitStrategy();
-            return ProxyUtil.invokeMethod(storyBus, methodWrapper, targetProxy.getTarget(),
+            return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget(),
                     () -> TaskServiceUtil.getTaskParams(tracking, serviceTask, storyBus, role, targetProxy, paramInjectDefs, paramInitStrategy));
         } catch (Throwable e) {
             if (!serviceTask.iterable() || serviceTask.getIteStrategy() == null || serviceTask.getIteStrategy() == IterateStrategyEnum.ALL_SUCCESS) {

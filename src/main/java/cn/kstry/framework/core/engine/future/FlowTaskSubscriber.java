@@ -80,6 +80,8 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
     protected void hookOnNext(@Nonnull Object value) {
         AssertUtil.notTrue(flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()),
                 ExceptionEnum.ASYNC_TASK_INTERRUPTED, "Task interrupted. Story task was interrupted! taskName: {}", taskName);
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
             doNextHook(value);
@@ -88,7 +90,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
             dispose();
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
@@ -96,6 +98,8 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
     protected void hookOnComplete() {
         AssertUtil.notTrue(flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()),
                 ExceptionEnum.ASYNC_TASK_INTERRUPTED, "Task interrupted. Story task was interrupted! taskName: {}", taskName);
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
             doCompleteHook();
@@ -104,12 +108,14 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
             dispose();
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     @Override
     protected void hookOnError(@Nonnull Throwable throwable) {
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
             doErrorHook(throwable);
@@ -117,12 +123,14 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             LOGGER.warn(ex.getMessage(), ex);
         } finally {
             dispose();
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     @Override
     protected void hookFinally(@Nonnull SignalType type) {
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
             doFinallyHook();
@@ -130,11 +138,13 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     AsyncTaskState hookTimeout() {
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
             return doTimeoutHook();
@@ -143,7 +153,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             return AsyncTaskState.TIMEOUT;
         } finally {
             dispose();
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 

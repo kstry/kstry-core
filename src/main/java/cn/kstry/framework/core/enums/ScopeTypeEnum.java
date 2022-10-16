@@ -47,7 +47,7 @@ public enum ScopeTypeEnum {
     /**
      * result 域
      */
-    RESULT("result", false),
+    RESULT("res", false),
 
     /**
      * empty

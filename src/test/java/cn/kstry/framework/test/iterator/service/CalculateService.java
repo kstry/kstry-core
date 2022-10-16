@@ -20,6 +20,7 @@ package cn.kstry.framework.test.iterator.service;
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import com.google.common.collect.Lists;
 
 import java.util.Optional;
@@ -56,7 +57,7 @@ public class CalculateService {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<Integer> iterDataItem = dataOperator.iterDataItem();
         iterDataItem.ifPresent(i ->
-                dataOperator.computeIfAbsent("result", Lists::newCopyOnWriteArrayList).ifPresent(list -> {
+                dataOperator.computeIfAbsent(ScopeTypeEnum.RESULT.getKey(), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
                     if (i == 4) {
                         throw new RuntimeException("系统中偶发的异常！！！");
                     }

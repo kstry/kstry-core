@@ -206,6 +206,10 @@ public enum ExceptionEnum {
      */
     ITERATE_ITEM_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0006", "Iteration item execution failure!"),
 
+    /**
+     * [K1050007] 业务执行失败
+     */
+    BUSINESS_INVOKE_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0007", "Business execution failure!"),
 
     ///////////////////////////////////////////////// PARAMS END /////////////////////////////////////////////////
 

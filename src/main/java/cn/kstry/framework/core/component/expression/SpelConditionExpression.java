@@ -17,13 +17,13 @@
  */
 package cn.kstry.framework.core.component.expression;
 
+import cn.kstry.framework.core.bus.ExpressionBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.ExpressionException;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 /**
  *
@@ -38,10 +38,9 @@ public class SpelConditionExpression extends ConditionExpressionImpl implements 
             if (StringUtils.isBlank(exp) || scopeData == null) {
                 return false;
             }
-            StandardEvaluationContext evaluationContext = new StandardEvaluationContext(scopeData);
             Boolean value;
             try {
-                value = PARSER.parseExpression(exp).getValue(evaluationContext, Boolean.class);
+                value = PARSER.parseExpression(exp).getValue(new ExpressionBus(scopeData), Boolean.class);
             } catch (Throwable e) {
                 throw new ExpressionException(ExceptionEnum.EXPRESSION_INVOKE_ERROR, e);
             }

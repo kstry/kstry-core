@@ -77,7 +77,7 @@ public class ConfigResourceResolver implements ApplicationContextAware {
 
     @Bean
     @Conditional(ConfigResourceResolver.MissingPropertySourcesPlaceholderConfigurer.class)
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+    public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
     }
 

@@ -79,6 +79,8 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
 
     @Override
     public Object call() throws Exception {
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         AdminFuture adminFuture = flowRegister.getAdminFuture();
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
@@ -108,7 +110,7 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
             adminFuture.errorNotice(e, flowRegister.getStartEventId());
             throw e;
         } finally {
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 

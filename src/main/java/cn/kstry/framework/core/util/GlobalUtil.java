@@ -20,7 +20,7 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
-import cn.kstry.framework.core.exception.*;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -134,10 +134,18 @@ public class GlobalUtil {
 
         String requestId = MDC.get(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME);
         if (StringUtils.isBlank(requestId)) {
-            requestId = UUID.randomUUID().toString();
+            requestId = GlobalUtil.uuid();
         }
         storyRequest.setRequestId(requestId);
         return requestId;
+    }
+
+    public static void traceIdClear(String oldReqId, String reqLogIdKey) {
+        if (StringUtils.isNotBlank(oldReqId)) {
+            MDC.put(reqLogIdKey, oldReqId);
+        } else {
+            MDC.remove(reqLogIdKey);
+        }
     }
 
     public static String expToString(Throwable e) {
@@ -167,4 +175,7 @@ public class GlobalUtil {
         return Optional.empty();
     }
 
+    public static String uuid() {
+        return UUID.randomUUID().toString().replace("-", StringUtils.EMPTY);
+    }
 }

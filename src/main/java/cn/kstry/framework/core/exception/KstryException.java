@@ -61,4 +61,8 @@ public class KstryException extends RuntimeException {
         alreadyLog = true;
         doLog.accept(this);
     }
+
+    public void closeInLog() {
+        alreadyLog = true;
+    }
 }

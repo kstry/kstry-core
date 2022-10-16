@@ -26,11 +26,37 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class BusinessException extends KstryException {
 
+    /**
+     * 任务标识
+     */
+    private String taskIdentity;
+
+    /**
+     * 方法名称
+     */
+    private String methodName;
+
     public BusinessException(String code, String desc) {
         this(code, desc, null);
     }
 
     public BusinessException(String code, String desc, Throwable cause) {
-        super(StringUtils.isBlank(code) ? "500" : code, desc, cause);
+        super(StringUtils.isBlank(code) ? ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode() : code, desc, cause);
+    }
+
+    public String getTaskIdentity() {
+        return taskIdentity;
+    }
+
+    public void setTaskIdentity(String taskIdentity) {
+        this.taskIdentity = taskIdentity;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 }

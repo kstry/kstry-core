@@ -26,7 +26,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.8</version>
+    <version>1.0.9</version>
 
     <name>Kstry Core</name>
     <description>Kstry Core</description>
@@ -62,17 +62,22 @@
             <version>${dependency.spring.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>${dependency.snakeyaml.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.camunda.bpm.model</groupId>
             <artifactId>camunda-bpmn-model</artifactId>
             <version>${dependency.camunda.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${dependency.reactor.version}</version>
+        </dependency>
 
         <!-- util -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${dependency.snakeyaml.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -108,6 +113,8 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- validator -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
@@ -117,17 +124,14 @@
         <dependency>
             <groupId>javax.el</groupId>
             <artifactId>javax.el-api</artifactId>
+            <scope>provided</scope>
             <version>${dependency.javax.el.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.el</artifactId>
+            <scope>provided</scope>
             <version>${dependency.javax.el.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <version>${dependency.reactor.version}</version>
         </dependency>
 
         <!-- log -->

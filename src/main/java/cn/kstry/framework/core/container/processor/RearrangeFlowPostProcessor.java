@@ -90,12 +90,12 @@ public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
             });
 
             SequenceFlowImpl sequenceFlow1 = new SequenceFlowImpl();
-            sequenceFlow1.setId(UUID.randomUUID().toString());
+            sequenceFlow1.setId(GlobalUtil.uuid());
             mockInclusiveGateway.outing(sequenceFlow1);
             sequenceFlow1.outing(serviceTaskImpl);
 
             SequenceFlowImpl sequenceFlow2 = new SequenceFlowImpl();
-            sequenceFlow2.setId(UUID.randomUUID().toString());
+            sequenceFlow2.setId(GlobalUtil.uuid());
             serviceTaskImpl.outing(sequenceFlow2);
             sequenceFlow2.outing(node);
 
@@ -104,7 +104,7 @@ public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
             AssertUtil.oneSize(nodeComingList);
 
             SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
-            sequenceFlow.setId(UUID.randomUUID().toString());
+            sequenceFlow.setId(GlobalUtil.uuid());
 
             FlowElementImpl beforeSequenceFlow = GlobalUtil.transferNotEmpty(nodeComingList.get(0), FlowElementImpl.class);
             beforeSequenceFlow.clearOutingChain();

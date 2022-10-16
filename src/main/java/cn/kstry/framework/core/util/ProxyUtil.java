@@ -17,8 +17,12 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.container.component.MethodWrapper;
+import cn.kstry.framework.core.exception.BusinessException;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.kv.KvThreadLocal;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.util.ReflectionUtils;
@@ -48,17 +52,31 @@ public class ProxyUtil {
         return AopUtils.getTargetClass(candidate);
     }
 
-    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, Object target) {
-        return invokeMethod(storyBus, methodWrapper, target, () -> new Object[0]);
+    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask, Object target) {
+        return invokeMethod(storyBus, methodWrapper, serviceTask, target, () -> new Object[0]);
     }
 
-    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, Object target, Supplier<Object[]> paramsSupplier) {
+    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask, Object target, Supplier<Object[]> paramsSupplier) {
         try {
             KvThreadLocal.KvScope newKvScope = new KvThreadLocal.KvScope(methodWrapper.getKvScope());
             newKvScope.setBusinessId(storyBus.getBusinessId());
             KvThreadLocal.setKvScope(newKvScope);
             Object[] params = paramsSupplier.get();
             return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, params);
+        } catch (Exception e) {
+            if ((e instanceof KstryException) && !(e instanceof BusinessException)) {
+                throw (KstryException) e;
+            }
+
+            BusinessException businessException;
+            if (e instanceof BusinessException) {
+                businessException = GlobalUtil.transferNotEmpty(e, BusinessException.class);
+            } else {
+                businessException = new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), e.getMessage(), e);
+            }
+            businessException.setTaskIdentity(TaskServiceUtil.joinName(serviceTask.getTaskComponent(), serviceTask.getTaskService()));
+            businessException.setMethodName(methodWrapper.getMethod().getName());
+            throw businessException;
         } finally {
             KvThreadLocal.clear();
         }

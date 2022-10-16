@@ -64,7 +64,7 @@ public class FragmentTaskFuture<T> implements FragmentFuture {
         taskCancelled = true;
         boolean success = !future.isCancelled() && future.cancel(true);
         if (success) {
-            LOGGER.warn("[{}] Error occurred. Story task was cancelled! taskName: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getTaskName());
+            LOGGER.info("[{}] Error occurred. Story task was cancelled! taskName: {}", ExceptionEnum.TASK_CANCELLED.getExceptionCode(), getTaskName());
         }
         return true;
     }

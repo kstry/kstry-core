@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -79,6 +78,8 @@ public class StoryEngine {
     }
 
     public <T> TaskResponse<T> fire(StoryRequest<T> storyRequest) {
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, GlobalUtil.getOrSetRequestId(storyRequest));
             preProcessing(storyRequest);
@@ -94,7 +95,7 @@ public class StoryEngine {
             LOGGER.warn(exception.getMessage(), exception);
             return errorResponse;
         } finally {
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
@@ -136,12 +137,14 @@ public class StoryEngine {
     }
 
     public <T> Mono<T> fireAsync(StoryRequest<T> storyRequest) {
+        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        String oldRequestId = MDC.get(requestLogIdKey);
         try {
             MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, GlobalUtil.getOrSetRequestId(storyRequest));
             preProcessing(storyRequest);
             return doFireAsync(storyRequest);
         } finally {
-            MDC.clear();
+            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
@@ -161,12 +164,12 @@ public class StoryEngine {
         MonoFlowTask monoFlowTask = new MonoFlowTask(storyEngineModule, flowRegister, role, storyBus, flowTaskSubscriber);
         AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(monoFlowTask);
         MonoFlowFuture monoFlowFuture = GlobalUtil.transferNotEmpty(adminFuture.getMainTaskFuture(), MonoFlowFuture.class);
-        return monoFlowFuture.getMonoFuture().mapNotNull(t -> {
+        return monoFlowFuture.getMonoFuture().handle((t, sink) -> {
+            String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+            String oldRequestId = MDC.get(requestLogIdKey);
             try {
-                if (!Objects.equals(t, AsyncTaskState.SUCCESS)) {
-                    return null;
-                }
                 MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+                AssertUtil.isTrue(t == AsyncTaskState.SUCCESS, ExceptionEnum.SYSTEM_ERROR);
                 Class<?> returnType = storyRequest.getReturnType();
                 Object result = null;
                 if (returnType != null && storyBus.getResult().isPresent()) {
@@ -175,14 +178,17 @@ public class StoryEngine {
                             "Engine async fire. result type conversion error! expect: {}, actual: {}", returnType.getName(), result.getClass().getName());
                 }
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(storyBus)));
-                return result == null ? null : (T) result;
+                if (result == null) {
+                    return;
+                }
+                sink.next((T) result);
             } catch (Throwable exception) {
                 LOGGER.warn(exception.getMessage(), exception);
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(exception, storyBus)));
-                return null;
+                sink.error(exception);
             } finally {
                 flowRegister.getMonitorTracking().trackingLog();
-                MDC.clear();
+                GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
             }
         });
     }

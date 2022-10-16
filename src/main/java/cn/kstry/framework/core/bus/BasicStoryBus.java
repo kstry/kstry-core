@@ -135,12 +135,12 @@ public class BasicStoryBus implements StoryBus {
         if (scopeTypeEnum == null) {
             return Optional.empty();
         }
-        if (scopeTypeEnum == ScopeTypeEnum.RESULT) {
-            return getResult();
-        }
         ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
+            if (scopeTypeEnum == ScopeTypeEnum.RESULT) {
+                return getResult();
+            }
             if (scopeTypeEnum == ScopeTypeEnum.STABLE) {
                 return PropertyUtil.getProperty(getSta(), key);
             } else if (scopeTypeEnum == ScopeTypeEnum.VARIABLE) {
