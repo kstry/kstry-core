@@ -155,4 +155,5 @@ public class GoodsController {
 <img src="./doc/img/image-20211211145528118.png" alt="image-20211211145528118" style="zoom:70%;" /> 
 
 ## 我想为Kstry提交代码
+[代码提交步骤](https://gitee.com/kstry/kstry-core/blob/master/doc/join-and-coding.md)
 

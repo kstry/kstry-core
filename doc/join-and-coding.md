@@ -1,16 +1,16 @@
 # 我想为Kstry提交代码
-**1、先fork原项目到自己的仓库**
+### **1、先fork原项目到自己的仓库**
 
 <img src="./img/pr/pr-1.1.png" alt="pr-1.1.png" style="zoom:60%;" />
 <img src="./img/pr/pr-1.2.png" alt="pr-1.2.png" style="zoom:40%;" />
 <img src="./img/pr/pr-1.3.png" alt="pr-1.3.png" style="zoom:60%;" />
 
-**2、clone下载fork项目到本地**
+### **2、clone下载fork项目到本地**
 ``` shell
 git clone https://gitee.com/abysscat/kstry-core.git
 ```
 
-**3、本地完成代码修改，提交到远程仓库**
+### **3、本地完成代码修改，提交到远程仓库**
 ``` shell
 git add .
 git commit -m "update test classes directory name"
@@ -26,12 +26,12 @@ git push
 [ISSUE #178] update test classes directory name
 ```
 
-**4、发起 Pull Request**
+### **4、发起 Pull Request**
 
 <img src="./img/pr/pr-4.1.png" alt="pr-4.1.png" style="zoom:60%;" />
 <img src="./img/pr/pr-4.2.png" alt="pr-4.2.png" style="zoom:60%;" />
 
-**5、等待管理员审核**
+### **5、等待管理员审核**
 
 也可主动在kstry交流群联系管理员。审核通过后，即可看到pr已合入：
 
@@ -42,7 +42,7 @@ git push
 
 github流程和gitee基本一致，按找个步骤即可完成pr。
 
-**6、后续：如何将原项目更新同步到fork项目**
+### **6、后续：如何将原项目更新同步到fork项目**
 
 我们经常会通过上面的方式fork开源项目在自己的仓库中更新，然后提交 Pull Request 为开源项目做贡献。
 不过我们经常会遇到原仓库更新，重新 fork 显然是不优雅的，那我们该怎么同步更新呢？基本流程可以参考下图：
