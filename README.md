@@ -81,6 +81,7 @@
 >
 > - [Kstry 使用文档](http://kstry.cn/doc/kstry-specification.html)
 > - [Kstry 使用demo](https://gitee.com/kstry/kstry-demo)
+> - [Kstry 流程注解+flux 使用demo](https://gitee.com/kstry/kstry-flux-demo)
 > - [功能测试](https://gitee.com/kstry/kstry-core/tree/master/src/test/java/cn/kstry/framework/test)
 
 ### 1、配置引入
@@ -89,7 +90,7 @@
 <dependency>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.9</version>
+    <version>1.0.10</version>
 </dependency>
 ```
 
@@ -122,7 +123,30 @@ public class GoodsService {
 
 ### 4、定义bpmn配置文件
 
+#### 方式一：BPMN配置文件定义流程
+
+> bpmn文件（流程图文件）软件：https://camunda.com/download/modeler
+
 <img src="./doc/img/image-20211211151733111.png" alt="image-20211211151733111" style="zoom:70%;" />  
+
+#### 方式二：代码定义流程
+
+> 如果没有BPMN配置文件，全部是代码定义流程时，`@EnableKstry` 注解的  `bpmnPath`  参数可以为空
+>
+> 代码方式也可以定义复杂的执行流程：[代码流程定义演示](https://gitee.com/kstry/kstry-flux-demo/blob/master/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/config/diagram/ProcessDiagramConfiguration.java)
+
+``` java
+@Configuration
+public class ProcessDiagramConfiguration {
+    
+    @Bean
+    public BpmnLink buildShowGoodsLink() {
+        StartBpmnLink bpmnLink = StartBpmnLink.build(SHOW_GOODS_LINK, "展示商品详情");
+		bpmnLink.nextTask("goods", "init-base-info").end();
+        return bpmnLink;
+    }
+}
+```
 
 ### 5、调用执行
 
