@@ -20,9 +20,10 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -39,7 +40,16 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
     /**
      * 开始节点延迟生成器
      */
-    private final Function<Map<String, SubProcess>, StartEvent> startEventBuilder;
+    private Function<Map<String, SubProcess>, StartEvent> startEventBuilder;
+
+    /**
+     * 资源配置信息
+     */
+    private ConfigResource config;
+
+    public SubProcessImpl() {
+
+    }
 
     public SubProcessImpl(Function<Map<String, SubProcess>, StartEvent> startEventBuilder) {
         AssertUtil.notNull(startEventBuilder);
@@ -56,21 +66,41 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
         return BpmnTypeEnum.SUB_PROCESS;
     }
 
-    public SubProcess cloneSubProcess(Map<String, SubProcess> allSubProcess) {
-        SubProcessImpl subProcess = new SubProcessImpl(this.startEventBuilder);
-        subProcess.setId(getId());
-        subProcess.setName(getName());
-        subProcess.strictMode = this.strictMode;
-        subProcess.timeout = this.timeout;
-        subProcess.startEvent = startEventBuilder.apply(allSubProcess);
-        subProcess.elementIterable = this.elementIterable;
-        return subProcess;
+    public SubProcess cloneSubProcess(Map<String, SubProcess> allSubProcess, SubProcessImpl targetSubProcess) {
+        if (targetSubProcess == null) {
+            targetSubProcess = new SubProcessImpl();
+            targetSubProcess.setId(getId());
+        }
+        if (StringUtils.isBlank(targetSubProcess.getName())) {
+            targetSubProcess.setName(getName());
+        }
+        if (targetSubProcess.startEventBuilder == null) {
+            targetSubProcess.startEventBuilder = this.startEventBuilder;
+        }
+        if (targetSubProcess.strictMode == null) {
+            targetSubProcess.strictMode = this.strictMode;
+        }
+        if (targetSubProcess.timeout == null) {
+            targetSubProcess.timeout = this.timeout;
+        }
+        if (targetSubProcess.startEvent == null) {
+            AssertUtil.notNull(startEventBuilder);
+            targetSubProcess.startEvent = startEventBuilder.apply(allSubProcess);
+        }
+        if (targetSubProcess.elementIterable == null) {
+            targetSubProcess.elementIterable = this.elementIterable;
+        }
+        return targetSubProcess;
     }
 
-    public void startEventSupplier(@Nonnull Map<String, SubProcess> allSubProcess) {
+    public ConfigResource getConfig() {
+        return config;
+    }
+
+    public void setConfig(ConfigResource resource) {
+        this.config = resource;
         if (startEvent != null) {
-            return;
+            this.startEvent.setConfig(resource);
         }
-        this.startEvent = startEventBuilder.apply(allSubProcess);
     }
 }

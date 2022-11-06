@@ -20,17 +20,8 @@ package cn.kstry.framework.core.container.processor;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
-import cn.kstry.framework.core.component.utils.BasicInStack;
-import cn.kstry.framework.core.component.utils.InStack;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementPropertyUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
-import com.google.common.collect.Maps;
+import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -38,29 +29,17 @@ import java.util.Optional;
  *
  * @author lykan
  */
-public class ImmutablePostProcessor implements StartEventPostProcessor {
+public class ImmutablePostProcessor extends DiagramTraverseSupport<Object> implements StartEventPostProcessor {
 
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
-        AssertUtil.notNull(startEvent);
-        Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
-        InStack<FlowElement> basicInStack = new BasicInStack<>();
-        basicInStack.push(startEvent);
-        while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
-            if (node instanceof SubProcess) {
-                postStartEvent(GlobalUtil.transferNotEmpty(node, SubProcess.class).getStartEvent());
-            }
-            if (ElementPropertyUtil.isSupportAggregation(node)) {
-                comingCountMap.merge(node, 1, Integer::sum);
-                if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
-                    continue;
-                }
-            }
-            node.immutable();
-            basicInStack.pushList(node.outingList());
-        }
+        traverse(startEvent);
         return Optional.of(startEvent);
+    }
+
+    @Override
+    public void doPlainElement(Object course, FlowElement node, SubProcess subProcess) {
+        node.immutable();
     }
 
     @Override

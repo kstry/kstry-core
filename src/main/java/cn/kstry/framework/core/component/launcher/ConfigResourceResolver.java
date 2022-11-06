@@ -20,6 +20,7 @@ package cn.kstry.framework.core.component.launcher;
 import cn.kstry.framework.core.annotation.EnableKstry;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.BpmnClassPathConfigSource;
+import cn.kstry.framework.core.resource.config.BpmnDiagramConfigSource;
 import cn.kstry.framework.core.resource.config.ConfigSource;
 import cn.kstry.framework.core.resource.config.PropertiesClassPathConfigSource;
 import cn.kstry.framework.core.resource.factory.KValueFactory;
@@ -55,13 +56,18 @@ public class ConfigResourceResolver implements ApplicationContextAware {
 
     @Bean
     @Conditional(ConfigResourceResolver.ClassPathSourceCondition.class)
-    public ConfigSource getClassPathStartEventResource() {
+    public ConfigSource getBpmnClassPathConfigSource() {
         return new BpmnClassPathConfigSource(getBpmnPath(this.applicationContext));
     }
 
     @Bean
+    public ConfigSource getCodeConfigSource() {
+        return new BpmnDiagramConfigSource(this.applicationContext);
+    }
+
+    @Bean
     @Conditional(ConfigResourceResolver.PropertiesSourceCondition.class)
-    public ConfigSource PropertiesClassPathConfigSource() {
+    public ConfigSource getPropertiesClassPathConfigSource() {
         return new PropertiesClassPathConfigSource(getPropertiesPath(this.applicationContext));
     }
 

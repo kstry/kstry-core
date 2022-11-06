@@ -22,17 +22,15 @@ import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.impl.FlowElementImpl;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
 import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;
-import cn.kstry.framework.core.component.utils.BasicInStack;
-import cn.kstry.framework.core.component.utils.InStack;
+import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementPropertyUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * 重排链路
@@ -40,34 +38,20 @@ import java.util.*;
  *
  * @author lykan
  */
-public class RearrangeFlowPostProcessor implements StartEventPostProcessor {
+public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> implements StartEventPostProcessor {
 
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
-
-        Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
-        InStack<FlowElement> basicInStack = new BasicInStack<>();
-        basicInStack.push(startEvent);
-        while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
-            if (node instanceof SubProcess) {
-                postStartEvent(((SubProcess) node).getStartEvent());
-            }
-            if (ElementPropertyUtil.isSupportAggregation(node)) {
-                comingCountMap.merge(node, 1, Integer::sum);
-                if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
-                    continue;
-                }
-            }
-
-            if (node instanceof ServiceTaskSupport) {
-                Optional<ServiceTask> serviceTaskOptional = ((ServiceTaskSupport) node).getServiceTask();
-                serviceTaskOptional.ifPresent(serviceTask -> doSeparateFlowElement(node, serviceTask));
-            }
-            basicInStack.pushList(node.outingList());
-        }
-
+        traverse(startEvent);
         return Optional.of(startEvent);
+    }
+
+    @Override
+    public void doPlainElement(Object course, FlowElement node, SubProcess subProcess) {
+        if (node instanceof ServiceTaskSupport) {
+            Optional<ServiceTask> serviceTaskOptional = ((ServiceTaskSupport) node).getServiceTask();
+            serviceTaskOptional.ifPresent(serviceTask -> doSeparateFlowElement(node, serviceTask));
+        }
     }
 
     private void doSeparateFlowElement(FlowElement node, ServiceTask serviceTask) {

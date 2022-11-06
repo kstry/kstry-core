@@ -17,12 +17,12 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
-import java.util.Optional;
-
 import cn.kstry.framework.core.bpmn.ExclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
+
+import java.util.Optional;
 
 /**
  * ExclusiveGatewayImpl
@@ -32,7 +32,11 @@ public class ExclusiveGatewayImpl extends GatewayImpl implements ExclusiveGatewa
     /**
      * 支持定义 ServiceTask
      */
-    private final ServiceTask serviceTask;
+    private ServiceTask serviceTask;
+
+    public ExclusiveGatewayImpl() {
+
+    }
 
     public ExclusiveGatewayImpl(ServiceTask serviceTask) {
         if (serviceTask != null && serviceTask.validTask()) {
@@ -45,6 +49,12 @@ public class ExclusiveGatewayImpl extends GatewayImpl implements ExclusiveGatewa
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.EXCLUSIVE_GATEWAY;
+    }
+
+    public void setServiceTask(ServiceTask serviceTask) {
+        if (serviceTask != null && serviceTask.validTask()) {
+            this.serviceTask = serviceTask;
+        }
     }
 
     @Override

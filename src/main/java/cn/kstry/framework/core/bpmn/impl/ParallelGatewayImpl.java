@@ -17,7 +17,6 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
-import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.ParallelGateway;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import org.apache.commons.lang3.BooleanUtils;
@@ -31,7 +30,7 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
     /**
      * 支持异步流程
      */
-    private final AsyncFlowElement asyncFlowElement;
+    private final BasicAsyncFlowElement asyncFlowElement;
 
     /**
      * 控制严格模式，默认情况下是严格模式
@@ -39,13 +38,21 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
      */
     private Boolean strictMode;
 
-    public ParallelGatewayImpl(AsyncFlowElement asyncFlowElement) {
+    public ParallelGatewayImpl() {
+        this.asyncFlowElement = new BasicAsyncFlowElement();
+    }
+
+    public ParallelGatewayImpl(BasicAsyncFlowElement asyncFlowElement) {
         this.asyncFlowElement = asyncFlowElement;
     }
 
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.PARALLEL_GATEWAY;
+    }
+
+    public void setOpenAsync(boolean openAsync) {
+        this.asyncFlowElement.setOpenAsync(openAsync);
     }
 
     @Override

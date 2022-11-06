@@ -19,13 +19,20 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.bus.BasicStoryBus;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * BPMN元素迭代器
  */
 public class BasicElementIterable extends BasicAsyncFlowElement implements ElementIterable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicElementIterable.class);
 
     /**
      * 指定需要从 StoryBus 中的什么地方来获取需要迭代的集合
@@ -54,6 +61,7 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
 
     public void setIteSource(String source) {
         if (!ElementParserUtil.isValidDataExpression(source)) {
+            LOGGER.warn("[{}] The set ite-source being iterated over is invalid. source: {}", ExceptionEnum.BPMN_ATTRIBUTE_INVALID.getExceptionCode(), source);
             return;
         }
         this.source = source;

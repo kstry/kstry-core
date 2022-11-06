@@ -22,19 +22,11 @@ import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
-import cn.kstry.framework.core.component.utils.BasicInStack;
-import cn.kstry.framework.core.component.utils.InStack;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementPropertyUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
+import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -42,45 +34,29 @@ import java.util.Optional;
  *
  * @author lykan
  */
-public class IterablePostProcessor implements StartEventPostProcessor {
+public class IterablePostProcessor extends DiagramTraverseSupport<Object> implements StartEventPostProcessor {
 
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
-        AssertUtil.notNull(startEvent);
-        syncIterableProperty(startEvent, null);
+        traverse(startEvent);
         return Optional.of(startEvent);
     }
 
-    private void syncIterableProperty(StartEvent startEvent, SubProcess subProcess) {
-        Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
-        InStack<FlowElement> basicInStack = new BasicInStack<>();
-        basicInStack.push(startEvent);
-        while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
-            if (node instanceof SubProcess) {
-                SubProcess sp = GlobalUtil.transferNotEmpty(node, SubProcess.class);
-                syncIterableProperty(sp.getStartEvent(), sp);
-            }
-            if (ElementPropertyUtil.isSupportAggregation(node)) {
-                comingCountMap.merge(node, 1, Integer::sum);
-                if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
-                    continue;
-                }
-            }
-            if (subProcess != null && subProcess.iterable() && node instanceof ServiceTaskImpl) {
-                ServiceTaskImpl serviceTask = GlobalUtil.transferNotEmpty(node, ServiceTaskImpl.class);
-                BasicElementIterable beIterable = serviceTask.buildElementIterable();
-                if (StringUtils.isBlank(beIterable.getIteSource())) {
-                    beIterable.setIteSource(subProcess.getIteSource());
-                }
-                if (beIterable.openAsync() == null) {
-                    beIterable.setOpenAsync(BooleanUtils.isTrue(subProcess.openAsync()));
-                }
-                if (beIterable.getIteStrategy() == null) {
-                    beIterable.setIteStrategy(subProcess.getIteStrategy());
-                }
-            }
-            basicInStack.pushList(node.outingList());
+    @Override
+    public void doPlainElement(Object course, FlowElement node, SubProcess subProcess) {
+        if (subProcess == null || !subProcess.iterable() || !(node instanceof ServiceTaskImpl)) {
+            return;
+        }
+        ServiceTaskImpl serviceTask = GlobalUtil.transferNotEmpty(node, ServiceTaskImpl.class);
+        BasicElementIterable beIterable = serviceTask.buildElementIterable();
+        if (StringUtils.isBlank(beIterable.getIteSource())) {
+            beIterable.setIteSource(subProcess.getIteSource());
+        }
+        if (beIterable.openAsync() == null) {
+            beIterable.setOpenAsync(BooleanUtils.isTrue(subProcess.openAsync()));
+        }
+        if (beIterable.getIteStrategy() == null) {
+            beIterable.setIteStrategy(subProcess.getIteStrategy());
         }
     }
 

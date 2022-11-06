@@ -27,7 +27,6 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.resource.service.ServiceNodeResourceItem;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -114,35 +113,12 @@ public abstract class TaskComponentRepository implements TaskContainer {
             if (demotionResource == null) {
                 return;
             }
+
             MethodWrapper methodWrapper = registeredServiceNodeResource.get(demotionResource);
             if (methodWrapper == null) {
                 LOGGER.warn("[{}] Service node not matched to demotion policy! identityId: {}, demotion: {}",
                         ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), k.getIdentityId(), demotionResource.getIdentityId());
                 invokeProperties.invalidDemotion();
-                return;
-            }
-            if (!ElementParserUtil.isAssignable(methodWrapper.getMethod().getReturnType(), v.getMethod().getReturnType())) {
-                LOGGER.warn("[{}] The return type of the demotion method and the main method do not match! identityId: {}, demotion: {}",
-                        ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), k.getIdentityId(), demotionResource.getIdentityId());
-                invokeProperties.invalidDemotion();
-                return;
-            }
-            Class<?>[] demotionMethodTypes = methodWrapper.getMethod().getParameterTypes();
-            Class<?>[] mainMethodTypes = v.getMethod().getParameterTypes();
-            if (mainMethodTypes.length != demotionMethodTypes.length) {
-                LOGGER.warn("[{}] The parameters of the demotion method and the main method do not match! identityId: {}, demotion: {}",
-                        ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), k.getIdentityId(), demotionResource.getIdentityId());
-                invokeProperties.invalidDemotion();
-                return;
-            }
-            for (int i = 0; i < mainMethodTypes.length; i++) {
-                if (ElementParserUtil.isAssignable(demotionMethodTypes[i], mainMethodTypes[i])) {
-                    continue;
-                }
-                LOGGER.warn("[{}] The parameters of the demotion method and the main method do not match! identityId: {}, demotion: {}",
-                        ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), k.getIdentityId(), demotionResource.getIdentityId());
-                invokeProperties.invalidDemotion();
-                break;
             }
         });
     }

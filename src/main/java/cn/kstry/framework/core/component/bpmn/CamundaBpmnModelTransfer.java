@@ -17,10 +17,7 @@
  */
 package cn.kstry.framework.core.component.bpmn;
 
-import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.SequenceFlow;
-import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.impl.*;
 import cn.kstry.framework.core.component.utils.BasicInStack;
@@ -90,7 +87,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         subProcesses.forEach(sp -> {
             SubProcess subProcess = getKstrySubProcess(config, sp);
             AssertUtil.notTrue(subProcessMap.containsKey(subProcess.getId()), ExceptionEnum.ELEMENT_DUPLICATION_ERROR,
-                    "There are duplicate SubProcess ids defined! id: {}, fileName: {}", subProcess.getId(), config.getConfigName());
+                    "There are duplicate SubProcess ids defined! identity: {}, fileName: {}", subProcess.identity(), config.getConfigName());
             subProcessMap.put(subProcess.getId(), subProcess);
         });
         return subProcessMap;
@@ -129,7 +126,9 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
                 BpmnMappingItem item = getCacheMappingItem(bpmnMappingItemCache, targetNode, kstryNode);
                 mappingItem.getKstryElement().outing(item.getKstryElement());
                 basicInStack.push(item);
-
+                if (kstryNode instanceof SubProcess && !allSubProcess.containsKey(kstryNode.getId())) {
+                    allSubProcess.put(kstryNode.getId(), GlobalUtil.transferNotEmpty(kstryNode, SubProcess.class));
+                }
             } else if (mappingItem.getCamundaElement() instanceof FlowNode) {
                 List<BpmnMappingItem> itemList = ((FlowNode) mappingItem.getCamundaElement()).getOutgoing().stream()
                         .map(flow -> {
@@ -237,7 +236,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
             bpmnMappingItemCache.put(element.getId(), item);
         } else {
             AssertUtil.isTrue(GlobalConstant.ELEMENT_MAX_OCCUR_NUMBER >= item.getOccurNumber(), ExceptionEnum.CONFIGURATION_FLOW_ERROR,
-                    "Duplicate calls between elements are not allowed! elementId: {}", item.getKstryElement().getId());
+                    "Duplicate calls between elements are not allowed! element identity: {}", item.getKstryElement().identity());
             item.occurNumberIncrement();
         }
         return item;
@@ -248,8 +247,8 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
                 "CallActivity element id cannot be empty!, fileName: {}", config.getConfigName());
         SubProcess subProcess = allSubProcess.get(calledElementId);
         AssertUtil.notNull(subProcess, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR,
-                "CallActivity element id cannot match to SubProcess instance!, fileName: {}, calledElementId: {}", config.getConfigName(), calledElementId);
-        return GlobalUtil.transferNotEmpty(subProcess, SubProcessImpl.class).cloneSubProcess(allSubProcess);
+                "CallActivity element id cannot match to SubProcess instance! fileName: {}, calledElementId: {}", config.getConfigName(), calledElementId);
+        return GlobalUtil.transferNotEmpty(subProcess, SubProcessImpl.class).cloneSubProcess(allSubProcess, null);
     }
 
     private SubProcess getKstrySubProcess(ConfigResource config, org.camunda.bpm.model.bpmn.instance.SubProcess sp) {

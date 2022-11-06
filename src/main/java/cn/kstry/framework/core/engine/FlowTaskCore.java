@@ -105,7 +105,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         }
         TaskServiceDef taskServiceDef = taskServiceDefOptional.orElseThrow(() ->
                 ExceptionUtil.buildException(null, ExceptionEnum.TASK_SERVICE_MATCH_ERROR, ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc()
-                        + GlobalUtil.format(" service task id: {}, name: {}", serviceTask.getId(), serviceTask.getName())));
+                        + GlobalUtil.format(" service task identity: {}", serviceTask.identity())));
         flowRegister.getMonitorTracking().getServiceNodeTracking(flowElement).ifPresent(nodeTracking -> {
             MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
             nodeTracking.setMethodName(methodWrapper.getMethod().getName());
@@ -282,7 +282,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         }
         taskServiceDef = taskServiceDefOptional.orElseThrow(() ->
                 ExceptionUtil.buildException(null, ExceptionEnum.TASK_SERVICE_MATCH_ERROR, ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc()
-                        + GlobalUtil.format(" service task id: {}, name: {}", serviceTask.getId(), serviceTask.getName())));
+                        + GlobalUtil.format(" service task identity: {}", serviceTask.identity())));
         doInvokeMethod(serviceTask, taskServiceDef, scopeData, role);
     }
 

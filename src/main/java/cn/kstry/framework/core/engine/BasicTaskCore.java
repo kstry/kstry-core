@@ -35,6 +35,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -125,18 +126,25 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             if (!d.getClass().isArray()) {
                 return d;
             }
-            Object[] dArray = (Object[]) d;
+            int arrLength = Array.getLength(d);
+            if (arrLength == 0) {
+                return null;
+            }
+            Object[] dArray = new Object[arrLength];
+            for (int i = 0; i < arrLength; i++) {
+                dArray[i] = Array.get(d, i);
+            }
             return Stream.of(dArray).filter(Objects::nonNull).collect(Collectors.toList());
         }).filter(d -> d instanceof Iterable);
         if (!iteData.isPresent()) {
-            LOGGER.info("[{}] {} taskName:{}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
-                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.getName());
+            LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
+                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), serviceTask.getIteSource());
             return null;
         }
         Iterator<?> iterator = GlobalUtil.transferNotEmpty(iteData.get(), Iterable.class).iterator();
         if (!iterator.hasNext()) {
-            LOGGER.info("[{}] {} taskName:{}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
-                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.getName());
+            LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
+                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), serviceTask.getIteSource());
             return null;
         }
 
@@ -188,7 +196,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             if (!serviceTask.iterable() || serviceTask.getIteStrategy() == null || serviceTask.getIteStrategy() == IterateStrategyEnum.ALL_SUCCESS) {
                 throw e;
             }
-            LOGGER.warn("[{}] {} taskName:{}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(), ExceptionEnum.ITERATE_ITEM_ERROR.getDesc(), serviceTask.getName(), e);
+            LOGGER.warn("[{}] {} identity: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(), ExceptionEnum.ITERATE_ITEM_ERROR.getDesc(), serviceTask.identity(), e);
             return INVOKE_ERROR_SIGN;
         } finally {
             IteratorThreadLocal.clear();

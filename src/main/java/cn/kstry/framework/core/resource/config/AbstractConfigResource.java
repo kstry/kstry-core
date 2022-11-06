@@ -21,8 +21,6 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import java.io.InputStream;
@@ -33,27 +31,21 @@ import java.net.URI;
  */
 public class AbstractConfigResource implements ConfigResource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConfigResource.class);
-
     /**
      * 配置文件名
      */
     private final String configName;
 
-    /**
-     * 配置文件 URI
-     */
-    private final URI configUri;
+    private final URI uri;
 
     public AbstractConfigResource(Resource resource) {
         AssertUtil.notNull(resource, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR);
         try {
             this.configName = resource.getFilename();
-            this.configUri = resource.getURI();
+            this.uri = resource.getURI();
             InputStream inputStream = resource.getInputStream();
             AssertUtil.notBlank(configName, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR);
-            AssertUtil.anyNotNull(configUri, inputStream, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR);
-            LOGGER.info("Load bpmn resource. path: {}", getConfigUri());
+            AssertUtil.anyNotNull(resource.getURI(), inputStream, ExceptionEnum.CONFIGURATION_RESOURCE_ERROR);
             init(resource, inputStream);
             inputStream.close();
         } catch (KstryException e) {
@@ -73,13 +65,12 @@ public class AbstractConfigResource implements ConfigResource {
         // DO NOTHING
     }
 
-    @Override
-    public String getConfigName() {
-        return configName;
+    public URI getUri() {
+        return uri;
     }
 
     @Override
-    public URI getConfigUri() {
-        return configUri;
+    public String getConfigName() {
+        return configName;
     }
 }

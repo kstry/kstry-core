@@ -123,6 +123,11 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
     }
 
     @Override
+    public String identity() {
+        return GlobalUtil.format("{}:[id:{}, name:{}]", getElementType(), getId(), getName());
+    }
+
+    @Override
     public void setId(String id) {
         AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         super.setId(id);

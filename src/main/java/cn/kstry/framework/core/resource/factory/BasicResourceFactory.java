@@ -17,20 +17,18 @@
  */
 package cn.kstry.framework.core.resource.factory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
-import org.springframework.context.ApplicationContext;
-
-import com.google.common.collect.Lists;
-
 import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.resource.config.ConfigSource;
 import cn.kstry.framework.core.util.AssertUtil;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
+import org.springframework.context.ApplicationContext;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author lykan

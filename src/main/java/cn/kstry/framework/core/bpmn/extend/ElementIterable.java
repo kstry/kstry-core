@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.bpmn.extend;
 
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
+import cn.kstry.framework.core.component.bpmn.builder.IterablePropertyBuilder;
 
 /**
  * BPMN元素迭代器
@@ -53,4 +54,14 @@ public interface ElementIterable extends AsyncFlowElement {
      * @return boolean
      */
     boolean iterable();
+
+    /**
+     * 迭代器构建器
+     *
+     * @param iteSource 迭代资源地址
+     * @return 构建器
+     */
+    static IterablePropertyBuilder builder(String iteSource) {
+        return new IterablePropertyBuilder(iteSource);
+    }
 }

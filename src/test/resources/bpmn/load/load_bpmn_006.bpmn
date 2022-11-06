@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1mfw59v" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1mfw59v" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:process id="Process_0yfc5zp" isExecutable="true">
     <bpmn:startEvent id="story-def-load_error_01">
       <bpmn:outgoing>Flow_0dq8ufs</bpmn:outgoing>
@@ -9,6 +9,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="allow-absent" value="true" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0dq8ufs</bpmn:incoming>
@@ -21,6 +22,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="allow-absent" value="true" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1dfv6du</bpmn:incoming>
@@ -32,6 +34,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="allow-absent" value="true" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1i68hwa</bpmn:incoming>
@@ -51,9 +54,6 @@
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0yfc5zp">
-      <bpmndi:BPMNShape id="TextAnnotation_1hms5f2_di" bpmnElement="TextAnnotation_1hms5f2">
-        <dc:Bounds x="160" y="120" width="100" height="54" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1muw528_di" bpmnElement="Flow_1muw528">
         <di:waypoint x="600" y="120" />
         <di:waypoint x="672" y="120" />
@@ -92,6 +92,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0g90g45_di" bpmnElement="Event_0g90g45">
         <dc:Bounds x="672" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1hms5f2_di" bpmnElement="TextAnnotation_1hms5f2">
+        <dc:Bounds x="160" y="120" width="100" height="54" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Association_1bzmrc0_di" bpmnElement="Association_1bzmrc0">
         <di:waypoint x="244" y="223" />
