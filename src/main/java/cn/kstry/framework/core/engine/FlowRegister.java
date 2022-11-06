@@ -237,7 +237,7 @@ public class FlowRegister {
         List<FlowElement> flowList =
                 elementOptional.get().outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {
-            AssertUtil.notEmpty(flowList, ExceptionEnum.STORY_FLOW_ERROR, "Match to the next process node as empty! taskId: {}", currentFlowElement.getId());
+            AssertUtil.notEmpty(flowList, ExceptionEnum.STORY_FLOW_ERROR, "Match to the next process node as empty! identity: {}", currentFlowElement.identity());
         }
 
         // 开启异步流程
@@ -279,7 +279,7 @@ public class FlowRegister {
                         notNeedPeekSequenceFlow.getIndex()) || Objects.equals(e.getIndex(), notNeedPeekSequenceFlow.getIndex())).collect(Collectors.toList());
                 if (endElement instanceof ParallelGateway && ((ParallelGateway) endElement).isStrictMode() && CollectionUtils.isNotEmpty(comingList)) {
                     throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_FLOW_ERROR, GlobalUtil.format(
-                            "A process branch that cannot reach the ParallelGateway appears! sequenceFlowId: {}", notNeedPeekSequenceFlow.getId()));
+                            "A process branch that cannot reach the ParallelGateway appears! identity: {}", notNeedPeekSequenceFlow.identity()));
                 }
                 comingList.forEach(coming -> {
                     ElementAllowNextEnum allowNextEnum = PeekStrategyRepository.allowDoNext(endElement, coming, contextStoryBus, false);
@@ -287,7 +287,7 @@ public class FlowRegister {
                         AssertUtil.isTrue(coming instanceof SequenceFlow);
                         flowElementStack.push(coming.comingList().get(0), coming);
                         LOGGER.debug("The last incoming degree is executed, " +
-                                "opening the next event flow! eventId: {}, comingId: {}", endElement.getId(), coming.getId());
+                                "opening the next event flow! event: {}, coming: {}", endElement.identity(), coming.identity());
                     } else if (allowNextEnum == ElementAllowNextEnum.NOT_ALLOW_NEX_NEED_COMPENSATE) {
                         processNotMatchElement(contextStoryBus, Lists.newArrayList(), endElement);
                     }

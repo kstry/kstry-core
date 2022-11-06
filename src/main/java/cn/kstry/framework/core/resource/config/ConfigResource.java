@@ -17,8 +17,6 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import java.net.URI;
-
 /**
  * 配置文件定义
  *
@@ -32,11 +30,4 @@ public interface ConfigResource {
      * @return 配置文件名称
      */
     String getConfigName();
-
-    /**
-     * 获取配置文件资源符
-     *
-     * @return 配置文件资源符
-     */
-    URI getConfigUri();
 }

@@ -17,7 +17,10 @@
  */
 package cn.kstry.framework.core.bpmn;
 
+import cn.kstry.framework.core.component.bpmn.builder.ServiceTaskBuilder;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * ServiceTask
@@ -56,4 +59,27 @@ public interface ServiceTask extends Task {
      * @return allowAbsent 默认不跳过
      */
     boolean allowAbsent();
+
+    /**
+     * 获取Service Task 构造器
+     *
+     * @return ServiceTaskBuilder
+     */
+    static ServiceTaskBuilder builder() {
+        return builder(null);
+    }
+
+    /**
+     * 获取Service Task 构造器
+     *
+     * @param id service task id
+     * @return ServiceTaskBuilder
+     */
+    static ServiceTaskBuilder builder(String id) {
+        ServiceTaskBuilder serviceTaskBuilder = new ServiceTaskBuilder();
+        if (StringUtils.isBlank(id)) {
+            id = GlobalUtil.uuid();
+        }
+        return serviceTaskBuilder.id(id);
+    }
 }

@@ -17,63 +17,73 @@
  */
 package cn.kstry.framework.core.container.processor;
 
-import cn.kstry.framework.core.bpmn.EndEvent;
-import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.bpmn.SubProcess;
-import cn.kstry.framework.core.component.utils.BasicInStack;
+import cn.kstry.framework.core.bpmn.*;
+import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.component.utils.InStack;
+import cn.kstry.framework.core.container.component.TaskContainer;
+import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
+import cn.kstry.framework.core.role.ServiceTaskRole;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementPropertyUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
-import com.google.common.collect.Maps;
+import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Sets;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * 校验流程是否非法
- *  - 包含网关、并行网关、结束事件支持多入度，其他元素均不支持多入度
- *  - 一个流程中有且仅能有一个结束事件
+ * - 包含网关、并行网关、结束事件支持多入度，其他元素均不支持多入度
+ * - 一个流程中有且仅能有一个结束事件
  *
  * @author lykan
  */
-public class VerifyFlowPostProcessor implements StartEventPostProcessor {
+public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent>> implements StartEventPostProcessor {
+
+    private final TaskContainer taskContainer;
+
+    public VerifyFlowPostProcessor(ApplicationContext applicationContext) {
+        super(Sets::newHashSet, true);
+        Map<String, TaskContainer> taskContainerMap = applicationContext.getBeansOfType(TaskContainer.class);
+        AssertUtil.oneSize(taskContainerMap.values());
+        taskContainer = taskContainerMap.values().iterator().next();
+    }
 
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
-
-        Set<EndEvent> endEventSet = Sets.newHashSet();
-        Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
-        InStack<FlowElement> basicInStack = new BasicInStack<>();
-        basicInStack.push(startEvent);
-        while (!basicInStack.isEmpty()) {
-            FlowElement node = basicInStack.pop().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
-            if (node instanceof SubProcess) {
-                postStartEvent(((SubProcess) node).getStartEvent());
-            }
-            if (ElementPropertyUtil.isSupportAggregation(node)) {
-                comingCountMap.merge(node, 1, Integer::sum);
-                if (!Objects.equals(comingCountMap.get(node), node.comingList().size())) {
-                    AssertUtil.isTrue(comingCountMap.get(node) < node.comingList().size() && basicInStack.peek().isPresent(),
-                            ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Wrong branch in the path of an element! bpmnId: {}, fileName: {}",
-                            node.getId(), startEvent.getConfig().map(ConfigResource::getConfigName).orElse(null));
-                    continue;
-                }
-            }
-            if (node instanceof EndEvent) {
-                endEventSet.add((EndEvent) node);
-            }
-            basicInStack.pushList(node.outingList());
-        }
-        AssertUtil.oneSize(endEventSet, ExceptionEnum.CONFIGURATION_FLOW_ERROR, "EndEvent must appear and can only appear once! fileName: {}",
-                startEvent.getConfig().map(ConfigResource::getConfigName).orElse(null));
+        traverse(startEvent);
         return Optional.of(startEvent);
+    }
+
+    @Override
+    public void doAggregationBack(InStack<FlowElement> inStack, Map<FlowElement, Integer> comingCountMap, StartEvent startEvent, FlowElement node) {
+        AssertUtil.isTrue(comingCountMap.get(node) < node.comingList().size() && inStack.peek().isPresent(),
+                ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Wrong branch in the path of an element! identity: {}, fileName: {}",
+                node.identity(), startEvent.getConfig().map(ConfigResource::getConfigName).orElse(null));
+    }
+
+    @Override
+    public void doPlainElement(Set<EndEvent> endEventSet, FlowElement node, SubProcess subProcess) {
+        if (node instanceof EndEvent) {
+            endEventSet.add((EndEvent) node);
+        }
+        if (node instanceof ServiceTask) {
+            ServiceTask serviceTask = GlobalUtil.transferNotEmpty(node, ServiceTask.class);
+            if (!serviceTask.allowAbsent()) {
+                Optional<TaskServiceDef> taskDefOptional = taskContainer.getTaskServiceDef(serviceTask.getTaskComponent(), serviceTask.getTaskService(), new ServiceTaskRole());
+                AssertUtil.isTrue(taskDefOptional.isPresent(), ExceptionEnum.TASK_SERVICE_MATCH_ERROR,
+                        ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc() + GlobalUtil.format(" service task identity: {}", serviceTask.identity()));
+            }
+        }
+    }
+
+    @Override
+    public void doLast(Set<EndEvent> endEventSet, StartEvent startEvent) {
+        AssertUtil.oneSize(endEventSet, ExceptionEnum.CONFIGURATION_FLOW_ERROR, "EndEvent must appear and can only appear once! startEventId: {}, fileName: {}",
+                startEvent.getId(), startEvent.getConfig().map(ConfigResource::getConfigName).orElse(null));
     }
 
     @Override

@@ -23,6 +23,8 @@ package cn.kstry.framework.core.enums;
  */
 public enum ResourceTypeEnum {
 
+    BPMN_DIAGRAM,
+
     BPMN,
 
     PROPERTIES

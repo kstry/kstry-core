@@ -92,14 +92,14 @@ public class EndTaskPedometer {
         if (remove) {
             taskCountDownLatch.countDown();
         }
-        LOGGER.debug("End task pedometer completed a branch. result: {}, taskName: {}, elementId: {}, latch count: {}",
-                remove, taskName, flowElement.getId(), taskCountDownLatch.getCount());
+        LOGGER.debug("End task pedometer completed a branch. result: {}, taskName: {}, identity: {}, latch count: {}",
+                remove, taskName, flowElement.identity(), taskCountDownLatch.getCount());
         if (taskCountDownLatch.getCount() > 0) {
             return;
         }
         if (this.completedHook != null) {
-            LOGGER.debug("End task pedometer completed all branch. start asynchronous notification of results. taskName: {}, elementId: {}, latch count: {}",
-                    taskName, flowElement.getId(), taskCountDownLatch.getCount());
+            LOGGER.debug("End task pedometer completed all branch. start asynchronous notification of results. taskName: {}, identity: {}, latch count: {}",
+                    taskName, flowElement.identity(), taskCountDownLatch.getCount());
             this.completedHook.trigger();
         }
     }

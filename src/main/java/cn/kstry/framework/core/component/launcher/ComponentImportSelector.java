@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.launcher;
 
 import cn.kstry.framework.core.container.processor.*;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
@@ -52,7 +53,12 @@ public class ComponentImportSelector {
     }
 
     @Bean
-    public StartEventPostProcessor getVerifyFlowPostProcessor() {
-        return new VerifyFlowPostProcessor();
+    public StartEventPostProcessor getVerifyFlowPostProcessor(ApplicationContext applicationContext) {
+        return new VerifyFlowPostProcessor(applicationContext);
+    }
+
+    @Bean
+    public SpringBpmnDiagramRegister springBpmnDiagramRegister(ApplicationContext applicationContext) {
+        return new SpringBpmnDiagramRegister(applicationContext);
     }
 }

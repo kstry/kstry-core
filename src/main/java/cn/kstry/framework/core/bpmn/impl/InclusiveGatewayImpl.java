@@ -17,13 +17,12 @@
  */
 package cn.kstry.framework.core.bpmn.impl;
 
-import java.util.Optional;
-
-import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.InclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
+
+import java.util.Optional;
 
 /**
  * InclusiveGatewayImpl
@@ -33,19 +32,19 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
     /**
      * 支持异步流程
      */
-    private final AsyncFlowElement asyncFlowElement;
+    private final BasicAsyncFlowElement asyncFlowElement;
 
     /**
      * 支持定义 ServiceTask
      */
-    private final ServiceTask serviceTask;
+    private ServiceTask serviceTask;
 
     public InclusiveGatewayImpl() {
         this.asyncFlowElement = new BasicAsyncFlowElement();
         this.serviceTask = null;
     }
 
-    public InclusiveGatewayImpl(AsyncFlowElement asyncFlowElement, ServiceTask serviceTask) {
+    public InclusiveGatewayImpl(BasicAsyncFlowElement asyncFlowElement, ServiceTask serviceTask) {
         if (serviceTask != null && serviceTask.validTask()) {
             this.serviceTask = serviceTask;
         } else {
@@ -62,6 +61,16 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
     @Override
     public Boolean openAsync() {
         return asyncFlowElement.openAsync();
+    }
+
+    public void setOpenAsync(boolean openAsync) {
+        this.asyncFlowElement.setOpenAsync(openAsync);
+    }
+
+    public void setServiceTask(ServiceTask serviceTask) {
+        if (serviceTask != null && serviceTask.validTask()) {
+            this.serviceTask = serviceTask;
+        }
     }
 
     @Override

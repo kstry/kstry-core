@@ -17,22 +17,24 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import java.util.List;
-import java.util.Map;
-
+import cn.kstry.framework.core.kv.BasicKValue;
+import cn.kstry.framework.core.util.GlobalUtil;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.core.io.Resource;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import cn.kstry.framework.core.kv.BasicKValue;
-import cn.kstry.framework.core.util.GlobalUtil;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author lykan
  */
 public class BasicPropertiesConfigResource extends AbstractConfigResource implements PropertiesConfigResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicPropertiesConfigResource.class);
 
     /**
      * 资源
@@ -42,6 +44,7 @@ public class BasicPropertiesConfigResource extends AbstractConfigResource implem
     public BasicPropertiesConfigResource(Resource resource) {
         super(resource);
         this.resource = resource;
+        LOGGER.info("Load properties resource. path: {}", getUri());
     }
 
     @SuppressWarnings("unchecked")

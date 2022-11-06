@@ -31,6 +31,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import java.io.InputStream;
@@ -47,6 +49,8 @@ import java.util.stream.Collectors;
  */
 public class BasicBpmnConfigResource extends AbstractConfigResource implements BpmnConfigResource {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicBpmnConfigResource.class);
+
     /**
      * BPMN 文件解析器Camunda
      */
@@ -59,6 +63,7 @@ public class BasicBpmnConfigResource extends AbstractConfigResource implements B
 
     public BasicBpmnConfigResource(Resource resource) {
         super(resource);
+        LOGGER.info("Load bpmn resource. path: {}", getUri());
     }
 
     @Override
@@ -67,7 +72,8 @@ public class BasicBpmnConfigResource extends AbstractConfigResource implements B
             this.modelInstance = Bpmn.readModelFromStream(inputStream);
             AssertUtil.notNull(this.modelInstance);
         } catch (Throwable e) {
-            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}", getConfigName()));
+            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}",
+                    getConfigName()));
         }
     }
 

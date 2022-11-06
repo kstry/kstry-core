@@ -20,17 +20,23 @@ package cn.kstry.framework.core.resource.factory;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
+import cn.kstry.framework.core.component.bpmn.BpmnDiagramRegister;
+import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
+import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
 import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.BpmnConfigResource;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.util.List;
@@ -44,6 +50,8 @@ import java.util.stream.Collectors;
  */
 public class StartEventFactory extends BasicResourceFactory<StartEvent> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StartEventFactory.class);
+
     public StartEventFactory(ApplicationContext applicationContext) {
         super(applicationContext);
     }
@@ -51,13 +59,60 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
     @Override
     public List<StartEvent> getResourceList() {
         List<ConfigResource> configResourceList = getConfigResource(ResourceTypeEnum.BPMN);
-        if (CollectionUtils.isEmpty(configResourceList)) {
+        List<ConfigResource> diagramConfigResourceList = getConfigResource(ResourceTypeEnum.BPMN_DIAGRAM);
+        if (CollectionUtils.isEmpty(configResourceList) && CollectionUtils.isEmpty(diagramConfigResourceList)) {
             return Lists.newArrayList();
         }
 
-        Map<String, SubProcess> allSubProcess = Maps.newHashMap();
         List<BpmnConfigResource> bpmnResourceList =
                 configResourceList.stream().map(c -> GlobalUtil.transferNotEmpty(c, BpmnConfigResource.class)).collect(Collectors.toList());
+        List<BpmnDiagramRegister> bpmnDiagramResourceList =
+                diagramConfigResourceList.stream().map(r -> GlobalUtil.transferNotEmpty(r, BpmnDiagramRegister.class)).collect(Collectors.toList());
+
+        Map<String, SubProcess> allSubProcess = getAllSubProcessMap(bpmnResourceList, bpmnDiagramResourceList);
+        List<StartEvent> list = getStartEvents(allSubProcess, bpmnResourceList, bpmnDiagramResourceList);
+        notDuplicateCheck(list);
+        return list;
+    }
+
+    private static void notDuplicateCheck(List<StartEvent> list) {
+        List<StartEvent> duplicateList = list.stream().collect(Collectors.toMap(e -> e, e -> 1, Integer::sum))
+                .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(duplicateList)) {
+            return;
+        }
+        StartEvent es = duplicateList.get(0);
+        String fileName = es.getConfig().map(ConfigResource::getConfigName).orElse(null);
+        throw ExceptionUtil.buildException(null, ExceptionEnum.ELEMENT_DUPLICATION_ERROR,
+                GlobalUtil.format("There are duplicate start event ids defined! identity: {}, fileName: {}", es.identity(), fileName));
+    }
+
+    private List<StartEvent> getStartEvents(Map<String, SubProcess> allSubProcess, List<BpmnConfigResource> bpmnResourceList, List<BpmnDiagramRegister> bpmnDiagramResourceList) {
+        List<StartEvent> startEventList = bpmnResourceList.stream().flatMap(bpmnResource -> bpmnResource.getStartEventList(allSubProcess).stream()).collect(Collectors.toList());
+        for (BpmnDiagramRegister bpmnDiagramRegister : bpmnDiagramResourceList) {
+            List<BpmnLink> bpmnLinkList = Lists.newArrayList();
+            bpmnDiagramRegister.registerDiagram(bpmnLinkList);
+            if (CollectionUtils.isEmpty(bpmnLinkList)) {
+                continue;
+            }
+            LOGGER.info("Load bpmn code register. name: {}", bpmnDiagramRegister.getConfigName());
+            List<StartEvent> sList = Lists.newArrayList();
+            for (BpmnLink bpmnLink : bpmnLinkList) {
+                if (bpmnLink == null) {
+                    continue;
+                }
+                StartEvent startEvent = bpmnLink.getElement();
+                startEvent.setConfig(bpmnDiagramRegister);
+                ElementParserUtil.fillSubProcess(allSubProcess, startEvent);
+                sList.add(startEvent);
+            }
+            startEventList.addAll(sList);
+        }
+        return startEventList;
+    }
+
+    private Map<String, SubProcess> getAllSubProcessMap(List<BpmnConfigResource> bpmnResourceList, List<BpmnDiagramRegister> bpmnDiagramResourceList) {
+        Map<String, SubProcess> allSubProcess = Maps.newHashMap();
         bpmnResourceList.forEach(bpmnResource -> {
             Map<String, SubProcess> sbMap = bpmnResource.getSubProcessMap();
             if (MapUtils.isEmpty(sbMap)) {
@@ -70,21 +125,19 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
             });
         });
 
-        allSubProcess.values().forEach(subProcess -> {
-            SubProcessImpl impl = GlobalUtil.transferNotEmpty(subProcess, SubProcessImpl.class);
-            impl.startEventSupplier(allSubProcess);
+        bpmnDiagramResourceList.forEach(diagramConfig -> {
+            List<SubProcessLink> subLinkBuilderList = Lists.newArrayList();
+            diagramConfig.registerSubDiagram(subLinkBuilderList);
+            if (CollectionUtils.isEmpty(subLinkBuilderList)) {
+                return;
+            }
+            subLinkBuilderList.forEach(linkBuilder -> {
+                SubProcessImpl subProcess = linkBuilder.buildSubDiagramBpmnLink(diagramConfig).getElement();
+                AssertUtil.notTrue(allSubProcess.containsKey(subProcess.getId()),
+                        ExceptionEnum.ELEMENT_DUPLICATION_ERROR, "There are duplicate SubProcess ids defined! identity: {}", subProcess.identity());
+                allSubProcess.put(subProcess.getId(), subProcess);
+            });
         });
-
-        List<StartEvent> list = bpmnResourceList.stream()
-                .flatMap(bpmnResource -> bpmnResource.getStartEventList(allSubProcess).stream()).collect(Collectors.toList());
-        List<StartEvent> duplicateList = list.stream().collect(Collectors.toMap(e -> e, e -> 1, Integer::sum))
-                .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(duplicateList)) {
-            StartEvent es = duplicateList.get(0);
-            String fileName = es.getConfig().map(ConfigResource::getConfigName).orElse(null);
-            throw ExceptionUtil.buildException(null, ExceptionEnum.ELEMENT_DUPLICATION_ERROR,
-                    GlobalUtil.format("There are duplicate start event ids defined! id: {}, fileName: {}", es.getId(), fileName));
-        }
-        return list;
+        return allSubProcess;
     }
 }

@@ -18,6 +18,10 @@
 package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
+import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
@@ -258,5 +262,17 @@ public class ElementParserUtil {
             return true;
         }
         return Pattern.matches(GlobalConstant.VALID_DATA_EXPRESSION_PATTERN, expression);
+    }
+
+    public static void fillSubProcess(Map<String, SubProcess> allSubProcess, StartEvent startEvent) {
+        new DiagramTraverseSupport<Object>() {
+
+            @Override
+            public void doSubProcess(SubProcessImpl subProcess) {
+                SubProcessImpl sp = (SubProcessImpl) allSubProcess.get(subProcess.getId());
+                AssertUtil.notNull(sp, ExceptionEnum.CONFIGURATION_SUBPROCESS_ERROR, "Element id cannot match to SubProcess instance! calledElement identity: {}", subProcess.identity());
+                sp.cloneSubProcess(allSubProcess, subProcess);
+            }
+        }.traverse(startEvent);
     }
 }

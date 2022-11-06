@@ -131,6 +131,11 @@ public enum ExceptionEnum {
      */
     BPMN_ATTRIBUTE_INVALID(ExceptionTypeEnum.CONFIG, "0009", "The bpmn element attribute is invalid!"),
 
+    /**
+     * [K1030010] 代码方式配置BPMN执行线路存在异常
+     */
+    BPMN_DIAGRAM_LINK_ERROR(ExceptionTypeEnum.CONFIG, "0010", "There is an exception in the code way to configure BPMN execution line!"),
+
     ///////////////////////////////////////////////// CONFIG END /////////////////////////////////////////////////
 
     /**

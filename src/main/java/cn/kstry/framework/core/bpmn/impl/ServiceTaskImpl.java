@@ -19,8 +19,8 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -112,6 +112,11 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
             return;
         }
         this.allowAbsent = BooleanUtils.toBooleanObject(allowAbsent.trim());
+    }
+
+    @Override
+    public String identity() {
+        return GlobalUtil.format("{}:[id:{}, name:{}, component:{}, service: {}]", getElementType(), getId(), getName(), taskComponent, taskService);
     }
 
     @Override

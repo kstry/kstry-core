@@ -100,4 +100,8 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
         elementIterable = new BasicElementIterable();
         return elementIterable;
     }
+
+    public void setElementIterable(BasicElementIterable elementIterable) {
+        this.elementIterable = elementIterable;
+    }
 }

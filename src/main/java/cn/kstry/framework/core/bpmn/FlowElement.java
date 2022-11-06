@@ -82,4 +82,10 @@ public interface FlowElement extends BpmnElement {
      * 不可变对象
      */
     boolean isImmutable();
+
+    /**
+     * 获取节点身份描述信息
+     * @return 身份描述信息
+     */
+    String identity();
 }
