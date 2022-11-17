@@ -18,9 +18,10 @@
 package cn.kstry.framework.core.component.expression;
 
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,7 +41,7 @@ public class ConditionExpressionImpl implements ConditionExpression {
      */
     private final BiPredicate<StoryBus, String> testCondition;
 
-    private final static Pattern expressionPattern = Pattern.compile(GlobalConstant.VALID_DATA_EXPRESSION_PATTERN);
+    private final static Pattern itemPattern = Pattern.compile("\\.[\\w-]+");
 
     public ConditionExpressionImpl(BiPredicate<StoryBus, String> testCondition) {
         AssertUtil.notNull(testCondition);
@@ -68,17 +69,22 @@ public class ConditionExpressionImpl implements ConditionExpression {
      * @return 表达式对象
      */
     public ConditionExpression newWorkConditionExpression(String expression) {
-        ConditionExpressionImpl conditionExpression = new ConditionExpressionImpl(this.testCondition);
-        Matcher matcher = expressionPattern.matcher(expression);
+        final String finalExpression = expression;
+        Matcher matcher = itemPattern.matcher(finalExpression);
         while (matcher.find()) {
             String group = matcher.group();
-            String[] split = group.split("\\.");
-            StringBuilder exp = new StringBuilder(split[0]);
-            for (int i = 1; i < split.length; i++) {
-                exp.append("['").append(split[i]).append("']");
+            int endIndex = matcher.end();
+            for (; endIndex < finalExpression.length(); endIndex++) {
+                if (finalExpression.charAt(endIndex) == ' ') {
+                    continue;
+                }
+                if (!Objects.equals(finalExpression.charAt(endIndex), '(')) {
+                    expression = expression.replace(group, GlobalUtil.format("['{}']", group.substring(1)));
+                }
+                break;
             }
-            expression = expression.replace(group, exp.toString());
         }
+        ConditionExpressionImpl conditionExpression = new ConditionExpressionImpl(this.testCondition);
         conditionExpression.expression = expression;
         return conditionExpression;
     }

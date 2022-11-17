@@ -17,15 +17,19 @@
  */
 package cn.kstry.framework.core.engine.thread;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Optional;
 
 /**
  *
  * @author lykan
  */
-public class IteratorThreadLocal {
+public class InvokeMethodThreadLocal {
 
     private static final ThreadLocal<Object> ITERATOR_THREAD_LOCAL = new ThreadLocal<>();
+
+    private static final ThreadLocal<String> TASK_PROPERTY_THREAD_LOCAL = new ThreadLocal<>();
 
     public static void setDataItem(Object data) {
         if (data != null) {
@@ -37,7 +41,18 @@ public class IteratorThreadLocal {
         return Optional.ofNullable(ITERATOR_THREAD_LOCAL.get());
     }
 
+    public static void setTaskProperty(String property) {
+        if (StringUtils.isNotBlank(property)) {
+            TASK_PROPERTY_THREAD_LOCAL.set(property);
+        }
+    }
+
+    public static Optional<String> getTaskProperty() {
+        return Optional.ofNullable(TASK_PROPERTY_THREAD_LOCAL.get()).filter(StringUtils::isNotBlank);
+    }
+
     public static void clear() {
         ITERATOR_THREAD_LOCAL.remove();
+        TASK_PROPERTY_THREAD_LOCAL.remove();
     }
 }

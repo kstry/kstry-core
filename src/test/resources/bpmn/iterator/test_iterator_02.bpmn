@@ -35,6 +35,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="sku-service" />
             <camunda:property name="task-service" value="set-sku-img" />
+            <camunda:property name="task-property" value="test-prop" />
             <camunda:property name="ite-async" value="y" />
           </camunda:properties>
         </bpmn:extensionElements>

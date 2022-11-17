@@ -21,6 +21,7 @@ import cn.kstry.framework.core.bpmn.Task;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -101,7 +102,7 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
         return elementIterable;
     }
 
-    public void setElementIterable(BasicElementIterable elementIterable) {
-        this.elementIterable = elementIterable;
+    public void setElementIterable(ElementIterable elementIterable) {
+        this.elementIterable = GlobalUtil.transferNotEmpty(elementIterable, BasicElementIterable.class);
     }
 }

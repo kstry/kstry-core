@@ -19,9 +19,12 @@ package cn.kstry.framework.core.engine.interceptor;
 
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.role.Role;
+import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.core.Ordered;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 子流程拦截器
@@ -31,11 +34,26 @@ import java.util.Set;
 public interface SubProcessInterceptor extends Ordered {
 
     /**
+     * 子流程拦截器切入点
+     *
+     * @return 返回子流程开始事件Id集合
+     */
+    default Set<String> pointcut() {
+        return Sets.newHashSet();
+    }
+
+    /**
      * 获取子流程身份标志集合，只有当前子流程在集合内才会执行拦截器
      *
      * @return 子流程身份标志集合
      */
-    Set<SubProcessIdentity> getSubProcessIdentity();
+    default Set<SubProcessIdentity> getSubProcessIdentity() {
+        Set<String> pointcut = pointcut();
+        if (CollectionUtils.isEmpty(pointcut)) {
+            return Sets.newHashSet();
+        }
+        return pointcut.stream().map(SubProcessIdentity::new).collect(Collectors.toSet());
+    }
 
     /**
      * 子流程进入前的前置处理器

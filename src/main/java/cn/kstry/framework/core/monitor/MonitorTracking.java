@@ -151,7 +151,20 @@ public class MonitorTracking {
         AssertUtil.notNull(flowElement);
         getServiceNodeTracking(flowElement).filter(t -> trackingTypeEnum.needServiceDetailTracking()).ifPresent(tracking -> {
             ParamTracking paramTracking = paramTrackingSupplier.get();
-            tracking.addParamTracking(paramTracking);
+            if (paramTracking == null || paramTracking.getValue() == null || GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == 0) {
+                return;
+            }
+            if (GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == -1
+                    || (paramTracking.getValue().length() <= GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)) {
+                tracking.addParamTracking(paramTracking);
+            } else {
+                try {
+                    tracking.addParamTracking(ParamTracking.build(paramTracking.getParamName(), paramTracking.getValue()
+                            .substring(0, GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT), paramTracking.getSourceScopeType(), paramTracking.getSourceName()));
+                } catch (Exception e) {
+                    LOGGER.error("build ParamTracking error! paramTracking: {}", paramTracking, e);
+                }
+            }
         });
     }
 
@@ -165,7 +178,20 @@ public class MonitorTracking {
         AssertUtil.notNull(flowElement);
         getServiceNodeTracking(flowElement).filter(t -> trackingTypeEnum.needServiceDetailTracking()).ifPresent(tracking -> {
             NoticeTracking noticeTracking = noticeTrackingSupplier.get();
-            tracking.addNoticeTracking(noticeTracking);
+            if (noticeTracking == null || noticeTracking.getValue() == null || GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == 0) {
+                return;
+            }
+            if (GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == -1
+                    || (noticeTracking.getValue().length() <= GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)) {
+                tracking.addNoticeTracking(noticeTracking);
+            } else {
+                try {
+                    tracking.addNoticeTracking(NoticeTracking.build(noticeTracking.getFieldName(), noticeTracking.getNoticeName(),
+                            noticeTracking.getNoticeScopeType(), noticeTracking.getValue().substring(0, GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)));
+                } catch (Exception e) {
+                    LOGGER.error("build NoticeTracking error! noticeTracking: {}", noticeTracking, e);
+                }
+            }
         });
     }
 
@@ -187,8 +213,12 @@ public class MonitorTracking {
         getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setDemotionInfo(demotionInfo));
     }
 
+    public void iterateCountTracking(FlowElement flowElement, int count) {
+        getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setIterateCount(count));
+    }
+
     public Optional<NodeTracking> getServiceNodeTracking(FlowElement flowElement) {
-        if (!trackingTypeEnum.needServiceTracking()) {
+        if (trackingTypeEnum.notNeedServiceTracking()) {
             return Optional.empty();
         }
         NodeTracking nodeTracking = nodeTrackingMap.get(flowElement.getId());
@@ -226,7 +256,7 @@ public class MonitorTracking {
                     });
         }
         return nodeTrackingMap.values().stream().peek(nodeTracking -> {
-                    if (!trackingTypeEnum.needServiceTracking() || nodeTracking.finishService()) {
+                    if (trackingTypeEnum.notNeedServiceTracking() || nodeTracking.finishService()) {
                         return;
                     }
                     nodeTracking.setEndTime(LocalDateTime.now());

@@ -41,8 +41,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SayError01Interceptor implements SubProcessInterceptor {
 
     @Override
-    public Set<SubProcessIdentity> getSubProcessIdentity() {
-        return Sets.newHashSet(new SubProcessIdentity("Event_08c7n2w"), new SubProcessIdentity("Event_1el4bmh"));
+    public Set<String> pointcut() {
+        return Sets.newHashSet("Event_08c7n2w", "Event_1el4bmh");
     }
 
     @Override

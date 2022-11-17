@@ -96,6 +96,13 @@ public interface ScopeDataOperator {
     <T> Optional<T> getData(String expression);
 
     /**
+     * 获取任务节点属性，任务节点属性在节点定义时指定
+     *
+     * @return 任务节点属性
+     */
+    Optional<String> getTaskProperty();
+
+    /**
      * 使用取值表达式获取数据, 如果不存在会创建并赋值到表达式指定位置，创建失败或指定位置失败返回空值
      *
      * @param expression 取值表达式

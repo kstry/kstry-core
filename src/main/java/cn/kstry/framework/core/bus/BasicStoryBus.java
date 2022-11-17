@@ -20,7 +20,7 @@ package cn.kstry.framework.core.bus;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
-import cn.kstry.framework.core.engine.thread.IteratorThreadLocal;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
@@ -320,7 +320,12 @@ public class BasicStoryBus implements StoryBus {
 
                 @Override
                 public <T> Optional<T> iterDataItem() {
-                    return IteratorThreadLocal.getDataItem().map(t -> (T) t);
+                    return InvokeMethodThreadLocal.getDataItem().map(t -> (T) t);
+                }
+
+                @Override
+                public Optional<String> getTaskProperty() {
+                    return InvokeMethodThreadLocal.getTaskProperty();
                 }
 
                 @Override

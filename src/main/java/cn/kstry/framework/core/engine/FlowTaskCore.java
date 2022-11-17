@@ -380,8 +380,10 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                             def.setDemotionNode(true);
                             return def;
                         });
-                LOGGER.warn("[{}] {} demotion: {}", ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(),
-                        ExceptionEnum.DEMOTION_DEFINITION_ERROR.getDesc(), demotionResource.getIdentityId());
+                if (!resultOptional.isPresent()) {
+                    LOGGER.warn("[{}] {} demotion: {}",
+                            ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), ExceptionEnum.DEMOTION_DEFINITION_ERROR.getDesc(), demotionResource.getIdentityId());
+                }
                 return resultOptional;
             } catch (Throwable e) {
                 LOGGER.warn(e.getMessage(), e);

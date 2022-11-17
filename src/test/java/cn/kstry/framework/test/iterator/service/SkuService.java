@@ -22,6 +22,7 @@ import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.iterator.bo.SkuBo;
 import com.alibaba.fastjson.JSON;
+import org.junit.Assert;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +65,7 @@ public class SkuService {
 
     @TaskService(name = "set-sku-img")
     public void setSkuImg(ScopeDataOperator dataOperator) {
+        Assert.assertEquals("test-prop", dataOperator.getTaskProperty().orElse(null));
         Optional<SkuBo> o = dataOperator.iterDataItem();
         o.ifPresent(bo -> {
             bo.setImg("SKU图片" + bo.getId());

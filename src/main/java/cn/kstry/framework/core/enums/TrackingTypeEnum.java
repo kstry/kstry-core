@@ -60,8 +60,8 @@ public enum TrackingTypeEnum {
         return Stream.of(values()).filter(e -> Objects.equals(e.name().toLowerCase(), type.toLowerCase())).findFirst().orElse(NONE);
     }
 
-    public boolean needServiceTracking() {
-        return this == ALL || this == SERVICE || this == SERVICE_DETAIL;
+    public boolean notNeedServiceTracking() {
+        return this != ALL && this != SERVICE && this != SERVICE_DETAIL;
     }
 
     public boolean isServiceTracking() {

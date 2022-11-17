@@ -17,13 +17,15 @@
  */
 package cn.kstry.framework.core.exception;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  *
  * @author lykan
  */
 public class ExpressionException extends KstryException {
 
-    public ExpressionException(ExceptionEnum exceptionEnum, Throwable cause) {
-        super(exceptionEnum.getExceptionCode(), exceptionEnum.getDesc(), cause);
+    public ExpressionException(ExceptionEnum exceptionEnum, String desc, Throwable cause) {
+        super(exceptionEnum.getExceptionCode(), StringUtils.isBlank(desc) ? exceptionEnum.getDesc() : desc, cause);
     }
 }

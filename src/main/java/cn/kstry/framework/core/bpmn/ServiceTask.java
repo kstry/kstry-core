@@ -61,6 +61,13 @@ public interface ServiceTask extends Task {
     boolean allowAbsent();
 
     /**
+     * 获取任务属性
+     *
+     * @return 任务属性
+     */
+    String getTaskProperty();
+
+    /**
      * 获取Service Task 构造器
      *
      * @return ServiceTaskBuilder

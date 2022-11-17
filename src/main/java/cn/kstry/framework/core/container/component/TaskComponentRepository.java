@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.container.component;
 
 import cn.kstry.framework.core.annotation.TaskService;
+import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.container.task.impl.AbilityTaskServiceWrapper;
 import cn.kstry.framework.core.container.task.impl.TaskComponentProxy;
@@ -27,6 +28,7 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.resource.service.ServiceNodeResourceItem;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -117,6 +120,14 @@ public abstract class TaskComponentRepository implements TaskContainer {
             MethodWrapper methodWrapper = registeredServiceNodeResource.get(demotionResource);
             if (methodWrapper == null) {
                 LOGGER.warn("[{}] Service node not matched to demotion policy! identityId: {}, demotion: {}",
+                        ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), k.getIdentityId(), demotionResource.getIdentityId());
+                invokeProperties.invalidDemotion();
+                return;
+            }
+
+            Class<?> returnType = methodWrapper.getMethod().getReturnType();
+            if (!Objects.equals(GlobalConstant.VOID, returnType.getName()) && !ElementParserUtil.isAssignable(returnType, v.getMethod().getReturnType())) {
+                LOGGER.warn("[{}] The return type of the demotion method and the main method do not match! identityId: {}, demotion: {}",
                         ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), k.getIdentityId(), demotionResource.getIdentityId());
                 invokeProperties.invalidDemotion();
             }

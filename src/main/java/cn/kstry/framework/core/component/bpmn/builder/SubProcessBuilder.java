@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.SubProcess;
-import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
 import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
@@ -44,7 +44,7 @@ public class SubProcessBuilder {
         return this;
     }
 
-    public SubProcessBuilder iterable(BasicElementIterable iterable) {
+    public SubProcessBuilder iterable(ElementIterable iterable) {
         this.subProcess.setElementIterable(iterable);
         return this;
     }

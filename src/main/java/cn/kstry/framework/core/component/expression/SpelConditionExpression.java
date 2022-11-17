@@ -20,6 +20,7 @@ package cn.kstry.framework.core.component.expression;
 import cn.kstry.framework.core.bus.ExpressionBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.ExpressionException;
+import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.ExpressionParser;
@@ -42,7 +43,8 @@ public class SpelConditionExpression extends ConditionExpressionImpl implements 
             try {
                 value = PARSER.parseExpression(exp).getValue(new ExpressionBus(scopeData), Boolean.class);
             } catch (Throwable e) {
-                throw new ExpressionException(ExceptionEnum.EXPRESSION_INVOKE_ERROR, e);
+                throw new ExpressionException(ExceptionEnum.EXPRESSION_INVOKE_ERROR,
+                        GlobalUtil.format("{} expression: {}", ExceptionEnum.EXPRESSION_INVOKE_ERROR.getDesc(), exp), e);
             }
             return BooleanUtils.isTrue(value);
         });

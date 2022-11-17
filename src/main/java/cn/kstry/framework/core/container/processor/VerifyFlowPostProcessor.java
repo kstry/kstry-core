@@ -28,6 +28,7 @@ import cn.kstry.framework.core.role.ServiceTaskRole;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
@@ -69,7 +70,11 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
     public void doPlainElement(Set<EndEvent> endEventSet, FlowElement node, SubProcess subProcess) {
         if (node instanceof EndEvent) {
             endEventSet.add((EndEvent) node);
+        } else {
+            AssertUtil.isTrue(CollectionUtils.isNotEmpty(node.outingList()),
+                    ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Intermediate break in node flow! identity: {}", node.identity());
         }
+
         if (node instanceof ServiceTask) {
             ServiceTask serviceTask = GlobalUtil.transferNotEmpty(node, ServiceTask.class);
             if (!serviceTask.allowAbsent()) {

@@ -49,6 +49,11 @@ public interface ConfigPropertyNameConstant {
     String KSTRY_STORY_TRACKING_LOG = "kstry.story.tracking.log";
 
     /**
+     * 监控中节点出入参快照最大长度，超出将进行截取
+     */
+    String KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = "kstry.story.tracking.value-max-length";
+
+    /**
      * requestId 名字
      */
     String KSTRY_STORY_REQUEST_ID_NAME = "kstry.story.request-id";

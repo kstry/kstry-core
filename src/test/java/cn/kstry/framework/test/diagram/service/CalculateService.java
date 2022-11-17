@@ -6,6 +6,7 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.diagram.bo.CalculateServiceRequest;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import com.google.common.collect.Lists;
+import org.junit.Assert;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,7 @@ public class CalculateService {
 
     @TaskService(name = SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE)
     public void increaseArrayOne(ScopeDataOperator operator) {
+        Assert.assertEquals("test-prop", operator.getTaskProperty().orElse(null));
         ReentrantReadWriteLock.WriteLock writeLock = operator.writeLock();
         writeLock.lock();
         try {

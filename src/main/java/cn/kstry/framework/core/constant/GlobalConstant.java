@@ -55,5 +55,5 @@ public interface GlobalConstant {
     /**
      * 正则表达式：匹配有效的条件表达式
      */
-    String VALID_DATA_EXPRESSION_PATTERN = "((req)|(sta)|(var)|(res))(\\.[\\w-']+)+";
+    String VALID_DATA_EXPRESSION_PATTERN = "((req)|(sta)|(var)|(res))((\\.[\\w-]+)|(\\['[\\w-]+'\\]))+";
 }

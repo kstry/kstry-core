@@ -25,6 +25,7 @@ import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
 import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
 import cn.kstry.framework.core.component.bpmn.link.StartBpmnLink;
+import cn.kstry.framework.core.util.KeyUtil;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import cn.kstry.framework.test.diagram.constants.StoryNameConstants;
 import org.springframework.context.annotation.Bean;
@@ -67,7 +68,7 @@ public class Case1BpmnDiagramConfiguration {
                     .nextExclusive().build();
 
             eg1
-                    .nextTask("req.d>=0").component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                    .nextTask(KeyUtil.req("d", ">=", "0")).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();
             eg1
@@ -80,7 +81,8 @@ public class Case1BpmnDiagramConfiguration {
 
     @Bean
     public SubProcessLink subProcessBuilder4() {
-        return SubProcessLink.build("ite-test-sub-process", link -> link.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).build().end());
+        return SubProcessLink.build("ite-test-sub-process",
+                link -> link.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop").build().end());
     }
 
     @Bean
@@ -167,7 +169,7 @@ public class Case1BpmnDiagramConfiguration {
     @Bean
     public BpmnLink bpmnLink4() {
         StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A004);
-        bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE)
+        bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
         return bpmnLink;

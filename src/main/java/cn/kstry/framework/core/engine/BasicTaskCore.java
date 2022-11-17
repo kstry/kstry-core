@@ -24,9 +24,10 @@ import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.container.task.impl.TaskComponentProxy;
-import cn.kstry.framework.core.engine.thread.IteratorThreadLocal;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.engine.thread.Task;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
@@ -122,6 +123,8 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         if (!serviceTask.iterable()) {
             return doInvokeMethod(true, null, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
         }
+
+        MonitorTracking monitorTracking = storyBus.getMonitorTracking();
         Optional<Object> iteData = storyBus.getScopeDataOperator().getData(serviceTask.getIteSource()).map(d -> {
             if (!d.getClass().isArray()) {
                 return d;
@@ -137,29 +140,34 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             return Stream.of(dArray).filter(Objects::nonNull).collect(Collectors.toList());
         }).filter(d -> d instanceof Iterable);
         if (!iteData.isPresent()) {
+            monitorTracking.iterateCountTracking(serviceTask, 0);
             LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
                     "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), serviceTask.getIteSource());
             return null;
         }
         Iterator<?> iterator = GlobalUtil.transferNotEmpty(iteData.get(), Iterable.class).iterator();
         if (!iterator.hasNext()) {
+            monitorTracking.iterateCountTracking(serviceTask, 0);
             LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
                     "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), serviceTask.getIteSource());
             return null;
         }
 
         if (BooleanUtils.isNotTrue(serviceTask.openAsync()) || serviceTask.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS) {
+            int count = 1;
             Object result = null;
-            for (int i = 0; iterator.hasNext(); i++) {
+            for (int i = 0; iterator.hasNext(); i++, count++) {
                 Object r = doInvokeMethod(i == 0, iterator.next(), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
                 if (r == INVOKE_ERROR_SIGN) {
                     continue;
                 }
                 if (serviceTask.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS) {
+                    monitorTracking.iterateCountTracking(serviceTask, i + 1);
                     return r;
                 }
                 result = r;
             }
+            monitorTracking.iterateCountTracking(serviceTask, count);
             return result;
         }
         List<CompletableFuture<Object>> futureList = Lists.newArrayList();
@@ -169,6 +177,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                     engineModule.getIteratorThreadPool());
             futureList.add(f);
         });
+        monitorTracking.iterateCountTracking(serviceTask, futureList.size());
         CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
         for (CompletableFuture<Object> f : futureList) {
             try {
@@ -185,7 +194,8 @@ public abstract class BasicTaskCore<T> implements Task<T> {
     private Object doInvokeMethod(boolean tracking, Object itemData, ServiceTask serviceTask, StoryBus storyBus,
                                   Role role, MethodWrapper methodWrapper, TaskComponentProxy targetProxy, List<ParamInjectDef> paramInjectDefs) {
         try {
-            IteratorThreadLocal.setDataItem(itemData);
+            InvokeMethodThreadLocal.setDataItem(itemData);
+            InvokeMethodThreadLocal.setTaskProperty(serviceTask.getTaskProperty());
             if (CollectionUtils.isEmpty(paramInjectDefs)) {
                 return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget());
             }
@@ -199,7 +209,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             LOGGER.warn("[{}] {} identity: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(), ExceptionEnum.ITERATE_ITEM_ERROR.getDesc(), serviceTask.identity(), e);
             return INVOKE_ERROR_SIGN;
         } finally {
-            IteratorThreadLocal.clear();
+            InvokeMethodThreadLocal.clear();
         }
     }
 }

@@ -65,6 +65,8 @@ public class NodeTracking {
 
     private DemotionInfo demotionInfo;
 
+    private Integer iterateCount;
+
     @JSONField(serialize = false)
     private Throwable taskException;
 
@@ -215,5 +217,13 @@ public class NodeTracking {
 
     public void setDemotionInfo(DemotionInfo demotionInfo) {
         this.demotionInfo = demotionInfo;
+    }
+
+    public Integer getIterateCount() {
+        return iterateCount;
+    }
+
+    public void setIterateCount(Integer iterateCount) {
+        this.iterateCount = iterateCount;
     }
 }

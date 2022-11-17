@@ -17,15 +17,15 @@
  */
 package cn.kstry.framework.core.enums;
 
-import java.util.Optional;
-
-import cn.kstry.framework.core.util.ExceptionUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
+import cn.kstry.framework.core.util.KeyUtil;
 import cn.kstry.framework.core.util.TaskServiceUtil;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Optional;
 
 /**
  * 权限类型
@@ -84,24 +84,23 @@ public enum PermissionType {
                 if (StringUtils.isAnyBlank(resource.getComponentName(), resource.getServiceName())) {
                     return Optional.empty();
                 }
-                return Optional.of(getPrefix() + ":" + TaskServiceUtil.joinName(resource.getComponentName(), resource.getServiceName()));
+                return Optional.of(KeyUtil.pr(resource.getComponentName(), resource.getServiceName()));
             case COMPONENT_SERVICE_ABILITY:
                 if (StringUtils.isAnyBlank(resource.getComponentName(), resource.getServiceName(), resource.getAbilityName())) {
                     return Optional.empty();
                 }
-                return Optional.of(getPrefix() + ":" +
-                        TaskServiceUtil.joinName(TaskServiceUtil.joinName(resource.getComponentName(), resource.getServiceName()), resource.getAbilityName()));
+                return Optional.of(KeyUtil.pr(resource.getComponentName(), resource.getServiceName(), resource.getAbilityName()));
             case SERVICE:
                 AssertUtil.notBlank(resource.getServiceName());
                 if (StringUtils.isBlank(resource.getServiceName())) {
                     return Optional.empty();
                 }
-                return Optional.of(getPrefix() + ":" + resource.getServiceName());
+                return Optional.of(KeyUtil.r(resource.getServiceName()));
             case SERVICE_ABILITY:
                 if (StringUtils.isAnyBlank(resource.getServiceName(), resource.getAbilityName())) {
                     return Optional.empty();
                 }
-                return Optional.of(getPrefix() + ":" + TaskServiceUtil.joinName(resource.getServiceName(), resource.getAbilityName()));
+                return Optional.of(KeyUtil.r(resource.getServiceName(), resource.getAbilityName()));
             default:
                 throw ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null);
         }

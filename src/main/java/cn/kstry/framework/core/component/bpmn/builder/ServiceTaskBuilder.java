@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
 import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
@@ -60,6 +60,11 @@ public class ServiceTaskBuilder {
         return this;
     }
 
+    public ServiceTaskBuilder property(String property) {
+        serviceTask.setTaskProperty(property);
+        return this;
+    }
+
     public ServiceTaskBuilder component(String component) {
         serviceTask.setTaskComponent(component);
         return this;
@@ -80,7 +85,7 @@ public class ServiceTaskBuilder {
         return this;
     }
 
-    public ServiceTaskBuilder iterable(BasicElementIterable iterable) {
+    public ServiceTaskBuilder iterable(ElementIterable iterable) {
         this.serviceTask.setElementIterable(iterable);
         return this;
     }

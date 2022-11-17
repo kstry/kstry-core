@@ -50,6 +50,11 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      */
     private Boolean allowAbsent;
 
+    /**
+     * 任务属性
+     */
+    private String taskProperty;
+
     @Override
     public String getTaskComponent() {
         return taskComponent;
@@ -97,9 +102,18 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
         this.taskService = taskService;
     }
 
+    public void setTaskProperty(String taskProperty) {
+        this.taskProperty = taskProperty;
+    }
+
     @Override
     public boolean allowAbsent() {
         return BooleanUtils.isTrue(allowAbsent);
+    }
+
+    @Override
+    public String getTaskProperty() {
+        return taskProperty;
     }
 
     /**
