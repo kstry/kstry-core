@@ -141,7 +141,7 @@ public class ProcessDiagramConfiguration {
     
     @Bean
     public BpmnLink buildShowGoodsLink() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(SHOW_GOODS_LINK, "展示商品详情");
+        StartBpmnLink bpmnLink = StartBpmnLink.build("kstry-demo-goods-show", "展示商品详情");
 		bpmnLink.nextTask("goods", "init-base-info").end();
         return bpmnLink;
     }
