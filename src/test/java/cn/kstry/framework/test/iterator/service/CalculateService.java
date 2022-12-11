@@ -24,6 +24,7 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.util.KeyUtil;
 import com.google.common.collect.Lists;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +48,36 @@ public class CalculateService {
                     list.add(i * i);
                     dataOperator.setResult(list);
                 })
+        );
+    }
+
+    /**
+     * 求平方再放回
+     */
+    @TaskService(name = "batch-square")
+    public void batchSquare(ScopeDataOperator dataOperator) {
+        Optional<List<Integer>> iterDataItem = dataOperator.iterDataItem();
+        iterDataItem.ifPresent(ts -> ts.forEach(i ->
+                dataOperator.computeIfAbsent(ScopeTypeEnum.RESULT.getKey(), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
+                    list.add(i * i);
+                    dataOperator.setResult(list);
+                })
+        ));
+    }
+
+    /**
+     * 求平方再放回
+     */
+    @TaskService(name = "batch-square2")
+    public void batchSquare2(ScopeDataOperator dataOperator) throws InterruptedException {
+        TimeUnit.MILLISECONDS.sleep(230);
+        Optional<List<Integer>> iterDataItem = dataOperator.iterDataItem();
+        iterDataItem.ifPresent(ds -> ds.forEach(i ->
+                        dataOperator.computeIfAbsent(KeyUtil.sta("squareResult", "a"), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
+                            list.add(i * i);
+                            dataOperator.setResult(list);
+                        })
+                )
         );
     }
 

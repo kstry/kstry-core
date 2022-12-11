@@ -49,6 +49,13 @@ public interface ElementIterable extends AsyncFlowElement {
     IterateStrategyEnum getIteStrategy();
 
     /**
+     * 迭代步长，即每批处理多少元素。默认为空，代表每批处理1个元素
+     *
+     * @return 步长
+     */
+    Integer getStride();
+
+    /**
      * 是否可以被遍历执行
      *
      * @return boolean

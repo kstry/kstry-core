@@ -66,13 +66,28 @@ public class ExceptionUtil {
         if (code == null || EXCEPTION_ENUM_MAP.get(code) == null) {
             return StringUtils.isBlank(desc) ? defErrorDesc : desc;
         }
-        return GlobalUtil.format("[{}] {}", StringUtils.isBlank(code)
-                ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? defErrorDesc : desc);
+        return GlobalUtil.format("[{}] {}", StringUtils.isBlank(code) ? ExceptionEnum.SYSTEM_ERROR.getExceptionCode() : code, StringUtils.isBlank(desc) ? defErrorDesc : desc);
     }
 
     public static Optional<String> tryGetCode(Throwable throwable) {
         if (throwable instanceof KstryException) {
             return Optional.ofNullable(GlobalUtil.transferNotEmpty(throwable, KstryException.class).getErrorCode());
+        }
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getErrFromCause(Throwable err, Class<T> clazz) {
+        if (err == null || clazz == null) {
+            return Optional.empty();
+        }
+
+        Throwable e = err;
+        while (e != null) {
+            if (clazz.isAssignableFrom(e.getClass())) {
+                return Optional.of((T) e);
+            }
+            e = e.getCause();
         }
         return Optional.empty();
     }

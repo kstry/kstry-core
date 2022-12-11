@@ -24,6 +24,7 @@ import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
 import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -51,6 +52,22 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
         if (node instanceof ServiceTaskSupport) {
             Optional<ServiceTask> serviceTaskOptional = ((ServiceTaskSupport) node).getServiceTask();
             serviceTaskOptional.ifPresent(serviceTask -> doSeparateFlowElement(node, serviceTask));
+        }
+        if (node instanceof ServiceTask) {
+            ServiceNodeResource customRoleInfo = ((ServiceTask) node).getCustomRoleInfo();
+            // 支持自定义角色属性
+            if (customRoleInfo != null) {
+                List<FlowElement> outingList = Lists.newArrayList(node.outingList());
+                AssertUtil.notEmpty(outingList);
+                node.clearOutingChain();
+
+                SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
+                sequenceFlow.setId(GlobalUtil.uuid());
+                ServiceTask serviceTask = ServiceTask.builder().service(customRoleInfo.getServiceName()).component(customRoleInfo.getComponentName()).ins();
+                node.outing(sequenceFlow);
+                sequenceFlow.outing(serviceTask);
+                outingList.forEach(serviceTask::outing);
+            }
         }
     }
 

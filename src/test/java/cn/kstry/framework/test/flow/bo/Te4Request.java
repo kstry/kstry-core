@@ -1,5 +1,9 @@
 package cn.kstry.framework.test.flow.bo;
 
+import com.google.common.collect.Lists;
+
+import java.util.List;
+
 public class Te4Request {
 
     private Long goodsId;
@@ -9,6 +13,8 @@ public class Te4Request {
     private long hospitalId;
 
     private int count;
+
+    private List<String> nodeList = Lists.newCopyOnWriteArrayList();
 
     public Long getGoodsId() {
         return goodsId;
@@ -34,7 +40,11 @@ public class Te4Request {
         this.hospitalId = hospitalId;
     }
 
-    public int getCount() {
+    public List<String> getNodeList() {
+        return nodeList;
+    }
+
+    public synchronized int getCount() {
         return count;
     }
 

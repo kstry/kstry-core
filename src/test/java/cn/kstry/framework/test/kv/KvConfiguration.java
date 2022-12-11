@@ -27,7 +27,7 @@ import org.springframework.context.annotation.PropertySource;
  * @author lykan
  */
 @Configuration
-@EnableKstry(bpmnPath = "./bpmn/kv/*.bpmn", propertiesPath = "./bpmn/kv/kstry-*.yml")
+@EnableKstry(bpmnPath = "./bpmn/kv/*.bpmn", propertiesPath = "./bpmn/kv/*.yml")
 @PropertySource("classpath:application.properties")
 @ComponentScan(basePackageClasses = KvConfiguration.class)
 public class KvConfiguration {

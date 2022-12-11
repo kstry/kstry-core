@@ -17,21 +17,19 @@
  */
 package cn.kstry.framework.core.util;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.config.SingletonBeanRegistry;
-
-import com.google.common.collect.Maps;
-
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.kv.BasicKValue;
 import cn.kstry.framework.core.kv.KValue;
-import cn.kstry.framework.core.kv.KvScope;
+import cn.kstry.framework.core.kv.KvScopeProfile;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * KValueUtil
@@ -47,54 +45,54 @@ public class KValueUtil {
         return scope;
     }
 
-    public static KvScope getKvScope(String scope) {
+    public static KvScopeProfile getKvScopeProfile(String scope) {
         AssertUtil.notBlank(scope);
         String[] split = scope.split("@");
-        AssertUtil.isTrue(split.length > 0 && split.length <= 2, ExceptionEnum.KV_SCOPE_PARSING_ERROR,
-                ExceptionEnum.KV_SCOPE_PARSING_ERROR.getDesc() + " scope: {}", scope);
+        AssertUtil.isTrue(split.length > 0 && split.length <= 2, ExceptionEnum.KV_SCOPE_PARSING_ERROR, ExceptionEnum.KV_SCOPE_PARSING_ERROR.getDesc() + " scope: {}", scope);
         if (split.length == 1) {
-            return new KvScope(split[0], null);
+            return new KvScopeProfile(split[0], null);
         }
-        return new KvScope(split[0], split[1]);
+        return new KvScopeProfile(split[0], split[1]);
     }
 
-    public static void initKValue(List<KValue> kValueList, List<String> activeProfiles, SingletonBeanRegistry beanFactory) {
+    public static Map<String, BasicKValue> getKValueMap(List<KValue> kValueList, List<String> activeProfiles) {
         AssertUtil.notNull(activeProfiles);
-        AssertUtil.notNull(beanFactory);
         if (CollectionUtils.isEmpty(kValueList)) {
-            return;
+            return Maps.newHashMap();
         }
 
+        List<String> scopeNameList = Lists.newArrayList();
         Map<String, BasicKValue> kValueMap = Maps.newHashMap();
         kValueList.stream().map(kv -> GlobalUtil.transferNotEmpty(kv, BasicKValue.class)).forEach(kValue -> {
-            KvScope kvScope = KValueUtil.getKvScope(kValue.getScope());
-            if (StringUtils.isNotBlank(kvScope.getActiveProfile()) && !activeProfiles.contains(kvScope.getActiveProfile())) {
+            scopeNameList.add(kValue.getScope());
+            KvScopeProfile kvScopeProfile = KValueUtil.getKvScopeProfile(kValue.getScope());
+            if (StringUtils.isNotBlank(kvScopeProfile.getActiveProfile()) && !activeProfiles.contains(kvScopeProfile.getActiveProfile())) {
                 return;
             }
             kValueMap.put(kValue.getScope(), kValue);
         });
+        List<String> dKeys = scopeNameList.stream().collect(Collectors.toMap(e -> e, e -> 1, Integer::sum))
+                .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
+        AssertUtil.isEmpty(dKeys, ExceptionEnum.KV_SCOPE_PARSING_ERROR, "kv scope cannot be defined repeatedly even in different files! scope: {}", dKeys);
 
         Maps.newHashMap(kValueMap).forEach((k, v) -> {
-            KvScope kvScope = KValueUtil.getKvScope(k);
-            if (StringUtils.isNotBlank(kvScope.getActiveProfile())) {
-                BasicKValue parentKValue = kValueMap.get(kvScope.getScope());
+            KvScopeProfile kvScopeProfile = KValueUtil.getKvScopeProfile(k);
+            if (StringUtils.isNotBlank(kvScopeProfile.getActiveProfile())) {
+                BasicKValue parentKValue = kValueMap.get(kvScopeProfile.getScope());
                 if (parentKValue == null) {
                     return;
                 }
                 v.setParent(parentKValue);
-                kValueMap.remove(kvScope.getScope());
+                kValueMap.remove(kvScopeProfile.getScope());
             }
         });
-
-        List<String> collect = kValueMap.keySet().stream().map(KValueUtil::getKvScope).map(KvScope::getScope)
-                .collect(Collectors.toMap(e -> e, e -> 1, Integer::sum)).entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        AssertUtil.isEmpty(collect, ExceptionEnum.KV_SCOPE_PARSING_ERROR,
-                "kv scope cannot be defined repeatedly even in different files! scope: {}", collect);
+        List<String> collect = kValueMap.keySet().stream().map(KValueUtil::getKvScopeProfile).map(KvScopeProfile::getScope)
+                .collect(Collectors.toMap(e -> e, e -> 1, Integer::sum)).entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
+        AssertUtil.isEmpty(collect, ExceptionEnum.KV_SCOPE_PARSING_ERROR, "kv scope cannot be defined repeatedly even in different files! scope: {}", collect);
         kValueMap.forEach((k, v) -> {
-            KvScope kvScope = KValueUtil.getKvScope(k);
-            v.setScope(kvScope.getScope());
-            beanFactory.registerSingleton(GlobalUtil.format(GlobalConstant.KV_SCOPE_DEFAULT_BEAN_NAME, kvScope.getScope()), v);
+            KvScopeProfile kvScopeProfile = KValueUtil.getKvScopeProfile(k);
+            v.setScope(kvScopeProfile.getScope());
         });
+        return kValueMap;
     }
 }

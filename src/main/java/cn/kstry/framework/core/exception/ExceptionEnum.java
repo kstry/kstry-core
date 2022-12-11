@@ -178,6 +178,20 @@ public enum ExceptionEnum {
      */
     STORY_TRACKING_CODE(ExceptionTypeEnum.STORY, "0009", " story tracking code."),
 
+    /**
+     * [K1040010] 线程切换钩子执行异常
+     */
+    THREAD_SWITCH_HOOK_ERROR(ExceptionTypeEnum.STORY, "0010", "Thread switch hook execution exception!"),
+
+    /**
+     * [K1040011] 脚本属性解析异常
+     */
+    SCRIPT_PROPERTY_PARSER_ERROR(ExceptionTypeEnum.STORY, "0011", "Script property resolution exception!"),
+
+    /**
+     * [K1040012] 脚本执行异常
+     */
+    SCRIPT_EXECUTE_ERROR(ExceptionTypeEnum.STORY, "0012", "Script execution exception!"),
 
     ///////////////////////////////////////////////// STORY END /////////////////////////////////////////////////
 

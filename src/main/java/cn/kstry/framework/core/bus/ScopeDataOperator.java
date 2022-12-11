@@ -26,81 +26,7 @@ import java.util.function.Supplier;
  *
  * @author lykan
  */
-public interface ScopeDataOperator {
-
-    /**
-     * 获取 Req 对象
-     *
-     * @return 数据结果
-     */
-    <T> T getReqScope();
-
-    /**
-     * 获取 Sta 对象
-     *
-     * @return 数据结果
-     */
-    <T extends ScopeData> T getStaScope();
-
-    /**
-     * 获取 Var 对象
-     *
-     * @return 数据结果
-     */
-    <T extends ScopeData> T getVarScope();
-
-    /**
-     * 获取 Result 对象
-     *
-     * @return 数据结果
-     */
-    <T> Optional<T> getResult();
-
-    /**
-     * 获取业务 ID
-     *
-     * @return 业务 ID
-     */
-    Optional<String> getBusinessId();
-
-    /**
-     * 从 Req 域获取数据
-     *
-     * @param name 数据名称
-     * @return 数据结果
-     */
-    <T> Optional<T> getReqData(String name);
-
-    /**
-     * 从 Sta 域获取数据
-     *
-     * @param name 数据名称
-     * @return 数据结果
-     */
-    <T> Optional<T> getStaData(String name);
-
-    /**
-     * 从 Var 域获取数据
-     *
-     * @param name 数据名称
-     * @return 数据结果
-     */
-    <T> Optional<T> getVarData(String name);
-
-    /**
-     * 使用取值表达式获取数据
-     *
-     * @param expression 取值表达式
-     * @return 数据结果
-     */
-    <T> Optional<T> getData(String expression);
-
-    /**
-     * 获取任务节点属性，任务节点属性在节点定义时指定
-     *
-     * @return 任务节点属性
-     */
-    Optional<String> getTaskProperty();
+public interface ScopeDataOperator extends ScopeDataQuery {
 
     /**
      * 使用取值表达式获取数据, 如果不存在会创建并赋值到表达式指定位置，创建失败或指定位置失败返回空值
@@ -113,11 +39,14 @@ public interface ScopeDataOperator {
     <T> Optional<T> computeIfAbsent(String expression, Supplier<T> supplier);
 
     /**
-     * 遍历执行迭代器的每一项数据时，获取当前项数据
+     * 设置数据
      *
-     * @return 数据结果
+     * @param expression 取值表达式
+     * @param target 变量值
+     *
+     * @return 是否设置成功，如果已经存在将会设置失败
      */
-    <T> Optional<T> iterDataItem();
+    boolean setData(String expression, Object target);
 
     /**
      * 设置 Sta 域变量
@@ -146,13 +75,6 @@ public interface ScopeDataOperator {
      * @return 是否设置成功，如果已经存在将会设置失败
      */
     boolean setResult(Object target);
-
-    /**
-     * 拿到 StoryBus 中的读锁
-     *
-     * @return 读锁
-     */
-    ReentrantReadWriteLock.ReadLock readLock();
 
     /**
      * 拿到 StoryBus 中的写锁

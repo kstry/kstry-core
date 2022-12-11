@@ -18,19 +18,21 @@
 package cn.kstry.framework.core.container.element;
 
 import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.container.processor.StartEventPostProcessor;
+import cn.kstry.framework.core.bus.ScopeDataQuery;
+import cn.kstry.framework.core.container.processor.StartEventProcessor;
 import cn.kstry.framework.core.resource.factory.StartEventFactory;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -42,26 +44,25 @@ public class BasicStartEventContainer implements StartEventContainer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicStartEventContainer.class);
 
-    /**
-     * StartEvent 创建流程拦截器链
-     */
-    private final List<StartEventPostProcessor> startEventPostProcessorList = Lists.newArrayList();
+    private final StartEventProcessor startEventProcessor;
 
     /**
      * 保存 StartEvent
      */
-    private volatile Map<String, StartEvent> globalStartEventMap;
+    private Map<String, StartEvent> globalStartEventMap;
 
     /**
      * StartEvent 资源创建工厂
      */
     private final StartEventFactory startEventFactory;
 
-    public BasicStartEventContainer(StartEventFactory startEventFactory) {
-        AssertUtil.notNull(startEventFactory);
+    public BasicStartEventContainer(StartEventFactory startEventFactory, StartEventProcessor startEventProcessor) {
+        AssertUtil.anyNotNull(startEventFactory, startEventProcessor);
         this.startEventFactory = startEventFactory;
+        this.startEventProcessor = startEventProcessor;
     }
 
+    @PostConstruct
     public void refreshStartEvent() {
         List<StartEvent> resourceList = this.startEventFactory.getResourceList();
         Map<String, StartEvent> startEventMap = Maps.newHashMap();
@@ -70,30 +71,19 @@ public class BasicStartEventContainer implements StartEventContainer {
             this.globalStartEventMap = ImmutableMap.copyOf(startEventMap);
             return;
         }
-        resourceList.stream().filter(event -> {
-            for (StartEventPostProcessor startEventPostProcessor : startEventPostProcessorList) {
-                if (!startEventPostProcessor.postStartEvent(event).isPresent()) {
-                    return false;
-                }
-            }
-            return true;
-        }).forEach(event -> startEventMap.put(event.getId(), event));
+        resourceList.stream().map(event -> startEventProcessor.postStartEvent(event).orElse(null)).filter(Objects::nonNull).forEach(event -> startEventMap.put(event.getId(), event));
         this.globalStartEventMap = ImmutableMap.copyOf(startEventMap);
     }
 
     @Override
-    public Optional<StartEvent> getStartEventById(String id) {
-        if (StringUtils.isBlank(id)) {
+    public Optional<StartEvent> getStartEventById(ScopeDataQuery scopeDataQuery) {
+        if (StringUtils.isBlank(scopeDataQuery.getStartId())) {
             return Optional.empty();
         }
-        return Optional.ofNullable(globalStartEventMap.get(id));
-    }
-
-    @Override
-    public void registerStartEventPostProcessor(StartEventPostProcessor processor) {
-        if (processor == null) {
-            return;
+        StartEvent startEvent = globalStartEventMap.get(scopeDataQuery.getStartId());
+        if (startEvent != null) {
+            return Optional.of(startEvent);
         }
-        startEventPostProcessorList.add(processor);
+        return startEventFactory.getDynamicStartEvent(scopeDataQuery);
     }
 }

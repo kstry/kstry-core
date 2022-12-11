@@ -17,18 +17,24 @@
  */
 package cn.kstry.framework.core.component.launcher;
 
+import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
+import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
+import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.ComponentLifecycle;
-import cn.kstry.framework.core.container.component.CustomRoleComponentRepository;
+import cn.kstry.framework.core.container.component.SpringTaskComponentRepository;
 import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.element.BasicStartEventContainer;
 import cn.kstry.framework.core.container.element.StartEventContainer;
-import cn.kstry.framework.core.container.processor.StartEventPostProcessor;
+import cn.kstry.framework.core.container.processor.StartEventProcessor;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.engine.StoryEngineModule;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptor;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptorRepository;
+import cn.kstry.framework.core.engine.interceptor.TaskInterceptor;
+import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
 import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.kv.*;
 import cn.kstry.framework.core.monitor.ThreadPoolMonitor;
@@ -50,11 +56,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.core.OrderComparator;
-import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
-import java.util.*;
+import javax.annotation.Nonnull;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -67,19 +75,13 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     private ConfigurableApplicationContext applicationContext;
 
     @Bean
-    public StartEventContainer getStartEventRepository(StartEventFactory startEventFactory) {
-        BasicStartEventContainer startEventContainer = new BasicStartEventContainer(startEventFactory);
-
-        List<StartEventPostProcessor> startEventPostProcessorList = new ArrayList<>(applicationContext.getBeansOfType(StartEventPostProcessor.class).values());
-        OrderComparator.sort(startEventPostProcessorList);
-        startEventPostProcessorList.forEach(startEventContainer::registerStartEventPostProcessor);
-        startEventContainer.refreshStartEvent();
-        return startEventContainer;
+    public StartEventContainer getStartEventRepository(StartEventFactory startEventFactory, StartEventProcessor startEventProcessor) {
+        return new BasicStartEventContainer(startEventFactory, startEventProcessor);
     }
 
     @Bean(initMethod = ComponentLifecycle.INIT, destroyMethod = ComponentLifecycle.DESTROY)
     public TaskContainer getTaskComponentContainer() {
-        return new CustomRoleComponentRepository();
+        return new SpringTaskComponentRepository();
     }
 
     @Bean
@@ -93,9 +95,9 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     }
 
     @Bean
-    public KvAbility getKvAbility(KvSelector kvSelector) {
-        AssertUtil.notNull(kvSelector);
-        return new BasicKvAbility(kvSelector);
+    public KvAbility getKvAbility(KvSelector kvSelector, KValueDynamicComponent kValueDynamicComponent) {
+        AssertUtil.anyNotNull(kvSelector, kValueDynamicComponent);
+        return new DynamicKvAbility(kvSelector, kValueDynamicComponent);
     }
 
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
@@ -117,16 +119,16 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     }
 
     @Bean
-    public StoryEngine getFlowEngine(StartEventContainer startEventContainer,
-                                     TaskContainer taskContainer, List<TaskThreadPoolExecutor> taskThreadPoolExecutor) {
+    public StoryEngine getFlowEngine(StartEventContainer startEventContainer, RoleDynamicComponent roleDynamicComponent,
+                                     TaskContainer taskContainer, List<TaskThreadPoolExecutor> taskThreadPoolExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor) {
         StoryEngineModule storyEngineModule = new StoryEngineModule(taskThreadPoolExecutor, startEventContainer, taskContainer, def -> {
             AssertUtil.notNull(def);
             if (def.isSpringInitialization()) {
                 return applicationContext.getBean(def.getParamType());
             }
             return ElementParserUtil.newInstance(def.getParamType()).orElse(null);
-        }, getSubProcessInterceptorRepository());
-        return new StoryEngine(storyEngineModule, getBusinessRoleRepository());
+        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(), threadSwitchHookProcessor);
+        return new StoryEngine(storyEngineModule, getBusinessRoleRepository(roleDynamicComponent));
     }
 
     @Bean
@@ -136,7 +138,7 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = GlobalUtil.transferNotEmpty(applicationContext, ConfigurableApplicationContext.class);
     }
 
@@ -147,18 +149,18 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
 
     private void initKValue(KValueFactory kValueFactory) {
         AssertUtil.notNull(kValueFactory);
-
         List<KValue> kValueList = kValueFactory.getResourceList();
-        ConfigurableEnvironment environment = applicationContext.getEnvironment();
-        List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-        KValueUtil.initKValue(kValueList, activeProfiles, applicationContext.getBeanFactory());
+        Map<String, BasicKValue> kValueMap = KValueUtil.getKValueMap(kValueList, Arrays.asList(applicationContext.getEnvironment().getActiveProfiles()));
+        if (MapUtils.isNotEmpty(kValueMap)) {
+            kValueMap.forEach((k, v) -> applicationContext.getBeanFactory().registerSingleton(GlobalUtil.format(GlobalConstant.KV_SCOPE_DEFAULT_BEAN_NAME, v.getScope()), v));
+        }
     }
 
-    private BusinessRoleRepository getBusinessRoleRepository() {
+    private BusinessRoleRepository getBusinessRoleRepository(RoleDynamicComponent roleDynamicComponent) {
         Map<String, BusinessRoleRegister> businessRoleRegisterMap = this.applicationContext.getBeansOfType(BusinessRoleRegister.class);
         List<BusinessRole> businessRoleList = businessRoleRegisterMap.values()
                 .stream().map(BusinessRoleRegister::register).flatMap(Collection::stream).collect(Collectors.toList());
-        return new BusinessRoleRepository(businessRoleList);
+        return new BusinessRoleRepository(roleDynamicComponent, businessRoleList);
     }
 
     private SubProcessInterceptorRepository getSubProcessInterceptorRepository() {
@@ -166,10 +168,18 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
         return new SubProcessInterceptorRepository(subProcessInterceptorMap.values());
     }
 
+    private TaskInterceptorRepository getTaskInterceptorRepository() {
+        Map<String, TaskInterceptor> taskInterceptorMap = this.applicationContext.getBeansOfType(TaskInterceptor.class);
+        return new TaskInterceptorRepository(taskInterceptorMap.values());
+    }
+
     private static class MissingTaskThreadPoolExecutor implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
             Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.TASK).collect(Collectors.toList()));
         }
@@ -178,7 +188,10 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     private static class MissingMethodThreadPoolExecutor implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
             Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList()));
         }
@@ -186,7 +199,10 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
 
     private static class MissingIteratorThreadPoolExecutor implements Condition {
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
             Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.ITERATOR).collect(Collectors.toList()));
         }
@@ -195,7 +211,10 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     private static class KvSelectorCondition implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
             Map<String, KvSelector> beansOfType = context.getBeanFactory().getBeansOfType(KvSelector.class);
             return MapUtils.isEmpty(beansOfType);
         }
@@ -204,7 +223,7 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     private static class ThreadPoolMonitorCondition implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             String enable = context.getEnvironment().getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_POOL_MONITOR_ENABLE);
             return BooleanUtils.isNotFalse(BooleanUtils.toBooleanObject(enable));
         }

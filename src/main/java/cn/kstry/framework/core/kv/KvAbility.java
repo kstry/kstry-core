@@ -21,16 +21,44 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * 键值获取能力定义
  *
  * @author lykan
  */
 public interface KvAbility extends KValue {
 
+    /**
+     * 指定 scope 获取值变量
+     *
+     * @param scope scope
+     * @param key key
+     * @return 值
+     */
     Optional<Object> getValueByScope(String scope, String key);
 
+    /**
+     * 获取值变量
+     *
+     * @param key key
+     * @param clazz 值类型
+     * @return 值
+     */
     <T> Optional<T> getObject(String key, Class<T> clazz);
 
+    /**
+     * 获取String类型值变量
+     *
+     * @param key key
+     * @return 值
+     */
     Optional<String> getString(String key);
 
+    /**
+     * 获取List类型值变量
+     *
+     * @param key key
+     * @param clazz list项类型
+     * @return 值
+     */
     <T> List<T> getList(String key, Class<T> clazz);
 }

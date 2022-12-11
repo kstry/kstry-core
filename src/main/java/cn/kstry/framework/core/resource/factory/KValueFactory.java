@@ -49,8 +49,7 @@ public class KValueFactory extends BasicResourceFactory<KValue> {
             return Lists.newArrayList();
         }
 
-        List<PropertiesConfigResource> propResourceList =
-                configResourceList.stream().map(c -> GlobalUtil.transferNotEmpty(c, PropertiesConfigResource.class)).collect(Collectors.toList());
+        List<PropertiesConfigResource> propResourceList = configResourceList.stream().map(c -> GlobalUtil.transferNotEmpty(c, PropertiesConfigResource.class)).collect(Collectors.toList());
         return propResourceList.stream().flatMap(propResource -> propResource.getKValueList().stream()).collect(Collectors.toList());
     }
 }

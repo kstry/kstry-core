@@ -22,10 +22,12 @@ import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
+import cn.kstry.framework.core.container.component.TaskInstructWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.container.task.impl.TaskComponentProxy;
 import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.engine.thread.Task;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.role.Role;
@@ -37,10 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
@@ -91,6 +90,8 @@ public abstract class BasicTaskCore<T> implements Task<T> {
      */
     private final String taskName;
 
+    protected final Map<ThreadSwitchHook<Object>, Object> threadSwitchHookObjectMap;
+
     public BasicTaskCore(StoryEngineModule engineModule, FlowRegister flowRegister, StoryBus storyBus, Role role, String taskName) {
         AssertUtil.notBlank(taskName);
         AssertUtil.anyNotNull(engineModule, flowRegister, storyBus, role);
@@ -99,6 +100,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         this.storyBus = storyBus;
         this.role = role;
         this.taskName = taskName;
+        this.threadSwitchHookObjectMap = engineModule.getThreadSwitchHookProcessor().getPreviousData(storyBus.getScopeDataOperator());
     }
 
     @Override
@@ -115,12 +117,16 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         return flowRegister;
     }
 
+    /**
+     * 支持批量调用
+     */
     protected Object doInvokeMethod(ServiceTask serviceTask, TaskServiceDef taskServiceDef, StoryBus storyBus, Role role) {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         TaskComponentProxy targetProxy = taskServiceDef.getTaskComponentTarget();
         List<ParamInjectDef> paramInjectDefs = methodWrapper.getParamInjectDefs();
 
-        if (!serviceTask.iterable()) {
+        // 降级方法调用时不支持迭代
+        if (!serviceTask.iterable() || taskServiceDef.isDemotionNode()) {
             return doInvokeMethod(true, null, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
         }
 
@@ -140,44 +146,73 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             return Stream.of(dArray).filter(Objects::nonNull).collect(Collectors.toList());
         }).filter(d -> d instanceof Iterable);
         if (!iteData.isPresent()) {
-            monitorTracking.iterateCountTracking(serviceTask, 0);
+            monitorTracking.iterateCountTracking(serviceTask, 0, 0);
             LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
                     "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), serviceTask.getIteSource());
             return null;
         }
         Iterator<?> iterator = GlobalUtil.transferNotEmpty(iteData.get(), Iterable.class).iterator();
         if (!iterator.hasNext()) {
-            monitorTracking.iterateCountTracking(serviceTask, 0);
+            monitorTracking.iterateCountTracking(serviceTask, 0, 0);
             LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
                     "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), serviceTask.getIteSource());
             return null;
         }
 
+        int stride = Optional.ofNullable(serviceTask.getStride()).filter(i -> i > 0).orElse(1);
+        boolean isOneStride = stride == 1;
         if (BooleanUtils.isNotTrue(serviceTask.openAsync()) || serviceTask.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS) {
-            int count = 1;
+            int count = 0;
             Object result = null;
-            for (int i = 0; iterator.hasNext(); i++, count++) {
-                Object r = doInvokeMethod(i == 0, iterator.next(), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+            List<Object> batchParamList = isOneStride ? null : Lists.newArrayList();
+            for (int i = 0; iterator.hasNext(); i++) {
+                Object next = iterator.next();
+                if (!isOneStride) {
+                    batchParamList.add(next);
+                    next = batchParamList;
+                }
+                if (!isOneStride && batchParamList.size() < stride && iterator.hasNext()) {
+                    continue;
+                }
+                count++;
+                Object r = doInvokeMethod(i == 0, next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+                if (!isOneStride && iterator.hasNext()) {
+                    batchParamList = Lists.newArrayList();
+                }
                 if (r == INVOKE_ERROR_SIGN) {
                     continue;
                 }
                 if (serviceTask.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS) {
-                    monitorTracking.iterateCountTracking(serviceTask, i + 1);
+                    monitorTracking.iterateCountTracking(serviceTask, count, stride);
                     return r;
                 }
                 result = r;
             }
-            monitorTracking.iterateCountTracking(serviceTask, count);
+            monitorTracking.iterateCountTracking(serviceTask, count, stride);
             return result;
         }
+
         List<CompletableFuture<Object>> futureList = Lists.newArrayList();
-        iterator.forEachRemaining(next -> {
-            CompletableFuture<Object> f = CompletableFuture.supplyAsync(
-                    () -> doInvokeMethod(futureList.isEmpty(), next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs),
-                    engineModule.getIteratorThreadPool());
-            futureList.add(f);
-        });
-        monitorTracking.iterateCountTracking(serviceTask, futureList.size());
+        if (isOneStride) {
+            iterator.forEachRemaining(next -> {
+                CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
+                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                    return doInvokeMethod(futureList.isEmpty(), next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+                }, engineModule.getIteratorThreadPool());
+                futureList.add(f);
+            });
+        } else {
+            List<Object> batchParamList = Lists.newArrayList();
+            iterator.forEachRemaining(batchParamList::add);
+            Lists.partition(batchParamList, stride).forEach(next -> {
+                CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
+                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                    return doInvokeMethod(futureList.isEmpty(), next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+                }, engineModule.getIteratorThreadPool());
+                futureList.add(f);
+            });
+        }
+        monitorTracking.iterateCountTracking(serviceTask, futureList.size(), stride);
         CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
         for (CompletableFuture<Object> f : futureList) {
             try {
@@ -191,6 +226,9 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         return null;
     }
 
+    /**
+     * 实际调用目标方法
+     */
     private Object doInvokeMethod(boolean tracking, Object itemData, ServiceTask serviceTask, StoryBus storyBus,
                                   Role role, MethodWrapper methodWrapper, TaskComponentProxy targetProxy, List<ParamInjectDef> paramInjectDefs) {
         try {
@@ -200,8 +238,9 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                 return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget());
             }
             Function<ParamInjectDef, Object> paramInitStrategy = engineModule.getParamInitStrategy();
+            TaskInstructWrapper taskInstructWrapper = methodWrapper.getTaskInstructWrapper().orElse(null);
             return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget(),
-                    () -> TaskServiceUtil.getTaskParams(tracking, serviceTask, storyBus, role, targetProxy, paramInjectDefs, paramInitStrategy));
+                    () -> TaskServiceUtil.getTaskParams(methodWrapper.isCustomRole(), tracking, serviceTask, storyBus, role, taskInstructWrapper, paramInjectDefs, paramInitStrategy));
         } catch (Throwable e) {
             if (!serviceTask.iterable() || serviceTask.getIteStrategy() == null || serviceTask.getIteStrategy() == IterateStrategyEnum.ALL_SUCCESS) {
                 throw e;

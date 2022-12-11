@@ -1,12 +1,14 @@
 package cn.kstry.framework.test.flow.service;
 
 import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.bus.InstructContent;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Hospital;
 import cn.kstry.framework.test.flow.bo.Te4Request;
 import com.alibaba.fastjson.JSON;
+import org.junit.Assert;
 import reactor.core.publisher.Mono;
 
 @SuppressWarnings("unused")
@@ -23,8 +25,13 @@ public class GoodsService {
         return goods;
     }
 
+    @TaskInstruct(name = "goods-fill")
     @TaskService(name = "fill_goods", invoke = @Invoke(demotion = "pr:goods_service@XXX"))
-    public Mono<Void> fillGoods(@StaTaskParam("goods") Goods goods, Hospital hospital) {
+    public Mono<Void> fillGoods(@StaTaskParam("goods") Goods goods, Hospital hospital, InstructContent instructContent) {
+        if (instructContent != null) {
+            Assert.assertNotNull(instructContent.getContent());
+            Assert.assertNotNull(instructContent.getInstruct());
+        }
         goods.setHospital(hospital);
         System.out.println("thread ->" + Thread.currentThread().getName() + ", fill goods ->" + JSON.toJSONString(goods));
         return Mono.empty();
@@ -34,6 +41,7 @@ public class GoodsService {
     public void sayRequest(ScopeDataOperator operator) {
         Te4Request request = operator.getReqScope();
         request.increase();
+        request.getNodeList().add(operator.getTaskProperty().orElse(null));
     }
 
     @TaskService(name = "check_params")

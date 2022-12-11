@@ -17,6 +17,9 @@
  */
 package cn.kstry.framework.core.role;
 
+import cn.kstry.framework.core.bus.ScopeDataQuery;
+import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
+import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
@@ -47,40 +50,46 @@ public class BusinessRoleRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BusinessRoleRepository.class);
 
-    private static final Cache<String, Optional<BusinessRole>> businessRoleMapping = CacheBuilder.newBuilder()
-            .concurrencyLevel(8).initialCapacity(1024).maximumSize(50_000).expireAfterWrite(10, TimeUnit.MINUTES)
+    private final Cache<String, Optional<BusinessRole>> businessRoleMapping = CacheBuilder.newBuilder()
+            .concurrencyLevel(8).initialCapacity(1024).maximumSize(10_000).expireAfterWrite(10, TimeUnit.MINUTES)
             .removalListener(notification -> LOGGER.info("Business role cache lose efficacy. key: {}, value: {}, cause: {}",
                     notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     private final List<BusinessRole> businessRoleList;
+    private final RoleDynamicComponent roleDynamicComponent;
 
-    public BusinessRoleRepository(List<BusinessRole> businessRoleList) {
+    public BusinessRoleRepository(RoleDynamicComponent roleDynamicComponent, List<BusinessRole> businessRoleList) {
         if (businessRoleList == null) {
             businessRoleList = Lists.newArrayList();
         }
         checkDuplicated(businessRoleList);
+        this.roleDynamicComponent = roleDynamicComponent;
         this.businessRoleList = ImmutableList.copyOf(businessRoleList.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
-    public Optional<Role> getRole(String businessId, String startId) {
+    public Optional<Role> getRole(StoryRequest<?> storyRequest, ScopeDataQuery scopeDataQuery) {
+        String startId = storyRequest.getStartId();
+        String businessId = storyRequest.getBusinessId();
         if (StringUtils.isBlank(startId)) {
             return Optional.empty();
         }
+
         String key = getKey(businessId, startId);
         try {
             Optional<BusinessRole> businessRole = businessRoleMapping.get(key, () -> {
                 Optional<BusinessRole> brOptional = getBusinessRole(businessId, startId);
-                brOptional.ifPresent(br -> LOGGER.debug("business role match. " +
-                        "startId: {}, businessId: {}, role name: {}", startId, businessId, br.getRole().getName())
-                );
+                brOptional.ifPresent(br -> LOGGER.debug("business role match. startId: {}, businessId: {}, role name: {}", startId, businessId, br.getRole().getName()));
                 return brOptional;
             });
-            return businessRole.map(BusinessRole::getRole);
+            return Optional.ofNullable(businessRole.map(BusinessRole::getRole).orElseGet(() -> getDynamicRole(scopeDataQuery)));
         } catch (ExecutionException e) {
             LOGGER.error(e.getMessage(), e);
             throw ExceptionUtil.buildException(e, ExceptionEnum.STORY_ERROR, null);
         }
+    }
 
+    private Role getDynamicRole(ScopeDataQuery scopeDataQuery) {
+        return roleDynamicComponent.dynamicGetComponent(null, null, scopeDataQuery).orElse(null);
     }
 
     private Optional<BusinessRole> getBusinessRole(String businessId, String startId) {

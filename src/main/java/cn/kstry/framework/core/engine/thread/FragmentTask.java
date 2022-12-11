@@ -59,14 +59,11 @@ public class FragmentTask extends FlowTaskCore<AsyncTaskState> implements Task<A
     @Override
     public AsyncTaskState call() {
         AdminFuture adminFuture = null;
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
             asyncTaskSwitch.await();
             adminFuture = flowRegister.getAdminFuture();
-            AssertUtil.notTrue(adminFuture.isCancelled(flowRegister.getStartEventId()),
-                    ExceptionEnum.ASYNC_TASK_INTERRUPTED, "Task interrupted. Story task was interrupted! taskName: {}", getTaskName());
+            AssertUtil.notTrue(adminFuture.isCancelled(flowRegister.getStartEventId()), ExceptionEnum.ASYNC_TASK_INTERRUPTED, "Task interrupted. Story task was interrupted! taskName: {}", getTaskName());
             doExe(this.role, this.storyBus, this.flowRegister);
             return AsyncTaskState.SUCCESS;
         } catch (Throwable e) {
@@ -77,12 +74,9 @@ public class FragmentTask extends FlowTaskCore<AsyncTaskState> implements Task<A
                 if (e instanceof KstryException) {
                     errorCode = GlobalUtil.transferNotEmpty(e, KstryException.class).getErrorCode();
                 }
-                LOGGER.warn("[{}] Task execution fails and exits because an exception is thrown! AdminFuture is null! taskName: {}",
-                        errorCode, getTaskName(), e);
+                LOGGER.warn("[{}] Task execution fails and exits because an exception is thrown! AdminFuture is null! taskName: {}", errorCode, getTaskName(), e);
             }
             return AsyncTaskState.ERROR;
-        } finally {
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 }

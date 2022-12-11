@@ -67,8 +67,7 @@ public class MonoFlowTaskFuture extends FragmentTaskFuture<AsyncTaskState> imple
         Integer timeout = flowTaskSubscriber.getTimeout();
         Mono<AsyncTaskState> r = resultMono;
         if (timeout != null && timeout >= 0) {
-            r = resultMono.timeout(Duration.ofMillis(timeout), Mono.fromSupplier(flowTaskSubscriber::hookTimeout)
-            );
+            r = resultMono.timeout(Duration.ofMillis(timeout), Mono.fromSupplier(flowTaskSubscriber::hookTimeout));
         }
         r.subscribe(flowTaskSubscriber);
     }

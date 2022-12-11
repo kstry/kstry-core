@@ -42,12 +42,10 @@ public class MethodInvokeFuture extends FragmentTaskFuture<Object> implements In
             return future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             future.cancel(true);
-            throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_INTERRUPTED,
-                    GlobalUtil.format("Task interrupted. method invoke was interrupted! taskName: {}", getTaskName()));
+            throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_INTERRUPTED, GlobalUtil.format("Task interrupted. method invoke was interrupted! taskName: {}", getTaskName()));
         } catch (TimeoutException e) {
             future.cancel(true);
-            throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT,
-                    GlobalUtil.format("Async invoke method timeout! taskName: {}, maximum time limit: {}ms", getTaskName(), timeout));
+            throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT, GlobalUtil.format("Async invoke method timeout! taskName: {}, maximum time limit: {}ms", getTaskName(), timeout));
         } catch (Throwable e) {
             future.cancel(true);
             throw ExceptionUtil.buildException(e, ExceptionEnum.SERVICE_INVOKE_ERROR, null);

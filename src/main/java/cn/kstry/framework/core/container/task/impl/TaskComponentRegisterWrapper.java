@@ -17,22 +17,19 @@
  */
 package cn.kstry.framework.core.container.task.impl;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.collect.Maps;
-
+import cn.kstry.framework.core.container.task.RootTaskService;
+import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.container.task.RootTaskService;
-import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.util.AssertUtil;
+import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nonnull;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 服务组件类包装器

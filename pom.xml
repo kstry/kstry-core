@@ -26,7 +26,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.0.11</version>
+    <version>1.1.0-SNAPSHOT</version>
 
     <name>Kstry Core</name>
     <description>Kstry Core</description>
@@ -37,19 +37,19 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <dependency.spring.version>4.1.9.RELEASE</dependency.spring.version>
-        <dependency.snakeyaml.version>1.30</dependency.snakeyaml.version>
+        <dependency.snakeyaml.version>1.33</dependency.snakeyaml.version>
         <dependency.collections.version>3.2.2</dependency.collections.version>
-        <dependency.fastjson.version>1.2.75</dependency.fastjson.version>
-        <dependency.lang3.version>3.11</dependency.lang3.version>
-        <dependency.guava.version>30.0-jre</dependency.guava.version>
+        <dependency.fastjson.version>1.2.83</dependency.fastjson.version>
+        <dependency.lang3.version>3.12.0</dependency.lang3.version>
+        <dependency.guava.version>31.1-jre</dependency.guava.version>
         <dependency.beanutils.version>1.9.4</dependency.beanutils.version>
         <dependency.slf4j.version>1.7.30</dependency.slf4j.version>
         <dependency.logback-classic.version>1.2.3</dependency.logback-classic.version>
         <dependency.jcl-over-slf4j.version>1.7.30</dependency.jcl-over-slf4j.version>
         <dependency.validator.version>6.1.7.Final</dependency.validator.version>
         <dependency.javax.el.version>3.0.0</dependency.javax.el.version>
-        <dependency.camunda.version>7.15.0</dependency.camunda.version>
-        <dependency.reactor.version>3.4.11</dependency.reactor.version>
+        <dependency.camunda.version>7.17.0</dependency.camunda.version>
+        <dependency.reactor.version>3.4.24</dependency.reactor.version>
         <dependency.junit.version>4.13.2</dependency.junit.version>
         <jakarta.el.version>3.0.3</jakarta.el.version>
     </properties>

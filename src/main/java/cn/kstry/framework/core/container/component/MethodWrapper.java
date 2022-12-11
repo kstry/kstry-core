@@ -19,7 +19,8 @@ package cn.kstry.framework.core.container.component;
 
 import cn.kstry.framework.core.annotation.NoticeScope;
 import cn.kstry.framework.core.annotation.TaskService;
-import cn.kstry.framework.core.bus.ScopeDataOperator;
+import cn.kstry.framework.core.bus.InstructContent;
+import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
@@ -74,7 +75,12 @@ public class MethodWrapper {
 
     private final InvokeProperties invokeProperties;
 
-    public MethodWrapper(@Nonnull Method method, @Nonnull TaskService annotation, @Nonnull NoticeAnnotationWrapper noticeMethodSpecify) {
+    private final boolean isCustomRole;
+
+    private final TaskInstructWrapper taskInstructWrapper;
+
+    public MethodWrapper(@Nonnull Method method, @Nonnull TaskService annotation,
+                         @Nonnull NoticeAnnotationWrapper noticeMethodSpecify, TaskInstructWrapper taskInstructWrapper, boolean isCustomRole) {
         AssertUtil.notNull(method);
         AssertUtil.notNull(annotation);
         this.method = method;
@@ -83,6 +89,8 @@ public class MethodWrapper {
         this.targetType = annotation.targetType();
         this.ability = annotation.ability();
         this.monoResult = false;
+        this.isCustomRole = isCustomRole;
+        this.taskInstructWrapper = taskInstructWrapper;
         this.invokeProperties = new InvokeProperties(annotation.invoke());
 
         methodParser(method, annotation.name());
@@ -112,8 +120,16 @@ public class MethodWrapper {
         return monoResult;
     }
 
+    public boolean isCustomRole() {
+        return isCustomRole;
+    }
+
     public InvokeProperties getInvokeProperties() {
         return invokeProperties;
+    }
+
+    public Optional<TaskInstructWrapper> getTaskInstructWrapper() {
+        return Optional.ofNullable(taskInstructWrapper);
     }
 
     private void methodParser(Method method, String taskServiceName) {
@@ -145,7 +161,7 @@ public class MethodWrapper {
                 continue;
             }
 
-            if (Role.class.isAssignableFrom(p.getType()) || ScopeDataOperator.class.isAssignableFrom(p.getType())) {
+            if (Role.class.isAssignableFrom(p.getType()) || ScopeDataQuery.class.isAssignableFrom(p.getType()) || InstructContent.class.isAssignableFrom(p.getType())) {
                 injectDefs[i] = new ParamInjectDef(p.getType(), parameterNames[i], null);
                 continue;
             }

@@ -50,7 +50,7 @@ public class FlowCase02Test {
      */
     @Test
     public void testComplexFlow2() {
-        IntStream.range(0, 20000).parallel().forEach(i -> {
+        IntStream.range(0, 30000).parallel().forEach(i -> {
             Te4Request request = new Te4Request();
             request.setActivityId(24L);
             request.setGoodsId(23L);

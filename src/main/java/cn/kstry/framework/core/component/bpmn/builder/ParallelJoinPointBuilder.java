@@ -38,7 +38,7 @@ public class ParallelJoinPointBuilder {
     }
 
     public ParallelJoinPointBuilder notStrictMode() {
-        this.parallelGateway.setStrictMode(Boolean.FALSE.toString());
+        this.parallelGateway.setStrictMode(false);
         return this;
     }
 

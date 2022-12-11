@@ -213,8 +213,14 @@ public class MonitorTracking {
         getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setDemotionInfo(demotionInfo));
     }
 
-    public void iterateCountTracking(FlowElement flowElement, int count) {
-        getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setIterateCount(count));
+    public void iterateCountTracking(FlowElement flowElement, int count, int stride) {
+        if (count <= 0) {
+            return;
+        }
+        getServiceNodeTracking(flowElement).ifPresent(tracking -> {
+            tracking.setIterateCount(count);
+            tracking.setIterateStride(stride);
+        });
     }
 
     public Optional<NodeTracking> getServiceNodeTracking(FlowElement flowElement) {

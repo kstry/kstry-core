@@ -22,18 +22,19 @@ import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.Gateway;
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * ElementPropertyUtil
@@ -69,19 +70,24 @@ public class ElementPropertyUtil {
     }
 
     public static Optional<String> getNodeProperty(FlowNode flowNode, String name) {
+        Pair<String, String> pair = getNodeProperty(flowNode, name, false);
+        return Optional.ofNullable(pair.getRight()).filter(StringUtils::isNotBlank).map(String::trim);
+    }
+
+    public static Pair<String, String> getNodeProperty(FlowNode flowNode, String name, boolean isLike) {
         AssertUtil.notBlank(name);
         if (flowNode == null) {
-            return Optional.empty();
+            return ImmutablePair.nullPair();
         }
 
         ExtensionElements extensionElements = flowNode.getExtensionElements();
         if (extensionElements == null) {
-            return Optional.empty();
+            return ImmutablePair.nullPair();
         }
 
         Collection<CamundaProperties> camundaProperties = extensionElements.getChildElementsByType(CamundaProperties.class);
         if (CollectionUtils.isEmpty(camundaProperties)) {
-            return Optional.empty();
+            return ImmutablePair.nullPair();
         }
 
         for (CamundaProperties camundaProperty : camundaProperties) {
@@ -89,13 +95,19 @@ public class ElementPropertyUtil {
             if (CollectionUtils.isEmpty(ps)) {
                 continue;
             }
-            Optional<String> rOptional = ps.stream().filter(p -> StringUtils.isNotBlank(p.getCamundaName()))
-                    .filter(p -> Objects.equals(p.getCamundaName().trim().toLowerCase(Locale.ROOT), name))
-                    .map(CamundaProperty::getCamundaValue).filter(StringUtils::isNotBlank).map(String::trim).findFirst();
-            if (rOptional.isPresent()) {
-                return rOptional;
+            List<Pair<String, String>> list = ps.stream().filter(p -> StringUtils.isNotBlank(p.getCamundaName()))
+                    .filter(p -> {
+                        if (isLike) {
+                            return p.getCamundaName().trim().toLowerCase(Locale.ROOT).startsWith(name);
+                        }
+                        return Objects.equals(p.getCamundaName().trim().toLowerCase(Locale.ROOT), name);
+                    })
+                    .map(prop -> Pair.of(prop.getCamundaName(), prop.getCamundaValue())).collect(Collectors.toList());
+            AssertUtil.isTrue(list.size() <= 1, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Configuration file component properties are repeatedly defined. prop: {}", list);
+            if (CollectionUtils.isNotEmpty(list)) {
+                return list.get(0);
             }
         }
-        return Optional.empty();
+        return ImmutablePair.nullPair();
     }
 }

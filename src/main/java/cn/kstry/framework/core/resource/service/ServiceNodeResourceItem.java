@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.resource.service;
 
 import cn.kstry.framework.core.enums.PermissionType;
+import cn.kstry.framework.core.util.KeyUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
@@ -48,8 +49,8 @@ public class ServiceNodeResourceItem extends BasicIdentity implements ServiceNod
     private final String abilityName;
 
     public ServiceNodeResourceItem(String componentName, String serviceName, String abilityName) {
-        super(PermissionType.COMPONENT_SERVICE.getPrefix() + ":" +
-                TaskServiceUtil.joinName(componentName, TaskServiceUtil.joinName(serviceName, abilityName)), IdentityTypeEnum.SERVICE_NODE_RESOURCE);
+        super(KeyUtil.pr(componentName, serviceName, abilityName), IdentityTypeEnum.SERVICE_NODE_RESOURCE);
+
         this.componentName = componentName;
         this.serviceName = serviceName;
         this.abilityName = abilityName;

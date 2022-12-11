@@ -17,16 +17,16 @@
  */
 package cn.kstry.framework.core.container.task.impl;
 
-import javax.annotation.Nonnull;
-
 import cn.kstry.framework.core.container.component.MethodWrapper;
+import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.resource.service.ServiceNodeResourceAuth;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.role.ServiceTaskRole;
-import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.util.AssertUtil;
+
+import javax.annotation.Nonnull;
 
 /**
  * 服务节点包装类
@@ -86,9 +86,6 @@ public class AbilityTaskServiceWrapper extends BasicIdentity implements TaskServ
 
     @Override
     public boolean match(@Nonnull Role role) {
-        if (target.isCustomRole()) {
-            return getServiceNodeType() == ServiceNodeType.SERVICE_TASK;
-        }
         if (getServiceNodeType() == ServiceNodeType.SERVICE_TASK && (role instanceof ServiceTaskRole)) {
             return true;
         }

@@ -18,9 +18,11 @@
 package cn.kstry.framework.core.container.component;
 
 import cn.kstry.framework.core.container.ComponentLifecycle;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 服务节点容器
@@ -38,4 +40,18 @@ public interface TaskContainer extends ComponentLifecycle {
      * @return TaskServiceDef
      */
     Optional<TaskServiceDef> getTaskServiceDef(String componentName, String serviceName, Role role);
+
+    /**
+     * 获取资源集
+     *
+     * @return 资源集
+     */
+    Set<ServiceNodeResource> getServiceNodeResource();
+
+    /**
+     * 根据指令名称获取资源标识
+     *
+     * @return 资源标识
+     */
+    Optional<ServiceNodeResource> getServiceNodeResourceByInstruct(String instruction);
 }

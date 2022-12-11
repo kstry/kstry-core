@@ -25,29 +25,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于标注 Class，被标注 Class 可以定义被 cn.kstry.framework.core.annotation.TaskService 标注方法
- * 用来在运行中修改角色所承载的权限集
+ * 用于标注 Method 且与 cn.kstry.framework.core.annotation.TaskService 同时出现时才会生效
+ * 用来指定该服务任务节点可以在运行中修改角色
  *
- * 注意：CustomRole 中定义的 TaskService 只能修改 Role 不会将结果通知到 StoryBus
+ * 注意：只有与 @CustomRole 同时使用的 @TaskService 修饰的方法，在入参中存在 Role 对象时，Role 对象才会被设置，否则，Role 参数字段将为空
  *
  * @author lykan
  */
 @Component
-@Target(ElementType.TYPE)
+@Target({ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CustomRole {
 
-    /**
-     * custom role name
-     *
-     * @return name
-     */
-    String name();
-
-    /**
-     * 扫描父类文件
-     *
-     * @return 默认 true 除当前类文件，也会扫描父类中的服务节点。为 false 时只会扫描当前类中的服务节点
-     */
-    boolean scanSuper() default true;
 }

@@ -19,9 +19,7 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
-import cn.kstry.framework.core.bus.BasicStoryBus;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -44,6 +42,11 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
      */
     private IterateStrategyEnum strategy;
 
+    /**
+     * 迭代步长，即每批处理多少元素。默认为空，代表每批处理1个元素
+     */
+    private Integer stride;
+
     @Override
     public String getIteSource() {
         return this.source;
@@ -59,6 +62,11 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
         return StringUtils.isNotBlank(this.source);
     }
 
+    @Override
+    public Integer getStride() {
+        return stride;
+    }
+
     public void setIteSource(String source) {
         if (!ElementParserUtil.isValidDataExpression(source)) {
             LOGGER.warn("[{}] The set ite-source being iterated over is invalid. source: {}", ExceptionEnum.BPMN_ATTRIBUTE_INVALID.getExceptionCode(), source);
@@ -69,5 +77,31 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
 
     public void setIteStrategy(IterateStrategyEnum strategy) {
         this.strategy = strategy;
+    }
+
+    public void setStride(Integer stride) {
+        if (stride != null && stride <= 0) {
+            return;
+        }
+        this.stride = stride;
+    }
+
+    public void mergeProperty(ElementIterable elementIterable) {
+        if (elementIterable == null) {
+            return;
+        }
+
+        if (this.getIteStrategy() == null) {
+            this.setIteStrategy(elementIterable.getIteStrategy());
+        }
+        if (this.getIteSource() == null) {
+            this.setIteSource(elementIterable.getIteSource());
+        }
+        if (this.openAsync() == null) {
+            this.setOpenAsync(elementIterable.openAsync());
+        }
+        if (this.getStride() == null) {
+            this.setStride(elementIterable.getStride());
+        }
     }
 }

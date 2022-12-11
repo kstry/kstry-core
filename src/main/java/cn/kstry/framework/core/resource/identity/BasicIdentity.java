@@ -19,10 +19,9 @@ package cn.kstry.framework.core.resource.identity;
 
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 /**
  * BasicIdentity
@@ -70,11 +69,11 @@ public abstract class BasicIdentity implements Identity {
             return false;
         }
         BasicIdentity that = (BasicIdentity) o;
-        return new EqualsBuilder().append(identityId, that.identityId).append(identityType, that.identityType).isEquals();
+        return identityId.equals(that.identityId) && identityType == that.identityType;
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37).append(identityId).append(identityType).toHashCode();
+        return Objects.hash(identityId, identityType);
     }
 }

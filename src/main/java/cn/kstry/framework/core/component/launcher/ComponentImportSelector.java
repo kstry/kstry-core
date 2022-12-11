@@ -17,10 +17,23 @@
  */
 package cn.kstry.framework.core.component.launcher;
 
+import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
+import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
+import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
+import cn.kstry.framework.core.component.dynamic.SubProcessDynamicComponent;
+import cn.kstry.framework.core.component.instruct.JsScriptInstruct;
 import cn.kstry.framework.core.container.processor.*;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchLogHook;
+import com.google.common.collect.Lists;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.OrderComparator;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Spring 容器中注册组件
@@ -58,7 +71,53 @@ public class ComponentImportSelector {
     }
 
     @Bean
+    public StartEventProcessor getStartEventProcessor(List<StartEventPostProcessor> processorList) {
+        return new StartEventProcessor(processorList);
+    }
+
+    @Bean
     public SpringBpmnDiagramRegister springBpmnDiagramRegister(ApplicationContext applicationContext) {
         return new SpringBpmnDiagramRegister(applicationContext);
+    }
+
+    @Bean
+    public RoleDynamicComponent roleDynamicComponent(ApplicationContext applicationContext) {
+        return new RoleDynamicComponent(applicationContext);
+    }
+
+    @Bean
+    public SubProcessDynamicComponent subProcessDynamicComponent(ApplicationContext applicationContext) {
+        return new SubProcessDynamicComponent(applicationContext);
+    }
+
+    @Bean
+    public ProcessDynamicComponent processDynamicComponent(ApplicationContext applicationContext,
+                                                           StartEventProcessor startEventProcessor, SubProcessDynamicComponent subProcessDynamicComponent) {
+        return new ProcessDynamicComponent(applicationContext, startEventProcessor, subProcessDynamicComponent);
+    }
+
+    @Bean
+    public KValueDynamicComponent kValueDynamicComponent(ApplicationContext applicationContext) {
+        return new KValueDynamicComponent(applicationContext);
+    }
+
+    @Bean
+    @SuppressWarnings("all")
+    public ThreadSwitchHookProcessor threadSwitchHookProcessor(ApplicationContext applicationContext) {
+        List<ThreadSwitchHook<Object>> threadSwitchHookList = Lists.newArrayList();
+        Map<String, ThreadSwitchHook> threadSwitchHookMap = applicationContext.getBeansOfType(ThreadSwitchHook.class);
+        threadSwitchHookMap.values().forEach(hook -> threadSwitchHookList.add(hook));
+        OrderComparator.sort(threadSwitchHookList);
+        return new ThreadSwitchHookProcessor(threadSwitchHookList);
+    }
+
+    @Bean
+    public ThreadSwitchLogHook logThreadSwitchHook() {
+        return new ThreadSwitchLogHook();
+    }
+
+    @Bean
+    public JsScriptInstruct jsScriptInstruct() {
+        return new JsScriptInstruct();
     }
 }

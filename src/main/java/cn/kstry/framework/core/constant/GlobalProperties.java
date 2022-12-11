@@ -24,11 +24,6 @@ package cn.kstry.framework.core.constant;
 public class GlobalProperties {
 
     /**
-     * StartEvent ID 前缀
-     */
-    public static String START_EVENT_ID_PREFIX = "story-def-";
-
-    /**
      * Story 执行成功后的 code
      */
     public static String STORY_SUCCESS_CODE = "200";
@@ -61,7 +56,7 @@ public class GlobalProperties {
     /**
      *  kstry 线程池缓存队列长度
      */
-    public static int KSTRY_THREAD_POOL_QUEUE_SIZE = 10_000;
+    public static int KSTRY_THREAD_POOL_QUEUE_SIZE = 2_000;
 
     /**
      * requestId 名字

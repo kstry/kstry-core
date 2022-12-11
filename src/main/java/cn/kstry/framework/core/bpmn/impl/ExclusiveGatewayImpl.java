@@ -38,14 +38,6 @@ public class ExclusiveGatewayImpl extends GatewayImpl implements ExclusiveGatewa
 
     }
 
-    public ExclusiveGatewayImpl(ServiceTask serviceTask) {
-        if (serviceTask != null && serviceTask.validTask()) {
-            this.serviceTask = serviceTask;
-        } else {
-            this.serviceTask = null;
-        }
-    }
-
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.EXCLUSIVE_GATEWAY;

@@ -74,7 +74,7 @@ public class Case1BpmnDiagramConfiguration {
             eg1
                     .nextTask("req.d<0", SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                    .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                    .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();
         });
     }

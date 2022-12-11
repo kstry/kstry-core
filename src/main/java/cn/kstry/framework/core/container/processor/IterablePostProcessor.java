@@ -24,8 +24,6 @@ import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.util.GlobalUtil;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
@@ -47,17 +45,12 @@ public class IterablePostProcessor extends DiagramTraverseSupport<Object> implem
         if (subProcess == null || !subProcess.iterable() || !(node instanceof ServiceTaskImpl)) {
             return;
         }
-        ServiceTaskImpl serviceTask = GlobalUtil.transferNotEmpty(node, ServiceTaskImpl.class);
-        BasicElementIterable beIterable = serviceTask.buildElementIterable();
-        if (StringUtils.isBlank(beIterable.getIteSource())) {
-            beIterable.setIteSource(subProcess.getIteSource());
-        }
-        if (beIterable.openAsync() == null) {
-            beIterable.setOpenAsync(BooleanUtils.isTrue(subProcess.openAsync()));
-        }
-        if (beIterable.getIteStrategy() == null) {
-            beIterable.setIteStrategy(subProcess.getIteStrategy());
-        }
+        BasicElementIterable beIterable = new BasicElementIterable();
+        beIterable.setIteSource(subProcess.getIteSource());
+        beIterable.setOpenAsync(subProcess.openAsync());
+        beIterable.setIteStrategy(subProcess.getIteStrategy());
+        beIterable.setStride(subProcess.getStride());
+        GlobalUtil.transferNotEmpty(node, ServiceTaskImpl.class).mergeElementIterable(beIterable);
     }
 
     @Override

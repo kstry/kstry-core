@@ -23,6 +23,7 @@ import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.kv.KvThreadLocal;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.util.ReflectionUtils;
@@ -58,7 +59,7 @@ public class ProxyUtil {
 
     public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask, Object target, Supplier<Object[]> paramsSupplier) {
         try {
-            KvThreadLocal.KvScope newKvScope = new KvThreadLocal.KvScope(methodWrapper.getKvScope());
+            KvScope newKvScope = new KvScope(methodWrapper.getKvScope());
             newKvScope.setBusinessId(storyBus.getBusinessId());
             KvThreadLocal.setKvScope(newKvScope);
             Object[] params = paramsSupplier.get();

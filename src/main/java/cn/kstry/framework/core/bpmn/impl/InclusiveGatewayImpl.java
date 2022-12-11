@@ -44,15 +44,6 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
         this.serviceTask = null;
     }
 
-    public InclusiveGatewayImpl(BasicAsyncFlowElement asyncFlowElement, ServiceTask serviceTask) {
-        if (serviceTask != null && serviceTask.validTask()) {
-            this.serviceTask = serviceTask;
-        } else {
-            this.serviceTask = null;
-        }
-        this.asyncFlowElement = asyncFlowElement;
-    }
-
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.INCLUSIVE_GATEWAY;

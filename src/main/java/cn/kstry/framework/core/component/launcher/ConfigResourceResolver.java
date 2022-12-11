@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.launcher;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
+import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.BpmnClassPathConfigSource;
 import cn.kstry.framework.core.resource.config.BpmnDiagramConfigSource;
@@ -43,6 +44,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -72,8 +74,8 @@ public class ConfigResourceResolver implements ApplicationContextAware {
     }
 
     @Bean
-    public StartEventFactory getStartEventFactory() {
-        return new StartEventFactory(applicationContext);
+    public StartEventFactory getStartEventFactory(ProcessDynamicComponent processDynamicComponent) {
+        return new StartEventFactory(applicationContext, processDynamicComponent);
     }
 
     @Bean
@@ -88,7 +90,7 @@ public class ConfigResourceResolver implements ApplicationContextAware {
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = GlobalUtil.transferNotEmpty(applicationContext, ConfigurableApplicationContext.class);
     }
 
@@ -114,7 +116,7 @@ public class ConfigResourceResolver implements ApplicationContextAware {
     private static class ClassPathSourceCondition implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             String bpmnPath = getBpmnPath(context.getBeanFactory());
             return StringUtils.isNotBlank(bpmnPath);
         }
@@ -123,15 +125,19 @@ public class ConfigResourceResolver implements ApplicationContextAware {
     private static class PropertiesSourceCondition implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             String propertiesPath = getPropertiesPath(context.getBeanFactory());
             return StringUtils.isNotBlank(propertiesPath);
         }
     }
 
     private static class MissingPropertySourcesPlaceholderConfigurer implements Condition {
+
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
             Map<String, PropertySourcesPlaceholderConfigurer> beansOfType = context.getBeanFactory().getBeansOfType(PropertySourcesPlaceholderConfigurer.class);
             return MapUtils.isEmpty(beansOfType);
         }

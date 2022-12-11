@@ -53,8 +53,9 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
     }
 
     public static TaskThreadPoolExecutor buildDefaultExecutor(ExecutorType executorType, String prefix) {
-        TaskThreadPoolExecutor poolExecutor = new TaskThreadPoolExecutor(
+        return buildTaskExecutor(
                 executorType,
+                prefix,
                 GlobalProperties.THREAD_POOL_CORE_SIZE,
                 GlobalProperties.THREAD_POOL_MAX_SIZE,
                 GlobalProperties.THREAD_POOL_KEEP_ALIVE_TIME, TimeUnit.MINUTES,
@@ -70,6 +71,11 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
                     LOGGER.error(kstryException.getMessage() + " taskName: {}", taskName);
                 }
         );
+    }
+
+    public static TaskThreadPoolExecutor buildTaskExecutor(ExecutorType executorType, String prefix, int corePoolSize, int maximumPoolSize, long keepAliveTime,
+                                                           TimeUnit keepAliveTimeUnit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
+        TaskThreadPoolExecutor poolExecutor = new TaskThreadPoolExecutor(executorType, corePoolSize, maximumPoolSize, keepAliveTime, keepAliveTimeUnit, workQueue, threadFactory, handler);
         poolExecutor.setPrefix(prefix);
         return poolExecutor;
     }

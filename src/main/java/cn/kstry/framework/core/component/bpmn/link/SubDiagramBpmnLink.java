@@ -23,13 +23,14 @@ import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.ElementParserUtil;
+import org.apache.commons.lang3.StringUtils;
 
 public class SubDiagramBpmnLink extends StartDiagramBpmnLink implements SubBpmnLink {
 
     private final SubProcessImpl subProcess;
 
-    public SubDiagramBpmnLink(SubProcessLink builder, ConfigResource configResource, String id, String name) {
-        super(SubBpmnLink.relatedStartId(id), name);
+    public SubDiagramBpmnLink(SubProcessLink builder, ConfigResource configResource, String id, String name, String startId, String startName) {
+        super(StringUtils.isBlank(startId) ? SubBpmnLink.relatedStartId(id) : startId, StringUtils.isBlank(startName) ? name : startName);
         SubProcessImpl subProcess = new SubProcessImpl(allSub -> {
             SubDiagramBpmnLink bpmnLink = builder.buildSubDiagramBpmnLink(configResource);
             SubProcessImpl sp = bpmnLink.getElement();
