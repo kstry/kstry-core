@@ -1,0 +1,43 @@
+default:
+  name1: name1
+  name2: name2
+  name3: name3
+  name4: name4
+  name5: name5
+  name6: name6
+  name7: name7
+  name8: name-8
+  fir: fir
+  ate: ate
+  bust: bust
+  ids:
+    - 1
+    - 2
+    - 3
+    - 4
+
+default@prod:
+  name1: name1
+  name2: name2
+  name3: name3
+  name4: name4
+  name5: name5
+  name6: name6
+  name7: name-7
+  fir:
+
+new-per-scope:
+  name1: name1
+  name2: name2
+  name3: name3
+  name4: name4
+  name5: name5
+  name6: name-6
+  ate:
+
+new-per-scope@prod:
+  name1: name1
+  name2: name2
+  name3: name3
+  name4: name4
+  name5: name-5

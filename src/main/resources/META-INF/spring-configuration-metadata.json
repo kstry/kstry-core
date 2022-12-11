@@ -1,0 +1,73 @@
+{
+  "properties": [{
+    "name": "kstry.story.timeout",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Story 超时时间，默认：3000ms"
+  }, {
+    "name": "kstry.story.success-code",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "成功状态码，默认：200"
+  }, {
+    "name": "kstry.story.tracking.type",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "链路追踪类型，默认：none"
+  }, {
+    "name": "kstry.story.tracking.log",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "是否打印链路追踪，默认：false"
+  }, {
+    "name": "kstry.story.tracking.value-max-length",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "监控中节点出入参快照最大长度，超出将进行截取。默认为 -1 代表不限制， 0 时不记录入参， >0 时会对节点出入参快照截取到该字段长度。仅在 TrackingTypeEnum == SERVICE_DETAIL 时生效"
+  }, {
+    "name": "kstry.story.request-id",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "requestId 名字，默认：ks-request-id"
+  }, {
+    "name": "kstry.thread.pool.core-size",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Kstry 线程池核心线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2)"
+  }, {
+    "name": "kstry.thread.pool.max-size",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Kstry 线程池最大线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2) * 2"
+  }, {
+    "name": "kstry.thread.pool.keep-alive-time",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Kstry 线程池空闲线程等待时间，单位：分钟，默认：10"
+  }, {
+    "name": "kstry.thread.pool.queue-size",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Kstry 线程池缓存队列长度，默认：2000"
+  }, {
+    "name": "kstry.thread.pool.monitor.delay",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "线程监控日志打印间隔时间，默认 10s"
+  }, {
+    "name": "kstry.thread.pool.monitor.enable",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "是否开启线程池监控，进行日志打印，默认：true"
+  }, {
+    "name": "kstry.thread.pool.shutdown-await",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Thread Pool shutdown 之后的等待时间，单位：ms，默认：3000"
+  }, {
+    "name": "kstry.thread.pool.shutdown-now-await",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "Thread Pool shutdown 失败之后，再 shutdownNow 之后的等待时间，单位：ms，默认：5000"
+  }]
+}
