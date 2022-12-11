@@ -124,7 +124,7 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
 
     @Override
     public String identity() {
-        return GlobalUtil.format("{}:[id:{}, name:{}]", getElementType(), getId(), getName());
+        return GlobalUtil.format("{}:[id: {}, name: {}]", getElementType(), getId(), getName());
     }
 
     @Override

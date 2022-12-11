@@ -38,7 +38,7 @@ public class ThreadSwitchLogHook implements ThreadSwitchHook<TraceLog> {
         TraceLog traceLog = new TraceLog();
         traceLog.setLogId(MDC.get(mdcKeyName));
         if (StringUtils.isBlank(traceLog.getLogId())) {
-            LOGGER.warn("[{}] Failed to get logId during thread switch. mdcKeyName: {}, threadName:{}",
+            LOGGER.warn("[{}] Failed to get logId during thread switch. mdcKeyName: {}, threadName: {}",
                     ExceptionEnum.THREAD_SWITCH_HOOK_ERROR.getExceptionCode(), mdcKeyName, Thread.currentThread().getName());
         }
         return traceLog;
@@ -48,12 +48,12 @@ public class ThreadSwitchLogHook implements ThreadSwitchHook<TraceLog> {
     public void usePreviousData(TraceLog traceLog, ScopeDataQuery scopeDataQuery) {
         String mdcKeyName = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
         if (traceLog == null || StringUtils.isBlank(traceLog.getLogId())) {
-            LOGGER.warn("[{}] Failed to use logId during thread switch. mdcKeyName: {}, threadName:{}, traceLog: {}",
+            LOGGER.warn("[{}] Failed to use logId during thread switch. mdcKeyName: {}, threadName: {}, traceLog: {}",
                     ExceptionEnum.THREAD_SWITCH_HOOK_ERROR.getExceptionCode(), mdcKeyName, Thread.currentThread().getName(), traceLog);
             return;
         }
         if (!Objects.equals(traceLog.getLogId(), scopeDataQuery.getRequestId())) {
-            LOGGER.warn("[{}] The logId saved in the MDC is not the same as the logId saved in the request. mdcKeyName: {}, mdcRequestId: {}, requestId:{}",
+            LOGGER.warn("[{}] The logId saved in the MDC is not the same as the logId saved in the request. mdcKeyName: {}, mdcRequestId: {}, requestId: {}",
                     mdcKeyName, ExceptionEnum.THREAD_SWITCH_HOOK_ERROR.getExceptionCode(), traceLog.getLogId(), scopeDataQuery.getRequestId());
         }
         MDC.put(mdcKeyName, traceLog.getLogId());

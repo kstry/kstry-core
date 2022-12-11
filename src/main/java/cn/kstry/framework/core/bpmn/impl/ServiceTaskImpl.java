@@ -161,7 +161,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
 
     @Override
     public String identity() {
-        return GlobalUtil.format("{}:[id:{}, name:{}, component:{}, service: {}]", getElementType(), getId(), getName(), taskComponent, taskService);
+        return GlobalUtil.format("{}:[id: {}, name: {}, component: {}, service: {}]", getElementType(), getId(), getName(), taskComponent, taskService);
     }
 
     @Override
