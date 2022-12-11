@@ -70,23 +70,33 @@ public class ServiceTaskBuilder {
         return this;
     }
 
+    public ServiceTaskBuilder instruct(String instruct) {
+        serviceTask.setTaskInstruct(instruct);
+        return this;
+    }
+
+    public ServiceTaskBuilder instructContent(String instructContent) {
+        serviceTask.setTaskInstructContent(instructContent);
+        return this;
+    }
+
     public ServiceTaskBuilder customRole(String customRole) {
         this.serviceTask.setCustomRoleInfo(CustomRoleInfo.buildCustomRole(customRole).orElse(null));
         return this;
     }
 
     public ServiceTaskBuilder allowAbsent() {
-        this.serviceTask.setAllowAbsent(Boolean.TRUE.toString());
+        this.serviceTask.setAllowAbsent(true);
         return this;
     }
 
     public ServiceTaskBuilder notStrictMode() {
-        this.serviceTask.setStrictMode(Boolean.FALSE.toString());
+        this.serviceTask.setStrictMode(false);
         return this;
     }
 
     public ServiceTaskBuilder iterable(ElementIterable iterable) {
-        this.serviceTask.setElementIterable(iterable);
+        this.serviceTask.mergeElementIterable(iterable);
         return this;
     }
 

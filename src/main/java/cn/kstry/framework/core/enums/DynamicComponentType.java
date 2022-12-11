@@ -15,15 +15,27 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.role;
+package cn.kstry.framework.core.enums;
 
-import cn.kstry.framework.core.container.task.TaskComponentRegister;
+public enum DynamicComponentType {
 
-/**
- * 自定义角色组件声明
- *
- * @author lykan
- */
-public interface CustomRoleRegister extends TaskComponentRegister {
+    /**
+     * 角色
+     */
+    ROLE,
 
+    /**
+     * 子流程
+     */
+    SUB_PROCESS,
+
+    /**
+     * 流程
+     */
+    PROCESS,
+
+    /**
+     * 动态属性
+     */
+    K_VALUE
 }

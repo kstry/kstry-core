@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.bpmn.link;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.component.bpmn.builder.ExclusiveGatewayBuilder;
@@ -61,6 +62,15 @@ public interface BpmnLink {
     /**
      * 定义下一个  ServiceTask
      *
+     * @param sequenceFlow   指向 ServiceTask 箭头对象
+     * @param serviceTask    serviceTask
+     * @return BpmnLink
+     */
+    BpmnLink nextTask(SequenceFlow sequenceFlow, ServiceTask serviceTask);
+
+    /**
+     * 定义下一个  ServiceTask
+     *
      * @param flowExpression 指向 ServiceTask 箭头的条件表达式
      * @return ServiceTask Builder
      */
@@ -86,6 +96,71 @@ public interface BpmnLink {
     ServiceTaskBuilder nextTask(String flowExpression, String component, String service);
 
     /**
+     * 定义下一个  ServiceTask
+     *
+     * @param sequenceFlow   指向 ServiceTask 箭头对象
+     * @param component      对应 @TaskComponent
+     * @param service        对应 @TaskService
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextTask(SequenceFlow sequenceFlow, String component, String service);
+
+    /**
+     * 定义下一个  ServiceTask
+     *
+     * @param service   对应 @TaskService
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextService(String service);
+
+    /**
+     * 定义下一个  ServiceTask
+     *
+     * @param flowExpression 指向 ServiceTask 箭头的条件表达式
+     * @param service        对应 @TaskService
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextService(String flowExpression, String service);
+
+    /**
+     * 定义下一个  ServiceTask
+     *
+     * @param sequenceFlow   指向 SubProcess 箭头对象
+     * @param service        对应 @TaskService
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextService(SequenceFlow sequenceFlow, String service);
+
+    /**
+     * 定义下一个指令
+     *
+     * @param instruct   指令
+     * @param content   指令内容
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextInstruct(String instruct, String content);
+
+    /**
+     * 定义下一个指令
+     *
+     * @param flowExpression 指向指令箭头的条件表达式
+     * @param instruct   指令
+     * @param content   指令内容
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextInstruct(String flowExpression, String instruct, String content);
+
+    /**
+     * 定义下一个指令
+     *
+     * @param sequenceFlow   指向 SubProcess 箭头对象
+     * @param instruct   指令
+     * @param content   指令内容
+     * @return ServiceTask Builder
+     */
+    ServiceTaskBuilder nextInstruct(SequenceFlow sequenceFlow, String instruct, String content);
+
+    /**
      * 定义下一个子流程
      *
      * @param processId 子流程Id
@@ -103,6 +178,15 @@ public interface BpmnLink {
     SubProcessBuilder nextSubProcess(String flowExpression, String processId);
 
     /**
+     * 定义下一个子流程
+     *
+     * @param sequenceFlow   指向 SubProcess 箭头对象
+     * @param processId      子流程Id
+     * @return SubProcess Builder
+     */
+    SubProcessBuilder nextSubProcess(SequenceFlow sequenceFlow, String processId);
+
+    /**
      * 定义下一个 ExclusiveGateway
      *
      * @return ExclusiveGatewayBuilder
@@ -116,6 +200,14 @@ public interface BpmnLink {
      * @return ExclusiveGatewayBuilder
      */
     ExclusiveGatewayBuilder nextExclusive(String flowExpression);
+
+    /**
+     * 定义下一个 ExclusiveGateway
+     *
+     * @param sequenceFlow   指向 ExclusiveGateway 箭头对象
+     * @return ExclusiveGatewayBuilder
+     */
+    ExclusiveGatewayBuilder nextExclusive(SequenceFlow sequenceFlow);
 
     /**
      * 定义下一个 InclusiveGateway
@@ -135,6 +227,15 @@ public interface BpmnLink {
     InclusiveJoinPoint nextInclusive(String flowExpression, InclusiveJoinPoint inclusiveGateway);
 
     /**
+     * 定义下一个 InclusiveGateway
+     *
+     * @param sequenceFlow     指向 inclusiveGateway 箭头对象
+     * @param inclusiveGateway inclusiveGateway
+     * @return InclusiveJoinPoint
+     */
+    InclusiveJoinPoint nextInclusive(SequenceFlow sequenceFlow, InclusiveJoinPoint inclusiveGateway);
+
+    /**
      * 定义下一个 ParallelGateway
      *
      * @param parallelGateway parallelGateway
@@ -152,6 +253,15 @@ public interface BpmnLink {
     ParallelJoinPoint nextParallel(String flowExpression, ParallelJoinPoint parallelGateway);
 
     /**
+     * 定义下一个 ParallelGateway
+     *
+     * @param parallelGateway parallelGateway
+     * @param sequenceFlow    指向 parallelGateway 箭头对象
+     * @return ParallelJoinPoint
+     */
+    ParallelJoinPoint nextParallel(SequenceFlow sequenceFlow, ParallelJoinPoint parallelGateway);
+
+    /**
      * 将多个任务分支进行合并
      *
      * @param diagramJoinPoint 合并点元素
@@ -167,9 +277,31 @@ public interface BpmnLink {
     <T extends AggregationFlowElement> void joinTask(String flowExpression, DiagramJoinPoint<T> diagramJoinPoint);
 
     /**
+     * 将多个任务分支进行合并
+     *
+     * @param sequenceFlow     指向 DiagramJoinPoint 箭头对象
+     * @param diagramJoinPoint 合并点元素
+     */
+    <T extends AggregationFlowElement> void joinTask(SequenceFlow sequenceFlow, DiagramJoinPoint<T> diagramJoinPoint);
+
+    /**
      * 结束流程 —— 将当前节点指向结束节点
      */
     void end();
+
+    /**
+     * 结束流程 —— 将当前节点指向结束节点
+     *
+     * @param flowExpression   指向 end 箭头的条件表达式
+     */
+    void end(String flowExpression);
+
+    /**
+     * 结束流程 —— 将当前节点指向结束节点
+     *
+     * @param sequenceFlow     指向 end 箭头对象
+     */
+    void end(SequenceFlow sequenceFlow);
 
     /**
      * 获取关联事件

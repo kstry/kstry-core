@@ -19,13 +19,13 @@ package cn.kstry.framework.test.load;
 
 import java.util.Optional;
 
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.test.load.lct01.Lct01;
 
 /**
@@ -45,7 +45,7 @@ public class LoadComponentTest {
             e.printStackTrace();
             err = e;
         }
-        Optional<KstryException> exception = GlobalUtil.getErrFromCause(err, KstryException.class);
+        Optional<KstryException> exception = ExceptionUtil.getErrFromCause(err, KstryException.class);
         Assert.assertTrue(exception.isPresent());
         String errorCode = exception.get().getErrorCode();
         Assert.assertEquals(ExceptionEnum.COMPONENT_DUPLICATION_ERROR.getExceptionCode(), errorCode);

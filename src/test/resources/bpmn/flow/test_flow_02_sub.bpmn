@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0lbddjt" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0lbddjt" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:process id="Process_1wdxkdf" isExecutable="true">
     <bpmn:subProcess id="Activity_08dqpf9" name="BBBB">
       <bpmn:extensionElements>
         <camunda:properties>
-          <camunda:property name="timeout" value="500" />
+          <camunda:property name="timeout" value="1000" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:startEvent id="Event_1ql4cvh">
@@ -15,6 +15,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="3" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0dr6yl3</bpmn:incoming>
@@ -46,6 +47,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="4" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_078c5kd</bpmn:incoming>
@@ -56,6 +58,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="5" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1rji4cf</bpmn:incoming>
@@ -67,6 +70,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="7" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1la3e7x</bpmn:incoming>
@@ -87,6 +91,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="6" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1r2bve7</bpmn:incoming>
@@ -149,6 +154,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="20" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1soxlsz</bpmn:incoming>
@@ -159,6 +165,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="23" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0pz7xw1</bpmn:incoming>
@@ -194,6 +201,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="21" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0twvsph</bpmn:incoming>
@@ -204,6 +212,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="22" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1tywou4</bpmn:incoming>
@@ -214,6 +223,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="25" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0nmzba9</bpmn:incoming>
@@ -224,9 +234,10 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="24" />
           </camunda:properties>
         </bpmn:extensionElements>
-        <bpmn:incoming>Flow_0750yin</bpmn:incoming>
+        <bpmn:incoming>Flow_0i1nuj4</bpmn:incoming>
         <bpmn:outgoing>Flow_07hxi4r</bpmn:outgoing>
       </bpmn:serviceTask>
       <bpmn:inclusiveGateway id="Gateway_0goky4r">
@@ -236,11 +247,11 @@
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0jfj5m7</bpmn:incoming>
-        <bpmn:incoming>Flow_0i1nuj4</bpmn:incoming>
+        <bpmn:incoming>Flow_07hxi4r</bpmn:incoming>
         <bpmn:outgoing>Flow_0nmzba9</bpmn:outgoing>
       </bpmn:inclusiveGateway>
       <bpmn:sequenceFlow id="Flow_0nmzba9" sourceRef="Gateway_0goky4r" targetRef="Activity_1tqeki7" />
-      <bpmn:sequenceFlow id="Flow_0750yin" name="true" sourceRef="Gateway_03eds54" targetRef="Activity_0y4meow">
+      <bpmn:sequenceFlow id="Flow_0750yin" name="true" sourceRef="Gateway_03eds54" targetRef="Activity_0xpgxk1">
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">true</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_06u1q0g" sourceRef="Activity_1tqeki7" targetRef="Event_0upw607" />
@@ -259,10 +270,10 @@
         <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">true</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
       <bpmn:sequenceFlow id="Flow_0l9cycj" sourceRef="Event_1fhisn0" targetRef="Gateway_1ke1v3q" />
-      <bpmn:sequenceFlow id="Flow_07hxi4r" sourceRef="Activity_0y4meow" targetRef="Activity_0xpgxk1" />
-      <bpmn:sequenceFlow id="Flow_0i1nuj4" sourceRef="Activity_0xpgxk1" targetRef="Gateway_0goky4r" />
+      <bpmn:sequenceFlow id="Flow_07hxi4r" sourceRef="Activity_0y4meow" targetRef="Gateway_0goky4r" />
+      <bpmn:sequenceFlow id="Flow_0i1nuj4" sourceRef="Activity_0xpgxk1" targetRef="Activity_0y4meow" />
       <bpmn:callActivity id="Activity_0xpgxk1" name="ssException" calledElement="Activity_0yw791j">
-        <bpmn:incoming>Flow_07hxi4r</bpmn:incoming>
+        <bpmn:incoming>Flow_0750yin</bpmn:incoming>
         <bpmn:outgoing>Flow_0i1nuj4</bpmn:outgoing>
       </bpmn:callActivity>
     </bpmn:subProcess>
@@ -415,12 +426,12 @@
         <dc:Bounds x="190" y="720" width="780" height="570" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0i1nuj4_di" bpmnElement="Flow_0i1nuj4">
-        <di:waypoint x="720" y="1030" />
-        <di:waypoint x="720" y="815" />
+        <di:waypoint x="730" y="1030" />
+        <di:waypoint x="730" y="1010" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_07hxi4r_di" bpmnElement="Flow_07hxi4r">
-        <di:waypoint x="720" y="1180" />
-        <di:waypoint x="720" y="1110" />
+        <di:waypoint x="730" y="930" />
+        <di:waypoint x="730" y="815" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0l9cycj_di" bpmnElement="Flow_0l9cycj">
         <di:waypoint x="248" y="880" />
@@ -441,7 +452,7 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0jfj5m7_di" bpmnElement="Flow_0jfj5m7">
         <di:waypoint x="645" y="790" />
-        <di:waypoint x="695" y="790" />
+        <di:waypoint x="705" y="790" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0pz7xw1_di" bpmnElement="Flow_0pz7xw1">
         <di:waypoint x="385" y="1170" />
@@ -464,20 +475,20 @@
         <di:waypoint x="360" y="1145" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_06u1q0g_di" bpmnElement="Flow_06u1q0g">
-        <di:waypoint x="870" y="790" />
+        <di:waypoint x="880" y="790" />
         <di:waypoint x="912" y="790" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0750yin_di" bpmnElement="Flow_0750yin">
-        <di:waypoint x="360" y="1195" />
-        <di:waypoint x="360" y="1220" />
-        <di:waypoint x="670" y="1220" />
+        <di:waypoint x="385" y="1170" />
+        <di:waypoint x="730" y="1170" />
+        <di:waypoint x="730" y="1110" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="506" y="1202" width="19" height="14" />
+          <dc:Bounds x="549" y="1152" width="19" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0nmzba9_di" bpmnElement="Flow_0nmzba9">
-        <di:waypoint x="745" y="790" />
-        <di:waypoint x="770" y="790" />
+        <di:waypoint x="755" y="790" />
+        <di:waypoint x="780" y="790" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Event_1fhisn0_di" bpmnElement="Event_1fhisn0">
         <dc:Bounds x="212" y="862" width="36" height="36" />
@@ -506,17 +517,17 @@
       <bpmndi:BPMNShape id="Activity_05ti5q2_di" bpmnElement="Activity_05ti5q2">
         <dc:Bounds x="310" y="1030" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1tqeki7_di" bpmnElement="Activity_1tqeki7">
-        <dc:Bounds x="770" y="750" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_15lptwl_di" bpmnElement="Activity_0xpgxk1">
+        <dc:Bounds x="680" y="1030" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0y4meow_di" bpmnElement="Activity_0y4meow">
-        <dc:Bounds x="670" y="1180" width="100" height="80" />
+        <dc:Bounds x="680" y="930" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0goky4r_di" bpmnElement="Gateway_0goky4r">
-        <dc:Bounds x="695" y="765" width="50" height="50" />
+        <dc:Bounds x="705" y="765" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_15lptwl_di" bpmnElement="Activity_0xpgxk1">
-        <dc:Bounds x="670" y="1030" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_1tqeki7_di" bpmnElement="Activity_1tqeki7">
+        <dc:Bounds x="780" y="750" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0yw791j_di" bpmnElement="Activity_0yw791j" isExpanded="true">
         <dc:Bounds x="405" y="1420" width="350" height="200" />

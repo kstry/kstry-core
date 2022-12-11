@@ -24,57 +24,52 @@ package cn.kstry.framework.core.constant;
 public interface ConfigPropertyNameConstant {
 
     /**
-     * Story 超时时间
+     * Story 超时时间，默认：3000ms
      */
     String KSTRY_STORY_TIMEOUT = "kstry.story.timeout";
 
     /**
-     * StartEvent ID 前缀
-     */
-    String KSTRY_STORY_PREFIX = "kstry.story.prefix";
-
-    /**
-     * 成功状态码
+     * 成功状态码，默认：200
      */
     String KSTRY_STORY_SUCCESS_CODE = "kstry.story.success-code";
 
     /**
-     * 链路追踪类型
+     * 链路追踪类型，默认：none
      */
     String KSTRY_STORY_TRACKING_TYPE = "kstry.story.tracking.type";
 
     /**
-     * 是否打印链路追踪
+     * 是否打印链路追踪，默认：false
      */
     String KSTRY_STORY_TRACKING_LOG = "kstry.story.tracking.log";
 
     /**
-     * 监控中节点出入参快照最大长度，超出将进行截取
+     * 监控中节点出入参快照最大长度，超出将进行截取。默认为 -1 代表不限制， 0 时不记录入参， >0 时会对节点出入参快照截取到该字段长度。仅在 TrackingTypeEnum == SERVICE_DETAIL 时生效
      */
     String KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = "kstry.story.tracking.value-max-length";
 
     /**
-     * requestId 名字
+     * requestId 名字，默认：ks-request-id
      */
     String KSTRY_STORY_REQUEST_ID_NAME = "kstry.story.request-id";
 
     /**
-     *  kstry 线程池核心线程数
+     *  kstry 线程池核心线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2)
      */
     String KSTRY_THREAD_POOL_CORE_SIZE = "kstry.thread.pool.core-size";
 
     /**
-     *  kstry 线程池最大线程数
+     *  kstry 线程池最大线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2) * 2
      */
     String KSTRY_THREAD_POOL_MAX_SIZE = "kstry.thread.pool.max-size";
 
     /**
-     *  kstry 线程池空闲线程等待时间，单位：分钟
+     *  kstry 线程池空闲线程等待时间，单位：分钟，默认：10
      */
     String KSTRY_THREAD_POOL_KEEP_ALIVE_TIME = "kstry.thread.pool.keep-alive-time";
 
     /**
-     *  kstry 线程池缓存队列长度
+     *  kstry 线程池缓存队列长度，默认：2000
      */
     String KSTRY_THREAD_POOL_QUEUE_SIZE = "kstry.thread.pool.queue-size";
 
@@ -84,17 +79,17 @@ public interface ConfigPropertyNameConstant {
     String KSTRY_THREAD_POOL_MONITOR_DELAY = "kstry.thread.pool.monitor.delay";
 
     /**
-     * 是否开启线程池监控，进行日志打印
+     * 是否开启线程池监控，进行日志打印，默认：true
      */
     String KSTRY_THREAD_POOL_MONITOR_ENABLE = "kstry.thread.pool.monitor.enable";
 
     /**
-     *  Thread Pool shutdown 之后的等待时间
+     *  Thread Pool shutdown 之后的等待时间，单位：ms，默认：3000
      */
     String KSTRY_THREAD_SHUTDOWN_AWAIT = "kstry.thread.pool.shutdown-await";
 
     /**
-     *  shutdown失败之后，Thread Pool shutdownNow 之后的等待时间
+     *  shutdown失败之后，Thread Pool shutdownNow 之后的等待时间，单位：ms，默认：5000
      */
     String KSTRY_THREAD_SHUTDOWN_NOW_AWAIT = "kstry.thread.pool.shutdown-now-await";
 }

@@ -38,11 +38,6 @@ public interface GlobalConstant {
     List<ScopeTypeEnum> STORY_DATA_SCOPE = Lists.newArrayList(ScopeTypeEnum.REQUEST, ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE);
 
     /**
-     * Element 引用最大次数，链路中存在循环依赖时会报错
-     */
-    int ELEMENT_MAX_OCCUR_NUMBER = 1000;
-
-    /**
      * void 类型
      */
     String VOID = "void";

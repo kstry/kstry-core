@@ -40,6 +40,8 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 
+import javax.annotation.Nonnull;
+
 /**
  * 支持Spring上下文的服务组件仓库
  *
@@ -60,16 +62,14 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
         GlobalUtil.sortObjExtends(objSet).forEach(target -> {
             if (target instanceof TaskComponentRegister) {
                 TaskComponentRegister v = (TaskComponentRegister) target;
-                AssertUtil.notBlank(v.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
-                        "TaskComponentRegister name cannot be empty! className: {}", v.getClass().getName());
+                AssertUtil.notBlank(v.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskComponentRegister name cannot be empty! className: {}", v.getClass().getName());
                 doInit(v, v.getClass(), v.getName(), true);
                 return;
             }
             Class<?> targetClass = ProxyUtil.noneProxyClass(target);
             TaskComponent taskComponent = AnnotationUtils.findAnnotation(targetClass, TaskComponent.class);
             AssertUtil.notNull(taskComponent);
-            AssertUtil.notBlank(taskComponent.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
-                    "TaskComponent name cannot be empty! className: {}", targetClass.getName());
+            AssertUtil.notBlank(taskComponent.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskComponent name cannot be empty! className: {}", targetClass.getName());
             doInit(target, targetClass, taskComponent.name(), taskComponent.scanSuper());
         });
         repositoryPostProcessor();
@@ -102,7 +102,7 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 }

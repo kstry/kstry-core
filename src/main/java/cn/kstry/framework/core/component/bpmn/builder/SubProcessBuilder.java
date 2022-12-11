@@ -40,12 +40,12 @@ public class SubProcessBuilder {
     }
 
     public SubProcessBuilder notStrictMode() {
-        this.subProcess.setStrictMode(Boolean.FALSE.toString());
+        this.subProcess.setStrictMode(false);
         return this;
     }
 
     public SubProcessBuilder iterable(ElementIterable iterable) {
-        this.subProcess.setElementIterable(iterable);
+        this.subProcess.mergeElementIterable(iterable);
         return this;
     }
 

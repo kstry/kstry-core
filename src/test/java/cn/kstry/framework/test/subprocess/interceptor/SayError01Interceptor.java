@@ -58,8 +58,7 @@ public class SayError01Interceptor implements SubProcessInterceptor {
         Assert.assertNotNull(varScope);
         Optional<Boolean> b = dataOperator.getReqData("c");
         Assert.assertTrue(b.orElse(false));
-        Optional<Object> result = dataOperator.getResult();
-        dataOperator.setVarData("at", "at");
+        Assert.assertTrue(dataOperator.setVarData("at", "at"));
         Assert.assertTrue(dataOperator.setStaData("at", "at"));
         return true;
     }

@@ -232,8 +232,7 @@ public class ElementParserUtil {
             return false;
         }
         TaskComponent taskComponentAnnotation = AnnotationUtils.findAnnotation(clazz, TaskComponent.class);
-        CustomRole customRoleAnnotation = AnnotationUtils.findAnnotation(clazz, CustomRole.class);
-        return taskComponentAnnotation != null || customRoleAnnotation != null || TaskComponentRegister.class.isAssignableFrom(clazz);
+        return taskComponentAnnotation != null || TaskComponentRegister.class.isAssignableFrom(clazz);
     }
 
     public static Optional<String> getTaskComponentName(Object target) {
@@ -242,13 +241,10 @@ public class ElementParserUtil {
         }
 
         TaskComponent taskComponentAnnotation = AnnotationUtils.findAnnotation(target.getClass(), TaskComponent.class);
-        CustomRole customRoleAnnotation = AnnotationUtils.findAnnotation(target.getClass(), CustomRole.class);
         if (target instanceof TaskComponentRegister) {
             return Optional.ofNullable(((TaskComponentRegister) target).getName()).filter(StringUtils::isNotBlank);
         } else if (taskComponentAnnotation != null) {
             return Optional.of(taskComponentAnnotation.name()).filter(StringUtils::isNotBlank);
-        } else if (customRoleAnnotation != null) {
-            return Optional.of(customRoleAnnotation.name()).filter(StringUtils::isNotBlank);
         } else {
             throw ExceptionUtil.buildException(null, ExceptionEnum.ANNOTATION_USAGE_ERROR, null);
         }

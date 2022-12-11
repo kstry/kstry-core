@@ -23,7 +23,6 @@ import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
@@ -58,11 +57,8 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
         return BooleanUtils.isNotFalse(strictMode);
     }
 
-    public void setStrictMode(String strictMode) {
-        if (StringUtils.isBlank(strictMode)) {
-            return;
-        }
-        this.strictMode = BooleanUtils.toBooleanObject(strictMode.trim());
+    public void setStrictMode(Boolean strictMode) {
+        this.strictMode = strictMode;
     }
 
     @Override
@@ -90,19 +86,23 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
     }
 
     @Override
+    public Integer getStride() {
+        return Optional.ofNullable(elementIterable).map(ElementIterable::getStride).orElse(null);
+    }
+
+    @Override
     public boolean iterable() {
         return Optional.ofNullable(elementIterable).map(ElementIterable::iterable).orElse(false);
     }
 
-    public BasicElementIterable buildElementIterable() {
-        if (elementIterable != null) {
-            return elementIterable;
+    public void mergeElementIterable(ElementIterable elementIterable) {
+        if (elementIterable == null) {
+            return;
         }
-        elementIterable = new BasicElementIterable();
-        return elementIterable;
-    }
-
-    public void setElementIterable(ElementIterable elementIterable) {
-        this.elementIterable = GlobalUtil.transferNotEmpty(elementIterable, BasicElementIterable.class);
+        if (this.elementIterable != null) {
+            this.elementIterable.mergeProperty(elementIterable);
+        } else {
+            this.elementIterable = GlobalUtil.transferNotEmpty(elementIterable, BasicElementIterable.class);
+        }
     }
 }

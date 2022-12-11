@@ -28,13 +28,28 @@ import cn.kstry.framework.core.util.PermissionUtil;
  */
 public class InvokeProperties {
 
+    /**
+     * 服务任务节点调用失败重试次数，在@Invoke注解中定义
+     */
     private final int retry;
 
+    /**
+     * 服务任务节点调用超时时间，在@Invoke注解中定义
+     * 非降级调用场景中，会以流程配置中任务节点的timeout属性为主（流程配置中配置了就用流程配置中的超时时间，没有配置时尝试获取@Invoke超时时间）该属性为辅
+     * 在降级调用时，会以该超时时间为主流程配置中任务节点的timeout属性为辅
+     */
     private final int timeout;
 
-    private final ServiceNodeResource demotionResource;
-
+    /**
+     * 服务任务节点调用是否是严格模式，在@Invoke注解中定义
+     * 服务任务节点调用是否为严格模式。与流程配置中任务节点的严格模式相同。两者同时为严格模式时才会是严格默认，有任一是非严格模式时，任务调用将
+     */
     private final boolean strictMode;
+
+    /**
+     * 服务任务节点调用失败时降低调用的资源位置，在@Invoke注解中定义
+     */
+    private final ServiceNodeResource demotionResource;
 
     private boolean validDemotion;
 
@@ -43,8 +58,7 @@ public class InvokeProperties {
         this.timeout = invoke.timeout();
         this.strictMode = invoke.strictMode();
         this.demotionResource = PermissionUtil.parseResource(invoke.demotion())
-                .filter(p -> p.getPermissionType() == PermissionType.COMPONENT_SERVICE || p.getPermissionType() == PermissionType.COMPONENT_SERVICE_ABILITY)
-                .orElse(null);
+                .filter(p -> p.getPermissionType() == PermissionType.COMPONENT_SERVICE || p.getPermissionType() == PermissionType.COMPONENT_SERVICE_ABILITY).orElse(null);
         this.validDemotion = this.demotionResource != null;
     }
 

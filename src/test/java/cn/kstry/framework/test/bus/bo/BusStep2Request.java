@@ -18,6 +18,7 @@
 package cn.kstry.framework.test.bus.bo;
 
 import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.engine.ParamLifecycle;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.bus.service.BusTestService;
@@ -58,13 +59,15 @@ public class BusStep2Request implements ParamLifecycle {
     private BusTestService busTestService;
 
     @Override
-    public void before() {
-        ParamLifecycle.super.before();
+    public void before(ScopeDataOperator scopeDataOperator) {
+        Assert.assertNotNull(scopeDataOperator);
+        ParamLifecycle.super.before(scopeDataOperator);
         br = new Br();
     }
 
     @Override
-    public void after() {
+    public void after(ScopeDataOperator scopeDataOperator) {
+        Assert.assertNotNull(scopeDataOperator);
         Assert.assertTrue(reqId > 0);
         Assert.assertEquals(reqId, varId);
         Assert.assertEquals(reqId, staId);

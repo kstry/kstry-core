@@ -40,6 +40,11 @@ public interface BpmnElementProperties {
     String SERVICE_TASK_TASK_PROPERTY = "task-property";
 
     /**
+     * ServiceTask: 任务指令
+     */
+    String SERVICE_TASK_TASK_INSTRUCT = "c-";
+
+    /**
      * ServiceTask: allow-absent
      */
     String TASK_ALLOW_ABSENT = "allow-absent";
@@ -78,4 +83,9 @@ public interface BpmnElementProperties {
      * ElementIterator(SubProcess/ServiceTask): ite-strategy
      */
     String ITERATE_STRATEGY = "ite-strategy";
+
+    /**
+     * ElementIterator(SubProcess/ServiceTask): ite-stride
+     */
+    String ITERATE_STRIDE = "ite-stride";
 }

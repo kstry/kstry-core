@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.component.bpmn.builder;
 
+import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.link.SubBpmnLink;
 import cn.kstry.framework.core.component.bpmn.link.SubDiagramBpmnLink;
@@ -28,26 +29,75 @@ import java.util.function.Consumer;
 
 public abstract class SubProcessLink {
 
-    protected final String subProcessId;
+    private final String subProcessId;
 
-    public SubProcessLink(String subProcessId) {
+    private final String subProcessName;
+
+    private final String startEventId;
+
+    private final String startEventName;
+
+    private Integer timeout;
+
+    private Boolean strictMode;
+
+    private BasicElementIterable elementIterable;
+
+    private SubProcessImpl subProcess;
+
+    public SubProcessLink(String subProcessId, String subProcessName, String startEventId, String startEventName) {
         AssertUtil.notBlank(subProcessId, ExceptionEnum.NOT_ALLOW_EMPTY);
         this.subProcessId = subProcessId;
+        this.subProcessName = subProcessName;
+        this.startEventId = startEventId;
+        this.startEventName = startEventName;
     }
 
     public SubDiagramBpmnLink buildSubDiagramBpmnLink(ConfigResource config) {
         AssertUtil.notNull(config, ExceptionEnum.NOT_ALLOW_EMPTY);
-        SubDiagramBpmnLink subBpmnLink = new SubDiagramBpmnLink(this, config, subProcessId, null);
+        SubDiagramBpmnLink subBpmnLink = new SubDiagramBpmnLink(this, config, subProcessId, subProcessName, startEventId, startEventName);
         SubProcessImpl subProcess = subBpmnLink.getElement();
         subProcess.setConfig(config);
+        subProcess.setStrictMode(strictMode);
+        subProcess.setTimeout(timeout);
+        subProcess.mergeElementIterable(elementIterable);
         doBuild(subBpmnLink);
+        this.subProcess = subProcess;
         return subBpmnLink;
     }
 
     abstract void doBuild(SubBpmnLink subBpmnLink);
 
+    public String getSubProcessId() {
+        return subProcessId;
+    }
+
+    public SubProcessImpl getSubProcess() {
+        return subProcess;
+    }
+
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
+
+    public void setStrictMode(Boolean strictMode) {
+        this.strictMode = strictMode;
+    }
+
+    public void setElementIterable(BasicElementIterable elementIterable) {
+        this.elementIterable = elementIterable;
+    }
+
     public static SubProcessLink build(String id, Consumer<SubBpmnLink> builder) {
-        return new SubProcessLink(id) {
+        return build(id, null, builder);
+    }
+
+    public static SubProcessLink build(String id, String name, Consumer<SubBpmnLink> builder) {
+        return build(id, name, null, null, builder);
+    }
+
+    public static SubProcessLink build(String id, String name, String startEventId, String startEventName, Consumer<SubBpmnLink> builder) {
+        return new SubProcessLink(id, name, startEventId, startEventName) {
 
             @Override
             public void doBuild(SubBpmnLink subBpmnLink) {

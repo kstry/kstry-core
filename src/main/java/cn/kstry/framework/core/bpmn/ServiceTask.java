@@ -68,6 +68,20 @@ public interface ServiceTask extends Task {
     String getTaskProperty();
 
     /**
+     * 获取任务指令
+     *
+     * @return 指令名称
+     */
+    String getTaskInstruct();
+
+    /**
+     * 获取指令内容
+     *
+     * @return 指令内容
+     */
+    String getTaskInstructContent();
+
+    /**
      * 获取Service Task 构造器
      *
      * @return ServiceTaskBuilder

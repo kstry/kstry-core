@@ -23,6 +23,11 @@ public class SCS {
         private String INCREASE_ONE;
 
         /**
+         * 相乘
+         */
+        private String MULTIPLY_PLUS;
+
+        /**
          * 增加超时
          */
         private String INCREASE_TIMEOUT;

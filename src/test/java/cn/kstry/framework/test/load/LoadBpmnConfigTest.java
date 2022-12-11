@@ -20,7 +20,7 @@ package cn.kstry.framework.test.load;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.ResourceException;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -60,7 +60,7 @@ public class LoadBpmnConfigTest {
         } catch (Exception e) {
             err = e;
         }
-        Optional<ResourceException> exception = GlobalUtil.getErrFromCause(err, ResourceException.class);
+        Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
         Assert.assertTrue(exception.isPresent());
 
         exception.get().printStackTrace();
@@ -79,7 +79,7 @@ public class LoadBpmnConfigTest {
         } catch (Exception e) {
             err = e;
         }
-        Optional<ResourceException> exception = GlobalUtil.getErrFromCause(err, ResourceException.class);
+        Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
         Assert.assertTrue(exception.isPresent());
 
         exception.get().printStackTrace();
@@ -98,7 +98,7 @@ public class LoadBpmnConfigTest {
         } catch (Exception e) {
             err = e;
         }
-        Optional<ResourceException> exception = GlobalUtil.getErrFromCause(err, ResourceException.class);
+        Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
         Assert.assertTrue(exception.isPresent());
 
         exception.get().printStackTrace();
@@ -117,7 +117,7 @@ public class LoadBpmnConfigTest {
         } catch (Exception e) {
             err = e;
         }
-        Optional<ResourceException> exception = GlobalUtil.getErrFromCause(err, ResourceException.class);
+        Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
         Assert.assertTrue(exception.isPresent());
 
         exception.get().printStackTrace();
@@ -137,7 +137,7 @@ public class LoadBpmnConfigTest {
             err = e;
         }
 
-        Optional<ResourceException> exception = GlobalUtil.getErrFromCause(err, ResourceException.class);
+        Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
         Assert.assertTrue(exception.isPresent());
 
         exception.get().printStackTrace();
@@ -157,7 +157,7 @@ public class LoadBpmnConfigTest {
             err = e;
         }
 
-        Optional<ResourceException> exception = GlobalUtil.getErrFromCause(err, ResourceException.class);
+        Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
         Assert.assertTrue(exception.isPresent());
 
         exception.get().printStackTrace();

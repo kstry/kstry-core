@@ -17,9 +17,6 @@
  */
 package cn.kstry.framework.core.kv;
 
-import cn.kstry.framework.core.constant.GlobalConstant;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Optional;
 
 /**
@@ -42,26 +39,4 @@ public class KvThreadLocal {
         KV_THREAD_LOCAL.remove();
     }
 
-    public static class KvScope {
-
-        private final String scope;
-
-        private String businessId;
-
-        public KvScope(String scope) {
-            this.scope = Optional.ofNullable(scope).filter(StringUtils::isNotBlank).orElse(GlobalConstant.VARIABLE_SCOPE_DEFAULT);
-        }
-
-        public String getScope() {
-            return scope;
-        }
-
-        public Optional<String> getBusinessId() {
-            return Optional.ofNullable(businessId).filter(StringUtils::isNotBlank);
-        }
-
-        public void setBusinessId(String businessId) {
-            this.businessId = businessId;
-        }
-    }
 }

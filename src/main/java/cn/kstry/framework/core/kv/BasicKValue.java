@@ -87,10 +87,6 @@ public class BasicKValue extends BasicIdentity implements KValue {
         abilityValueMap.put(key, value);
     }
 
-    public BasicKValue getParent() {
-        return parent;
-    }
-
     public void setParent(BasicKValue parent) {
         this.parent = parent;
     }
@@ -101,5 +97,9 @@ public class BasicKValue extends BasicIdentity implements KValue {
 
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    private BasicKValue getParent() {
+        return parent;
     }
 }

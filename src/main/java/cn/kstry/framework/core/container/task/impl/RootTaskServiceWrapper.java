@@ -17,21 +17,8 @@
  */
 package cn.kstry.framework.core.container.task.impl;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
-
-import cn.kstry.framework.core.util.ExceptionUtil;
-import org.apache.commons.collections.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
+import cn.kstry.framework.core.container.task.RootTaskService;
+import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -39,10 +26,21 @@ import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.role.ServiceTaskRole;
-import cn.kstry.framework.core.container.task.RootTaskService;
-import cn.kstry.framework.core.container.task.TaskServiceWrapper;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.TaskServiceUtil;
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * @author lykan
@@ -82,10 +80,6 @@ public class RootTaskServiceWrapper extends BasicIdentity implements RootTaskSer
                 AssertUtil.isNull(this.taskServiceWrapper);
                 this.taskServiceWrapper = taskService;
             } else if (serviceNodeResource.getServiceNodeType() == ServiceNodeType.SERVICE_TASK_ABILITY) {
-                if (taskService.getTarget().isCustomRole()) {
-                    LOGGER.warn("CustomRole nodes do not support defining sub-ability! identityId: {}", taskService.getIdentityId());
-                    return;
-                }
                 AssertUtil.notTrue(taskServiceAbilitySet.contains(taskService));
                 taskServiceAbilitySet.add(taskService);
             } else {

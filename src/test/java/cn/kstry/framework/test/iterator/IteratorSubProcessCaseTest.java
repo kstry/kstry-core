@@ -6,7 +6,9 @@ import cn.kstry.framework.core.engine.facade.ReqBuilder;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.facade.TaskResponse;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.test.iterator.bo.DataSource;
+import cn.kstry.framework.test.iterator.config.DynamicIteratorProcess;
 import cn.kstry.framework.test.util.TestUtil;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
@@ -44,7 +46,7 @@ public class IteratorSubProcessCaseTest {
         InScopeData inScopeData = new InScopeData(ScopeTypeEnum.STABLE);
         inScopeData.put("squareResult", Maps.newHashMap());
         StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list)
-                .timeout(3000).request(dataSource).staScopeData(inScopeData).startId("story-def-iterate-test_001").build();
+                .timeout(3000).request(dataSource).staScopeData(inScopeData).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("story-def-iterate-test_001").build();
 
         TaskResponse<List<Integer>> fire = storyEngine.fire(fireRequest);
         System.out.println(JSON.toJSONString(fire));
@@ -148,5 +150,41 @@ public class IteratorSubProcessCaseTest {
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(fire.getResult().size(), 1);
         Assert.assertEquals((int) fire.getResult().get(0), 9);
+    }
+
+    /**
+     * 测试子流程同步情况的批处理迭代
+     */
+    @Test
+    public void test07() {
+        DataSource dataSource = new DataSource();
+        ArrayList<Integer> integers = Lists.newArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        dataSource.setNumList(integers.toArray(new Integer[0]));
+        List<Integer> list = Lists.newCopyOnWriteArrayList();
+        StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list).timeout(1000).request(dataSource).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId(DynamicIteratorProcess.ITERATE_PROCESS_03).build();
+
+        TaskResponse<List<Integer>> fire = storyEngine.fire(fireRequest);
+        System.out.println(JSON.toJSONString(fire));
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(11, fire.getResult().size());
+        Assert.assertEquals(fire.getResult().stream().mapToInt(i -> i).sum(), 385);
+    }
+
+    /**
+     * 测试子流程异步情况的批处理迭代
+     */
+    @Test
+    public void test08() {
+        DataSource dataSource = new DataSource();
+        ArrayList<Integer> integers = Lists.newArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        dataSource.setNumList(integers.toArray(new Integer[0]));
+        List<Integer> list = Lists.newCopyOnWriteArrayList();
+        StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list).trackingType(TrackingTypeEnum.SERVICE_DETAIL).timeout(1000).request(dataSource).startId(DynamicIteratorProcess.ITERATE_PROCESS_04).build();
+
+        TaskResponse<List<Integer>> fire = storyEngine.fire(fireRequest);
+        System.out.println(JSON.toJSONString(fire));
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(11, fire.getResult().size());
+        Assert.assertEquals(fire.getResult().stream().mapToInt(i -> i).sum(), 385);
     }
 }

@@ -20,6 +20,7 @@ package cn.kstry.framework.core.engine;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bus.BasicStoryBus;
 import cn.kstry.framework.core.bus.ScopeData;
+import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.facade.TaskResponse;
@@ -30,7 +31,11 @@ import cn.kstry.framework.core.engine.future.FlowTaskSubscriber;
 import cn.kstry.framework.core.engine.future.MonoFlowFuture;
 import cn.kstry.framework.core.engine.thread.FlowTask;
 import cn.kstry.framework.core.engine.thread.MonoFlowTask;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
+import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.AsyncTaskState;
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.MonitorTracking;
@@ -38,19 +43,18 @@ import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.BusinessRoleRepository;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.role.ServiceTaskRole;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 执行引擎
@@ -81,9 +85,10 @@ public class StoryEngine {
         String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
         String oldRequestId = MDC.get(requestLogIdKey);
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, GlobalUtil.getOrSetRequestId(storyRequest));
-            preProcessing(storyRequest);
-            return doFire(storyRequest);
+            MDC.put(requestLogIdKey, GlobalUtil.getOrSetRequestId(storyRequest));
+            ScopeDataQuery scopeDataQuery = getScopeDataQuery(storyRequest);
+            initRole(storyRequest, scopeDataQuery);
+            return doFire(storyRequest, scopeDataQuery);
         } catch (KstryException exception) {
             exception.log(e -> LOGGER.warn(e.getMessage(), e));
             TaskResponse<T> errorResponse = TaskResponseBox.buildError(exception.getErrorCode(), exception.getMessage());
@@ -100,9 +105,9 @@ public class StoryEngine {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> TaskResponse<T> doFire(StoryRequest<T> storyRequest) throws InterruptedException, TimeoutException {
+    private <T> TaskResponse<T> doFire(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) throws InterruptedException, TimeoutException {
         Role role = storyRequest.getRole();
-        FlowRegister flowRegister = getFlowRegister(storyRequest);
+        FlowRegister flowRegister = getFlowRegister(storyRequest, scopeDataQuery);
         BasicStoryBus storyBus = getStoryBus(storyRequest, flowRegister, role);
         FlowTask flowTask = new FlowTask(storyEngineModule, flowRegister, role, storyBus);
         AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(flowTask);
@@ -140,23 +145,27 @@ public class StoryEngine {
         String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
         String oldRequestId = MDC.get(requestLogIdKey);
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, GlobalUtil.getOrSetRequestId(storyRequest));
-            preProcessing(storyRequest);
-            return doFireAsync(storyRequest);
+            MDC.put(requestLogIdKey, GlobalUtil.getOrSetRequestId(storyRequest));
+            ScopeDataQuery scopeDataQuery = getScopeDataQuery(storyRequest);
+            initRole(storyRequest, scopeDataQuery);
+            return doFireAsync(storyRequest, scopeDataQuery);
         } finally {
             GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Mono<T> doFireAsync(StoryRequest<T> storyRequest) {
+    private <T> Mono<T> doFireAsync(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) {
         Role role = storyRequest.getRole();
-        FlowRegister flowRegister = getFlowRegister(storyRequest);
+        FlowRegister flowRegister = getFlowRegister(storyRequest, scopeDataQuery);
         BasicStoryBus storyBus = getStoryBus(storyRequest, flowRegister, role);
-        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
+        ThreadSwitchHookProcessor threadSwitchHookProcessor = storyEngineModule.getThreadSwitchHookProcessor();
+        Map<ThreadSwitchHook<Object>, Object> hookData = threadSwitchHookProcessor.getPreviousData(scopeDataQuery);
+        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(() -> threadSwitchHookProcessor.usePreviousData(hookData, storyBus.getScopeDataOperator()),
                 true, storyRequest.getTimeout(), flowRegister, GlobalUtil.getTaskName(flowRegister.getStartElement(), flowRegister.getRequestId())) {
             @Override
             protected void doErrorHook(Throwable throwable) {
+
                 flowRegister.getMonitorTracking().trackingLog();
                 Optional.ofNullable(storyRequest.getRecallStoryHook()).ifPresent(c -> c.accept(new RecallStory(throwable, storyBus)));
             }
@@ -168,7 +177,7 @@ public class StoryEngine {
             String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
             String oldRequestId = MDC.get(requestLogIdKey);
             try {
-                MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+                MDC.put(requestLogIdKey, flowRegister.getRequestId());
                 AssertUtil.isTrue(t == AsyncTaskState.SUCCESS, ExceptionEnum.SYSTEM_ERROR);
                 Class<?> returnType = storyRequest.getReturnType();
                 Object result = null;
@@ -193,22 +202,20 @@ public class StoryEngine {
         });
     }
 
-    private <T> FlowRegister getFlowRegister(StoryRequest<T> storyRequest) {
+    private <T> FlowRegister getFlowRegister(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) {
         String startId = storyRequest.getStartId();
         AssertUtil.notBlank(startId, ExceptionEnum.PARAMS_ERROR, "StartId is not allowed to be empty!");
-        Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(startId);
+        Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(scopeDataQuery);
         StartEvent startEvent = startEventOptional.orElseThrow(() -> ExceptionUtil
                 .buildException(null, ExceptionEnum.PARAMS_ERROR, GlobalUtil.format("StartId did not match a valid StartEvent! startId: {}", startId)));
         return new FlowRegister(startEvent, storyRequest);
     }
 
-    private <T> void preProcessing(StoryRequest<T> storyRequest) {
-        String startId = storyRequest.getStartId();
-        Role role = storyRequest.getRole();
-        if (StringUtils.isNotBlank(startId) && role == null) {
-            String businessId = storyRequest.getBusinessId();
-            storyRequest.setRole(businessRoleRepository.getRole(businessId, startId).orElse(new ServiceTaskRole()));
+    private <T> void initRole(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) {
+        if (StringUtils.isBlank(storyRequest.getStartId()) || storyRequest.getRole() != null) {
+            return;
         }
+        storyRequest.setRole(businessRoleRepository.getRole(storyRequest, scopeDataQuery).orElse(new ServiceTaskRole()));
     }
 
     private <T> BasicStoryBus getStoryBus(StoryRequest<T> storyRequest, FlowRegister flowRegister, Role role) {
@@ -216,6 +223,118 @@ public class StoryEngine {
         ScopeData varScopeData = storyRequest.getVarScopeData();
         ScopeData staScopeData = storyRequest.getStaScopeData();
         MonitorTracking monitorTracking = flowRegister.getMonitorTracking();
-        return new BasicStoryBus(businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
+        return new BasicStoryBus(storyRequest.getRequestId(), storyRequest.getStartId(), businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ScopeDataQuery getScopeDataQuery(StoryRequest<?> storyRequest) {
+
+        return new ScopeDataQuery() {
+
+            @Override
+            public <T> T getReqScope() {
+                return (T) storyRequest.getRequest();
+            }
+
+            @Override
+            public <T extends ScopeData> T getStaScope() {
+                return (T) storyRequest.getStaScopeData();
+            }
+
+            @Override
+            public <T extends ScopeData> T getVarScope() {
+                return (T) storyRequest.getVarScopeData();
+            }
+
+            @Override
+            public <T> Optional<T> getResult() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+
+            @Override
+            public String getRequestId() {
+                return storyRequest.getRequestId();
+            }
+
+            @Override
+            public String getStartId() {
+                return storyRequest.getStartId();
+            }
+
+            @Override
+            public Optional<String> getBusinessId() {
+                return Optional.ofNullable(storyRequest.getBusinessId()).filter(StringUtils::isNotBlank);
+            }
+
+            @Override
+            public <T> Optional<T> getReqData(String name) {
+                T reqScope = getReqScope();
+                if (reqScope == null) {
+                    return Optional.empty();
+                }
+                return PropertyUtil.getProperty(reqScope, name).map(obj -> (T) obj);
+            }
+
+            @Override
+            public <T> Optional<T> getStaData(String name) {
+                T staScope = getStaScope();
+                if (staScope == null) {
+                    return Optional.empty();
+                }
+                return PropertyUtil.getProperty(staScope, name).map(obj -> (T) obj);
+            }
+
+            @Override
+            public <T> Optional<T> getVarData(String name) {
+                T varScope = getVarScope();
+                if (varScope == null) {
+                    return Optional.empty();
+                }
+                return PropertyUtil.getProperty(varScope, name).map(obj -> (T) obj);
+            }
+
+            @Override
+            public <T> Optional<T> getData(String expression) {
+                if (!ElementParserUtil.isValidDataExpression(expression)) {
+                    return Optional.empty();
+                }
+
+                String[] expArr = expression.split("\\.", 2);
+                Optional<ScopeTypeEnum> ScopeTypeOptional = ScopeTypeEnum.of(expArr[0]);
+                if (ScopeTypeOptional.orElse(null) == ScopeTypeEnum.RESULT) {
+                    return getResult();
+                }
+
+                String key = (expArr.length == 2) ? expArr[1] : null;
+                if (StringUtils.isBlank(key)) {
+                    return Optional.empty();
+                }
+                return ScopeTypeOptional.flatMap(scope -> {
+                    if (scope == ScopeTypeEnum.REQUEST) {
+                        return getReqData(key);
+                    } else if (scope == ScopeTypeEnum.STABLE) {
+                        return getStaData(key);
+                    } else if (scope == ScopeTypeEnum.VARIABLE) {
+                        return getVarData(key);
+                    }
+                    return Optional.empty();
+                });
+            }
+
+            @Override
+            public Optional<String> getTaskProperty() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+
+            @Override
+            public <T> Optional<T> iterDataItem() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+
+            @Override
+            public ReentrantReadWriteLock.ReadLock readLock() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+        };
     }
 }

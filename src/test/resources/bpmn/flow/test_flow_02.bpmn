@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0d9puy1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0d9puy1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:process id="Process_0e3mosn" name="AAC" isExecutable="true">
     <bpmn:serviceTask id="Activity_162jv35" name="打印参数9">
       <bpmn:extensionElements>
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="9" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1k90cb8</bpmn:incoming>
@@ -16,6 +17,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="8" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1axn6nn</bpmn:incoming>
@@ -26,6 +28,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="10" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_13x4db7</bpmn:incoming>
@@ -36,6 +39,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="1" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1280s23</bpmn:incoming>
@@ -48,6 +52,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="18" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0b63v1e</bpmn:incoming>
@@ -58,6 +63,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="17" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_06fzasx</bpmn:incoming>
@@ -68,6 +74,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="12" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0b7979u</bpmn:incoming>
@@ -78,6 +85,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="e6uk" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_11016uk</bpmn:incoming>
@@ -110,6 +118,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="2" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0kc6tpb</bpmn:incoming>
@@ -132,6 +141,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="14" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1qohxbc</bpmn:incoming>
@@ -152,6 +162,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="11" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1iqyen3</bpmn:incoming>
@@ -192,6 +203,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="13" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0cdc3tp</bpmn:incoming>
@@ -214,6 +226,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="15" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0xs0z4r</bpmn:incoming>
@@ -228,6 +241,7 @@
           <camunda:properties>
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="16" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_181kacn</bpmn:incoming>
@@ -242,6 +256,7 @@
             <camunda:property name="open-async" value="true" />
             <camunda:property name="task-component" value="goods_service" />
             <camunda:property name="task-service" value="say_request" />
+            <camunda:property name="task-property" value="i7uk" />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0trqlsv</bpmn:incoming>
@@ -316,6 +331,7 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="task-property" value="19" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0mxyhfs</bpmn:incoming>
@@ -328,9 +344,6 @@
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0e3mosn">
-      <bpmndi:BPMNShape id="TextAnnotation_0wyxsut_di" bpmnElement="TextAnnotation_0wyxsut">
-        <dc:Bounds x="160" y="330" width="100" height="54" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0b63v1e_di" bpmnElement="Flow_0b63v1e">
         <di:waypoint x="715" y="590" />
         <di:waypoint x="1030" y="590" />
@@ -518,12 +531,6 @@
       <bpmndi:BPMNShape id="Activity_1mznb27_di" bpmnElement="Activity_1mznb27">
         <dc:Bounds x="1250" y="220" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_033d78m_di" bpmnElement="Gateway_1s5awmf">
-        <dc:Bounds x="845" y="285" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_03i015r_di" bpmnElement="Activity_0z5ysk6">
-        <dc:Bounds x="1150" y="380" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0629uiz_di" bpmnElement="Activity_0629uiz" isExpanded="true">
         <dc:Bounds x="644" y="650" width="775" height="320" />
       </bpmndi:BPMNShape>
@@ -599,6 +606,15 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0z11oao_di" bpmnElement="Gateway_16g6vf1">
         <dc:Bounds x="1274" y="775" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_033d78m_di" bpmnElement="Gateway_1s5awmf">
+        <dc:Bounds x="845" y="285" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03i015r_di" bpmnElement="Activity_0z5ysk6">
+        <dc:Bounds x="1150" y="380" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0wyxsut_di" bpmnElement="TextAnnotation_0wyxsut">
+        <dc:Bounds x="160" y="330" width="100" height="54" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Association_1dwepou_di" bpmnElement="Association_1dwepou">
         <di:waypoint x="262" y="444" />

@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.container.component;
 
+import cn.kstry.framework.core.annotation.CustomRole;
+import cn.kstry.framework.core.annotation.TaskInstruct;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.task.TaskServiceWrapper;
@@ -30,16 +32,15 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -54,15 +55,23 @@ public abstract class TaskComponentRepository implements TaskContainer {
     /**
      * 服务节点容器
      */
-    private volatile Map<String, TaskComponentRegisterWrapper> taskComponentWrapperMap = Maps.newHashMap();
+    private final Map<String, TaskComponentRegisterWrapper> taskComponentWrapperMap = Maps.newHashMap();
 
     /**
      * 被注册的服务节点资源
      */
-    private volatile Map<ServiceNodeResource, MethodWrapper> registeredServiceNodeResource = Maps.newHashMap();
+    private final Map<ServiceNodeResource, MethodWrapper> registeredServiceNodeResource = Maps.newHashMap();
+
+    /**
+     * 任务指令容器
+     */
+    private final Map<String, ServiceNodeResource> taskInstructResourceMap = Maps.newHashMap();
 
     @Override
     public Optional<TaskServiceDef> getTaskServiceDef(String componentName, String serviceName, Role role) {
+        if (StringUtils.isBlank(componentName)) {
+            return Optional.empty();
+        }
         TaskComponentRegisterWrapper taskComponentWrapper = taskComponentWrapperMap.get(componentName);
         if (taskComponentWrapper == null) {
             return Optional.empty();
@@ -90,19 +99,39 @@ public abstract class TaskComponentRepository implements TaskContainer {
         TaskComponentProxy targetObj = new TaskComponentProxy(target);
         TaskComponentRegisterWrapper taskComponentWrapper = taskComponentWrapperMap.computeIfAbsent(taskComponentName, TaskComponentRegisterWrapper::new);
         Stream.of(taskServiceMethods).forEach(method -> {
+            boolean isCustomRole = method.getAnnotation(CustomRole.class) != null;
             TaskService annotation = method.getAnnotation(TaskService.class);
             AssertUtil.notNull(annotation);
-            AssertUtil.notBlank(annotation.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY,
-                    "TaskService name cannot be empty! methodName: {}", method.getName());
+            AssertUtil.notBlank(annotation.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskService name cannot be empty! methodName: {}", method.getName());
             ServiceNodeResourceItem serviceNodeResource = new ServiceNodeResourceItem(targetObj.getName(), annotation.name(), annotation.ability());
             AssertUtil.notTrue(registeredServiceNodeResource.containsKey(serviceNodeResource), ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
                     "TaskService with the same identity is not allowed to be set repeatedly! identity: {}", serviceNodeResource.getIdentityId());
+            TaskInstructWrapper taskInstruct = getTaskInstructWrapper(method).orElse(null);
+            if (taskInstruct != null) {
+                AssertUtil.notBlank(taskInstruct.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskInstruct name cannot be empty! methodName: {}", method.getName());
+                AssertUtil.notTrue(taskInstructResourceMap.containsKey(taskInstruct.getName()), ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
+                        "TaskInstruct with the same name is not allowed to be set repeatedly! instruct: {}", taskInstruct.getName());
+                taskInstructResourceMap.put(taskInstruct.getName(), serviceNodeResource);
+            }
             NoticeAnnotationWrapper noticeMethodSpecify = new NoticeAnnotationWrapper(method);
-            MethodWrapper methodWrapper = new MethodWrapper(method, annotation, noticeMethodSpecify);
+            MethodWrapper methodWrapper = new MethodWrapper(method, annotation, noticeMethodSpecify, taskInstruct, isCustomRole);
             taskComponentWrapper.addTaskService(new AbilityTaskServiceWrapper(targetObj, methodWrapperProcessor(methodWrapper), serviceNodeResource));
             registeredServiceNodeResource.put(serviceNodeResource, methodWrapper);
             LOGGER.debug("Service node resource items are resolved. identity: {}", serviceNodeResource.getIdentityId());
         });
+    }
+
+    @Override
+    public Optional<ServiceNodeResource> getServiceNodeResourceByInstruct(String instruction) {
+        if (StringUtils.isBlank(instruction)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(taskInstructResourceMap.get(instruction));
+    }
+
+    @Override
+    public Set<ServiceNodeResource> getServiceNodeResource() {
+        return Sets.newHashSet(registeredServiceNodeResource.keySet());
     }
 
     protected MethodWrapper methodWrapperProcessor(MethodWrapper methodWrapper) {
@@ -134,9 +163,11 @@ public abstract class TaskComponentRepository implements TaskContainer {
         });
     }
 
-    @Override
-    public void destroy() {
-        taskComponentWrapperMap = Maps.newHashMap();
-        registeredServiceNodeResource = Maps.newHashMap();
+    private Optional<TaskInstructWrapper> getTaskInstructWrapper(Method method) {
+        TaskInstruct annotation = method.getAnnotation(TaskInstruct.class);
+        if (annotation == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new TaskInstructWrapper(annotation));
     }
 }

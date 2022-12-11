@@ -159,22 +159,6 @@ public class GlobalUtil {
         return SUPPORT_VALIDATE;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> Optional<T> getErrFromCause(Throwable err, Class<T> clazz) {
-        if (err == null || clazz == null) {
-            return Optional.empty();
-        }
-
-        Throwable e = err;
-        while (e != null) {
-            if (clazz.isAssignableFrom(e.getClass())) {
-                return Optional.of((T) e);
-            }
-            e = e.getCause();
-        }
-        return Optional.empty();
-    }
-
     public static String uuid() {
         return UUID.randomUUID().toString().replace("-", StringUtils.EMPTY);
     }

@@ -66,11 +66,7 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
         return BpmnTypeEnum.SUB_PROCESS;
     }
 
-    public SubProcess cloneSubProcess(Map<String, SubProcess> allSubProcess, SubProcessImpl targetSubProcess) {
-        if (targetSubProcess == null) {
-            targetSubProcess = new SubProcessImpl();
-            targetSubProcess.setId(getId());
-        }
+    public void cloneSubProcess(Map<String, SubProcess> allSubProcess, SubProcessImpl targetSubProcess) {
         if (StringUtils.isBlank(targetSubProcess.getName())) {
             targetSubProcess.setName(getName());
         }
@@ -87,10 +83,9 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
             AssertUtil.notNull(startEventBuilder);
             targetSubProcess.startEvent = startEventBuilder.apply(allSubProcess);
         }
-        if (targetSubProcess.elementIterable == null) {
-            targetSubProcess.elementIterable = this.elementIterable;
+        if (targetSubProcess.elementIterable == null && this.elementIterable != null) {
+            targetSubProcess.mergeElementIterable(this.elementIterable);
         }
-        return targetSubProcess;
     }
 
     public ConfigResource getConfig() {

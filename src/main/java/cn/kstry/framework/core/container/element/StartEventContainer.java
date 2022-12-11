@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.container.element;
 
 import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.container.processor.StartEventPostProcessor;
+import cn.kstry.framework.core.bus.ScopeDataQuery;
 
 import java.util.Optional;
 
@@ -32,15 +32,8 @@ public interface StartEventContainer {
     /**
      * 根据 ID 获取链路执行的开始事件
      *
-     * @param id id
+     * @param scopeDataQuery scopeDataQuery
      * @return 开始事件
      */
-    Optional<StartEvent> getStartEventById(String id);
-
-    /**
-     * 注册 StartEventPostProcessor
-     *
-     * @param processor processor
-     */
-    void registerStartEventPostProcessor(StartEventPostProcessor processor);
+    Optional<StartEvent> getStartEventById(ScopeDataQuery scopeDataQuery);
 }

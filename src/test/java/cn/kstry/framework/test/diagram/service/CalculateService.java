@@ -33,6 +33,12 @@ public class CalculateService {
         TimeUnit.SECONDS.sleep(10);
     }
 
+    @NoticeResult
+    @TaskService(name = SCS.CALCULATE_SERVICE.F.MULTIPLY_PLUS)
+    public int multiply(@StaTaskParam("ai") int a, @StaTaskParam("bi") int b, @StaTaskParam("ci") int c) {
+        return (a * b) + c;
+    }
+
     @TaskService(name = SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE)
     public void increaseArrayOne(ScopeDataOperator operator) {
         Assert.assertEquals("test-prop", operator.getTaskProperty().orElse(null));

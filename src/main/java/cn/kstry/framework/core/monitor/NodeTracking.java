@@ -67,6 +67,8 @@ public class NodeTracking {
 
     private Integer iterateCount;
 
+    private Integer iterateStride;
+
     @JSONField(serialize = false)
     private Throwable taskException;
 
@@ -225,5 +227,13 @@ public class NodeTracking {
 
     public void setIterateCount(Integer iterateCount) {
         this.iterateCount = iterateCount;
+    }
+
+    public Integer getIterateStride() {
+        return iterateStride;
+    }
+
+    public void setIterateStride(Integer iterateStride) {
+        this.iterateStride = iterateStride;
     }
 }

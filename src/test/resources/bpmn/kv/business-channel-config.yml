@@ -1,0 +1,29 @@
+business-channel@dev:
+  default:
+    name: name
+
+business-channel:
+  default:
+    name1: name1
+    name2: name2
+    name3: name3
+    name4: name-4
+  new-per-scope:
+    name1: name1
+    name2: name-2
+
+business-channel@prod:
+  default:
+    name1: name1
+    name2: name2
+    name3: name-3
+    bust:
+  new-per-scope:
+    name1: name-1
+
+
+
+
+
+
+

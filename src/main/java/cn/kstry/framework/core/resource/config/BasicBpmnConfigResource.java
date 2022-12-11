@@ -18,28 +18,18 @@
 package cn.kstry.framework.core.resource.config;
 
 import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.bpmn.SubProcess;
-import cn.kstry.framework.core.component.bpmn.BpmnModelTransfer;
-import cn.kstry.framework.core.component.bpmn.CamundaBpmnModelTransfer;
-import cn.kstry.framework.core.constant.GlobalProperties;
+import cn.kstry.framework.core.component.bpmn.BpmnProcessParser;
+import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.camunda.bpm.model.bpmn.Bpmn;
-import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -54,12 +44,8 @@ public class BasicBpmnConfigResource extends AbstractConfigResource implements B
     /**
      * BPMN 文件解析器Camunda
      */
-    private static final BpmnModelTransfer<BpmnModelInstance> modelTransfer = new CamundaBpmnModelTransfer();
+    private BpmnProcessParser bpmnProcessParser;
 
-    /**
-     * Camunda 解析 BPMN 文件得到的实例对象
-     */
-    private BpmnModelInstance modelInstance;
 
     public BasicBpmnConfigResource(Resource resource) {
         super(resource);
@@ -69,33 +55,19 @@ public class BasicBpmnConfigResource extends AbstractConfigResource implements B
     @Override
     public void init(Resource resource, InputStream inputStream) {
         try {
-            this.modelInstance = Bpmn.readModelFromStream(inputStream);
-            AssertUtil.notNull(this.modelInstance);
+            bpmnProcessParser = new BpmnProcessParser(this.getConfigName(), inputStream);
         } catch (Throwable e) {
-            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}",
-                    getConfigName()));
+            throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, GlobalUtil.format("BPMN configuration file parsing failure! fileName: {}", getConfigName()));
         }
     }
 
     @Override
-    public Map<String, SubProcess> getSubProcessMap() {
-        AssertUtil.notNull(modelInstance);
-        return modelTransfer.getAllSubProcess(this, modelInstance);
+    public Map<String, SubProcessLink> getSubProcessMap() {
+        return bpmnProcessParser.getAllSubProcessLink();
     }
 
     @Override
-    public List<StartEvent> getStartEventList(Map<String, SubProcess> allSubProcess) {
-        AssertUtil.anyNotNull(modelInstance, allSubProcess);
-        Collection<org.camunda.bpm.model.bpmn.instance.StartEvent> startEventList =
-                modelInstance.getModelElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class);
-        if (CollectionUtils.isEmpty(startEventList)) {
-            return Lists.newArrayList();
-        }
-        return startEventList.stream()
-                .filter(startEvent -> StringUtils.isNotBlank(startEvent.getId()) && startEvent.getId().startsWith(GlobalProperties.START_EVENT_ID_PREFIX))
-                .map(org.camunda.bpm.model.bpmn.instance.StartEvent::getId)
-                .map(id -> modelTransfer.getKstryModel(allSubProcess, this, modelInstance, id))
-                .filter(Optional::isPresent)
-                .map(Optional::get).collect(Collectors.toList());
+    public List<StartEvent> getStartEventList() {
+        return bpmnProcessParser.getAllBpmnLink().values().stream().map(link -> (StartEvent) link.getElement()).collect(Collectors.toList());
     }
 }

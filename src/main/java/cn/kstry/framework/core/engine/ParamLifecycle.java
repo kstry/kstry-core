@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.engine;
 
+import cn.kstry.framework.core.bus.ScopeDataOperator;
+
 /**
  * 参数生命周期接口
  *
@@ -26,15 +28,19 @@ public interface ParamLifecycle {
 
     /**
      * 在参数未被初始化前调用
+     *
+     * @param scopeDataOperator 数据操作入口
      */
-    default void before() {
+    default void before(ScopeDataOperator scopeDataOperator) {
         // do nothing
     }
 
     /**
-     * 在参数被初始化后调用
+     * 在参数未被初始化前调用
+     *
+     * @param scopeDataOperator 数据操作入口
      */
-    default void after() {
+    default void after(ScopeDataOperator scopeDataOperator) {
         // do nothing
     }
 }

@@ -13,7 +13,7 @@
       <bpmn:extensionElements>
         <camunda:properties>
           <camunda:property name="task-component" value="kv-test" />
-          <camunda:property name="task-service" value="kv-service" />
+          <camunda:property name="task-service" value="kv-service-business" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1a2t1yq</bpmn:incoming>

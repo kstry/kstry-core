@@ -29,6 +29,7 @@ import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.engine.future.FlowTaskSubscriber;
 import cn.kstry.framework.core.engine.future.InvokeFuture;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptorRepository;
+import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
 import cn.kstry.framework.core.engine.thread.FragmentTask;
 import cn.kstry.framework.core.engine.thread.MethodInvokeTask;
 import cn.kstry.framework.core.engine.thread.MonoFlowTask;
@@ -98,8 +99,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         }
 
         ServiceTask serviceTask = (ServiceTask) flowElement;
-        Optional<TaskServiceDef> taskServiceDefOptional =
-                engineModule.getTaskContainer().getTaskServiceDef(serviceTask.getTaskComponent(), serviceTask.getTaskService(), role);
+        Optional<TaskServiceDef> taskServiceDefOptional = engineModule.getTaskContainer().getTaskServiceDef(serviceTask.getTaskComponent(), serviceTask.getTaskService(), role);
         if (!taskServiceDefOptional.isPresent() && serviceTask.allowAbsent()) {
             return true;
         }
@@ -115,7 +115,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
 
         Object result;
         try {
-            result = doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);
+            TaskInterceptorRepository taskInterceptorRepository = engineModule.getTaskInterceptorRepository();
+            result = taskInterceptorRepository.process(() -> doInvokeMethod(serviceTask, taskServiceDef, storyBus, role), taskServiceDef.getGetServiceNodeResource(), storyBus.getScopeDataOperator());
         } catch (Throwable exception) {
             flowRegister.getMonitorTracking().finishTaskTracking(flowElement, exception);
             InvokeProperties invokeProperties = taskServiceDef.getMethodWrapper().getInvokeProperties();
@@ -131,7 +132,6 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             return false;
         }
         storyBus.noticeResult(serviceTask, result, taskServiceDef);
-        customRoleInfo(role, storyBus, serviceTask);
         flowRegister.getMonitorTracking().finishTaskTracking(flowElement, null);
         return true;
     }
@@ -142,7 +142,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         InvokeProperties invokeProperties = taskServiceDef.getMethodWrapper().getInvokeProperties();
         boolean strictMode = serviceTask.strictMode() && invokeProperties.isStrictMode();
         Integer timeout = Optional.ofNullable(serviceTask.getTimeout()).filter(t -> t >= 0).orElse(invokeProperties.getTimeout());
-        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(strictMode, timeout, flowRegister, getTaskName()) {
+        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
+                () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()), strictMode, timeout, flowRegister, getTaskName()) {
 
             @Override
             protected void doNextHook(Object value) {
@@ -156,8 +157,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 Optional<TaskServiceDef> demotionServiceDefOptional = needDemotionSupplier.get();
                 KstryException kstryException = ExceptionUtil.buildException(throwable, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
                 if (!flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()) && demotionServiceDefOptional.isPresent()) {
-                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failed. taskName: {}, exception: {}",
-                            e.getErrorCode(), getTaskName(), throwable.getMessage(), e));
+                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failed. taskName: {}, exception: {}", e.getErrorCode(), getTaskName(), throwable.getMessage(), e));
                     TaskServiceDef demotionTaskServiceDef = demotionServiceDefOptional.get();
                     DemotionInfo demotionInfo = new DemotionInfo();
                     demotionInfo.setRetryTimes(0);
@@ -169,12 +169,14 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                             GlobalUtil.transferNotEmpty(o, Mono.class).subscribe(new BaseSubscriber<Object>() {
                                 @Override
                                 protected void hookOnNext(@Nonnull Object value) {
+                                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                                     doNextHook(value);
                                     dispose();
                                 }
 
                                 @Override
                                 protected void hookOnError(@Nonnull Throwable e) {
+                                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                                     LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
                                             ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
                                     dispose();
@@ -182,6 +184,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
 
                                 @Override
                                 protected void hookOnComplete() {
+                                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                                     doNextHook(null);
                                     dispose();
                                 }
@@ -213,7 +216,6 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
 
             private void resultHandler(FlowRegister flowRegister, ServiceTask serviceTask, StoryBus scopeData, Role role, Object value) {
                 scopeData.noticeResult(serviceTask, value, taskServiceDef);
-                customRoleInfo(role, scopeData, serviceTask);
                 doNextElement(flowRegister, serviceTask, storyBus, role);
             }
         };
@@ -236,7 +238,9 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         FlowRegister cloneSubFlowRegister = parentFlowRegister.cloneSubFlowRegister(startEvent);
         String taskName = GlobalUtil.getTaskName(cloneSubFlowRegister.getStartElement(), cloneSubFlowRegister.getRequestId());
         Integer timeout = Optional.of(subProcess).map(SubProcess::getTimeout).orElse(null);
-        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(subProcess.strictMode(), timeout, cloneSubFlowRegister, taskName) {
+        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
+                () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()),
+                subProcess.strictMode(), timeout, cloneSubFlowRegister, taskName) {
 
             @Override
             protected void doNextHook(Object value) {
@@ -269,23 +273,6 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         engineModule.getTaskThreadPool().submitMonoFlowTask(parentFlowRegister.getStartEventId(), subFlowTask);
     }
 
-    private void customRoleInfo(Role role, StoryBus scopeData, ServiceTask serviceTask) {
-        Optional<TaskServiceDef> taskServiceDefOptional;
-        TaskServiceDef taskServiceDef;
-        ServiceNodeResource customRoleInfo = serviceTask.getCustomRoleInfo();
-        if (customRoleInfo == null) {
-            return;
-        }
-        taskServiceDefOptional = engineModule.getTaskContainer().getTaskServiceDef(customRoleInfo.getComponentName(), customRoleInfo.getServiceName(), role);
-        if (!taskServiceDefOptional.isPresent() && serviceTask.allowAbsent()) {
-            return;
-        }
-        taskServiceDef = taskServiceDefOptional.orElseThrow(() ->
-                ExceptionUtil.buildException(null, ExceptionEnum.TASK_SERVICE_MATCH_ERROR, ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc()
-                        + GlobalUtil.format(" service task identity: {}", serviceTask.identity())));
-        doInvokeMethod(serviceTask, taskServiceDef, scopeData, role);
-    }
-
     private void submitAsyncTask(Role role, StoryBus storyBus, FlowRegister flowRegister, Hook<List<FlowElement>> hook) {
         hook.hook(list -> {
             for (FlowElement asyncFlow : list) {
@@ -308,6 +295,9 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         }
     }
 
+    /**
+     * 支持重试、降级调用
+     */
     @Override
     protected Object doInvokeMethod(ServiceTask serviceTask, TaskServiceDef taskServiceDef, StoryBus storyBus, Role role) {
         if (taskServiceDef.isDemotionNode()) {
@@ -392,8 +382,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         };
     }
 
-    private Object retryInvokeMethod(MethodInvokeTask.MethodInvokePedometer pedometer,
-                                     ServiceTask serviceTask, TaskServiceDef taskServiceDef, StoryBus storyBus, Role role) {
+    private Object retryInvokeMethod(MethodInvokeTask.MethodInvokePedometer pedometer, ServiceTask serviceTask, TaskServiceDef taskServiceDef, StoryBus storyBus, Role role) {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         InvokeProperties invokeProperties = methodWrapper.getInvokeProperties();
         Integer timeout;

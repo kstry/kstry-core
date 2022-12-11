@@ -57,6 +57,16 @@ public class BasicStoryBus implements StoryBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicStoryBus.class);
 
     /**
+     * 请求 ID 用来区分不同请求
+     */
+    private final String requestId;
+
+    /**
+     * 开始事件ID
+     */
+    private final String startEventId;
+
+    /**
      * 业务ID
      */
     private final String businessId;
@@ -101,8 +111,11 @@ public class BasicStoryBus implements StoryBus {
      */
     private ScopeDataOperator scopeDataOperator;
 
-    public BasicStoryBus(String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
+    public BasicStoryBus(String requestId, String startEventId, String businessId,
+                         Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         this.role = role;
+        this.requestId = requestId;
+        this.startEventId = startEventId;
         this.businessId = businessId;
         this.monitorTracking = monitorTracking;
         this.reqScopeData = reqScopeData == null ? new InScopeData(ScopeTypeEnum.REQUEST) : reqScopeData;
@@ -162,7 +175,7 @@ public class BasicStoryBus implements StoryBus {
 
     @Override
     public void noticeResult(FlowElement flowElement, Object result, TaskServiceDef taskServiceDef) {
-        if (result == null || taskServiceDef.getTaskComponentTarget().isCustomRole()) {
+        if (result == null) {
             return;
         }
 
@@ -205,6 +218,11 @@ public class BasicStoryBus implements StoryBus {
         return businessId;
     }
 
+    @Override
+    public String getStartId() {
+        return startEventId;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public ScopeDataOperator getScopeDataOperator() {
@@ -237,6 +255,16 @@ public class BasicStoryBus implements StoryBus {
                 @Override
                 public <T> Optional<T> getResult() {
                     return BasicStoryBus.this.getResult().map(r -> (T) r);
+                }
+
+                @Override
+                public String getRequestId() {
+                    return BasicStoryBus.this.requestId;
+                }
+
+                @Override
+                public String getStartId() {
+                    return BasicStoryBus.this.getStartId();
                 }
 
                 @Override
@@ -275,7 +303,8 @@ public class BasicStoryBus implements StoryBus {
                     }
                     String[] expArr = expression.split("\\.", 2);
                     String key = (expArr.length == 2) ? expArr[1] : null;
-                    return ScopeTypeEnum.of(expArr[0]).flatMap(scope -> BasicStoryBus.this.getValue(scope, key).map(r -> (T) r));
+                    return ScopeTypeEnum.of(expArr[0])
+                            .filter(e -> e == ScopeTypeEnum.RESULT || StringUtils.isNotBlank(key)).flatMap(scope -> BasicStoryBus.this.getValue(scope, key).map(r -> (T) r));
                 }
 
                 @Override
@@ -313,6 +342,32 @@ public class BasicStoryBus implements StoryBus {
                             }
                             return null;
                         });
+                    } finally {
+                        wLock.unlock();
+                    }
+                }
+
+                @Override
+                public boolean setData(String expression, Object target) {
+                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
+                    wLock.lock();
+                    try {
+                        if (!ElementParserUtil.isValidDataExpression(expression)) {
+                            return false;
+                        }
+                        if (Objects.equals(ScopeTypeEnum.RESULT.getKey(), expression)) {
+                            return setResult(target);
+                        }
+                        String[] expArr = expression.split("\\.", 2);
+                        return ScopeTypeEnum.of(expArr[0]).filter(e -> !e.isNotEdit()).map(e -> {
+                            if (e == ScopeTypeEnum.VARIABLE) {
+                                return BasicStoryBus.this.varScopeData;
+                            }
+                            if (e == ScopeTypeEnum.STABLE) {
+                                return BasicStoryBus.this.staScopeData;
+                            }
+                            return null;
+                        }).map(scope -> doSetData(expArr[1], scope, target)).orElse(false);
                     } finally {
                         wLock.unlock();
                     }
@@ -385,15 +440,13 @@ public class BasicStoryBus implements StoryBus {
                             return false;
                         }
                         if (scopeData.getScopeDataEnum() == ScopeTypeEnum.STABLE) {
-                            Optional<Object> oldResult =
-                                    PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
+                            Optional<Object> oldResult = PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
                             if (oldResult.isPresent()) {
                                 return false;
                             }
                         }
                         String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
-                        PropertyUtil.setProperty(t, fieldName, target);
-                        return true;
+                        return PropertyUtil.setProperty(t, fieldName, target);
                     } finally {
                         wLock.unlock();
                     }
@@ -458,8 +511,10 @@ public class BasicStoryBus implements StoryBus {
                         "{} expect: {}, actual: {}", ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(),
                         Optional.ofNullable(field).map(Field::getType).map(Class::getName).orElse(StringUtils.EMPTY), def.getFieldClass().getName());
             }
-            PropertyUtil.setProperty(t, fieldName, r);
-            monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r));
+            boolean setSuccess = PropertyUtil.setProperty(t, fieldName, r);
+            if (setSuccess) {
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r));
+            }
         });
     }
 }

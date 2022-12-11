@@ -25,6 +25,7 @@ import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.role.BasicRole;
 import cn.kstry.framework.core.role.Role;
+import cn.kstry.framework.core.util.KeyUtil;
 import cn.kstry.framework.core.util.PermissionUtil;
 import cn.kstry.framework.test.role.bo.SayInfoRequest;
 import com.alibaba.fastjson.JSON;
@@ -115,6 +116,7 @@ public class RoleCaseTest {
     @Test
     public void testRole00104() {
         Role role = new BasicRole();
+        role.addPermission(PermissionUtil.permissionList("pr:custom-role-test@custom-role-service"));
         SayInfoRequest request = new SayInfoRequest();
         request.setNumber(8);
 
@@ -130,6 +132,11 @@ public class RoleCaseTest {
         request.setNumber(8);
         StoryRequest<Void> fireRequest = ReqBuilder.returnType(Void.class).businessId("aq-110").request(request).startId("story-def-test-role-004").build();
         TaskResponse<Void> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
+        System.out.println(JSON.toJSONString(fire));
+
+        fireRequest = ReqBuilder.returnType(Void.class).businessId("aq-110").request(request).startId("story-def-test-role-004").build();
+        fire = storyEngine.fire(fireRequest);
         Assert.assertTrue(fire.isSuccess());
         System.out.println(JSON.toJSONString(fire));
     }

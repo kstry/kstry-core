@@ -19,7 +19,6 @@ package cn.kstry.framework.core.engine.thread;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.engine.BasicTaskCore;
 import cn.kstry.framework.core.engine.FlowRegister;
@@ -33,7 +32,6 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.util.Optional;
 import java.util.concurrent.Future;
@@ -79,11 +77,9 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
 
     @Override
     public Object call() throws Exception {
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
         AdminFuture adminFuture = flowRegister.getAdminFuture();
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
             asyncTaskSwitch.await();
             AssertUtil.notTrue(adminFuture.isCancelled(flowRegister.getStartEventId()), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
                     "Task interrupted. Method invoke task was interrupted! taskName: {}", getTaskName());
@@ -109,8 +105,6 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
             }
             adminFuture.errorNotice(e, flowRegister.getStartEventId());
             throw e;
-        } finally {
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
@@ -124,8 +118,7 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
 
         private final boolean strictMode;
 
-        public MethodInvokePedometer(int remainRetry, Supplier<Optional<TaskServiceDef>> needDemotionSupplier,
-                                     boolean isDemotion, boolean strictMode) {
+        public MethodInvokePedometer(int remainRetry, Supplier<Optional<TaskServiceDef>> needDemotionSupplier, boolean isDemotion, boolean strictMode) {
             this.remainRetry = remainRetry;
             this.needDemotionSupplier = needDemotionSupplier;
             this.isDemotion = isDemotion;

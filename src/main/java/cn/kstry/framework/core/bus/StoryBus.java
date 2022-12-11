@@ -98,6 +98,13 @@ public interface StoryBus {
     String getBusinessId();
 
     /**
+     * 获取开始事件ID
+     *
+     * @return 开始事件ID
+     */
+    String getStartId();
+
+    /**
      * 获取 ScopeDataOperator
      *
      * @return ScopeDataOperator

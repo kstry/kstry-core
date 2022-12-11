@@ -17,7 +17,6 @@
  */
 package cn.kstry.framework.core.engine.future;
 
-import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.FlowRegister;
 import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -28,11 +27,11 @@ import cn.kstry.framework.core.util.GlobalUtil;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.SignalType;
 
 import javax.annotation.Nonnull;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 自定义 Subscriber
@@ -64,11 +63,17 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
      */
     private final boolean strictMode;
 
-    public FlowTaskSubscriber(boolean strictMode, Integer timeout, FlowRegister flowRegister, String taskName) {
+    private final Runnable threadSwitchHook;
+
+    private final AtomicBoolean alreadyInvoke;
+
+    public FlowTaskSubscriber(Runnable threadSwitchHook, boolean strictMode, Integer timeout, FlowRegister flowRegister, String taskName) {
+        this.threadSwitchHook = threadSwitchHook;
         this.flowRegister = flowRegister;
         this.taskName = taskName;
         this.timeout = timeout;
         this.strictMode = strictMode;
+        this.alreadyInvoke = new AtomicBoolean(false);
     }
 
     @Override
@@ -80,17 +85,17 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
     protected void hookOnNext(@Nonnull Object value) {
         AssertUtil.notTrue(flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()),
                 ExceptionEnum.ASYNC_TASK_INTERRUPTED, "Task interrupted. Story task was interrupted! taskName: {}", taskName);
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
+        if (alreadyInvoke()) {
+            return;
+        }
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            threadSwitchHook.run();
             doNextHook(value);
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
             dispose();
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
@@ -98,62 +103,55 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
     protected void hookOnComplete() {
         AssertUtil.notTrue(flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()),
                 ExceptionEnum.ASYNC_TASK_INTERRUPTED, "Task interrupted. Story task was interrupted! taskName: {}", taskName);
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
+        if (alreadyInvoke()) {
+            return;
+        }
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            threadSwitchHook.run();
             doCompleteHook();
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
             dispose();
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     @Override
     protected void hookOnError(@Nonnull Throwable throwable) {
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            threadSwitchHook.run();
             doErrorHook(throwable);
         } catch (Throwable ex) {
             LOGGER.warn(ex.getMessage(), ex);
         } finally {
             dispose();
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     @Override
     protected void hookFinally(@Nonnull SignalType type) {
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            threadSwitchHook.run();
             doFinallyHook();
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
-        } finally {
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
     AsyncTaskState hookTimeout() {
-        String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
-        String oldRequestId = MDC.get(requestLogIdKey);
+        if (alreadyInvoke()) {
+            return AsyncTaskState.TIMEOUT;
+        }
         try {
-            MDC.put(GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME, flowRegister.getRequestId());
+            threadSwitchHook.run();
             return doTimeoutHook();
         } catch (Throwable ex) {
             LOGGER.warn(ex.getMessage(), ex);
             return AsyncTaskState.TIMEOUT;
         } finally {
             dispose();
-            GlobalUtil.traceIdClear(oldRequestId, requestLogIdKey);
         }
     }
 
@@ -182,13 +180,16 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
     }
 
     protected AsyncTaskState doTimeoutHook() {
-        KstryException timeoutException = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
-                GlobalUtil.format("Async task timeout! maximum time limit: {}ms, taskName: {}", timeout, taskName));
+        KstryException timeoutException = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT, GlobalUtil.format("Async task timeout! maximum time limit: {}ms, taskName: {}", timeout, taskName));
         try {
             onError(timeoutException);
         } finally {
             flowRegister.getAdminFuture().errorNotice(timeoutException, flowRegister.getStartEventId());
         }
         return AsyncTaskState.TIMEOUT;
+    }
+
+    private boolean alreadyInvoke() {
+        return !alreadyInvoke.compareAndSet(false, true);
     }
 }

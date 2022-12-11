@@ -19,7 +19,10 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.constant.BpmnElementProperties;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +58,16 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      */
     private String taskProperty;
 
+    /**
+     * 任务指令
+     */
+    private String taskInstruct;
+
+    /**
+     * 任务指令参数
+     */
+    private String taskInstructContent;
+
     @Override
     public String getTaskComponent() {
         return taskComponent;
@@ -81,7 +94,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
 
     @Override
     public boolean validTask() {
-        return !StringUtils.isAnyBlank(taskComponent, taskService);
+        return !StringUtils.isAllBlank(taskService, taskInstruct);
     }
 
     /**
@@ -116,16 +129,34 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
         return taskProperty;
     }
 
+    public Boolean getAllowAbsent() {
+        return allowAbsent;
+    }
+
+    public String getTaskInstruct() {
+        return taskInstruct;
+    }
+
+    public String getTaskInstructContent() {
+        return taskInstructContent;
+    }
+
+    public void setTaskInstructContent(String taskInstructContent) {
+        this.taskInstructContent = taskInstructContent;
+    }
+
+    public void setTaskInstruct(String taskInstruct) {
+        AssertUtil.notBlank(taskInstruct, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, GlobalUtil.format("TaskInstruct cannot be blank!"));
+        this.taskInstruct = taskInstruct.replaceFirst(BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT, StringUtils.EMPTY);
+    }
+
     /**
      * 设置 allowAbsent
      *
      * @param allowAbsent allowAbsent
      */
-    public void setAllowAbsent(String allowAbsent) {
-        if (StringUtils.isBlank(allowAbsent)) {
-            return;
-        }
-        this.allowAbsent = BooleanUtils.toBooleanObject(allowAbsent.trim());
+    public void setAllowAbsent(Boolean allowAbsent) {
+        this.allowAbsent = allowAbsent;
     }
 
     @Override

@@ -37,5 +37,5 @@ public enum ElementAllowNextEnum {
     /**
      * 不允许执行下一个节点，但是需要补偿逻辑
      */
-    NOT_ALLOW_NEX_NEED_COMPENSATE;
+    NOT_ALLOW_NEX_NEED_COMPENSATE
 }

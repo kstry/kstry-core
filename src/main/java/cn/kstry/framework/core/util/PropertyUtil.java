@@ -61,12 +61,13 @@ public class PropertyUtil {
         }
     }
 
-    public static void setProperty(Object target, String propertyName, Object value) {
+    public static boolean setProperty(Object target, String propertyName, Object value) {
         if (target == null || StringUtils.isBlank(propertyName)) {
-            return;
+            return false;
         }
         try {
             PropertyUtils.setProperty(target, propertyName, value);
+            return true;
         } catch (NoSuchMethodException e) {
             LOGGER.warn("[{}] Unknown property to set bean property! target: {}, propertyName: {}, value: {}",
                     ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value);
@@ -74,6 +75,7 @@ public class PropertyUtil {
             LOGGER.warn("[{}] BeanUtils Failed to set bean property! target: {}, propertyName: {}, value: {}",
                     ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value, e);
         }
+        return false;
     }
 
     public static void initGlobalProperties(ConfigurableEnvironment environment) {
@@ -99,7 +101,6 @@ public class PropertyUtil {
         GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS = NumberUtils.toLong(
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_SHUTDOWN_NOW_AWAIT), GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS
         );
-        GlobalProperties.START_EVENT_ID_PREFIX = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_PREFIX, GlobalProperties.START_EVENT_ID_PREFIX);
         GlobalProperties.STORY_SUCCESS_CODE = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_SUCCESS_CODE, GlobalProperties.STORY_SUCCESS_CODE);
         GlobalProperties.STORY_MONITOR_TRACKING_TYPE =
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_TYPE, GlobalProperties.STORY_MONITOR_TRACKING_TYPE);

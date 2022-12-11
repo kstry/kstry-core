@@ -17,11 +17,11 @@
  */
 package cn.kstry.framework.core.resource.config;
 
+import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
+
 import java.util.List;
 import java.util.Map;
-
-import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.bpmn.SubProcess;
 
 /**
  * BPMN 配置文件定义
@@ -37,13 +37,12 @@ public interface BpmnConfigResource extends ConfigResource {
      *
      * @return SubProcess Map
      */
-    Map<String, SubProcess> getSubProcessMap();
+    Map<String, SubProcessLink> getSubProcessMap();
 
     /**
      * 获取 StartEvent 集合
      *
-     * @param allSubProcess 容器中全部的 SubProcess 实例
      * @return StartEvent 集合
      */
-    List<StartEvent> getStartEventList(Map<String, SubProcess> allSubProcess);
+    List<StartEvent> getStartEventList();
 }
