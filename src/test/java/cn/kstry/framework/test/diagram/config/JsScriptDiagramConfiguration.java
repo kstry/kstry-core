@@ -17,8 +17,8 @@
  */
 package cn.kstry.framework.test.diagram.config;
 
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
-import cn.kstry.framework.core.component.bpmn.link.StartBpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.component.bpmn.link.StartProcessLink;
 import cn.kstry.framework.core.component.instruct.JsScriptProperty;
 import cn.kstry.framework.test.diagram.constants.StoryNameConstants;
 import com.alibaba.fastjson.JSON;
@@ -33,35 +33,35 @@ import org.springframework.context.annotation.Configuration;
 public class JsScriptDiagramConfiguration {
 
     @Bean
-    public BpmnLink jsScriptBpmnLink1() {
+    public ProcessLink jsScriptBpmnLink1() {
         JsScriptProperty property = new JsScriptProperty();
         property.setInvokeMethod("inv");
         property.setReturnType("java.lang.Integer");
         property.setReturnTarget(Lists.newArrayList("res", "sta.r", "var.r"));
 
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.JS001);
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.JS001);
         bpmnLink.nextInstruct("c-jscript", "function inv(){ ksta.v = kreq.a + kvar.num + ksta.num; return ksta.v * 2;}").property(JSON.toJSONString(property)).build().end();
         return bpmnLink;
     }
 
     @Bean
-    public BpmnLink jsScriptBpmnLink2() {
+    public ProcessLink jsScriptBpmnLink2() {
         JsScriptProperty property = new JsScriptProperty();
         property.setReturnType("java.lang.Integer");
         property.setReturnTarget(Lists.newArrayList("res", "sta.r", "var.r"));
 
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.JS002);
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.JS002);
         bpmnLink.nextInstruct("c-jscript", "ksta.v = kreq.a + kvar.num + ksta.num; return ksta.v * 2;").property(JSON.toJSONString(property)).build().end();
         return bpmnLink;
     }
 
     @Bean
-    public BpmnLink jsScriptBpmnLink3() {
+    public ProcessLink jsScriptBpmnLink3() {
         JsScriptProperty property = new JsScriptProperty();
         property.setReturnType("cn.kstry.framework.core.component.instruct.JsScriptProperty");
         property.setReturnTarget(Lists.newArrayList("res"));
 
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.JS003);
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.JS003);
         bpmnLink.nextInstruct("c-jscript", "return {'invoke-method':'invoke', 'return-type':'java.lang.Integer'}").property(JSON.toJSONString(property)).build().end();
         return bpmnLink;
     }

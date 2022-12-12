@@ -26,8 +26,8 @@ import cn.kstry.framework.core.component.bpmn.builder.SubProcessBuilder;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
-import cn.kstry.framework.core.component.bpmn.link.StartBpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.component.bpmn.link.StartProcessLink;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.constant.BpmnElementProperties;
@@ -66,7 +66,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
     private final List<String> CAMUNDA_TASK_TYPE_LIST = Lists.newArrayList(BpmnModelConstants.BPMN_ELEMENT_SERVICE_TASK, BpmnModelConstants.BPMN_ELEMENT_TASK);
 
     @Override
-    public Optional<BpmnLink> getBpmnLink(ConfigResource config, BpmnModelInstance instance, String startId) {
+    public Optional<ProcessLink> getProcessLink(ConfigResource config, BpmnModelInstance instance, String startId) {
         AssertUtil.notNull(config, ExceptionEnum.CONFIGURATION_PARSE_FAILURE);
         if (instance == null || StringUtils.isBlank(startId)) {
             return Optional.empty();
@@ -76,7 +76,7 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
                 || Objects.equals(BpmnModelConstants.BPMN_ELEMENT_SUB_PROCESS, camundaStartEvent.getParentElement().getElementType().getTypeName())) {
             return Optional.empty();
         }
-        StartBpmnLink bpmnLink = StartBpmnLink.build(camundaStartEvent.getId(), camundaStartEvent.getName());
+        StartProcessLink bpmnLink = StartProcessLink.build(camundaStartEvent.getId(), camundaStartEvent.getName());
         doGetStartEvent(config, camundaStartEvent, bpmnLink);
         return Optional.of(bpmnLink);
     }
@@ -111,13 +111,13 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
         return subProcessMap;
     }
 
-    private void doGetStartEvent(ConfigResource config, org.camunda.bpm.model.bpmn.instance.StartEvent camundaStartEvent, StartBpmnLink bpmnLink) {
+    private void doGetStartEvent(ConfigResource config, org.camunda.bpm.model.bpmn.instance.StartEvent camundaStartEvent, StartProcessLink bpmnLink) {
         if (camundaStartEvent == null) {
             return;
         }
 
         Set<org.camunda.bpm.model.bpmn.instance.FlowNode> circularDependencyCheck = Sets.newHashSet();
-        Map<org.camunda.bpm.model.bpmn.instance.FlowNode, BpmnLink> nextBpmnLinkMap = Maps.newHashMap();
+        Map<org.camunda.bpm.model.bpmn.instance.FlowNode, ProcessLink> nextBpmnLinkMap = Maps.newHashMap();
         nextBpmnLinkMap.put(camundaStartEvent, bpmnLink);
 
         Map<org.camunda.bpm.model.bpmn.instance.FlowNode, Integer> comingCountMap = Maps.newHashMap();
@@ -129,13 +129,13 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
                 continue;
             }
 
-            BpmnLink beforeBpmnLink = nextBpmnLinkMap.get(element);
+            ProcessLink beforeProcessLink = nextBpmnLinkMap.get(element);
             for (org.camunda.bpm.model.bpmn.instance.SequenceFlow seq : element.getOutgoing()) {
                 FlowNode targetNode = seq.getTarget();
                 if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.EndEvent) {
-                    beforeBpmnLink.end(sequenceFlowMapping(config, seq));
+                    beforeProcessLink.end(sequenceFlowMapping(config, seq));
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.ParallelGateway) {
-                    BpmnLink parallelBpmnLink = nextBpmnLinkMap.computeIfAbsent(targetNode, node -> {
+                    ProcessLink parallelProcessLink = nextBpmnLinkMap.computeIfAbsent(targetNode, node -> {
                         ParallelJoinPointBuilder parallelJoinPointBuilder = bpmnLink.parallel();
                         ElementPropertyUtil.getNodeProperty(targetNode,
                                 BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC).map(BooleanUtils::toBoolean).filter(b -> b).ifPresent(b -> parallelJoinPointBuilder.openAsync());
@@ -143,32 +143,32 @@ public class CamundaBpmnModelTransfer implements BpmnModelTransfer<BpmnModelInst
                                 BpmnElementProperties.TASK_STRICT_MODE).map(BooleanUtils::toBooleanObject).filter(b -> !b).ifPresent(b -> parallelJoinPointBuilder.notStrictMode());
                         return parallelJoinPointBuilder.build();
                     });
-                    BpmnLink nextBpmnLink = beforeBpmnLink.nextParallel(sequenceFlowMapping(config, seq), (ParallelJoinPoint) parallelBpmnLink);
-                    nextBpmnLinkMap.put(targetNode, nextBpmnLink);
+                    ProcessLink nextProcessLink = beforeProcessLink.nextParallel(sequenceFlowMapping(config, seq), (ParallelJoinPoint) parallelProcessLink);
+                    nextBpmnLinkMap.put(targetNode, nextProcessLink);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.InclusiveGateway) {
-                    BpmnLink inclusiveBpmnLink = nextBpmnLinkMap.computeIfAbsent(targetNode, node -> {
+                    ProcessLink inclusiveProcessLink = nextBpmnLinkMap.computeIfAbsent(targetNode, node -> {
                         InclusiveJoinPointBuilder inclusiveJoinPointBuilder = bpmnLink.inclusive().serviceTask(getServiceTask(node, config));
                         ElementPropertyUtil.getNodeProperty(targetNode,
                                 BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC).map(BooleanUtils::toBoolean).filter(b -> b).ifPresent(b -> inclusiveJoinPointBuilder.openAsync());
                         return inclusiveJoinPointBuilder.build();
                     });
-                    BpmnLink nextBpmnLink = beforeBpmnLink.nextInclusive(sequenceFlowMapping(config, seq), (InclusiveJoinPoint) inclusiveBpmnLink);
-                    nextBpmnLinkMap.put(targetNode, nextBpmnLink);
+                    ProcessLink nextProcessLink = beforeProcessLink.nextInclusive(sequenceFlowMapping(config, seq), (InclusiveJoinPoint) inclusiveProcessLink);
+                    nextBpmnLinkMap.put(targetNode, nextProcessLink);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.ExclusiveGateway) {
-                    BpmnLink nextBpmnLink = beforeBpmnLink.nextExclusive(sequenceFlowMapping(config, seq)).serviceTask(getServiceTask(targetNode, config)).build();
-                    nextBpmnLinkMap.put(targetNode, nextBpmnLink);
+                    ProcessLink nextProcessLink = beforeProcessLink.nextExclusive(sequenceFlowMapping(config, seq)).serviceTask(getServiceTask(targetNode, config)).build();
+                    nextBpmnLinkMap.put(targetNode, nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.Task && CAMUNDA_TASK_TYPE_LIST.contains(targetNode.getElementType().getTypeName())) {
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config);
-                    BpmnLink nextBpmnLink = beforeBpmnLink.nextTask(sequenceFlowMapping(config, seq), serviceTask);
-                    nextBpmnLinkMap.put(targetNode, nextBpmnLink);
+                    ProcessLink nextProcessLink = beforeProcessLink.nextTask(sequenceFlowMapping(config, seq), serviceTask);
+                    nextBpmnLinkMap.put(targetNode, nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.SubProcess || targetNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
                     String subProcessId = targetNode.getId();
                     if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
                         subProcessId = ((org.camunda.bpm.model.bpmn.instance.CallActivity) targetNode).getCalledElement();
                     }
-                    SubProcessBuilder subProcessBuilder = beforeBpmnLink.nextSubProcess(sequenceFlowMapping(config, seq), subProcessId);
+                    SubProcessBuilder subProcessBuilder = beforeProcessLink.nextSubProcess(sequenceFlowMapping(config, seq), subProcessId);
                     fillIterableProperty(config, targetNode, subProcessBuilder::iterable);
 
                     ElementPropertyUtil.getNodeProperty(targetNode,

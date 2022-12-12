@@ -21,7 +21,7 @@ import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.util.CustomRoleInfo;
 
 /**
@@ -31,17 +31,17 @@ import cn.kstry.framework.core.util.CustomRoleInfo;
  */
 public class ServiceTaskBuilder {
 
-    private final BpmnLink bpmnLink;
+    private final ProcessLink processLink;
 
     private final ServiceTaskImpl serviceTask;
 
     public ServiceTaskBuilder() {
-        this.bpmnLink = null;
+        this.processLink = null;
         this.serviceTask = new ServiceTaskImpl();
     }
 
-    public ServiceTaskBuilder(ServiceTaskImpl serviceTask, BpmnLink bpmnLink) {
-        this.bpmnLink = bpmnLink;
+    public ServiceTaskBuilder(ServiceTaskImpl serviceTask, ProcessLink processLink) {
+        this.processLink = processLink;
         this.serviceTask = serviceTask;
     }
 
@@ -105,8 +105,8 @@ public class ServiceTaskBuilder {
         return this;
     }
 
-    public BpmnLink build() {
-        return new BpmnElementDiagramLink<ServiceTask>(serviceTask, bpmnLink);
+    public ProcessLink build() {
+        return new BpmnElementDiagramLink<ServiceTask>(serviceTask, processLink);
     }
 
     public ServiceTask ins() {

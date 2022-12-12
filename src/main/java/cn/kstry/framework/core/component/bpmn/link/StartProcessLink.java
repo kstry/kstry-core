@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * 在 BpmnLink 的基础上增加了开始节点特有的功能
  */
-public interface StartBpmnLink extends BpmnLink {
+public interface StartProcessLink extends ProcessLink {
 
     /**
      * 创建包含网关汇聚节点
@@ -46,7 +46,7 @@ public interface StartBpmnLink extends BpmnLink {
      * @param id 非空
      * @return BpmnLink
      */
-    static StartBpmnLink build(String id) {
+    static StartProcessLink build(String id) {
         return build(id, StringUtils.EMPTY);
     }
 
@@ -57,7 +57,7 @@ public interface StartBpmnLink extends BpmnLink {
      * @param name 允许为空
      * @return BpmnLink
      */
-    static StartBpmnLink build(String id, String name) {
-        return new StartDiagramBpmnLink(id, name);
+    static StartProcessLink build(String id, String name) {
+        return new StartDiagramProcessLink(id, name);
     }
 }

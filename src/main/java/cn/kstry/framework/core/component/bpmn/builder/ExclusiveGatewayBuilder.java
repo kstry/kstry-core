@@ -21,7 +21,7 @@ import cn.kstry.framework.core.bpmn.ExclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.impl.ExclusiveGatewayImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 
 /**
  * ExclusiveGateway 构建类
@@ -30,12 +30,12 @@ import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
  */
 public class ExclusiveGatewayBuilder {
 
-    private final BpmnLink bpmnLink;
+    private final ProcessLink processLink;
 
     private final ExclusiveGatewayImpl exclusiveGateway;
 
-    public ExclusiveGatewayBuilder(ExclusiveGatewayImpl exclusiveGateway, BpmnLink bpmnLink) {
-        this.bpmnLink = bpmnLink;
+    public ExclusiveGatewayBuilder(ExclusiveGatewayImpl exclusiveGateway, ProcessLink processLink) {
+        this.processLink = processLink;
         this.exclusiveGateway = exclusiveGateway;
     }
 
@@ -44,7 +44,7 @@ public class ExclusiveGatewayBuilder {
         return this;
     }
 
-    public BpmnLink build() {
-        return new BpmnElementDiagramLink<ExclusiveGateway>(exclusiveGateway, bpmnLink);
+    public ProcessLink build() {
+        return new BpmnElementDiagramLink<ExclusiveGateway>(exclusiveGateway, processLink);
     }
 }

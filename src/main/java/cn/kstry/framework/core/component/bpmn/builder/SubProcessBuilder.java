@@ -21,7 +21,7 @@ import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 
 /**
  * SubProcessBuilder 构建类
@@ -30,12 +30,12 @@ import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
  */
 public class SubProcessBuilder {
 
-    private final BpmnLink bpmnLink;
+    private final ProcessLink processLink;
 
     private final SubProcessImpl subProcess;
 
-    public SubProcessBuilder(SubProcessImpl subProcess, BpmnLink bpmnLink) {
-        this.bpmnLink = bpmnLink;
+    public SubProcessBuilder(SubProcessImpl subProcess, ProcessLink processLink) {
+        this.processLink = processLink;
         this.subProcess = subProcess;
     }
 
@@ -54,7 +54,7 @@ public class SubProcessBuilder {
         return this;
     }
 
-    public BpmnLink build() {
-        return new BpmnElementDiagramLink<SubProcess>(subProcess, bpmnLink);
+    public ProcessLink build() {
+        return new BpmnElementDiagramLink<SubProcess>(subProcess, processLink);
     }
 }

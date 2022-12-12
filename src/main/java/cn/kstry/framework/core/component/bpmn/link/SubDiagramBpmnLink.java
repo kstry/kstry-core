@@ -25,7 +25,7 @@ import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import org.apache.commons.lang3.StringUtils;
 
-public class SubDiagramBpmnLink extends StartDiagramBpmnLink implements SubBpmnLink {
+public class SubDiagramBpmnLink extends StartDiagramProcessLink implements SubBpmnLink {
 
     private final SubProcessImpl subProcess;
 

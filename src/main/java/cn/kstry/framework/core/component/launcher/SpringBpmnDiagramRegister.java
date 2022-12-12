@@ -19,7 +19,7 @@ package cn.kstry.framework.core.component.launcher;
 
 import cn.kstry.framework.core.component.bpmn.BpmnDiagramRegister;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import org.apache.commons.collections.MapUtils;
 import org.springframework.context.ApplicationContext;
 
@@ -44,11 +44,11 @@ public class SpringBpmnDiagramRegister implements BpmnDiagramRegister {
     }
 
     @Override
-    public void registerDiagram(List<BpmnLink> bpmnLinkList) {
-        Map<String, BpmnLink> bpmnLinkMap = applicationContext.getBeansOfType(BpmnLink.class);
+    public void registerDiagram(List<ProcessLink> processLinkList) {
+        Map<String, ProcessLink> bpmnLinkMap = applicationContext.getBeansOfType(ProcessLink.class);
         if (MapUtils.isEmpty(bpmnLinkMap)) {
             return;
         }
-        bpmnLinkList.addAll(bpmnLinkMap.values());
+        processLinkList.addAll(bpmnLinkMap.values());
     }
 }

@@ -25,7 +25,7 @@ import cn.kstry.framework.core.util.AssertUtil;
 /**
  * 在 BpmnLink 的基础上增加了子流程特有的功能
  */
-public interface SubBpmnLink extends StartBpmnLink {
+public interface SubBpmnLink extends StartProcessLink {
 
     /**
      * 获取开始事件

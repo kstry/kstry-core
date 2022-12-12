@@ -18,13 +18,13 @@
 package cn.kstry.framework.core.component.bpmn.joinpoint;
 
 import cn.kstry.framework.core.bpmn.EndEvent;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
-import cn.kstry.framework.core.component.bpmn.link.StartDiagramBpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.component.bpmn.link.StartDiagramProcessLink;
 import cn.kstry.framework.core.util.GlobalUtil;
 
 public class EndJoinPoint extends DiagramJoinPoint<EndEvent> {
 
-    public EndJoinPoint(BpmnLink bpmnLink) {
-        super(GlobalUtil.transferNotEmpty(bpmnLink, StartDiagramBpmnLink.class).getEndEvent(), bpmnLink);
+    public EndJoinPoint(ProcessLink processLink) {
+        super(GlobalUtil.transferNotEmpty(processLink, StartDiagramProcessLink.class).getEndEvent(), processLink);
     }
 }

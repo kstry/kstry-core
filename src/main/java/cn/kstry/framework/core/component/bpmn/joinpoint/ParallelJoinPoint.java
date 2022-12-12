@@ -18,11 +18,11 @@
 package cn.kstry.framework.core.component.bpmn.joinpoint;
 
 import cn.kstry.framework.core.bpmn.ParallelGateway;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 
 public class ParallelJoinPoint extends DiagramJoinPoint<ParallelGateway> {
 
-    public ParallelJoinPoint(ParallelGateway element, BpmnLink bpmnLink) {
-        super(element, bpmnLink);
+    public ParallelJoinPoint(ParallelGateway element, ProcessLink processLink) {
+        super(element, processLink);
     }
 }

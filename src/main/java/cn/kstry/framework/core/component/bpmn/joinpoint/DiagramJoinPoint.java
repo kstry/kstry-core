@@ -19,20 +19,20 @@ package cn.kstry.framework.core.component.bpmn.joinpoint;
 
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 
 public class DiagramJoinPoint<T extends AggregationFlowElement> extends BpmnElementDiagramLink<T> {
 
-    public DiagramJoinPoint(T element, BpmnLink bpmnLink) {
-        super(element, bpmnLink);
+    public DiagramJoinPoint(T element, ProcessLink processLink) {
+        super(element, processLink);
     }
 
-    public DiagramJoinPoint<T> joinLinks(BpmnLink... bpmnLinks) {
-        if (bpmnLinks == null || bpmnLinks.length == 0) {
+    public DiagramJoinPoint<T> joinLinks(ProcessLink... processLinks) {
+        if (processLinks == null || processLinks.length == 0) {
             return this;
         }
-        for (BpmnLink bpmnLink : bpmnLinks) {
-            bpmnLink.joinTask(this);
+        for (ProcessLink processLink : processLinks) {
+            processLink.joinTask(this);
         }
         return this;
     }

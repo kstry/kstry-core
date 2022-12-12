@@ -23,7 +23,7 @@ import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.component.bpmn.BpmnDiagramRegister;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
 import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -114,18 +114,18 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
                 bpmnResource.getStartEventList().stream()).peek(startEvent -> ElementParserUtil.fillSubProcess(allSubProcess, startEvent)).collect(Collectors.toList());
 
         bpmnDiagramResourceList.forEach(bpmnDiagramRegister -> {
-            List<BpmnLink> bpmnLinkList = Lists.newArrayList();
-            bpmnDiagramRegister.registerDiagram(bpmnLinkList);
-            if (CollectionUtils.isEmpty(bpmnLinkList)) {
+            List<ProcessLink> processLinkList = Lists.newArrayList();
+            bpmnDiagramRegister.registerDiagram(processLinkList);
+            if (CollectionUtils.isEmpty(processLinkList)) {
                 return;
             }
             LOGGER.info("Load bpmn code register. name: {}", bpmnDiagramRegister.getConfigName());
             List<StartEvent> sList = Lists.newArrayList();
-            for (BpmnLink bpmnLink : bpmnLinkList) {
-                if (bpmnLink == null) {
+            for (ProcessLink processLink : processLinkList) {
+                if (processLink == null) {
                     continue;
                 }
-                StartEvent startEvent = bpmnLink.getElement();
+                StartEvent startEvent = processLink.getElement();
                 startEvent.setConfig(bpmnDiagramRegister);
                 ElementParserUtil.fillSubProcess(allSubProcess, startEvent);
                 sList.add(startEvent);

@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.component.bpmn;
 
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 
 import java.util.Map;
@@ -39,7 +39,7 @@ public interface BpmnModelTransfer<T> {
      * @param startId  startId
      * @return Bpmn Model
      */
-    Optional<BpmnLink> getBpmnLink(ConfigResource config, T instance, String startId);
+    Optional<ProcessLink> getProcessLink(ConfigResource config, T instance, String startId);
 
     /**
      * 获取 子流程

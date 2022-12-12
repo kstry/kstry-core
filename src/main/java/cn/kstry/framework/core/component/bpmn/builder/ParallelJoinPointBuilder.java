@@ -18,17 +18,17 @@
 package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.impl.ParallelGatewayImpl;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
 
 public class ParallelJoinPointBuilder {
 
-    private final BpmnLink bpmnLink;
+    private final ProcessLink processLink;
 
     private final ParallelGatewayImpl parallelGateway;
 
-    public ParallelJoinPointBuilder(ParallelGatewayImpl parallelGateway, BpmnLink bpmnLink) {
-        this.bpmnLink = bpmnLink;
+    public ParallelJoinPointBuilder(ParallelGatewayImpl parallelGateway, ProcessLink processLink) {
+        this.processLink = processLink;
         this.parallelGateway = parallelGateway;
     }
 
@@ -43,6 +43,6 @@ public class ParallelJoinPointBuilder {
     }
 
     public ParallelJoinPoint build() {
-        return new ParallelJoinPoint(parallelGateway, bpmnLink);
+        return new ParallelJoinPoint(parallelGateway, processLink);
     }
 }

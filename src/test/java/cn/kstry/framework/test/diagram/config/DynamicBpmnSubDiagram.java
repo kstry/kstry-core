@@ -2,7 +2,7 @@ package cn.kstry.framework.test.diagram.config;
 
 import cn.kstry.framework.core.component.bpmn.BpmnProcessParser;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.dynamic.creator.DynamicSubProcess;
 import cn.kstry.framework.core.util.KeyUtil;
 import cn.kstry.framework.test.diagram.constants.SCS;
@@ -72,7 +72,7 @@ public class DynamicBpmnSubDiagram implements DynamicSubProcess {
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                 .end()
                 ), SubProcessLink.build("gateway-sub-process2", link -> {
-                    BpmnLink eg1 = link
+                    ProcessLink eg1 = link
                             .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                             .nextExclusive().build();
 

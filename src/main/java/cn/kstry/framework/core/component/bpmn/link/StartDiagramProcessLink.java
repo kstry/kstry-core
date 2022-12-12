@@ -35,7 +35,7 @@ import cn.kstry.framework.core.util.GlobalUtil;
  *
  * @author lykan
  */
-public class StartDiagramBpmnLink extends BpmnDiagramLink implements StartBpmnLink {
+public class StartDiagramProcessLink extends BpmnDiagramLink implements StartProcessLink {
 
     /**
      * 开始事件
@@ -47,7 +47,7 @@ public class StartDiagramBpmnLink extends BpmnDiagramLink implements StartBpmnLi
      */
     private final EndEvent endEvent;
 
-    public StartDiagramBpmnLink(String id, String name) {
+    public StartDiagramProcessLink(String id, String name) {
         AssertUtil.notBlank(id, ExceptionEnum.PARAMS_ERROR, "Id is not allowed to be empty!");
         StartEventImpl se = new StartEventImpl();
         se.setId(id);
@@ -60,7 +60,7 @@ public class StartDiagramBpmnLink extends BpmnDiagramLink implements StartBpmnLi
     }
 
     @Override
-    public BpmnLink getBpmnLink() {
+    public ProcessLink getProcessLink() {
         return this;
     }
 

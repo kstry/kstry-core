@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.component.dynamic.creator;
 
 import cn.kstry.framework.core.bus.ScopeDataQuery;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
@@ -26,10 +26,10 @@ import java.util.Optional;
 /**
  * 动态子流程创建器
  */
-public interface DynamicProcess extends DynamicComponentCreator<BpmnLink>, ComponentCacheSupport {
+public interface DynamicProcess extends DynamicComponentCreator<ProcessLink>, ComponentCacheSupport {
 
     /**
-     * 动态流程版本，默认0 使用缓存。version增加之后，缓存失效重新调用getBpmnLink()生成新的流程
+     * 动态流程版本，默认0 使用缓存。version增加之后，缓存失效重新调用getProcessLink()生成新的流程
      *
      * @param key key，默认：startEventId
      * @return 版本
@@ -45,12 +45,12 @@ public interface DynamicProcess extends DynamicComponentCreator<BpmnLink>, Compo
     }
 
     @Override
-    default Optional<BpmnLink> getComponent(String key, Object param) {
+    default Optional<ProcessLink> getComponent(String key, Object param) {
         if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        return getBpmnLink(key);
+        return getProcessLink(key);
     }
 
-    Optional<BpmnLink> getBpmnLink(String startId);
+    Optional<ProcessLink> getProcessLink(String startId);
 }

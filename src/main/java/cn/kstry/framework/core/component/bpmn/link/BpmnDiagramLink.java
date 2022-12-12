@@ -45,16 +45,16 @@ public abstract class BpmnDiagramLink {
         return nextTask(StringUtils.EMPTY);
     }
 
-    public BpmnLink nextTask(ServiceTask serviceTask) {
+    public ProcessLink nextTask(ServiceTask serviceTask) {
         return nextTask(StringUtils.EMPTY, serviceTask);
     }
 
-    public BpmnLink nextTask(String flowExpression, ServiceTask serviceTask) {
+    public ProcessLink nextTask(String flowExpression, ServiceTask serviceTask) {
         return nextTask(expressionSequenceFlow(flowExpression), serviceTask);
     }
 
     public ServiceTaskBuilder nextTask(String flowExpression) {
-        return nextTask(getBpmnLink(), expressionSequenceFlow(flowExpression));
+        return nextTask(getProcessLink(), expressionSequenceFlow(flowExpression));
     }
 
     public ServiceTaskBuilder nextTask(String component, String service) {
@@ -62,26 +62,26 @@ public abstract class BpmnDiagramLink {
     }
 
     public ServiceTaskBuilder nextTask(String flowExpression, String component, String service) {
-        ServiceTaskBuilder builder = nextTask(getBpmnLink(), expressionSequenceFlow(flowExpression));
+        ServiceTaskBuilder builder = nextTask(getProcessLink(), expressionSequenceFlow(flowExpression));
         builder.component(component);
         builder.service(service);
         return builder;
     }
 
-    public BpmnLink nextTask(SequenceFlow sequenceFlow, ServiceTask serviceTask) {
+    public ProcessLink nextTask(SequenceFlow sequenceFlow, ServiceTask serviceTask) {
         AssertUtil.notNull(serviceTask);
-        AssertUtil.isTrue(getBpmnLink() instanceof StartDiagramBpmnLink, ExceptionEnum.BPMN_DIAGRAM_LINK_ERROR);
+        AssertUtil.isTrue(getProcessLink() instanceof StartDiagramProcessLink, ExceptionEnum.BPMN_DIAGRAM_LINK_ERROR);
         if (StringUtils.isBlank(serviceTask.getId())) {
             serviceTask.setId(GlobalUtil.uuid());
         }
         AssertUtil.isTrue(serviceTask.validTask(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED);
         sequenceFlow.outing(serviceTask);
         beforeElement().outing(sequenceFlow);
-        return new BpmnElementDiagramLink<>(serviceTask, getBpmnLink());
+        return new BpmnElementDiagramLink<>(serviceTask, getProcessLink());
     }
 
     public ServiceTaskBuilder nextTask(SequenceFlow sequenceFlow, String component, String service) {
-        ServiceTaskBuilder builder = nextTask(getBpmnLink(), sequenceFlow);
+        ServiceTaskBuilder builder = nextTask(getProcessLink(), sequenceFlow);
         builder.component(component);
         builder.service(service);
         return builder;
@@ -124,7 +124,7 @@ public abstract class BpmnDiagramLink {
         subProcess.setId(processId);
         sequenceFlow.outing(subProcess);
         getElement().outing(sequenceFlow);
-        return new SubProcessBuilder(subProcess, getBpmnLink());
+        return new SubProcessBuilder(subProcess, getProcessLink());
     }
 
     public ExclusiveGatewayBuilder nextExclusive() {
@@ -140,7 +140,7 @@ public abstract class BpmnDiagramLink {
         exclusiveGateway.setId(GlobalUtil.uuid());
         sequenceFlow.outing(exclusiveGateway);
         beforeElement().outing(sequenceFlow);
-        return new ExclusiveGatewayBuilder(exclusiveGateway, getBpmnLink());
+        return new ExclusiveGatewayBuilder(exclusiveGateway, getProcessLink());
     }
 
     public InclusiveJoinPoint nextInclusive(InclusiveJoinPoint inclusiveGateway) {
@@ -190,14 +190,14 @@ public abstract class BpmnDiagramLink {
     }
 
     public void end(String flowExpression) {
-        joinTask(flowExpression, new EndJoinPoint(getBpmnLink()));
+        joinTask(flowExpression, new EndJoinPoint(getProcessLink()));
     }
 
     public void end(SequenceFlow sequenceFlow) {
-        joinTask(sequenceFlow, new EndJoinPoint(getBpmnLink()));
+        joinTask(sequenceFlow, new EndJoinPoint(getProcessLink()));
     }
 
-    abstract BpmnLink getBpmnLink();
+    abstract ProcessLink getProcessLink();
 
     abstract <T extends FlowElement> T getElement();
 
@@ -205,13 +205,13 @@ public abstract class BpmnDiagramLink {
         return getElement();
     }
 
-    private ServiceTaskBuilder nextTask(BpmnLink bpmnLink, SequenceFlow sequenceFlow) {
-        AssertUtil.isTrue(bpmnLink instanceof StartDiagramBpmnLink, ExceptionEnum.BPMN_DIAGRAM_LINK_ERROR);
+    private ServiceTaskBuilder nextTask(ProcessLink processLink, SequenceFlow sequenceFlow) {
+        AssertUtil.isTrue(processLink instanceof StartDiagramProcessLink, ExceptionEnum.BPMN_DIAGRAM_LINK_ERROR);
         ServiceTaskImpl serviceTask = new ServiceTaskImpl();
         serviceTask.setId(GlobalUtil.uuid());
         sequenceFlow.outing(serviceTask);
         beforeElement().outing(sequenceFlow);
-        return new ServiceTaskBuilder(serviceTask, bpmnLink);
+        return new ServiceTaskBuilder(serviceTask, processLink);
     }
 
     private SequenceFlowImpl simpleSequenceFlow() {

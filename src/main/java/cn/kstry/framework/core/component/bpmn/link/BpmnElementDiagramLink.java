@@ -24,23 +24,23 @@ import cn.kstry.framework.core.bpmn.FlowElement;
  *
  * @author lykan
  */
-public class BpmnElementDiagramLink<T extends FlowElement> extends BpmnDiagramLink implements BpmnLink {
+public class BpmnElementDiagramLink<T extends FlowElement> extends BpmnDiagramLink implements ProcessLink {
 
     /**
      * 被连接的元素
      */
     private final T element;
 
-    private final BpmnLink bpmnLink;
+    private final ProcessLink processLink;
 
-    public BpmnElementDiagramLink(T element, BpmnLink bpmnLink) {
+    public BpmnElementDiagramLink(T element, ProcessLink processLink) {
         this.element = element;
-        this.bpmnLink = bpmnLink;
+        this.processLink = processLink;
     }
 
     @Override
-    public BpmnLink getBpmnLink() {
-        return bpmnLink;
+    public ProcessLink getProcessLink() {
+        return processLink;
     }
 
     @Override

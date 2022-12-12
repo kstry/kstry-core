@@ -23,8 +23,8 @@ import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
-import cn.kstry.framework.core.component.bpmn.link.StartBpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.component.bpmn.link.StartProcessLink;
 import cn.kstry.framework.core.util.KeyUtil;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import cn.kstry.framework.test.diagram.constants.StoryNameConstants;
@@ -63,7 +63,7 @@ public class Case1BpmnDiagramConfiguration {
     @Bean
     public SubProcessLink subProcessBuilder3() {
         return SubProcessLink.build("gateway-sub-process", link -> {
-            BpmnLink eg1 = link
+            ProcessLink eg1 = link
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextExclusive().build();
 
@@ -86,9 +86,9 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink1() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A001);
-        BpmnLink buildOneChain = bpmnLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
+    public ProcessLink bpmnLink1() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A001);
+        ProcessLink buildOneChain = bpmnLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
 
         bpmnLink.parallel().build().joinLinks().joinLinks(
                         bpmnLink.inclusive().build().joinLinks(
@@ -112,10 +112,10 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink2() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A002);
+    public ProcessLink bpmnLink2() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A002);
 
-        BpmnLink exclusiveGateway = bpmnLink.nextExclusive().build();
+        ProcessLink exclusiveGateway = bpmnLink.nextExclusive().build();
         exclusiveGateway
                 .nextTask("req.a < 10", SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
@@ -133,15 +133,15 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink3() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A003);
+    public ProcessLink bpmnLink3() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A003);
 
         ServiceTask st1 = ServiceTask.builder("s-02345-id1")
                 .component(SCS.F.CALCULATE_SERVICE)
                 .service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE)
                 .ins();
 
-        BpmnLink exclusiveGateway = bpmnLink.nextExclusive().serviceTask(st1).build();
+        ProcessLink exclusiveGateway = bpmnLink.nextExclusive().serviceTask(st1).build();
         exclusiveGateway
                 .nextTask("req.a < 10",
                         ServiceTask.builder(null).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).ins()
@@ -167,8 +167,8 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink4() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A004);
+    public ProcessLink bpmnLink4() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A004);
         bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
@@ -176,8 +176,8 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink5() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A005);
+    public ProcessLink bpmnLink5() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A005);
         bpmnLink.nextSubProcess("ite-test-sub-process").timeout(0).notStrictMode()
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
@@ -185,8 +185,8 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink6() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A006);
+    public ProcessLink bpmnLink6() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A006);
         bpmnLink.nextSubProcess("ite-test-sub-process").timeout(1000)
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
@@ -194,8 +194,8 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public BpmnLink bpmnLink7() {
-        StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.A007);
+    public ProcessLink bpmnLink7() {
+        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A007);
         bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.CALCULATE_ERROR).build().end();
         return bpmnLink;
     }

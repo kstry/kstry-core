@@ -18,7 +18,7 @@
 package cn.kstry.framework.core.component.bpmn;
 
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 
 import java.util.List;
@@ -51,7 +51,7 @@ public interface BpmnDiagramRegister extends ConfigResource {
     /**
      * 注册流程
      *
-     * @param bpmnLinkList 流程配置
+     * @param processLinkList 流程配置
      */
-    void registerDiagram(List<BpmnLink> bpmnLinkList);
+    void registerDiagram(List<ProcessLink> processLinkList);
 }

@@ -1,7 +1,7 @@
 package cn.kstry.framework.core.component.bpmn;
 
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.google.common.collect.Maps;
@@ -43,11 +43,11 @@ public class BpmnProcessParser implements ConfigResource {
         this.modelInstance = Bpmn.readModelFromStream(resource);
     }
 
-    public Map<String, BpmnLink> getAllBpmnLink() {
+    public Map<String, ProcessLink> getAllBpmnLink() {
         Collection<StartEvent> startEventList = modelInstance.getModelElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class);
-        Map<String, BpmnLink> bpmnLinkMap = Maps.newHashMap();
+        Map<String, ProcessLink> bpmnLinkMap = Maps.newHashMap();
         startEventList.forEach(startEvent -> {
-            Optional<BpmnLink> model = bpmnModelTransfer.getBpmnLink(this, modelInstance, startEvent.getId());
+            Optional<ProcessLink> model = bpmnModelTransfer.getProcessLink(this, modelInstance, startEvent.getId());
             if (!model.isPresent()) {
                 return;
             }
@@ -56,11 +56,11 @@ public class BpmnProcessParser implements ConfigResource {
         return bpmnLinkMap;
     }
 
-    public Optional<BpmnLink> getBpmnLink(String startEventId) {
+    public Optional<ProcessLink> getProcessLink(String startEventId) {
         if (StringUtils.isBlank(startEventId)) {
             return Optional.empty();
         }
-        return bpmnModelTransfer.getBpmnLink(this, modelInstance, startEventId);
+        return bpmnModelTransfer.getProcessLink(this, modelInstance, startEventId);
     }
 
     public Map<String, SubProcessLink> getAllSubProcessLink() {

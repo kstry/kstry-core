@@ -19,17 +19,17 @@ package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 
 public class InclusiveJoinPointBuilder {
 
-    private final BpmnLink bpmnLink;
+    private final ProcessLink processLink;
 
     private final InclusiveGatewayImpl inclusiveGateway;
 
-    public InclusiveJoinPointBuilder(InclusiveGatewayImpl inclusiveGateway, BpmnLink bpmnLink) {
-        this.bpmnLink = bpmnLink;
+    public InclusiveJoinPointBuilder(InclusiveGatewayImpl inclusiveGateway, ProcessLink processLink) {
+        this.processLink = processLink;
         this.inclusiveGateway = inclusiveGateway;
     }
 
@@ -44,6 +44,6 @@ public class InclusiveJoinPointBuilder {
     }
 
     public InclusiveJoinPoint build() {
-        return new InclusiveJoinPoint(inclusiveGateway, bpmnLink);
+        return new InclusiveJoinPoint(inclusiveGateway, processLink);
     }
 }

@@ -5,8 +5,8 @@ import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
-import cn.kstry.framework.core.component.bpmn.link.StartBpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.component.bpmn.link.StartProcessLink;
 import cn.kstry.framework.core.component.dynamic.creator.DynamicProcess;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import cn.kstry.framework.test.diagram.constants.StoryNameConstants;
@@ -19,10 +19,10 @@ import java.util.Optional;
 public class DynamicBpmnDiagram implements DynamicProcess {
 
     @Override
-    public Optional<BpmnLink> getBpmnLink(String startId) {
+    public Optional<ProcessLink> getProcessLink(String startId) {
         if (Objects.equals(StoryNameConstants.D001, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D001);
-            BpmnLink buildOneChain = bpmnLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D001);
+            ProcessLink buildOneChain = bpmnLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
 
             bpmnLink.parallel().build().joinLinks().joinLinks(
                             bpmnLink.inclusive().build().joinLinks(
@@ -44,9 +44,9 @@ public class DynamicBpmnDiagram implements DynamicProcess {
                     .end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D002, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D002);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D002);
 
-            BpmnLink exclusiveGateway = bpmnLink.nextExclusive().build();
+            ProcessLink exclusiveGateway = bpmnLink.nextExclusive().build();
             exclusiveGateway
                     .nextService("req.a < 10", SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
@@ -62,14 +62,14 @@ public class DynamicBpmnDiagram implements DynamicProcess {
             par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D003, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D003);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D003);
 
             ServiceTask st1 = ServiceTask.builder("s-02345-id1")
                     .component(SCS.F.CALCULATE_SERVICE)
                     .service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE)
                     .ins();
 
-            BpmnLink exclusiveGateway = bpmnLink.nextExclusive().serviceTask(st1).build();
+            ProcessLink exclusiveGateway = bpmnLink.nextExclusive().serviceTask(st1).build();
             exclusiveGateway
                     .nextTask("req.a < 10",
                             ServiceTask.builder(null).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).ins()
@@ -93,29 +93,29 @@ public class DynamicBpmnDiagram implements DynamicProcess {
             inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D004, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D004);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D004);
             bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
                     .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                     .end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D005, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D005);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D005);
             bpmnLink.nextSubProcess("ite-test-sub-process").timeout(0).notStrictMode()
                     .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                     .end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D006, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D006);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D006);
             bpmnLink.nextSubProcess("ite-test-sub-process2").timeout(1000)
                     .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                     .end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D007, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D007);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D007);
             bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.CALCULATE_ERROR).build().end();
             return Optional.of(bpmnLink);
         } else if (Objects.equals(StoryNameConstants.D008, startId)) {
-            StartBpmnLink bpmnLink = StartBpmnLink.build(StoryNameConstants.D008);
+            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D008);
             bpmnLink.nextService(SCS.CALCULATE_SERVICE.F.MULTIPLY_PLUS).build().end();
             return Optional.of(bpmnLink);
         }

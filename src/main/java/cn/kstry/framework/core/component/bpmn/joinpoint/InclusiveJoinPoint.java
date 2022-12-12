@@ -18,11 +18,11 @@
 package cn.kstry.framework.core.component.bpmn.joinpoint;
 
 import cn.kstry.framework.core.bpmn.InclusiveGateway;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 
 public class InclusiveJoinPoint extends DiagramJoinPoint<InclusiveGateway> {
 
-    public InclusiveJoinPoint(InclusiveGateway element, BpmnLink bpmnLink) {
-        super(element, bpmnLink);
+    public InclusiveJoinPoint(InclusiveGateway element, ProcessLink processLink) {
+        super(element, processLink);
     }
 }

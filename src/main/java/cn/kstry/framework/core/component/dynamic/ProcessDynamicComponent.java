@@ -20,7 +20,7 @@ package cn.kstry.framework.core.component.dynamic;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
-import cn.kstry.framework.core.component.bpmn.link.BpmnLink;
+import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.container.processor.StartEventProcessor;
 import cn.kstry.framework.core.enums.DynamicComponentType;
 import cn.kstry.framework.core.exception.BusinessException;
@@ -36,7 +36,7 @@ import java.util.Optional;
 /**
  * 动态流程组件
  */
-public class ProcessDynamicComponent extends SpringDynamicComponent<BpmnLink> implements ConfigResource {
+public class ProcessDynamicComponent extends SpringDynamicComponent<ProcessLink> implements ConfigResource {
 
     private final StartEventProcessor startEventProcessor;
 
@@ -67,12 +67,12 @@ public class ProcessDynamicComponent extends SpringDynamicComponent<BpmnLink> im
                 throw new BusinessException(ExceptionEnum.SYSTEM_ERROR.getExceptionCode(), "Method is not allowed to be called!");
             }
 
-        }, scopeDataQuery).map(BpmnLink::getElement);
+        }, scopeDataQuery).map(ProcessLink::getElement);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Optional<BpmnLink> checkDecorateComponent(BpmnLink component, Object param) {
+    public Optional<ProcessLink> checkDecorateComponent(ProcessLink component, Object param) {
         if (component == null) {
             return Optional.empty();
         }

@@ -33,7 +33,7 @@ import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
  *
  * @author lykan
  */
-public interface BpmnLink {
+public interface ProcessLink {
 
     /**
      * 定义下一个  ServiceTask
@@ -48,7 +48,7 @@ public interface BpmnLink {
      * @param serviceTask serviceTask
      * @return BpmnLink
      */
-    BpmnLink nextTask(ServiceTask serviceTask);
+    ProcessLink nextTask(ServiceTask serviceTask);
 
     /**
      * 定义下一个  ServiceTask
@@ -57,7 +57,7 @@ public interface BpmnLink {
      * @param serviceTask    serviceTask
      * @return BpmnLink
      */
-    BpmnLink nextTask(String flowExpression, ServiceTask serviceTask);
+    ProcessLink nextTask(String flowExpression, ServiceTask serviceTask);
 
     /**
      * 定义下一个  ServiceTask
@@ -66,7 +66,7 @@ public interface BpmnLink {
      * @param serviceTask    serviceTask
      * @return BpmnLink
      */
-    BpmnLink nextTask(SequenceFlow sequenceFlow, ServiceTask serviceTask);
+    ProcessLink nextTask(SequenceFlow sequenceFlow, ServiceTask serviceTask);
 
     /**
      * 定义下一个  ServiceTask
