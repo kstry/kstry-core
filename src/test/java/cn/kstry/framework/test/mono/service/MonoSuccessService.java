@@ -53,7 +53,7 @@ public class MonoSuccessService {
     }
 
     @NoticeResult
-    @TaskService(name = "say_info", targetType = SayInfoRequest.class, invoke = @Invoke(demotion = "pr:mono-service@say_info2_demotion"))
+    @TaskService(name = "say_info", invoke = @Invoke(demotion = "pr:mono-service@say_info2_demotion"))
     public Mono<SayInfoRequest> sayInfo(@ReqTaskParam(reqSelf = true) SayInfoRequest request,
                                         @ReqTaskParam int a, @ReqTaskParam Boolean b, @ReqTaskParam String c) {
         System.out.println(a);
@@ -146,7 +146,7 @@ public class MonoSuccessService {
     }
 
     @NoticeResult
-    @TaskService(name = "say_info2", targetType = SayInfoRequest.class, invoke = @Invoke(demotion = "pr:mono-service@say_info2_demotion"))
+    @TaskService(name = "say_info2", invoke = @Invoke(demotion = "pr:mono-service@say_info2_demotion"))
     public Mono<SayInfoRequest> sayInfo2(@ReqTaskParam(reqSelf = true) SayInfoRequest request,
                                          @ReqTaskParam int a, @ReqTaskParam Boolean b, @ReqTaskParam String c) {
         System.out.println(a);

@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 
 /**
  * 用于标注 Method 且与 cn.kstry.framework.core.annotation.TaskService 同时出现时才会生效
- * 用来指定该服务任务节点是一个指令
+ * 用来指定该服务节点是一个指令
  *
  * @author lykan
  */

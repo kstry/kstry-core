@@ -82,7 +82,7 @@ public class SubProcessService {
     }
 
     @NoticeResult
-    @TaskService(name = "mono_say_info", targetType = SubProcessBo.class)
+    @TaskService(name = "mono_say_info")
     public Mono<SubProcessBo> monoSayInfo(@StaTaskParam("tbo.a") int a, @StaTaskParam("tbo.b") long b, @StaTaskParam("tbo.c") boolean c,
                                           @StaTaskParam("tbo.d") String d, @StaTaskParam("tbo.e") double e, @StaTaskParam("tbo.f") AtomicInteger f) {
         Assert.assertEquals(1, a);

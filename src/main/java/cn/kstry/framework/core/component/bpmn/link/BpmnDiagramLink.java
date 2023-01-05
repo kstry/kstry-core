@@ -132,12 +132,15 @@ public abstract class BpmnDiagramLink {
     }
 
     public ExclusiveGatewayBuilder nextExclusive(String flowExpression) {
-        return nextExclusive(expressionSequenceFlow(flowExpression));
+        return nextExclusive(null, expressionSequenceFlow(flowExpression));
     }
 
-    public ExclusiveGatewayBuilder nextExclusive(SequenceFlow sequenceFlow) {
+    public ExclusiveGatewayBuilder nextExclusive(String id, SequenceFlow sequenceFlow) {
+        if (StringUtils.isBlank(id)) {
+            id = GlobalUtil.uuid();
+        }
         ExclusiveGatewayImpl exclusiveGateway = new ExclusiveGatewayImpl();
-        exclusiveGateway.setId(GlobalUtil.uuid());
+        exclusiveGateway.setId(id);
         sequenceFlow.outing(exclusiveGateway);
         beforeElement().outing(sequenceFlow);
         return new ExclusiveGatewayBuilder(exclusiveGateway, getProcessLink());

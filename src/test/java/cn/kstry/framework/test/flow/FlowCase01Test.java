@@ -238,4 +238,98 @@ public class FlowCase01Test {
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(2, fire.getResult().getA());
     }
+
+    /**
+     * 【正常】：测试服务节点使用js脚本
+     */
+    @Test
+    public void testFlow12() {
+        InScopeData var = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest = ReqBuilder.returnType(Integer.class).varScopeData(var).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-012").build();
+        TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(3, var.get("num"));
+        Assert.assertEquals(88, fire.getResult().intValue());
+    }
+
+    /**
+     * 【正常】：测试服务节点和js脚本一起使用场景
+     */
+    @Test
+    public void testFlow13() {
+        MethodInvokeBo methodInvokeBo = new MethodInvokeBo();
+        methodInvokeBo.setA(3);
+        methodInvokeBo.setD(10);
+
+        InScopeData var = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var).request(methodInvokeBo).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-013").build();
+        TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(30, fire.getResult().intValue());
+
+        MethodInvokeBo methodInvokeBo2 = new MethodInvokeBo();
+        methodInvokeBo2.setA(3);
+        methodInvokeBo2.setD(5);
+        InScopeData var2 = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest2 = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var2).request(methodInvokeBo2).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-013").build();
+        TaskResponse<Integer> fire2 = storyEngine.fire(fireRequest2);
+        Assert.assertTrue(fire2.isSuccess());
+        Assert.assertEquals(9, fire2.getResult().intValue());
+    }
+
+    /**
+     * 【正常】：测试排他网关和js脚本一起使用场景
+     */
+    @Test
+    public void testFlow14() {
+        MethodInvokeBo methodInvokeBo = new MethodInvokeBo();
+        methodInvokeBo.setA(3);
+        methodInvokeBo.setD(10);
+
+        InScopeData var = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var).request(methodInvokeBo).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-014").build();
+        TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(30, fire.getResult().intValue());
+
+        MethodInvokeBo methodInvokeBo2 = new MethodInvokeBo();
+        methodInvokeBo2.setA(3);
+        methodInvokeBo2.setD(5);
+        InScopeData var2 = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest2 = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var2).request(methodInvokeBo2).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-014").build();
+        TaskResponse<Integer> fire2 = storyEngine.fire(fireRequest2);
+        Assert.assertTrue(fire2.isSuccess());
+        Assert.assertEquals(9, fire2.getResult().intValue());
+    }
+
+    /**
+     * 【正常】：测试包含网关和js脚本一起使用场景
+     */
+    @Test
+    public void testFlow15() {
+        MethodInvokeBo methodInvokeBo = new MethodInvokeBo();
+        methodInvokeBo.setA(3);
+        methodInvokeBo.setD(10);
+
+        InScopeData var = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var).request(methodInvokeBo).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-015").build();
+        TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(30, fire.getResult().intValue());
+
+        MethodInvokeBo methodInvokeBo2 = new MethodInvokeBo();
+        methodInvokeBo2.setA(3);
+        methodInvokeBo2.setD(5);
+        InScopeData var2 = new InScopeData(ScopeTypeEnum.VARIABLE);
+        StoryRequest<Integer> fireRequest2 = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var2).request(methodInvokeBo2).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("def-flow-test-015").build();
+        TaskResponse<Integer> fire2 = storyEngine.fire(fireRequest2);
+        Assert.assertTrue(fire2.isSuccess());
+        Assert.assertEquals(9, fire2.getResult().intValue());
+    }
 }

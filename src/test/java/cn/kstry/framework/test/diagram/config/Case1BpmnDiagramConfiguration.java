@@ -86,12 +86,12 @@ public class Case1BpmnDiagramConfiguration {
     }
 
     @Bean
-    public ProcessLink bpmnLink1() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A001);
-        ProcessLink buildOneChain = bpmnLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
+    public ProcessLink processLink1() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A001);
+        ProcessLink buildOneChain = processLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
 
-        bpmnLink.parallel().build().joinLinks().joinLinks(
-                        bpmnLink.inclusive().build().joinLinks(
+        processLink.parallel().build().joinLinks().joinLinks(
+                        processLink.inclusive().build().joinLinks(
                                 buildOneChain
                                         .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                         .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build(),
@@ -100,7 +100,7 @@ public class Case1BpmnDiagramConfiguration {
                                         .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                         .nextSubProcess("a-call-link-diagram-sub-process").build()
                         ),
-                        bpmnLink
+                        processLink
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                 )
@@ -108,40 +108,40 @@ public class Case1BpmnDiagramConfiguration {
                 .nextSubProcess("diagram-sub-process").build()
                 .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                 .end();
-        return bpmnLink;
+        return processLink;
     }
 
     @Bean
-    public ProcessLink bpmnLink2() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A002);
+    public ProcessLink processLink2() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A002);
 
-        ProcessLink exclusiveGateway = bpmnLink.nextExclusive().build();
+        ProcessLink exclusiveGateway = processLink.nextExclusive().build();
         exclusiveGateway
                 .nextTask("req.a < 10", SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                 .end();
 
-        ParallelJoinPoint par01 = exclusiveGateway.nextParallel("req.a >= 10", bpmnLink.parallel().notStrictMode().openAsync().build());
-        par01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-        par01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-        par01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-        par01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-        par01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-        return bpmnLink;
+        ParallelJoinPoint par01 = exclusiveGateway.nextParallel("req.a >= 10", processLink.parallel().notStrictMode().openAsync().build());
+        par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
+        par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
+        par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
+        par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
+        par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
+        return processLink;
     }
 
     @Bean
-    public ProcessLink bpmnLink3() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A003);
+    public ProcessLink processLink3() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A003);
 
         ServiceTask st1 = ServiceTask.builder("s-02345-id1")
                 .component(SCS.F.CALCULATE_SERVICE)
                 .service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE)
                 .ins();
 
-        ProcessLink exclusiveGateway = bpmnLink.nextExclusive().serviceTask(st1).build();
+        ProcessLink exclusiveGateway = processLink.nextExclusive().serviceTask(st1).build();
         exclusiveGateway
                 .nextTask("req.a < 10",
                         ServiceTask.builder(null).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).ins()
@@ -157,46 +157,46 @@ public class Case1BpmnDiagramConfiguration {
                 .component(SCS.F.CALCULATE_SERVICE)
                 .service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE)
                 .ins();
-        InclusiveJoinPoint inc01 = exclusiveGateway.nextInclusive("req.a >= 10", bpmnLink.inclusive().serviceTask(st2).openAsync().build());
+        InclusiveJoinPoint inc01 = exclusiveGateway.nextInclusive("req.a >= 10", processLink.inclusive().serviceTask(st2).openAsync().build());
         inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).name("XXX").build().end();
         inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
         inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
         inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
         inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-        return bpmnLink;
+        return processLink;
     }
 
     @Bean
-    public ProcessLink bpmnLink4() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A004);
-        bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
+    public ProcessLink processLink4() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A004);
+        processLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
-        return bpmnLink;
+        return processLink;
     }
 
     @Bean
-    public ProcessLink bpmnLink5() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A005);
-        bpmnLink.nextSubProcess("ite-test-sub-process").timeout(0).notStrictMode()
+    public ProcessLink processLink5() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A005);
+        processLink.nextSubProcess("ite-test-sub-process").timeout(0).notStrictMode()
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
-        return bpmnLink;
+        return processLink;
     }
 
     @Bean
-    public ProcessLink bpmnLink6() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A006);
-        bpmnLink.nextSubProcess("ite-test-sub-process").timeout(1000)
+    public ProcessLink processLink6() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A006);
+        processLink.nextSubProcess("ite-test-sub-process").timeout(1000)
                 .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                 .end();
-        return bpmnLink;
+        return processLink;
     }
 
     @Bean
-    public ProcessLink bpmnLink7() {
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.A007);
-        bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.CALCULATE_ERROR).build().end();
-        return bpmnLink;
+    public ProcessLink processLink7() {
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.A007);
+        processLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.CALCULATE_ERROR).build().end();
+        return processLink;
     }
 }

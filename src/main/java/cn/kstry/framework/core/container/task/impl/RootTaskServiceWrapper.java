@@ -47,8 +47,6 @@ import java.util.stream.Collectors;
  */
 public class RootTaskServiceWrapper extends BasicIdentity implements RootTaskService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RootTaskServiceWrapper.class);
-
     /**
      * 服务能力集合
      */

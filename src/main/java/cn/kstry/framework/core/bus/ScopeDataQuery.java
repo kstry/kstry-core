@@ -109,9 +109,9 @@ public interface ScopeDataQuery {
     <T> Optional<T> getData(String expression);
 
     /**
-     * 获取任务节点属性，任务节点属性在节点定义时指定
+     * 获取服务节点属性，服务节点属性在节点定义时指定
      *
-     * @return 任务节点属性
+     * @return 服务节点属性
      */
     Optional<String> getTaskProperty();
 

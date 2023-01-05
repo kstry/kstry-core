@@ -31,7 +31,7 @@ import cn.kstry.framework.core.enums.ResourceTypeEnum;
  */
 public class PropertiesClassPathConfigSource extends ClassPathConfigSource implements ConfigSource {
 
-    private static final List<String> YAML_SUFFIX_NAME_LIST = Lists.newArrayList(".yaml", ".yml");
+    private final List<String> YAML_SUFFIX_NAME_LIST = Lists.newArrayList(".yaml", ".yml");
 
     public PropertiesClassPathConfigSource(String configName) {
         super(configName);

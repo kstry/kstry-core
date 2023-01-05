@@ -22,7 +22,7 @@ import cn.kstry.framework.core.component.bpmn.builder.ParallelJoinPointBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 在 BpmnLink 的基础上增加了开始节点特有的功能
+ * 在 ProcessLink 的基础上增加了开始节点特有的功能
  */
 public interface StartProcessLink extends ProcessLink {
 
@@ -41,10 +41,26 @@ public interface StartProcessLink extends ProcessLink {
     ParallelJoinPointBuilder parallel();
 
     /**
+     * 创建包含网关汇聚节点
+     *
+     * @param id 指定网关ID
+     * @return 包含网关汇聚节点构建类
+     */
+    InclusiveJoinPointBuilder inclusive(String id);
+
+    /**
+     * 创建并行网关汇聚节点
+     *
+     * @param id 指定网关ID
+     * @return 包含网关汇聚节点构建类
+     */
+    ParallelJoinPointBuilder parallel(String id);
+
+    /**
      * 构建
      *
      * @param id 非空
-     * @return BpmnLink
+     * @return ProcessLink
      */
     static StartProcessLink build(String id) {
         return build(id, StringUtils.EMPTY);
@@ -55,7 +71,7 @@ public interface StartProcessLink extends ProcessLink {
      *
      * @param id   非空
      * @param name 允许为空
-     * @return BpmnLink
+     * @return ProcessLink
      */
     static StartProcessLink build(String id, String name) {
         return new StartDiagramProcessLink(id, name);

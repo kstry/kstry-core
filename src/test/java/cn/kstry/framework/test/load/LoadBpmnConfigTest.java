@@ -126,7 +126,7 @@ public class LoadBpmnConfigTest {
     }
 
     /**
-     * 【异常】测试：任务节点有两个入度
+     * 【异常】测试：服务节点有两个入度
      */
     @Test
     public void loadTest006() {

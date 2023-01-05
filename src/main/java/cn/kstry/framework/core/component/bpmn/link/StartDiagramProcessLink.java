@@ -29,6 +29,7 @@ import cn.kstry.framework.core.component.bpmn.builder.ParallelJoinPointBuilder;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * BPMN 元素代码方式连接起点
@@ -72,15 +73,31 @@ public class StartDiagramProcessLink extends BpmnDiagramLink implements StartPro
 
     @Override
     public InclusiveJoinPointBuilder inclusive() {
-        InclusiveGatewayImpl gateway = new InclusiveGatewayImpl();
-        gateway.setId(GlobalUtil.uuid());
-        return new InclusiveJoinPointBuilder(gateway, this);
+        return inclusive(null);
     }
 
     @Override
     public ParallelJoinPointBuilder parallel() {
+        return parallel(null);
+    }
+
+    @Override
+    public InclusiveJoinPointBuilder inclusive(String id) {
+        if (StringUtils.isBlank(id)) {
+            id = GlobalUtil.uuid();
+        }
+        InclusiveGatewayImpl gateway = new InclusiveGatewayImpl();
+        gateway.setId(id);
+        return new InclusiveJoinPointBuilder(gateway, this);
+    }
+
+    @Override
+    public ParallelJoinPointBuilder parallel(String id) {
+        if (StringUtils.isBlank(id)) {
+            id = GlobalUtil.uuid();
+        }
         ParallelGatewayImpl gateway = new ParallelGatewayImpl();
-        gateway.setId(GlobalUtil.uuid());
+        gateway.setId(id);
         return new ParallelJoinPointBuilder(gateway, this);
     }
 

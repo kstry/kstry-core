@@ -21,11 +21,11 @@ public class DynamicBpmnDiagram implements DynamicProcess {
     @Override
     public Optional<ProcessLink> getProcessLink(String startId) {
         if (Objects.equals(StoryNameConstants.D001, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D001);
-            ProcessLink buildOneChain = bpmnLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D001);
+            ProcessLink buildOneChain = processLink.nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build();
 
-            bpmnLink.parallel().build().joinLinks().joinLinks(
-                            bpmnLink.inclusive().build().joinLinks(
+            processLink.parallel().build().joinLinks().joinLinks(
+                            processLink.inclusive().build().joinLinks(
                                     buildOneChain
                                             .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                             .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build(),
@@ -34,7 +34,7 @@ public class DynamicBpmnDiagram implements DynamicProcess {
                                             .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                             .nextSubProcess("a-call-link-diagram-sub-process2").build()
                             ),
-                            bpmnLink
+                            processLink
                                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                     .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     )
@@ -42,11 +42,11 @@ public class DynamicBpmnDiagram implements DynamicProcess {
                     .nextSubProcess("diagram-sub-process2").build()
                     .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();
-            return Optional.of(bpmnLink);
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D002, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D002);
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D002);
 
-            ProcessLink exclusiveGateway = bpmnLink.nextExclusive().build();
+            ProcessLink exclusiveGateway = processLink.nextExclusive().build();
             exclusiveGateway
                     .nextService("req.a < 10", SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
@@ -54,22 +54,22 @@ public class DynamicBpmnDiagram implements DynamicProcess {
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();
 
-            ParallelJoinPoint par01 = exclusiveGateway.nextParallel("req.a >= 10", bpmnLink.parallel().notStrictMode().openAsync().build());
+            ParallelJoinPoint par01 = exclusiveGateway.nextParallel("req.a >= 10", processLink.parallel().notStrictMode().openAsync().build());
             par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             par01.nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-            return Optional.of(bpmnLink);
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D003, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D003);
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D003);
 
             ServiceTask st1 = ServiceTask.builder("s-02345-id1")
                     .component(SCS.F.CALCULATE_SERVICE)
                     .service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE)
                     .ins();
 
-            ProcessLink exclusiveGateway = bpmnLink.nextExclusive().serviceTask(st1).build();
+            ProcessLink exclusiveGateway = processLink.nextExclusive().serviceTask(st1).build();
             exclusiveGateway
                     .nextTask("req.a < 10",
                             ServiceTask.builder(null).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).ins()
@@ -85,39 +85,39 @@ public class DynamicBpmnDiagram implements DynamicProcess {
                     .component(SCS.F.CALCULATE_SERVICE)
                     .service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE)
                     .ins();
-            InclusiveJoinPoint inc01 = exclusiveGateway.nextInclusive("req.a >= 10", bpmnLink.inclusive().serviceTask(st2).openAsync().build());
+            InclusiveJoinPoint inc01 = exclusiveGateway.nextInclusive("req.a >= 10", processLink.inclusive().serviceTask(st2).openAsync().build());
             inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).name("XXX").build().end();
             inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
             inc01.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build().end();
-            return Optional.of(bpmnLink);
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D004, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D004);
-            bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D004);
+            processLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE).property("test-prop")
                     .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                     .end();
-            return Optional.of(bpmnLink);
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D005, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D005);
-            bpmnLink.nextSubProcess("ite-test-sub-process").timeout(0).notStrictMode()
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D005);
+            processLink.nextSubProcess("ite-test-sub-process").timeout(0).notStrictMode()
                     .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                     .end();
-            return Optional.of(bpmnLink);
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D006, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D006);
-            bpmnLink.nextSubProcess("ite-test-sub-process2").timeout(1000)
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D006);
+            processLink.nextSubProcess("ite-test-sub-process2").timeout(1000)
                     .iterable(ElementIterable.builder("sta.arr").openAsync().iteStrategy(IterateStrategyEnum.ALL_SUCCESS).build()).build()
                     .end();
-            return Optional.of(bpmnLink);
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D007, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D007);
-            bpmnLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.CALCULATE_ERROR).build().end();
-            return Optional.of(bpmnLink);
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D007);
+            processLink.nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.CALCULATE_ERROR).build().end();
+            return Optional.of(processLink);
         } else if (Objects.equals(StoryNameConstants.D008, startId)) {
-            StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.D008);
-            bpmnLink.nextService(SCS.CALCULATE_SERVICE.F.MULTIPLY_PLUS).build().end();
-            return Optional.of(bpmnLink);
+            StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.D008);
+            processLink.nextService(SCS.CALCULATE_SERVICE.F.MULTIPLY_PLUS).build().end();
+            return Optional.of(processLink);
         }
         return Optional.empty();
     }

@@ -45,10 +45,10 @@ public class SpringBpmnDiagramRegister implements BpmnDiagramRegister {
 
     @Override
     public void registerDiagram(List<ProcessLink> processLinkList) {
-        Map<String, ProcessLink> bpmnLinkMap = applicationContext.getBeansOfType(ProcessLink.class);
-        if (MapUtils.isEmpty(bpmnLinkMap)) {
+        Map<String, ProcessLink> processLinkMap = applicationContext.getBeansOfType(ProcessLink.class);
+        if (MapUtils.isEmpty(processLinkMap)) {
             return;
         }
-        processLinkList.addAll(bpmnLinkMap.values());
+        processLinkList.addAll(processLinkMap.values());
     }
 }

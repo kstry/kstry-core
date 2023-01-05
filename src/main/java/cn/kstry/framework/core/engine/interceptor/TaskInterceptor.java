@@ -20,9 +20,19 @@ package cn.kstry.framework.core.engine.interceptor;
 import org.springframework.core.Ordered;
 
 /**
- * 任务拦截器，每一个被服务任务节点被调用时都将先通过拦截器
+ * 任务拦截器，每一个被服务节点被调用时都将先通过拦截器
  */
 public interface TaskInterceptor extends Ordered {
+
+    /**
+     * 判断当前拦截器是否生效
+     *
+     * @param iterData 数据集
+     * @return 是否匹配成功，默认：true
+     */
+    default boolean match(IterData iterData) {
+        return true;
+    }
 
     /**
      * 调用目标任务

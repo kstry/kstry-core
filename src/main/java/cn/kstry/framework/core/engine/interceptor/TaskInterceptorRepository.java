@@ -19,6 +19,7 @@ package cn.kstry.framework.core.engine.interceptor;
 
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.role.Role;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.core.OrderComparator;
@@ -41,10 +42,10 @@ public class TaskInterceptorRepository {
         this.taskInterceptors = ImmutableList.copyOf(taskInterceptorList);
     }
 
-    public Object process(Supplier<Object> supplier, ServiceNodeResource serviceNodeResource, ScopeDataOperator scopeDataOperator) {
+    public Object process(Supplier<Object> supplier, ServiceNodeResource serviceNodeResource, ScopeDataOperator scopeDataOperator, Role role) {
         if (CollectionUtils.isEmpty(taskInterceptors)) {
             return supplier.get();
         }
-        return new Iter(supplier, scopeDataOperator, taskInterceptors, serviceNodeResource).next();
+        return new Iter(supplier, new IterData(scopeDataOperator, serviceNodeResource, role), taskInterceptors).next();
     }
 }

@@ -264,8 +264,7 @@ public class FlowRegister {
     }
 
     private PeekStrategy getPeekStrategy(FlowElement currentFlowElement) {
-        Optional<PeekStrategy> peekStrategyOptional =
-                PeekStrategyRepository.getPeekStrategy().stream().filter(peekStrategy -> peekStrategy.match(currentFlowElement)).findFirst();
+        Optional<PeekStrategy> peekStrategyOptional = PeekStrategyRepository.getPeekStrategy().stream().filter(peekStrategy -> peekStrategy.match(currentFlowElement)).findFirst();
         return peekStrategyOptional.orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, null));
     }
 
@@ -286,8 +285,7 @@ public class FlowRegister {
                     if (allowNextEnum == ElementAllowNextEnum.ALLOW_NEX) {
                         AssertUtil.isTrue(coming instanceof SequenceFlow);
                         flowElementStack.push(coming.comingList().get(0), coming);
-                        LOGGER.debug("The last incoming degree is executed, " +
-                                "opening the next event flow! event: {}, coming: {}", endElement.identity(), coming.identity());
+                        LOGGER.debug("The last incoming degree is executed, opening the next event flow! event: {}, coming: {}", endElement.identity(), coming.identity());
                     } else if (allowNextEnum == ElementAllowNextEnum.NOT_ALLOW_NEX_NEED_COMPENSATE) {
                         processNotMatchElement(contextStoryBus, Lists.newArrayList(), endElement);
                     }

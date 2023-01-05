@@ -2,6 +2,7 @@ package cn.kstry.framework.test.diagram.config;
 
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.engine.interceptor.Iter;
+import cn.kstry.framework.core.engine.interceptor.IterData;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptor;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -15,6 +16,12 @@ public class TaskIte {
     @Bean
     public TaskInterceptor getTaskInterceptor1() {
         return new TaskInterceptor() {
+            @Override
+            public boolean match(IterData iterData) {
+                AssertUtil.notNull(iterData);
+                return true;
+            }
+
             @Override
             public int getOrder() {
                 return 7;

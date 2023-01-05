@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("unused")
 public class HospitalService implements TaskComponentRegister {
 
-    @TaskService(name = "get_hospital", targetType = Hospital.class)
+    @TaskService(name = "get_hospital")
     public Mono<Hospital> getHospital(@ReqTaskParam("hospitalId") Long id) {
         Hospital hospital = new Hospital();
         hospital.setId(id);

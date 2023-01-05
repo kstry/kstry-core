@@ -73,10 +73,8 @@ public class SubProcessInterceptorRepository {
         if (CollectionUtils.isEmpty(subProcessInterceptorList)) {
             return Lists.newArrayList();
         }
-        List<SubProcessInterceptor> priorityMatchList =
-                subProcessInterceptorList.stream().filter(interceptor -> priorityMatch(interceptor, startEventId, storyId)).collect(Collectors.toList());
-        List<SubProcessInterceptor> secondMatchList =
-                subProcessInterceptorList.stream().filter(interceptor -> secondMatch(interceptor, startEventId, storyId)).collect(Collectors.toList());
+        List<SubProcessInterceptor> priorityMatchList = subProcessInterceptorList.stream().filter(interceptor -> priorityMatch(interceptor, startEventId, storyId)).collect(Collectors.toList());
+        List<SubProcessInterceptor> secondMatchList = subProcessInterceptorList.stream().filter(interceptor -> secondMatch(interceptor, startEventId, storyId)).collect(Collectors.toList());
         priorityMatchList.addAll(secondMatchList);
         if (CollectionUtils.isNotEmpty(priorityMatchList)) {
             return priorityMatchList;
@@ -102,6 +100,7 @@ public class SubProcessInterceptorRepository {
         if (interceptor == null) {
             return false;
         }
+
         AssertUtil.notBlank(storyId);
         Set<SubProcessIdentity> startEventIdentitySet = interceptor.getSubProcessIdentity();
         if (CollectionUtils.isEmpty(startEventIdentitySet)) {

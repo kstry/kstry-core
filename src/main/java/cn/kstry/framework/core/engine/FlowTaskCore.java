@@ -116,7 +116,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         Object result;
         try {
             TaskInterceptorRepository taskInterceptorRepository = engineModule.getTaskInterceptorRepository();
-            result = taskInterceptorRepository.process(() -> doInvokeMethod(serviceTask, taskServiceDef, storyBus, role), taskServiceDef.getGetServiceNodeResource(), storyBus.getScopeDataOperator());
+            result = taskInterceptorRepository.process(() -> doInvokeMethod(serviceTask, taskServiceDef, storyBus, role), taskServiceDef.getGetServiceNodeResource(), storyBus.getScopeDataOperator(), role);
         } catch (Throwable exception) {
             flowRegister.getMonitorTracking().finishTaskTracking(flowElement, exception);
             InvokeProperties invokeProperties = taskServiceDef.getMethodWrapper().getInvokeProperties();

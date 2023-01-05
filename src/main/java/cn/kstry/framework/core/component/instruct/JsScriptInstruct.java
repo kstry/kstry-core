@@ -69,7 +69,7 @@ public class JsScriptInstruct implements TaskComponentRegister {
             }
             LOGGER.debug("invoke js script. instruct: '{}{}', script: {}, property: {}",
                     BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT, instructContent.getInstruct(), script, scopeDataOperator.getTaskProperty().orElse(StringUtils.EMPTY));
-            ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("js");
+            ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("javascript");
             Bindings bind = jsEngine.createBindings();
             bind.put("ksta", scopeDataOperator.getStaScope());
             bind.put("kvar", scopeDataOperator.getVarScope());

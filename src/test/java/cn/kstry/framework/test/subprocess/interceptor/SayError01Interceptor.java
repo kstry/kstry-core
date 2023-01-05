@@ -19,10 +19,8 @@ package cn.kstry.framework.test.subprocess.interceptor;
 
 import cn.kstry.framework.core.bus.ScopeData;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
-import cn.kstry.framework.core.engine.interceptor.SubProcessIdentity;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptor;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;

@@ -23,10 +23,10 @@ import cn.kstry.framework.core.bpmn.Gateway;
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
@@ -70,26 +70,31 @@ public class ElementPropertyUtil {
     }
 
     public static Optional<String> getNodeProperty(FlowNode flowNode, String name) {
-        Pair<String, String> pair = getNodeProperty(flowNode, name, false);
+        List<Pair<String, String>> list = getNodeProperty(flowNode, name, false, true);
+        if (CollectionUtils.isEmpty(list)) {
+            return Optional.empty();
+        }
+        Pair<String, String> pair = list.get(0);
         return Optional.ofNullable(pair.getRight()).filter(StringUtils::isNotBlank).map(String::trim);
     }
 
-    public static Pair<String, String> getNodeProperty(FlowNode flowNode, String name, boolean isLike) {
+    public static List<Pair<String, String>> getNodeProperty(FlowNode flowNode, String name, boolean isLike, boolean oneSize) {
         AssertUtil.notBlank(name);
         if (flowNode == null) {
-            return ImmutablePair.nullPair();
+            return Lists.newArrayList();
         }
 
         ExtensionElements extensionElements = flowNode.getExtensionElements();
         if (extensionElements == null) {
-            return ImmutablePair.nullPair();
+            return Lists.newArrayList();
         }
 
         Collection<CamundaProperties> camundaProperties = extensionElements.getChildElementsByType(CamundaProperties.class);
         if (CollectionUtils.isEmpty(camundaProperties)) {
-            return ImmutablePair.nullPair();
+            return Lists.newArrayList();
         }
 
+        List<Pair<String, String>> resultList = Lists.newArrayList();
         for (CamundaProperties camundaProperty : camundaProperties) {
             Collection<CamundaProperty> ps = camundaProperty.getCamundaProperties();
             if (CollectionUtils.isEmpty(ps)) {
@@ -103,11 +108,16 @@ public class ElementPropertyUtil {
                         return Objects.equals(p.getCamundaName().trim().toLowerCase(Locale.ROOT), name);
                     })
                     .map(prop -> Pair.of(prop.getCamundaName(), prop.getCamundaValue())).collect(Collectors.toList());
-            AssertUtil.isTrue(list.size() <= 1, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Configuration file component properties are repeatedly defined. prop: {}", list);
             if (CollectionUtils.isNotEmpty(list)) {
-                return list.get(0);
+                resultList.addAll(list);
             }
         }
-        return ImmutablePair.nullPair();
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            List<String> duplicateList = resultList.stream().map(Pair::getLeft).filter(StringUtils::isNotBlank).collect(Collectors.toMap(e -> e, e -> 1, Integer::sum))
+                    .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
+            AssertUtil.isEmpty(duplicateList, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Configuration file component properties are repeatedly defined. duplicateList: {}", duplicateList);
+        }
+        AssertUtil.isTrue((!oneSize || resultList.size() <= 1), ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Configuration file component properties are repeatedly defined. prop: {}", resultList);
+        return resultList;
     }
 }

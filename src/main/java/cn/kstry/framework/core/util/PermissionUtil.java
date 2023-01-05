@@ -17,19 +17,6 @@
  */
 package cn.kstry.framework.core.util;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.collect.Lists;
-
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.PermissionType;
 import cn.kstry.framework.core.enums.ServiceNodeType;
@@ -39,6 +26,16 @@ import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.permission.Permission;
 import cn.kstry.framework.core.role.permission.SimplePermission;
+import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 权限工具类
@@ -58,8 +55,7 @@ public class PermissionUtil {
         if (StringUtils.isBlank(seg)) {
             seg = ",";
         }
-        return Stream.of(source.split(seg)).map(String::trim)
-                .map(PermissionUtil::parsePermission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        return Stream.of(source.split(seg)).map(String::trim).map(PermissionUtil::parsePermission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 
     /**

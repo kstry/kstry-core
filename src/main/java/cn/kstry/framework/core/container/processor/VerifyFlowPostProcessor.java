@@ -123,7 +123,8 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
                 if (serviceTask.allowAbsent()) {
                     return;
                 }
-                throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, GlobalUtil.format("TaskInstruct cannot be empty! identity: {}", serviceTask.identity()));
+                throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
+                        GlobalUtil.format("TaskInstruct cannot be empty! identity: {}, instruct: {}", serviceTask.identity(), serviceTask.getTaskInstruct()));
             }
             serviceTask.setTaskService(instructResource.get().getServiceName());
             serviceTask.setTaskComponent(instructResource.get().getComponentName());

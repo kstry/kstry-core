@@ -17,29 +17,22 @@
  */
 package cn.kstry.framework.core.engine.interceptor;
 
-import cn.kstry.framework.core.bus.ScopeDataOperator;
-import cn.kstry.framework.core.resource.service.ServiceNodeResource;
-
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-public class Iter {
+public class Iter extends IterData {
 
     private final Supplier<Object> supplier;
 
-    private final ScopeDataOperator scopeDataOperator;
-
     private final List<TaskInterceptor> taskInterceptors;
-
-    private final ServiceNodeResource serviceNodeResource;
 
     private int index;
 
-    public Iter(Supplier<Object> supplier, ScopeDataOperator scopeDataOperator, List<TaskInterceptor> taskInterceptors, ServiceNodeResource serviceNodeResource) {
+    public Iter(Supplier<Object> supplier, IterData iterData, List<TaskInterceptor> taskInterceptors) {
+        super(iterData.getDataOperator(), iterData.getServiceNode(), iterData.getRole());
         this.supplier = supplier;
-        this.scopeDataOperator = scopeDataOperator;
-        this.taskInterceptors = taskInterceptors;
-        this.serviceNodeResource = serviceNodeResource;
+        this.taskInterceptors = taskInterceptors.stream().filter(t -> t.match(iterData)).collect(Collectors.toList());
         this.index = 0;
     }
 
@@ -48,13 +41,5 @@ public class Iter {
             return taskInterceptors.get(index++).invoke(this);
         }
         return supplier.get();
-    }
-
-    public ServiceNodeResource getServiceNode() {
-        return serviceNodeResource;
-    }
-
-    public ScopeDataOperator getDataOperator() {
-        return scopeDataOperator;
     }
 }

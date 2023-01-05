@@ -39,9 +39,9 @@ public class JsScriptDiagramConfiguration {
         property.setReturnType("java.lang.Integer");
         property.setReturnTarget(Lists.newArrayList("res", "sta.r", "var.r"));
 
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.JS001);
-        bpmnLink.nextInstruct("c-jscript", "function inv(){ ksta.v = kreq.a + kvar.num + ksta.num; return ksta.v * 2;}").property(JSON.toJSONString(property)).build().end();
-        return bpmnLink;
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.JS001);
+        processLink.nextInstruct("c-jscript", "function inv(){ ksta.v = kreq.a + kvar.num + ksta.num; return ksta.v * 2;}").property(JSON.toJSONString(property)).build().end();
+        return processLink;
     }
 
     @Bean
@@ -50,9 +50,9 @@ public class JsScriptDiagramConfiguration {
         property.setReturnType("java.lang.Integer");
         property.setReturnTarget(Lists.newArrayList("res", "sta.r", "var.r"));
 
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.JS002);
-        bpmnLink.nextInstruct("c-jscript", "ksta.v = kreq.a + kvar.num + ksta.num; return ksta.v * 2;").property(JSON.toJSONString(property)).build().end();
-        return bpmnLink;
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.JS002);
+        processLink.nextInstruct("c-jscript", "ksta.v = kreq.a + kvar.num + ksta.num; return ksta.v * 2;").property(JSON.toJSONString(property)).build().end();
+        return processLink;
     }
 
     @Bean
@@ -61,8 +61,8 @@ public class JsScriptDiagramConfiguration {
         property.setReturnType("cn.kstry.framework.core.component.instruct.JsScriptProperty");
         property.setReturnTarget(Lists.newArrayList("res"));
 
-        StartProcessLink bpmnLink = StartProcessLink.build(StoryNameConstants.JS003);
-        bpmnLink.nextInstruct("c-jscript", "return {'invoke-method':'invoke', 'return-type':'java.lang.Integer'}").property(JSON.toJSONString(property)).build().end();
-        return bpmnLink;
+        StartProcessLink processLink = StartProcessLink.build(StoryNameConstants.JS003);
+        processLink.nextInstruct("c-jscript", "return {'invoke-method':'invoke', 'return-type':'java.lang.Integer'}").property(JSON.toJSONString(property)).build().end();
+        return processLink;
     }
 }

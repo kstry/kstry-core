@@ -35,7 +35,7 @@ public interface BpmnElementProperties {
     String SERVICE_TASK_TASK_SERVICE = "task-service";
 
     /**
-     * ServiceTask: 任务节点属性
+     * ServiceTask: 服务节点属性
      */
     String SERVICE_TASK_TASK_PROPERTY = "task-property";
 

@@ -46,7 +46,7 @@ public interface ProcessLink {
      * 定义下一个  ServiceTask
      *
      * @param serviceTask serviceTask
-     * @return BpmnLink
+     * @return ProcessLink
      */
     ProcessLink nextTask(ServiceTask serviceTask);
 
@@ -55,7 +55,7 @@ public interface ProcessLink {
      *
      * @param flowExpression 指向 ServiceTask 箭头的条件表达式
      * @param serviceTask    serviceTask
-     * @return BpmnLink
+     * @return ProcessLink
      */
     ProcessLink nextTask(String flowExpression, ServiceTask serviceTask);
 
@@ -64,7 +64,7 @@ public interface ProcessLink {
      *
      * @param sequenceFlow   指向 ServiceTask 箭头对象
      * @param serviceTask    serviceTask
-     * @return BpmnLink
+     * @return ProcessLink
      */
     ProcessLink nextTask(SequenceFlow sequenceFlow, ServiceTask serviceTask);
 
@@ -204,10 +204,11 @@ public interface ProcessLink {
     /**
      * 定义下一个 ExclusiveGateway
      *
+     * @param id   指定排他网关Id
      * @param sequenceFlow   指向 ExclusiveGateway 箭头对象
      * @return ExclusiveGatewayBuilder
      */
-    ExclusiveGatewayBuilder nextExclusive(SequenceFlow sequenceFlow);
+    ExclusiveGatewayBuilder nextExclusive(String id, SequenceFlow sequenceFlow);
 
     /**
      * 定义下一个 InclusiveGateway

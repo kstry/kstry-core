@@ -116,8 +116,7 @@ public class StoryEngine {
             FlowFuture flowFuture = GlobalUtil.transferNotEmpty(adminFuture.getMainTaskFuture(), FlowFuture.class);
             boolean await = flowFuture.await(timeout, TimeUnit.MILLISECONDS);
             if (!await) {
-                throw new TimeoutException(GlobalUtil.format(
-                        "[{}] Target story execution timeout! maximum time limit: {}ms", ExceptionEnum.ASYNC_TASK_TIMEOUT.getExceptionCode(), timeout));
+                throw new TimeoutException(GlobalUtil.format("[{}] Target story execution timeout! maximum time limit: {}ms", ExceptionEnum.ASYNC_TASK_TIMEOUT.getExceptionCode(), timeout));
             }
             Optional<KstryException> exceptionOptional = adminFuture.getException();
             if (exceptionOptional.isPresent()) {

@@ -11,6 +11,11 @@ import java.util.Optional;
 public class DynamicValue implements DynamicKValue {
 
     @Override
+    public long version(String key) {
+        return DynamicKValue.super.version(key);
+    }
+
+    @Override
     public Optional<Object> getValue(String key, KvScope kvScope) {
         Assert.assertEquals("new-per-scope", kvScope.getScope());
         Assert.assertEquals("business-channel", kvScope.getBusinessId().orElse(null));

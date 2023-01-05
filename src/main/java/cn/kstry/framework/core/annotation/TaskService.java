@@ -55,13 +55,6 @@ public @interface TaskService {
     String kvScope() default StringUtils.EMPTY;
 
     /**
-     * 指定节点返回值类型，使用 Mono 且有返回值时需要指定。当指定类型与实际类型不符是会报错
-     *
-     * @return targetType
-     */
-    Class<?> targetType() default Object.class;
-
-    /**
      * 调用服务节点时的调用属性
      *
      * @return 调用属性

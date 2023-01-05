@@ -39,12 +39,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.ResolvableType;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -67,8 +69,6 @@ public class MethodWrapper {
 
     private final NoticeAnnotationWrapper noticeMethodSpecify;
 
-    private final Class<?> targetType;
-
     private final String ability;
 
     private boolean monoResult;
@@ -86,14 +86,13 @@ public class MethodWrapper {
         this.method = method;
         this.kvScope = annotation.kvScope();
         this.noticeMethodSpecify = noticeMethodSpecify;
-        this.targetType = annotation.targetType();
         this.ability = annotation.ability();
         this.monoResult = false;
         this.isCustomRole = isCustomRole;
         this.taskInstructWrapper = taskInstructWrapper;
         this.invokeProperties = new InvokeProperties(annotation.invoke());
 
-        methodParser(method, annotation.name());
+        methodParser(method);
     }
 
     public Method getMethod() {
@@ -132,10 +131,10 @@ public class MethodWrapper {
         return Optional.ofNullable(taskInstructWrapper);
     }
 
-    private void methodParser(Method method, String taskServiceName) {
+    private void methodParser(Method method) {
         Class<?> returnType = method.getReturnType();
         if (!Objects.equals(GlobalConstant.VOID, returnType.getName())) {
-            returnTypeParser(returnType, taskServiceName);
+            returnTypeParser(method.getGenericReturnType(), returnType);
         }
 
         Parameter[] parameters = method.getParameters();
@@ -186,17 +185,14 @@ public class MethodWrapper {
         return ElementParserUtil.getFieldInjectDefList(clazz);
     }
 
-    private void returnTypeParser(Class<?> returnType, String taskServiceName) {
+    private void returnTypeParser(Type genericReturnType, Class<?> returnType) {
         if (Mono.class.isAssignableFrom(returnType)) {
-            returnType = targetType;
-            monoResult = true;
-        } else {
-            AssertUtil.isTrue(targetType.isAssignableFrom(Object.class) || ElementParserUtil.isAssignable(targetType, returnType), ExceptionEnum.TYPE_TRANSFER_ERROR,
-                    "The actual type of the taskService return value does not match the specified type. expected: {}, actual: {}, taskService: {}",
-                    targetType, returnType, taskServiceName);
-            if (targetType != Object.class) {
-                returnType = targetType;
+            returnType = Object.class;
+            if (genericReturnType != null) {
+                Class<?>[] resolveArray = ResolvableType.forType(genericReturnType).resolveGenerics();
+                returnType = (resolveArray.length > 0 && resolveArray[0] != null && !Objects.equals(GlobalConstant.VOID, resolveArray[0].getName())) ? resolveArray[0] : returnType;
             }
+            monoResult = true;
         }
 
         String className = StringUtils.uncapitalize(returnType.getSimpleName());

@@ -65,7 +65,7 @@ public class TestLoadConfiguration {
     }
 
     /**
-     * 【异常】测试：任务节点有两个入度
+     * 【异常】测试：服务节点有两个入度
      */
     @EnableKstry(bpmnPath = "./bpmn/load/load_bpmn_006.bpmn")
     public static class LoadBpmnConfigTest006 {

@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * 用于标注 Method 且与 cn.kstry.framework.core.annotation.TaskService 同时出现时才会生效
- * 用来指定该服务任务节点可以在运行中修改角色
+ * 用来指定该服务节点可以在运行中修改角色
  *
  * 注意：只有与 @CustomRole 同时使用的 @TaskService 修饰的方法，在入参中存在 Role 对象时，Role 对象才会被设置，否则，Role 参数字段将为空
  *

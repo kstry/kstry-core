@@ -56,7 +56,7 @@ public class RoleRegister implements BusinessRoleRegister, DynamicRole {
 
     private BusinessRole getR3() {
         Role role = new BasicRole();
-        role.addPermission(PermissionUtil.permissionList("pr:say_info2@say_number, pr:say_info@say_number", null));
+        role.addPermission(PermissionUtil.permissionList("pr:say_info2@say_number, pr:say_info@say_number"));
         return new BusinessRole("story-def-test-role-00401", role);
     }
 

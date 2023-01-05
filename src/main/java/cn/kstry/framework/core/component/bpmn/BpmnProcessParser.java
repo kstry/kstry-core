@@ -24,7 +24,7 @@ public class BpmnProcessParser implements ConfigResource {
     /**
      * BPMN 文件解析器 Camunda
      */
-    private static final BpmnModelTransfer<BpmnModelInstance> bpmnModelTransfer = new CamundaBpmnModelTransfer();
+    private final BpmnModelTransfer<BpmnModelInstance> bpmnModelTransfer = new CamundaBpmnModelTransfer();
 
     private final BpmnModelInstance modelInstance;
 
@@ -45,15 +45,15 @@ public class BpmnProcessParser implements ConfigResource {
 
     public Map<String, ProcessLink> getAllBpmnLink() {
         Collection<StartEvent> startEventList = modelInstance.getModelElementsByType(org.camunda.bpm.model.bpmn.instance.StartEvent.class);
-        Map<String, ProcessLink> bpmnLinkMap = Maps.newHashMap();
+        Map<String, ProcessLink> processLinkMap = Maps.newHashMap();
         startEventList.forEach(startEvent -> {
             Optional<ProcessLink> model = bpmnModelTransfer.getProcessLink(this, modelInstance, startEvent.getId());
             if (!model.isPresent()) {
                 return;
             }
-            bpmnLinkMap.put(startEvent.getId(), model.get());
+            processLinkMap.put(startEvent.getId(), model.get());
         });
-        return bpmnLinkMap;
+        return processLinkMap;
     }
 
     public Optional<ProcessLink> getProcessLink(String startEventId) {
