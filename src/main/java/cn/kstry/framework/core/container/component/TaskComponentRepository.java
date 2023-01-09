@@ -31,8 +31,10 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResourceItem;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -41,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -84,21 +87,13 @@ public abstract class TaskComponentRepository implements TaskContainer {
 
     protected void doInit(Object target, Class<?> targetClass, String taskComponentName, boolean scanSuper) {
         Method[] taskServiceMethods = MethodUtils.getMethodsWithAnnotation(targetClass, TaskService.class, false, false);
-        if (ArrayUtils.isEmpty(taskServiceMethods)) {
-            return;
-        }
-        taskServiceMethods = Arrays.stream(taskServiceMethods).filter(tsm -> {
-            if (scanSuper) {
-                return true;
-            }
-            return targetClass.isAssignableFrom(tsm.getDeclaringClass());
-        }).toArray(Method[]::new);
-        if (ArrayUtils.isEmpty(taskServiceMethods)) {
+        List<Method> taskServiceMethodList = filterTaskServiceMethods(taskServiceMethods, targetClass, scanSuper);
+        if (CollectionUtils.isEmpty(taskServiceMethodList)) {
             return;
         }
         TaskComponentProxy targetObj = new TaskComponentProxy(target);
         TaskComponentRegisterWrapper taskComponentWrapper = taskComponentWrapperMap.computeIfAbsent(taskComponentName, TaskComponentRegisterWrapper::new);
-        Stream.of(taskServiceMethods).forEach(method -> {
+        taskServiceMethodList.forEach(method -> {
             boolean isCustomRole = method.getAnnotation(CustomRole.class) != null;
             TaskService annotation = method.getAnnotation(TaskService.class);
             AssertUtil.notNull(annotation);
@@ -119,6 +114,57 @@ public abstract class TaskComponentRepository implements TaskContainer {
             registeredServiceNodeResource.put(serviceNodeResource, methodWrapper);
             LOGGER.debug("Service node resource items are resolved. identity: {}", serviceNodeResource.getIdentityId());
         });
+    }
+
+    private List<Method> filterTaskServiceMethods(Method[] taskServiceMethods, Class<?> targetClass, boolean scanSuper) {
+        if (ArrayUtils.isEmpty(taskServiceMethods)) {
+            return Lists.newArrayList();
+        }
+        List<Method> taskServiceMethodList = Arrays.stream(taskServiceMethods).filter(tsm -> {
+            if (scanSuper) {
+                return true;
+            }
+            return targetClass.isAssignableFrom(tsm.getDeclaringClass());
+        }).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(taskServiceMethodList)) {
+            return Lists.newArrayList();
+        }
+
+        List<Method> methodList = Lists.newArrayList();
+        taskServiceMethodList.stream().collect(Collectors.groupingBy(m -> m.getAnnotation(TaskService.class))).forEach((ts, list) -> {
+            if (list.size() <= 1) {
+                methodList.add(list.get(0));
+                return;
+            }
+
+            boolean methodNameEquals = list.stream().map(Method::getName).distinct().count() == 1;
+            boolean paramsCountEquals = list.stream().map(Method::getParameterCount).distinct().count() == 1;
+            AssertUtil.isTrue(methodNameEquals && paramsCountEquals, ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
+                    "TaskService with the same identity is not allowed to be set repeatedly! methodNames: {}", list.stream().map(Method::getName).collect(Collectors.toList()));
+
+            list.sort((m1, m2) -> {
+                if (!m1.getReturnType().isAssignableFrom(m2.getReturnType())) {
+                    return -1;
+                }
+                Class<?>[] p1List = m1.getParameterTypes();
+                Class<?>[] p2List = m2.getParameterTypes();
+                if (p1List.length == 0) {
+                    return 0;
+                }
+                for (int i = 0; i < p1List.length; i++) {
+                    if (!p1List[i].isAssignableFrom(p2List[i])) {
+                        return -1;
+                    }
+                }
+                return 0;
+            });
+
+            LOGGER.info("[{}] TaskService with the same identity is repeatedly defined! select the most accurate method as the serviceNode. methodName: {}, returnType: {}, params: {}",
+                    ExceptionEnum.COMPONENT_DUPLICATION_ERROR.getExceptionCode(),
+                    list.get(0).getName(), list.get(0).getReturnType().getName(), Stream.of(list.get(0).getParameterTypes()).map(Class::getName).collect(Collectors.toList()));
+            methodList.add(list.get(0));
+        });
+        return methodList;
     }
 
     @Override

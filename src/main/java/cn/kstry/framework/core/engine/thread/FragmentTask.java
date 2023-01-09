@@ -17,14 +17,7 @@
  */
 package cn.kstry.framework.core.engine.thread;
 
-import java.util.concurrent.Future;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.FlowRegister;
 import cn.kstry.framework.core.engine.FlowTaskCore;
 import cn.kstry.framework.core.engine.StoryEngineModule;
@@ -37,6 +30,10 @@ import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Future;
 
 /**
  * 流程片段执行任务

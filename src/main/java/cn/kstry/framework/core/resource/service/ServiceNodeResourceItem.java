@@ -17,14 +17,11 @@
  */
 package cn.kstry.framework.core.resource.service;
 
-import cn.kstry.framework.core.enums.PermissionType;
-import cn.kstry.framework.core.util.KeyUtil;
-import org.apache.commons.lang3.StringUtils;
-
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ServiceNodeType;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
-import cn.kstry.framework.core.util.TaskServiceUtil;
+import cn.kstry.framework.core.util.KeyUtil;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 服务节点资源项

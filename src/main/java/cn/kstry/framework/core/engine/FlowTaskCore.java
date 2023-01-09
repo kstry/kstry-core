@@ -201,8 +201,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     }
                 }
                 if (!isStrictMode()) {
-                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failure, error is ignored in non-strict mode. exception: {}",
-                            e.getErrorCode(), throwable.getMessage(), e));
+                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failure, error is ignored in non-strict mode. exception: {}", e.getErrorCode(), throwable.getMessage(), e));
                     doNextElement(flowRegister, serviceTask, storyBus, role);
                     return;
                 }
@@ -223,8 +222,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         if (timeout != null) {
             mono = mono.timeout(Duration.ofMillis(timeout), Mono.fromRunnable(() -> {
                 KstryException e = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
-                        GlobalUtil.format("Target method execution timeout! maximum time limit: {}ms, taskName: {}",
-                                timeout, GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
+                        GlobalUtil.format("Target method execution timeout! maximum time limit: {}ms, taskName: {}", timeout, GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
                 flowTaskSubscriber.onError(e);
                 flowTaskSubscriber.dispose();
             }));
