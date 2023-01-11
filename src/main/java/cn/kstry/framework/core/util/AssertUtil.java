@@ -64,7 +64,10 @@ public class AssertUtil {
     /**
      * 判断条件为 true
      */
-    public static void isTrue(Boolean flag, ExceptionEnum exceptionEnum, String desc, Supplier<List<?>> paramsSupplier) {
+    public static void isTrue(Boolean flag,
+                              ExceptionEnum exceptionEnum,
+                              String desc,
+                              Supplier<List<?>> paramsSupplier) {
         if (exceptionEnum == null) {
             exceptionEnum = ExceptionEnum.SYSTEM_ERROR;
         }
