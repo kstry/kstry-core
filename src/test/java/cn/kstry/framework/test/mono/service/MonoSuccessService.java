@@ -139,7 +139,7 @@ public class MonoSuccessService {
         System.out.println(c);
         Assert.assertEquals(true, b);
         Assert.assertEquals("Mono测试", c);
-        System.out.println("say_empty_info5...");
+        System.out.println("say_empty_info5......");
         return Mono.fromFuture(CompletableFuture.runAsync(() -> {
             int ac = 1 / request.getD();
         }, Executors.newFixedThreadPool(1)));
