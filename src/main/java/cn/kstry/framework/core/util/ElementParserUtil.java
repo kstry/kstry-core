@@ -235,21 +235,6 @@ public class ElementParserUtil {
         return taskComponentAnnotation != null || TaskComponentRegister.class.isAssignableFrom(clazz);
     }
 
-    public static Optional<String> getTaskComponentName(Object target) {
-        if (target == null || !isTaskComponentClass(target.getClass())) {
-            return Optional.empty();
-        }
-
-        TaskComponent taskComponentAnnotation = AnnotationUtils.findAnnotation(target.getClass(), TaskComponent.class);
-        if (target instanceof TaskComponentRegister) {
-            return Optional.ofNullable(((TaskComponentRegister) target).getName()).filter(StringUtils::isNotBlank);
-        } else if (taskComponentAnnotation != null) {
-            return Optional.of(taskComponentAnnotation.name()).filter(StringUtils::isNotBlank);
-        } else {
-            throw ExceptionUtil.buildException(null, ExceptionEnum.ANNOTATION_USAGE_ERROR, null);
-        }
-    }
-
     public static boolean isValidDataExpression(String expression) {
         if (StringUtils.isBlank(expression)) {
             return false;

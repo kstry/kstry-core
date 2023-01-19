@@ -39,7 +39,7 @@ public class DynamicBpmnDiagram implements DynamicProcess {
                                     .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     )
                     .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                    .nextSubProcess("diagram-sub-process2").build()
+                    .nextSubProcess(DynamicBpmnSubDiagram::getSubProcessLinks).build()
                     .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();
             return Optional.of(processLink);

@@ -9,6 +9,7 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.test.diagram.bo.CalculateServiceRequest;
+import cn.kstry.framework.test.diagram.config.SimpleAnnotationDiagram;
 import cn.kstry.framework.test.diagram.constants.StoryNameConstants;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
@@ -240,5 +241,15 @@ public class DiagramCase01Test {
         System.out.println(JSON.toJSONString(fire));
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(Integer.valueOf(22), fire.getResult());
+    }
+
+    /**
+     * 测试lambda简化流程配置
+     */
+    @Test
+    public void testSimpleProcess() {
+        StoryRequest<Void> fireRequest = ReqBuilder.returnType(Void.class).startProcess(SimpleAnnotationDiagram::simpleAnnotationProcess).build();
+        TaskResponse<Void> fire = storyEngine.fire(fireRequest);
+        System.out.println(JSON.toJSONString(fire));
     }
 }

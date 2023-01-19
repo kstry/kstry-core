@@ -129,10 +129,6 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
         return taskProperty;
     }
 
-    public Boolean getAllowAbsent() {
-        return allowAbsent;
-    }
-
     public String getTaskInstruct() {
         return taskInstruct;
     }

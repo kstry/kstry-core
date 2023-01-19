@@ -18,12 +18,14 @@
 package cn.kstry.framework.core.engine.facade;
 
 import cn.kstry.framework.core.bus.ScopeData;
+import cn.kstry.framework.core.component.bpmn.lambda.LambdaParam;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.RecallStory;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.LambdaUtil;
 
 import java.util.function.Consumer;
 
@@ -56,6 +58,13 @@ public class ReqBuilder<T> {
     }
 
     public ReqBuilder<T> startId(String startId) {
+        AssertUtil.notBlank(startId);
+        this.storyRequest.setStartId(startId);
+        return this;
+    }
+
+    public <Link> ReqBuilder<T> startProcess(LambdaParam.LambdaProcess<Link> process) {
+        String startId = LambdaUtil.getProcessName(process);
         AssertUtil.notBlank(startId);
         this.storyRequest.setStartId(startId);
         return this;

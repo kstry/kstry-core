@@ -136,6 +136,11 @@ public enum ExceptionEnum {
      */
     BPMN_DIAGRAM_LINK_ERROR(ExceptionTypeEnum.CONFIG, "0010", "There is an exception in the code way to configure BPMN execution line!"),
 
+    /**
+     * [K1030011] Lambda表达式配置流程解析失败
+     */
+    LAMBDA_PROCESS_PARSE_FAILURE(ExceptionTypeEnum.CONFIG, "0011", "Lambda expression configuration flow parsing failure!"),
+
     ///////////////////////////////////////////////// CONFIG END /////////////////////////////////////////////////
 
     /**

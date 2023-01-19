@@ -27,13 +27,14 @@ import cn.kstry.framework.core.component.bpmn.builder.SubProcessBuilder;
 import cn.kstry.framework.core.component.bpmn.joinpoint.DiagramJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
+import cn.kstry.framework.core.component.bpmn.lambda.LambdaServiceSupport;
 
 /**
  * BPMN 元素代码方式连接能力
  *
  * @author lykan
  */
-public interface ProcessLink {
+public interface ProcessLink extends LambdaServiceSupport {
 
     /**
      * 定义下一个  ServiceTask
@@ -84,16 +85,6 @@ public interface ProcessLink {
      * @return ServiceTask Builder
      */
     ServiceTaskBuilder nextTask(String component, String service);
-
-    /**
-     * 定义下一个  ServiceTask
-     *
-     * @param flowExpression 指向 ServiceTask 箭头的条件表达式
-     * @param component      对应 @TaskComponent
-     * @param service        对应 @TaskService
-     * @return ServiceTask Builder
-     */
-    ServiceTaskBuilder nextTask(String flowExpression, String component, String service);
 
     /**
      * 定义下一个  ServiceTask
@@ -167,15 +158,6 @@ public interface ProcessLink {
      * @return SubProcess Builder
      */
     SubProcessBuilder nextSubProcess(String processId);
-
-    /**
-     * 定义下一个子流程
-     *
-     * @param flowExpression 指向 SubProcess 箭头的条件表达式
-     * @param processId      子流程Id
-     * @return SubProcess Builder
-     */
-    SubProcessBuilder nextSubProcess(String flowExpression, String processId);
 
     /**
      * 定义下一个子流程

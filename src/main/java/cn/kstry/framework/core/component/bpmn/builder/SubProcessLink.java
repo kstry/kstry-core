@@ -19,11 +19,13 @@ package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
+import cn.kstry.framework.core.component.bpmn.lambda.LambdaParam;
 import cn.kstry.framework.core.component.bpmn.link.SubBpmnLink;
 import cn.kstry.framework.core.component.bpmn.link.SubDiagramBpmnLink;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.LambdaUtil;
 
 import java.util.function.Consumer;
 
@@ -92,8 +94,16 @@ public abstract class SubProcessLink {
         return build(id, null, builder);
     }
 
+    public static <Link> SubProcessLink build(LambdaParam.LambdaSubProcess<Link> subProcess, Consumer<SubBpmnLink> builder) {
+        return build(subProcess, null, builder);
+    }
+
     public static SubProcessLink build(String id, String name, Consumer<SubBpmnLink> builder) {
         return build(id, name, null, null, builder);
+    }
+
+    public static <Link> SubProcessLink build(LambdaParam.LambdaSubProcess<Link> subProcess, String name, Consumer<SubBpmnLink> builder) {
+        return build(LambdaUtil.getSubprocessName(subProcess), name, null, null, builder);
     }
 
     public static SubProcessLink build(String id, String name, String startEventId, String startEventName, Consumer<SubBpmnLink> builder) {

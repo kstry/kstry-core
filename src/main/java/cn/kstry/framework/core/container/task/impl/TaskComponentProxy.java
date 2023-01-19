@@ -18,10 +18,7 @@
 package cn.kstry.framework.core.container.task.impl;
 
 import cn.kstry.framework.core.container.task.TaskComponentRegister;
-import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
 
 /**
  *
@@ -33,10 +30,10 @@ public class TaskComponentProxy implements TaskComponentRegister {
 
     private final String name;
 
-    public TaskComponentProxy(Object target) {
+    public TaskComponentProxy(Object target, String taskComponentName) {
         AssertUtil.notNull(target);
         this.target = target;
-        this.name = ElementParserUtil.getTaskComponentName(target).orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, null));
+        this.name = taskComponentName;
     }
 
     public Object getTarget() {

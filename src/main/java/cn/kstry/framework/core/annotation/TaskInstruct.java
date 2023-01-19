@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.annotation;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -37,5 +39,5 @@ public @interface TaskInstruct {
      *
      * @return name
      */
-    String name();
+    String name() default StringUtils.EMPTY;
 }

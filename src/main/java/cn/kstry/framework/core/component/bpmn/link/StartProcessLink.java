@@ -19,6 +19,8 @@ package cn.kstry.framework.core.component.bpmn.link;
 
 import cn.kstry.framework.core.component.bpmn.builder.InclusiveJoinPointBuilder;
 import cn.kstry.framework.core.component.bpmn.builder.ParallelJoinPointBuilder;
+import cn.kstry.framework.core.component.bpmn.lambda.LambdaParam;
+import cn.kstry.framework.core.util.LambdaUtil;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -69,11 +71,32 @@ public interface StartProcessLink extends ProcessLink {
     /**
      * 构建
      *
+     * @param process 非空
+     * @return ProcessLink
+     */
+    static <Link> StartProcessLink build(LambdaParam.LambdaProcess<Link> process) {
+        return build(process, StringUtils.EMPTY);
+    }
+
+    /**
+     * 构建
+     *
      * @param id   非空
      * @param name 允许为空
      * @return ProcessLink
      */
     static StartProcessLink build(String id, String name) {
         return new StartDiagramProcessLink(id, name);
+    }
+
+    /**
+     * 构建
+     *
+     * @param process 非空
+     * @param name 允许为空
+     * @return ProcessLink
+     */
+    static <Link> StartProcessLink build(LambdaParam.LambdaProcess<Link> process, String name) {
+        return build(LambdaUtil.getProcessName(process), name);
     }
 }

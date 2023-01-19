@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.container.component;
 
 import cn.kstry.framework.core.annotation.TaskInstruct;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -27,8 +28,8 @@ public class TaskInstructWrapper {
 
     private final String name;
 
-    public TaskInstructWrapper(TaskInstruct taskInstruct) {
-        this.name = taskInstruct.name();
+    public TaskInstructWrapper(TaskInstruct taskInstruct, String taskService) {
+        this.name = StringUtils.isBlank(taskInstruct.name()) ? taskService : taskInstruct.name();
     }
 
     public String getName() {

@@ -17,11 +17,16 @@
  */
 package cn.kstry.framework.core.container.component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import cn.kstry.framework.core.annotation.TaskComponent;
+import cn.kstry.framework.core.container.task.TaskComponentRegister;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.ProxyUtil;
+import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -31,16 +36,10 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationUtils;
 
-import com.google.common.collect.Sets;
-
-import cn.kstry.framework.core.annotation.TaskComponent;
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.container.task.TaskComponentRegister;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.ProxyUtil;
-
 import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 支持Spring上下文的服务组件仓库
@@ -60,6 +59,7 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
         objSet.addAll(beansOfClass.values());
         objSet.addAll(beansOfClassAnnotation.values());
         GlobalUtil.sortObjExtends(objSet).forEach(target -> {
+            AssertUtil.isTrue(ElementParserUtil.isTaskComponentClass(target.getClass()));
             if (target instanceof TaskComponentRegister) {
                 TaskComponentRegister v = (TaskComponentRegister) target;
                 AssertUtil.notBlank(v.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskComponentRegister name cannot be empty! className: {}", v.getClass().getName());
@@ -69,8 +69,9 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
             Class<?> targetClass = ProxyUtil.noneProxyClass(target);
             TaskComponent taskComponent = AnnotationUtils.findAnnotation(targetClass, TaskComponent.class);
             AssertUtil.notNull(taskComponent);
-            AssertUtil.notBlank(taskComponent.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskComponent name cannot be empty! className: {}", targetClass.getName());
-            doInit(target, targetClass, taskComponent.name(), taskComponent.scanSuper());
+            String taskComponentName = StringUtils.isBlank(taskComponent.name()) ? StringUtils.uncapitalize(targetClass.getSimpleName()) : taskComponent.name();
+            AssertUtil.notBlank(taskComponentName, ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskComponent name cannot be empty! className: {}", targetClass.getName());
+            doInit(target, targetClass, taskComponentName, taskComponent.scanSuper());
         });
         repositoryPostProcessor();
     }

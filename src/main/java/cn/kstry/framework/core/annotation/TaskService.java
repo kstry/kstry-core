@@ -34,11 +34,18 @@ import java.lang.annotation.Target;
 public @interface TaskService {
 
     /**
-     * 服务名称
+     * 服务名称，默认为修饰方法名称
      *
      * @return name
      */
-    String name();
+    String name() default StringUtils.EMPTY;
+
+    /**
+     * 对服务节点的描述，配置文件指定服务节点名称时该字段会被覆盖不会生效
+     *
+     * @return description
+     */
+    String desc() default StringUtils.EMPTY;
 
     /**
      * 子能力

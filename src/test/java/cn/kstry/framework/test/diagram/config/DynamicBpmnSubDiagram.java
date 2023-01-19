@@ -64,7 +64,7 @@ public class DynamicBpmnSubDiagram implements DynamicSubProcess {
                                 .nextSubProcess("req.d != null", "gateway-sub-process2").build()
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                 .end()
-                ), SubProcessLink.build("diagram-sub-process2",
+                ), SubProcessLink.build(DynamicBpmnSubDiagram::getSubProcessLinks,
                         link -> link
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                 .nextSubProcess("Activity_1t2opos").build()

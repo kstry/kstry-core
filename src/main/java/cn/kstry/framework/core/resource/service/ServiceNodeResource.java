@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.resource.service;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * 服务节点资源
  *
@@ -44,4 +46,13 @@ public interface ServiceNodeResource extends ServiceNodeIdentity {
      * @return 能力名
      */
     String getAbilityName();
+
+    /**
+     * 获取描述信息
+     *
+     * @return 资源描述信息
+     */
+    default String getDescription() {
+        return StringUtils.EMPTY;
+    }
 }

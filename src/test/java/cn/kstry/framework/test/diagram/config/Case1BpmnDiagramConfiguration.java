@@ -42,7 +42,7 @@ public class Case1BpmnDiagramConfiguration {
         return SubProcessLink.build("a-call-link-diagram-sub-process",
                 link -> link
                         .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                        .nextSubProcess("req.d != null", "gateway-sub-process").build()
+                        .nextSubProcess("req.d != null", Case1BpmnDiagramConfiguration::subProcessBuilder3).build()
                         .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                         .end()
         );
@@ -62,7 +62,7 @@ public class Case1BpmnDiagramConfiguration {
 
     @Bean
     public SubProcessLink subProcessBuilder3() {
-        return SubProcessLink.build("gateway-sub-process", link -> {
+        return SubProcessLink.build(Case1BpmnDiagramConfiguration::subProcessBuilder3, link -> {
             ProcessLink eg1 = link
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextExclusive().build();

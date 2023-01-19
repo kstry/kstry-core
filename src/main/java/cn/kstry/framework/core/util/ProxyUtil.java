@@ -17,17 +17,29 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.container.component.MethodWrapper;
+import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.exception.ResourceException;
 import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.kv.KvThreadLocal;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
+import java.io.Serializable;
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
 import java.util.function.Supplier;
 
 
@@ -35,6 +47,8 @@ import java.util.function.Supplier;
  * @author lykan
  */
 public class ProxyUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyUtil.class);
 
     public static boolean isProxyObject(Object o) {
         if (o == null) {
@@ -80,6 +94,40 @@ public class ProxyUtil {
             throw businessException;
         } finally {
             KvThreadLocal.clear();
+        }
+    }
+
+    /**
+     * left: componentName
+     * right: serviceName
+     */
+    public static Pair<String, String> getComponentServiceFromLambda(Serializable serializable) {
+        AssertUtil.notNull(serializable);
+        SerializedLambda serializedLambda = getSerializedLambda(serializable);
+        String taskComponentName = null;
+        String taskServiceName = serializedLambda.getImplMethodName();
+        try {
+            Class<?> componentClass = Class.forName(serializedLambda.getImplClass().replace("/", "."));
+            if (!TaskComponentRegister.class.isAssignableFrom(componentClass)) {
+                TaskComponent taskComponent = AnnotationUtils.findAnnotation(componentClass, TaskComponent.class);
+                if (taskComponent != null) {
+                    taskComponentName = StringUtils.isBlank(taskComponent.name()) ? StringUtils.uncapitalize(componentClass.getSimpleName()) : taskComponent.name();
+                }
+            }
+        } catch (Throwable e) {
+            LOGGER.warn("[{}] Lambda expression configuration process component class parsing failure! taskServiceName: {}",
+                    ExceptionEnum.LAMBDA_PROCESS_PARSE_FAILURE.getExceptionCode(), taskServiceName, e);
+        }
+        return ImmutablePair.of(taskComponentName, taskServiceName);
+    }
+
+    public static SerializedLambda getSerializedLambda(Serializable serializable) {
+        try {
+            Method write = serializable.getClass().getDeclaredMethod("writeReplace");
+            write.setAccessible(true);
+            return (SerializedLambda) write.invoke(serializable);
+        } catch (Throwable e) {
+            throw new ResourceException(ExceptionEnum.LAMBDA_PROCESS_PARSE_FAILURE, e);
         }
     }
 }

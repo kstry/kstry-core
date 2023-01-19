@@ -45,12 +45,18 @@ public class ServiceNodeResourceItem extends BasicIdentity implements ServiceNod
      */
     private final String abilityName;
 
-    public ServiceNodeResourceItem(String componentName, String serviceName, String abilityName) {
+    /**
+     * 资源描述信息
+     */
+    private final String description;
+
+    public ServiceNodeResourceItem(String componentName, String serviceName, String abilityName, String description) {
         super(KeyUtil.pr(componentName, serviceName, abilityName), IdentityTypeEnum.SERVICE_NODE_RESOURCE);
 
         this.componentName = componentName;
         this.serviceName = serviceName;
         this.abilityName = abilityName;
+        this.description = description;
     }
 
     @Override
@@ -66,6 +72,11 @@ public class ServiceNodeResourceItem extends BasicIdentity implements ServiceNod
     @Override
     public String getAbilityName() {
         return abilityName;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     @Override

@@ -26,4 +26,8 @@ public class ResourceException extends KstryException {
     public ResourceException(String code, String desc, Throwable cause) {
         super(code, desc, cause);
     }
+
+    public ResourceException(ExceptionEnum exceptionEnum, Throwable cause) {
+        super(exceptionEnum.getExceptionCode(), exceptionEnum.getDesc(), cause);
+    }
 }

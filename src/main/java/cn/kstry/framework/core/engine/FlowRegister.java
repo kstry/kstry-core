@@ -17,19 +17,6 @@
  */
 package cn.kstry.framework.core.engine;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import cn.kstry.framework.core.util.ExceptionUtil;
-import org.apache.commons.collections.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
-
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.ParallelGateway;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
@@ -46,7 +33,18 @@ import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.TrackingStack;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * 流程寄存器
@@ -234,10 +232,14 @@ public class FlowRegister {
 
         // 匹配可参与执行的子分支
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
-        List<FlowElement> flowList =
-                elementOptional.get().outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
+        List<FlowElement> flowList = elementOptional.get().outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {
-            AssertUtil.notEmpty(flowList, ExceptionEnum.STORY_FLOW_ERROR, "Match to the next process node as empty! identity: {}", currentFlowElement.identity());
+            AssertUtil.isTrue(CollectionUtils.isNotEmpty(flowList), ExceptionEnum.STORY_FLOW_ERROR,
+                    "Match to the next process node as empty! current node identity: {}, desired list of possible nodes for later execution: {}", () -> {
+                        List<String> identityList = elementOptional.get().outingList().stream()
+                                .map(flow -> flow.outingList().get(0)).map(FlowElement::identity).collect(Collectors.toList());
+                        return Lists.newArrayList(currentFlowElement.identity(), String.join(", ", identityList));
+                    });
         }
 
         // 开启异步流程

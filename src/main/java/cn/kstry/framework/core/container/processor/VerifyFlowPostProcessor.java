@@ -148,6 +148,11 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
         AssertUtil.isTrue(componentNames.size() == 1 && StringUtils.isNotBlank(componentNames.get(0)), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
                 "Do not allow multiple or empty TaskComponent to correspond to TaskService! identity: {}, components: {}", serviceTask.identity(), componentNames);
         serviceTask.setTaskComponent(componentNames.get(0));
+        if (StringUtils.isBlank(serviceTask.getName())) {
+            serviceNodeResources.stream()
+                    .filter(r -> StringUtils.isBlank(r.getAbilityName()) && StringUtils.isNotBlank(r.getDescription()))
+                    .findFirst().ifPresent(r -> serviceTask.setName(r.getDescription()));
+        }
         checkAllowAbsent(serviceTask);
     }
 

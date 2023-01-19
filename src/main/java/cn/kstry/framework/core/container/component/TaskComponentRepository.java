@@ -31,6 +31,7 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResourceItem;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.TaskServiceUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -91,17 +92,18 @@ public abstract class TaskComponentRepository implements TaskContainer {
         if (CollectionUtils.isEmpty(taskServiceMethodList)) {
             return;
         }
-        TaskComponentProxy targetObj = new TaskComponentProxy(target);
+        TaskComponentProxy targetObj = new TaskComponentProxy(target, taskComponentName);
         TaskComponentRegisterWrapper taskComponentWrapper = taskComponentWrapperMap.computeIfAbsent(taskComponentName, TaskComponentRegisterWrapper::new);
         taskServiceMethodList.forEach(method -> {
             boolean isCustomRole = method.getAnnotation(CustomRole.class) != null;
             TaskService annotation = method.getAnnotation(TaskService.class);
             AssertUtil.notNull(annotation);
-            AssertUtil.notBlank(annotation.name(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskService name cannot be empty! methodName: {}", method.getName());
-            ServiceNodeResourceItem serviceNodeResource = new ServiceNodeResourceItem(targetObj.getName(), annotation.name(), annotation.ability());
+            String taskServiceName = StringUtils.isBlank(annotation.name()) ? method.getName() : annotation.name();
+            AssertUtil.notBlank(taskServiceName, ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskService name cannot be empty! methodName: {}", method.getName());
+            ServiceNodeResourceItem serviceNodeResource = new ServiceNodeResourceItem(targetObj.getName(), taskServiceName, annotation.ability(), annotation.desc());
             AssertUtil.notTrue(registeredServiceNodeResource.containsKey(serviceNodeResource), ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
                     "TaskService with the same identity is not allowed to be set repeatedly! identity: {}", serviceNodeResource.getIdentityId());
-            TaskInstructWrapper taskInstruct = getTaskInstructWrapper(method).orElse(null);
+            TaskInstructWrapper taskInstruct = getTaskInstructWrapper(method, taskServiceName).orElse(null);
             if (taskInstruct != null) {
                 AssertUtil.notBlank(taskInstruct.getName(), ExceptionEnum.COMPONENT_ATTRIBUTES_EMPTY, "TaskInstruct name cannot be empty! methodName: {}", method.getName());
                 AssertUtil.notTrue(taskInstructResourceMap.containsKey(taskInstruct.getName()), ExceptionEnum.COMPONENT_DUPLICATION_ERROR,
@@ -131,7 +133,11 @@ public abstract class TaskComponentRepository implements TaskContainer {
         }
 
         List<Method> methodList = Lists.newArrayList();
-        taskServiceMethodList.stream().collect(Collectors.groupingBy(m -> m.getAnnotation(TaskService.class))).forEach((ts, list) -> {
+        taskServiceMethodList.stream().collect(Collectors.groupingBy(m -> {
+            TaskService annotation = m.getAnnotation(TaskService.class);
+            String name = StringUtils.isBlank(annotation.name()) ? StringUtils.uncapitalize(m.getName()) : annotation.name();
+            return TaskServiceUtil.joinName(name, annotation.ability());
+        })).forEach((ts, list) -> {
             if (list.size() <= 1) {
                 methodList.add(list.get(0));
                 return;
@@ -209,11 +215,11 @@ public abstract class TaskComponentRepository implements TaskContainer {
         });
     }
 
-    private Optional<TaskInstructWrapper> getTaskInstructWrapper(Method method) {
+    private Optional<TaskInstructWrapper> getTaskInstructWrapper(Method method, String taskService) {
         TaskInstruct annotation = method.getAnnotation(TaskInstruct.class);
         if (annotation == null) {
             return Optional.empty();
         }
-        return Optional.of(new TaskInstructWrapper(annotation));
+        return Optional.of(new TaskInstructWrapper(annotation, taskService));
     }
 }

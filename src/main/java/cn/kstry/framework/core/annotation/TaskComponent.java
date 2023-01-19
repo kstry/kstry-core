@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.annotation;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.ElementType;
@@ -37,11 +38,11 @@ import java.lang.annotation.Target;
 public @interface TaskComponent {
 
     /**
-     * 服务组件类名称
+     * 服务组件类名称，默认为类名
      *
      * @return name
      */
-    String name();
+    String name() default StringUtils.EMPTY;
 
     /**
      * 扫描父类文件
