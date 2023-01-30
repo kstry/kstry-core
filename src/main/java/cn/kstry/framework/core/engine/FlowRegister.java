@@ -39,6 +39,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.OrderComparator;
 
 import java.util.List;
 import java.util.Objects;
@@ -231,8 +232,15 @@ public class FlowRegister {
         }
 
         // 匹配可参与执行的子分支
+        List<FlowElement> flowList;
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
-        List<FlowElement> flowList = elementOptional.get().outingList().stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
+        if (elementOptional.get() instanceof SequenceFlow) {
+            flowList = elementOptional.get().outingList();
+        } else {
+            List<SequenceFlow> sequenceFlowList = elementOptional.get().outingList().stream().map(f -> (SequenceFlow) f).collect(Collectors.toList());
+            OrderComparator.sort(sequenceFlowList);
+            flowList = sequenceFlowList.stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
+        }
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {
             AssertUtil.isTrue(CollectionUtils.isNotEmpty(flowList), ExceptionEnum.STORY_FLOW_ERROR,
                     "Match to the next process node as empty! current node identity: {}, desired list of possible nodes for later execution: {}", () -> {

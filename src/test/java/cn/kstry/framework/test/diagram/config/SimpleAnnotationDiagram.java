@@ -34,7 +34,7 @@ public class SimpleAnnotationDiagram {
     public ProcessLink simpleAnnotationProcess() {
 
         StartProcessLink build = StartProcessLink.build(SimpleAnnotationDiagram::simpleAnnotationProcess);
-        build
+        ProcessLink service1 = build
                 .nextService(SimpleAnnotationComponent::method0).build()
                 .nextService(SimpleAnnotationComponent::method1).build()
                 .nextService(SimpleAnnotationComponent::method2).build()
@@ -45,18 +45,21 @@ public class SimpleAnnotationDiagram {
                 .nextService(SimpleAnnotationComponent::method7).build()
                 .nextService(SimpleAnnotationComponent::method8).build()
                 .nextService(SimpleAnnotationComponent::method9).build()
-                .nextService(SimpleAnnotationComponent::method10).build()
-                .nextService("true", SimpleAnnotationComponent::method0).build()
-                .nextService("true", SimpleAnnotationComponent::method1).build()
-                .nextService("true", SimpleAnnotationComponent::method2).build()
-                .nextService("true", SimpleAnnotationComponent::method3).build()
-                .nextService("true", SimpleAnnotationComponent::method4).build()
-                .nextService("true", SimpleAnnotationComponent::method5).build()
-                .nextService("true", SimpleAnnotationComponent::method6).build()
-                .nextService("true", SimpleAnnotationComponent::method7).build()
-                .nextService("true", SimpleAnnotationComponent::method8).build()
-                .nextService("true", SimpleAnnotationComponent::method9).build()
-                .nextService("true", SimpleAnnotationComponent::method10).build()
+                .nextService(SimpleAnnotationComponent::method10).build();
+
+        build.inclusive().build().joinLinks(
+                        service1.nextService("O10: true", SimpleAnnotationComponent::method0).build(),
+                        service1.nextService("O9: true", SimpleAnnotationComponent::method1).build(),
+                        service1.nextService("O8: true", SimpleAnnotationComponent::method2).build(),
+                        service1.nextService("O7: true", SimpleAnnotationComponent::method3).build(),
+                        service1.nextService("O6: false", SimpleAnnotationComponent::method4).build(),
+                        service1.nextService("O5: true", SimpleAnnotationComponent::method5).build(),
+                        service1.nextService("O0: true", SimpleAnnotationComponent::method6).build(),
+                        service1.nextService("true", SimpleAnnotationComponent::method7).build(),
+                        service1.nextService("O2: true", SimpleAnnotationComponent::method8).build(),
+                        service1.nextService("O3: true", SimpleAnnotationComponent::method9).build(),
+                        service1.nextService("O4: true", SimpleAnnotationComponent::method10).build()
+                )
                 .nextService(SimpleAnnotationComponent::methodR0).build()
                 .nextService(SimpleAnnotationComponent::methodR1).build()
                 .nextService(SimpleAnnotationComponent::methodR2).build()

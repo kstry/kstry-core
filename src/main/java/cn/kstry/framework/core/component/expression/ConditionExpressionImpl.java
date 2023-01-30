@@ -20,6 +20,11 @@ package cn.kstry.framework.core.component.expression;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.core.Ordered;
 
 import java.util.Objects;
 import java.util.function.BiPredicate;
@@ -35,6 +40,11 @@ public class ConditionExpressionImpl implements ConditionExpression {
      * 表达式
      */
     private String expression;
+
+    /**
+     * 表达式顺序
+     */
+    private int order;
 
     /**
      * 计算表达式行为，由具体业务指定
@@ -62,6 +72,11 @@ public class ConditionExpressionImpl implements ConditionExpression {
         return false;
     }
 
+    @Override
+    public int getOrder() {
+        return order;
+    }
+
     /**
      * 创建实际参与工作的表达式对象
      *
@@ -69,16 +84,17 @@ public class ConditionExpressionImpl implements ConditionExpression {
      * @return 表达式对象
      */
     public ConditionExpression newWorkConditionExpression(String expression) {
-        final String finalExpression = expression;
-        Matcher matcher = itemPattern.matcher(finalExpression);
+        Pair<Integer, String> expOrder = parseExpressionOrder(expression);
+        expression = expOrder.getRight();
+        Matcher matcher = itemPattern.matcher(expOrder.getRight());
         while (matcher.find()) {
             String group = matcher.group();
             int endIndex = matcher.end();
-            for (; endIndex < finalExpression.length(); endIndex++) {
-                if (finalExpression.charAt(endIndex) == ' ') {
+            for (; endIndex < expOrder.getRight().length(); endIndex++) {
+                if (expOrder.getRight().charAt(endIndex) == ' ') {
                     continue;
                 }
-                if (!Objects.equals(finalExpression.charAt(endIndex), '(')) {
+                if (!Objects.equals(expOrder.getRight().charAt(endIndex), '(')) {
                     expression = expression.replace(group, GlobalUtil.format("['{}']", group.substring(1)));
                 }
                 break;
@@ -86,6 +102,25 @@ public class ConditionExpressionImpl implements ConditionExpression {
         }
         ConditionExpressionImpl conditionExpression = new ConditionExpressionImpl(this.testCondition);
         conditionExpression.expression = expression;
+        conditionExpression.order = expOrder.getLeft();
         return conditionExpression;
+    }
+
+    public Pair<Integer, String> parseExpressionOrder(String expression) {
+        String[] split = expression.split(":", 2);
+        if (split.length == 1) {
+            return ImmutablePair.of(Ordered.LOWEST_PRECEDENCE, expression);
+        }
+        String left = StringUtils.trim(split[0]);
+        String right = StringUtils.trim(split[1]);
+        char fChar = left.charAt(0);
+        if (fChar != 'o' && fChar != 'O') {
+            return ImmutablePair.of(Ordered.LOWEST_PRECEDENCE, expression);
+        }
+        left = StringUtils.trim(left.substring(1));
+        if (!NumberUtils.isCreatable(left)) {
+            return ImmutablePair.of(Ordered.LOWEST_PRECEDENCE, expression);
+        }
+        return ImmutablePair.of(NumberUtils.toInt(left), right);
     }
 }

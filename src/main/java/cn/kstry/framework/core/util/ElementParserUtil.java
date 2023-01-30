@@ -20,6 +20,7 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.constant.GlobalConstant;
@@ -28,9 +29,11 @@ import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -255,5 +258,13 @@ public class ElementParserUtil {
                 sp.cloneSubProcess(allSubProcess, subProcess);
             }
         }.traverse(startEvent);
+    }
+
+    public static void tryFillTaskName(ServiceTaskImpl serviceTask, List<ServiceNodeResource> serviceNodeResources) {
+        if (StringUtils.isNotBlank(serviceTask.getName()) || CollectionUtils.isEmpty(serviceNodeResources)) {
+            return;
+        }
+        serviceNodeResources.stream().filter(r ->
+                StringUtils.isBlank(r.getAbilityName()) && StringUtils.isNotBlank(r.getDescription())).findFirst().ifPresent(r -> serviceTask.setName(r.getDescription()));
     }
 }

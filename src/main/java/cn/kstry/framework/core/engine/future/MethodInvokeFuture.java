@@ -21,6 +21,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -46,6 +47,9 @@ public class MethodInvokeFuture extends FragmentTaskFuture<Object> implements In
         } catch (TimeoutException e) {
             future.cancel(true);
             throw ExceptionUtil.buildException(e, ExceptionEnum.ASYNC_TASK_TIMEOUT, GlobalUtil.format("Async invoke method timeout! taskName: {}, maximum time limit: {}ms", getTaskName(), timeout));
+        } catch (ExecutionException e) {
+            future.cancel(true);
+            throw ExceptionUtil.buildException(e.getCause() != null ? e.getCause() : e, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
         } catch (Throwable e) {
             future.cancel(true);
             throw ExceptionUtil.buildException(e, ExceptionEnum.SERVICE_INVOKE_ERROR, null);

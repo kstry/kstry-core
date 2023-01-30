@@ -115,11 +115,13 @@ public class LambdaUtil {
     }
 
     public static <Link> String getSubprocessName(LambdaParam.LambdaSubProcess<Link> subProcess) {
-        return ProxyUtil.getSerializedLambda(subProcess).getImplMethodName();
+        Pair<String, String> lambdaPair = ProxyUtil.getComponentServiceFromLambda(subProcess);
+        return TaskServiceUtil.joinName(lambdaPair.getRight(), lambdaPair.getLeft());
     }
 
     public static <Link> String getProcessName(LambdaParam.LambdaProcess<Link> process) {
-        return ProxyUtil.getSerializedLambda(process).getImplMethodName();
+        Pair<String, String> lambdaPair = ProxyUtil.getComponentServiceFromLambda(process);
+        return TaskServiceUtil.joinName(lambdaPair.getRight(), lambdaPair.getLeft());
     }
 
     public static <Component> Pair<String, String> getComponentService(LambdaParam.LambdaParam0<Component> service) {

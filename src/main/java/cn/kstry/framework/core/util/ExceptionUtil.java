@@ -44,11 +44,15 @@ public class ExceptionUtil {
         if (StringUtils.isBlank(desc)) {
             desc = exceptionEnum.getDesc();
         }
+
         ExceptionTypeEnum typeEnum = exceptionEnum.getTypeEnum();
         switch (typeEnum) {
             case CONFIG:
                 return new ResourceException(exceptionEnum.getExceptionCode(), desc, exception);
             case ASYNC_TASK:
+                if (exceptionEnum == ExceptionEnum.ASYNC_TASK_TIMEOUT) {
+                    return new TaskTimeoutException(exceptionEnum.getExceptionCode(), desc, exception);
+                }
                 return new TaskAsyncException(exceptionEnum.getExceptionCode(), desc, exception);
             case COMPONENT:
                 return new KstryComponentException(exceptionEnum.getExceptionCode(), desc, exception);

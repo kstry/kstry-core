@@ -66,4 +66,20 @@ public @interface Invoke {
      * @return 是否是严格模式
      */
     boolean strictMode() default true;
+
+    /**
+     * 抛出异常包含以下异常时，进行重试。默认情况下列表为空，任何异常都将重试
+     *
+     * @since 1.1.3
+     * @return 异常列表
+     */
+    Class<? extends Throwable>[] retryIncludeExp() default {};
+
+    /**
+     * 抛出异常不包含以下异常时，进行重试。默认情况下列表为空，任何异常都将重试
+     *
+     * @since 1.1.3
+     * @return 异常列表
+     */
+    Class<? extends Throwable>[] retryExcludeExp() default {};
 }

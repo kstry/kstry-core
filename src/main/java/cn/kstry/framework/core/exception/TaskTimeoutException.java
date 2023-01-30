@@ -15,29 +15,15 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.component.expression;
-
-import cn.kstry.framework.core.bus.StoryBus;
-import org.springframework.core.Ordered;
+package cn.kstry.framework.core.exception;
 
 /**
  *
  * @author lykan
  */
-public interface ConditionExpression extends Ordered {
+public class TaskTimeoutException extends KstryException {
 
-    /**
-     * 计算表达式获取结果
-     *
-     * @param storyBus scopeData
-     * @return 表达式结果
-     */
-    boolean condition(StoryBus storyBus);
-
-    /**
-     * 根据表达式判断是否需要使用该类型表达式
-     *
-     * @return 匹配结果
-     */
-    boolean match(String expression);
+    public TaskTimeoutException(String code, String desc, Throwable cause) {
+        super(code, desc, cause);
+    }
 }

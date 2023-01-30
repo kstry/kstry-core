@@ -18,13 +18,14 @@
 package cn.kstry.framework.core.bpmn;
 
 import cn.kstry.framework.core.component.expression.Expression;
+import org.springframework.core.Ordered;
 
 import java.util.List;
 
 /**
  * SequenceFlow
  */
-public interface SequenceFlow extends FlowElement, Expression {
+public interface SequenceFlow extends FlowElement, Expression, Ordered {
 
     /**
      * 添加通过该 SequenceFlow 所能到达的 EndElement 节点

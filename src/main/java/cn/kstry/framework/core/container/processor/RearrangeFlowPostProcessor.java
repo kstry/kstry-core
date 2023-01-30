@@ -22,15 +22,21 @@ import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.impl.FlowElementImpl;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
 import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;
+import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
+import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.springframework.context.ApplicationContext;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -40,6 +46,19 @@ import java.util.Optional;
  * @author lykan
  */
 public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> implements StartEventPostProcessor {
+
+    private final Map<String, List<ServiceNodeResource>> serviceNodeResourceMap;
+
+    public RearrangeFlowPostProcessor(ApplicationContext applicationContext) {
+        Map<String, TaskContainer> taskContainerMap = applicationContext.getBeansOfType(TaskContainer.class);
+        AssertUtil.oneSize(taskContainerMap.values());
+        Map<String, List<ServiceNodeResource>> serviceNodeResourceMap = Maps.newHashMap();
+        taskContainerMap.values().iterator().next().getServiceNodeResource().forEach(resource -> {
+            List<ServiceNodeResource> serviceNodeResources = serviceNodeResourceMap.computeIfAbsent(resource.getServiceName(), key -> Lists.newArrayList());
+            serviceNodeResources.add(resource);
+        });
+        this.serviceNodeResourceMap = serviceNodeResourceMap;
+    }
 
     @Override
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {
@@ -64,6 +83,7 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
                 SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
                 sequenceFlow.setId(GlobalUtil.uuid());
                 ServiceTask serviceTask = ServiceTask.builder().service(customRoleInfo.getServiceName()).component(customRoleInfo.getComponentName()).ins();
+                ElementParserUtil.tryFillTaskName(GlobalUtil.transferNotEmpty(serviceTask, ServiceTaskImpl.class), serviceNodeResourceMap.get(serviceTask.getTaskService()));
                 node.outing(sequenceFlow);
                 sequenceFlow.outing(serviceTask);
                 outingList.forEach(serviceTask::outing);

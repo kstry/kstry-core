@@ -40,6 +40,7 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -319,7 +320,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 int iFinal = i;
                 ke.log(e -> LOGGER.warn("[{}] Target method execution failed, retry for the {}th time. taskName: {}, exception: {}",
                         ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), iFinal, taskName, exception.getMessage(), e));
-                if (i >= retry) {
+                if (i >= retry || notAllowRetry(exception, invokeProperties)) {
                     Optional<TaskServiceDef> serviceDefOptional = needDemotionSupplier.get();
                     if (!serviceDefOptional.isPresent()) {
                         throw ke;
@@ -349,6 +350,20 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             }
         }
         throw ExceptionUtil.buildException(null, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
+    }
+
+    private boolean notAllowRetry(Throwable exception, InvokeProperties invokeProperties) {
+        if (CollectionUtils.isEmpty(invokeProperties.getRetryIncludeExceptionList()) && CollectionUtils.isEmpty(invokeProperties.getRetryExcludeExceptionList())) {
+            return false;
+        }
+        if (CollectionUtils.isNotEmpty(invokeProperties.getRetryIncludeExceptionList()) && CollectionUtils.isNotEmpty(invokeProperties.getRetryExcludeExceptionList())) {
+            return invokeProperties.getRetryIncludeExceptionList().stream().noneMatch(c -> c.isAssignableFrom(exception.getClass()))
+                    || invokeProperties.getRetryExcludeExceptionList().stream().anyMatch(c -> c.isAssignableFrom(exception.getClass()));
+        }
+        if (CollectionUtils.isNotEmpty(invokeProperties.getRetryIncludeExceptionList())) {
+            return invokeProperties.getRetryIncludeExceptionList().stream().noneMatch(c -> c.isAssignableFrom(exception.getClass()));
+        }
+        return invokeProperties.getRetryExcludeExceptionList().stream().anyMatch(c -> c.isAssignableFrom(exception.getClass()));
     }
 
     private Supplier<Optional<TaskServiceDef>> getNeedDemotionSupplier(Role role, InvokeProperties invokeProperties) {

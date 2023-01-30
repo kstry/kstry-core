@@ -61,8 +61,8 @@ public class ComponentImportSelector {
     }
 
     @Bean
-    public StartEventPostProcessor getRearrangeFlowPostProcessor() {
-        return new RearrangeFlowPostProcessor();
+    public StartEventPostProcessor getRearrangeFlowPostProcessor(ApplicationContext applicationContext) {
+        return new RearrangeFlowPostProcessor(applicationContext);
     }
 
     @Bean

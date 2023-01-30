@@ -183,8 +183,7 @@ public class PermissionUtil {
         private static String getIdentityId(PermissionType permissionType, String componentName, String serviceName, String abilityName) {
             AssertUtil.notNull(permissionType);
             AssertUtil.notTrue(StringUtils.isAllBlank(componentName, serviceName, abilityName));
-            List<String> list = Lists.newArrayList(
-                    componentName, serviceName, abilityName).stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<String> list = Lists.newArrayList(componentName, serviceName, abilityName).stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
             return permissionType.getPrefix() + ":" + String.join("@", list);
         }
     }

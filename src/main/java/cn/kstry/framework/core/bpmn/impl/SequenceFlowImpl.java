@@ -24,10 +24,10 @@ import cn.kstry.framework.core.component.expression.ConditionExpression;
 import cn.kstry.framework.core.component.expression.Expression;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.core.Ordered;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +60,11 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
     @Override
     public Optional<ConditionExpression> getConditionExpression() {
         return Optional.ofNullable(this.expression).flatMap(Expression::getConditionExpression);
+    }
+
+    @Override
+    public int getOrder() {
+        return getConditionExpression().map(ConditionExpression::getOrder).orElse(Ordered.LOWEST_PRECEDENCE);
     }
 
     /**

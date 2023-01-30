@@ -21,6 +21,9 @@ import cn.kstry.framework.core.annotation.Invoke;
 import cn.kstry.framework.core.enums.PermissionType;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.PermissionUtil;
+import com.google.common.collect.ImmutableList;
+
+import java.util.List;
 
 /**
  *
@@ -47,6 +50,16 @@ public class InvokeProperties {
     private final boolean strictMode;
 
     /**
+     * 抛出异常包含以下异常时，进行重试。默认情况下列表为空，任何异常都将重试
+     */
+    private final List<Class<? extends Throwable>> retryIncludeExceptionList;
+
+    /**
+     * 抛出异常不包含以下异常时，进行重试。默认情况下列表为空，任何异常都将重试
+     */
+    private final List<Class<? extends Throwable>> retryExcludeExceptionList;
+
+    /**
      * 服务节点调用失败时降低调用的资源位置，在@Invoke注解中定义
      */
     private final ServiceNodeResource demotionResource;
@@ -57,6 +70,8 @@ public class InvokeProperties {
         this.retry = invoke.retry();
         this.timeout = invoke.timeout();
         this.strictMode = invoke.strictMode();
+        this.retryIncludeExceptionList = ImmutableList.copyOf(invoke.retryIncludeExp());
+        this.retryExcludeExceptionList = ImmutableList.copyOf(invoke.retryExcludeExp());
         this.demotionResource = PermissionUtil.parseResource(invoke.demotion())
                 .filter(p -> p.getPermissionType() == PermissionType.COMPONENT_SERVICE || p.getPermissionType() == PermissionType.COMPONENT_SERVICE_ABILITY).orElse(null);
         this.validDemotion = this.demotionResource != null;
@@ -68,6 +83,14 @@ public class InvokeProperties {
 
     public Integer getTimeout() {
         return timeout >= 0 ? timeout : null;
+    }
+
+    public List<Class<? extends Throwable>> getRetryIncludeExceptionList() {
+        return retryIncludeExceptionList;
+    }
+
+    public List<Class<? extends Throwable>> getRetryExcludeExceptionList() {
+        return retryExcludeExceptionList;
     }
 
     public ServiceNodeResource getDemotionResource() {

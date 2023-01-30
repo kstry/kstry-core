@@ -229,7 +229,7 @@ public abstract class BpmnDiagramLink {
         if (StringUtils.isBlank(expression)) {
             return sequenceFlow;
         }
-        SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(expression.trim());
+        SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(expression);
         sequenceFlowExpression.setId(GlobalUtil.uuid());
         sequenceFlowExpression.setName(StringUtils.EMPTY);
         sequenceFlow.setExpression(sequenceFlowExpression);

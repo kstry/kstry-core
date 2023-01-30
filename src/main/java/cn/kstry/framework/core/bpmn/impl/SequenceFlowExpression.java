@@ -42,8 +42,9 @@ public class SequenceFlowExpression extends BaseElementImpl implements Expressio
 
     public SequenceFlowExpression(String expression) {
         AssertUtil.notBlank(expression);
+        expression = expression.trim();
         for (ConditionExpressionImpl cExp : actualWorkExpressionList) {
-            if (cExp.match(expression)) {
+            if (cExp.match(cExp.parseExpressionOrder(expression).getRight())) {
                 conditionExpression = cExp.newWorkConditionExpression(expression);
                 return;
             }

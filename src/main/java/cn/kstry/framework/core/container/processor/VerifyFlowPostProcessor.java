@@ -29,6 +29,7 @@ import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.ServiceTaskRole;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
@@ -128,16 +129,18 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
             }
             serviceTask.setTaskService(instructResource.get().getServiceName());
             serviceTask.setTaskComponent(instructResource.get().getComponentName());
+            ElementParserUtil.tryFillTaskName(serviceTask, serviceNodeResourceMap.get(serviceTask.getTaskService()));
             return;
         }
 
         AssertUtil.notBlank(serviceTask.getTaskService(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskService cannot be empty! identity: {}", serviceTask.identity());
+        List<ServiceNodeResource> serviceNodeResources = serviceNodeResourceMap.get(serviceTask.getTaskService());
         if (StringUtils.isNotBlank(serviceTask.getTaskComponent())) {
+            ElementParserUtil.tryFillTaskName(serviceTask, serviceNodeResources);
             checkAllowAbsent(serviceTask);
             return;
         }
 
-        List<ServiceNodeResource> serviceNodeResources = serviceNodeResourceMap.get(serviceTask.getTaskService());
         if (CollectionUtils.isEmpty(serviceNodeResources)) {
             if (serviceTask.allowAbsent()) {
                 return;
@@ -148,11 +151,7 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
         AssertUtil.isTrue(componentNames.size() == 1 && StringUtils.isNotBlank(componentNames.get(0)), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
                 "Do not allow multiple or empty TaskComponent to correspond to TaskService! identity: {}, components: {}", serviceTask.identity(), componentNames);
         serviceTask.setTaskComponent(componentNames.get(0));
-        if (StringUtils.isBlank(serviceTask.getName())) {
-            serviceNodeResources.stream()
-                    .filter(r -> StringUtils.isBlank(r.getAbilityName()) && StringUtils.isNotBlank(r.getDescription()))
-                    .findFirst().ifPresent(r -> serviceTask.setName(r.getDescription()));
-        }
+        ElementParserUtil.tryFillTaskName(serviceTask, serviceNodeResources);
         checkAllowAbsent(serviceTask);
     }
 

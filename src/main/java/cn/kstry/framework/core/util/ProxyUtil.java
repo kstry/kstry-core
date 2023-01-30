@@ -78,7 +78,7 @@ public class ProxyUtil {
             KvThreadLocal.setKvScope(newKvScope);
             Object[] params = paramsSupplier.get();
             return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, params);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if ((e instanceof KstryException) && !(e instanceof BusinessException)) {
                 throw (KstryException) e;
             }
@@ -112,6 +112,9 @@ public class ProxyUtil {
                 TaskComponent taskComponent = AnnotationUtils.findAnnotation(componentClass, TaskComponent.class);
                 if (taskComponent != null) {
                     taskComponentName = StringUtils.isBlank(taskComponent.name()) ? StringUtils.uncapitalize(componentClass.getSimpleName()) : taskComponent.name();
+                }
+                if (StringUtils.isBlank(taskComponentName)) {
+                    taskComponentName = StringUtils.uncapitalize(componentClass.getSimpleName());
                 }
             }
         } catch (Throwable e) {
