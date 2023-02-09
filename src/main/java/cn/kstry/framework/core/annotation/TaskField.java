@@ -47,5 +47,5 @@ public @interface TaskField {
      *
      * @return 作用域
      */
-    ScopeTypeEnum scopeEnum() default ScopeTypeEnum.VARIABLE;
+    ScopeTypeEnum scopeEnum() default ScopeTypeEnum.EMPTY;
 }

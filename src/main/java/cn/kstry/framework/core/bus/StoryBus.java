@@ -24,6 +24,7 @@ import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.role.Role;
 
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * StoryBus
@@ -110,4 +111,14 @@ public interface StoryBus {
      * @return ScopeDataOperator
      */
     ScopeDataOperator getScopeDataOperator();
+
+    /**
+     * 获取当前任务使用的自定义任务执行器
+     */
+    ThreadPoolExecutor getStoryExecutor();
+
+    /**
+     * 距离最后期限的剩余时间
+     */
+    int remainTimeMillis();
 }

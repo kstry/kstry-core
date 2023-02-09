@@ -146,7 +146,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(TaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum());
-                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(GlobalConstant.STORY_DATA_SCOPE.contains(taskFieldProperty.getScopeDataEnum()), field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -162,7 +162,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(ReqTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.REQUEST);
-                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -178,7 +178,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(StaTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.STABLE);
-                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -194,7 +194,7 @@ public class ElementParserUtil {
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(VarTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.VARIABLE);
-                ParamInjectDef injectDef = new ParamInjectDef(field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }

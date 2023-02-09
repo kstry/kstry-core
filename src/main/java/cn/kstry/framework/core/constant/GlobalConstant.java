@@ -35,7 +35,7 @@ public interface GlobalConstant {
     /**
      * STORY DATA SCOPE
      */
-    List<ScopeTypeEnum> STORY_DATA_SCOPE = Lists.newArrayList(ScopeTypeEnum.REQUEST, ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE);
+    List<ScopeTypeEnum> STORY_DATA_SCOPE = Lists.newArrayList(ScopeTypeEnum.REQUEST, ScopeTypeEnum.STABLE, ScopeTypeEnum.VARIABLE, ScopeTypeEnum.RESULT);
 
     /**
      * void 类型

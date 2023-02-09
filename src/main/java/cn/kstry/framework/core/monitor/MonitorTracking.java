@@ -117,10 +117,7 @@ public class MonitorTracking {
     public Optional<FlowElement> trackingNextElement(FlowElement flowElement) {
         buildNodeTracking(flowElement).ifPresent(nodeTracking -> {
             nodeTracking.setIndex(invokePedometer.incrementAndGet());
-            getServiceNodeTracking(flowElement).ifPresent(tracking -> {
-                tracking.setThreadId(Thread.currentThread().getName());
-                tracking.setStartTime(LocalDateTime.now());
-            });
+            getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setStartTime(LocalDateTime.now()));
         });
         return Optional.ofNullable(flowElement);
     }

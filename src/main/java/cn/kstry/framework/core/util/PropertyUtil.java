@@ -109,6 +109,15 @@ public class PropertyUtil {
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT), GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT
         );
 
+        GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = NumberUtils.toInt(
+                environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT), GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT
+        );
+
+        String kstryStoryDefineNodeParams = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_DEFINE_NODE_PARAMS);
+        if (StringUtils.isNotBlank(kstryStoryDefineNodeParams)) {
+            GlobalProperties.SERVICE_NODE_DEFINE_PARAMS = BooleanUtils.toBoolean(kstryStoryDefineNodeParams);
+        }
+
         String kstryStoryTrackingLog = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_LOG);
         if (StringUtils.isNotBlank(kstryStoryTrackingLog)) {
             GlobalProperties.KSTRY_STORY_TRACKING_LOG = BooleanUtils.toBoolean(kstryStoryTrackingLog);

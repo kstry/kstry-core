@@ -53,6 +53,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
 /**
@@ -109,6 +110,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                         + GlobalUtil.format(" service task identity: {}", serviceTask.identity())));
         flowRegister.getMonitorTracking().getServiceNodeTracking(flowElement).ifPresent(nodeTracking -> {
             MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
+            nodeTracking.setThreadId(Thread.currentThread().getName());
             nodeTracking.setMethodName(methodWrapper.getMethod().getName());
             nodeTracking.setTargetName(taskServiceDef.getTaskComponentTarget().getTarget().getClass().getName());
             nodeTracking.setAbility(Optional.ofNullable(methodWrapper.getAbility()).filter(StringUtils::isNotBlank).orElse(null));
@@ -236,7 +238,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
 
         FlowRegister cloneSubFlowRegister = parentFlowRegister.cloneSubFlowRegister(startEvent);
         String taskName = GlobalUtil.getTaskName(cloneSubFlowRegister.getStartElement(), cloneSubFlowRegister.getRequestId());
-        Integer timeout = Optional.of(subProcess).map(SubProcess::getTimeout).orElse(null);
+        int timeout = Optional.of(subProcess).map(SubProcess::getTimeout).orElse(storyBus.remainTimeMillis());
         FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
                 () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()),
                 subProcess.strictMode(), timeout, cloneSubFlowRegister, taskName) {
@@ -269,7 +271,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             }
         };
         MonoFlowTask subFlowTask = new MonoFlowTask(engineModule, cloneSubFlowRegister, role, storyBus, flowTaskSubscriber);
-        engineModule.getTaskThreadPool().submitMonoFlowTask(parentFlowRegister.getStartEventId(), subFlowTask);
+        engineModule.getTaskThreadPool().submitMonoFlowTask(storyBus.getStoryExecutor(), parentFlowRegister.getStartEventId(), subFlowTask);
     }
 
     private void submitAsyncTask(Role role, StoryBus storyBus, FlowRegister flowRegister, Hook<List<FlowElement>> hook) {
@@ -278,7 +280,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 SequenceFlow sequenceFlow = (SequenceFlow) asyncFlow;
                 FlowRegister asyncFlowRegister = flowRegister.asyncFlowRegister(sequenceFlow);
                 FragmentTask fragmentTask = new FragmentTask(engineModule, asyncFlowRegister, role, storyBus);
-                engineModule.getTaskThreadPool().submitFragmentTask(fragmentTask);
+                engineModule.getTaskThreadPool().submitFragmentTask(storyBus.getStoryExecutor(), fragmentTask);
             }
         }).trigger();
     }
@@ -290,7 +292,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             submitAsyncTask(role, storyBus, flowRegister, asyncFlowHook.get());
         } else {
             FragmentTask fragmentTask = new FragmentTask(engineModule, flowRegister, role, storyBus);
-            engineModule.getTaskThreadPool().submitFragmentTask(fragmentTask);
+            engineModule.getTaskThreadPool().submitFragmentTask(storyBus.getStoryExecutor(), fragmentTask);
         }
     }
 
@@ -404,11 +406,15 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         } else {
             timeout = Optional.ofNullable(serviceTask.getTimeout()).filter(t -> t >= 0).orElse(invokeProperties.getTimeout());
         }
-        if (timeout == null || methodWrapper.isMonoResult()) {
+        ThreadPoolExecutor executor = null;
+        if (StringUtils.isNotBlank(invokeProperties.getCustomExecutorName())) {
+            executor = engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ThreadPoolExecutor.class);
+        }
+        if (executor == null && (timeout == null || methodWrapper.isMonoResult())) {
             return super.doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);
         }
         MethodInvokeTask methodInvokeTask = new MethodInvokeTask(pedometer, flowRegister, engineModule, serviceTask, taskServiceDef, storyBus, role);
-        InvokeFuture invokeFuture = engineModule.getMethodThreadPool().submitMethodInvokeTask(methodInvokeTask);
-        return invokeFuture.invokeMethod(timeout);
+        InvokeFuture invokeFuture = engineModule.getMethodThreadPool().submitMethodInvokeTask(executor, methodInvokeTask);
+        return invokeFuture.invokeMethod(timeout == null ? storyBus.remainTimeMillis() : timeout);
     }
 }

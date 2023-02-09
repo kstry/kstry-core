@@ -18,6 +18,8 @@
 package cn.kstry.framework.test.bus.bo;
 
 import cn.kstry.framework.core.annotation.NoticeResult;
+import cn.kstry.framework.core.annotation.TaskField;
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import lombok.Data;
 
 /**
@@ -28,5 +30,6 @@ import lombok.Data;
 public class BusStep2Bo {
 
     @NoticeResult
+    @TaskField(scopeEnum = ScopeTypeEnum.RESULT)
     private BusTestResult busTestResult;
 }

@@ -25,6 +25,10 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ExpressionException extends KstryException {
 
+    public ExpressionException(ExceptionEnum exceptionEnum, String desc) {
+        this(exceptionEnum, desc, null);
+    }
+
     public ExpressionException(ExceptionEnum exceptionEnum, String desc, Throwable cause) {
         super(exceptionEnum.getExceptionCode(), StringUtils.isBlank(desc) ? exceptionEnum.getDesc() : desc, cause);
     }

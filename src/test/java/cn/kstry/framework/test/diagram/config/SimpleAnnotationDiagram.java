@@ -52,7 +52,7 @@ public class SimpleAnnotationDiagram {
                         service1.nextService("O9: true", SimpleAnnotationComponent::method1).build(),
                         service1.nextService("O8: true", SimpleAnnotationComponent::method2).build(),
                         service1.nextService("O7: true", SimpleAnnotationComponent::method3).build(),
-                        service1.nextService("O6: false", SimpleAnnotationComponent::method4).build(),
+                        service1.nextService("O6: @notBlank('')", SimpleAnnotationComponent::method4).build(),
                         service1.nextService("O5: true", SimpleAnnotationComponent::method5).build(),
                         service1.nextService("O0: true", SimpleAnnotationComponent::method6).build(),
                         service1.nextService("true", SimpleAnnotationComponent::method7).build(),

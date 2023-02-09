@@ -104,4 +104,13 @@ public class RecallStory {
     public String getBusinessId() {
         return storyBus.getBusinessId();
     }
+
+    /**
+     * 获取StartID
+     *
+     * @return StartID
+     */
+    public String getStartId() {
+        return storyBus.getStartId();
+    }
 }

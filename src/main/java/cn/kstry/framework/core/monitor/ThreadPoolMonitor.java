@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 线程池监控
@@ -45,7 +46,8 @@ public class ThreadPoolMonitor {
         taskThreadPoolExecutor.forEach(ThreadPoolMonitor::handleExecutor);
     }
 
-    public static void handleExecutor(TaskThreadPoolExecutor threadPoolExecutor) {
+    public static void handleExecutor(TaskThreadPoolExecutor taskThreadPoolExecutor) {
+        ThreadPoolExecutor threadPoolExecutor = taskThreadPoolExecutor.getThreadPoolExecutor();
 
         // 线程池需要执行的任务数
         long taskCount = threadPoolExecutor.getTaskCount();
@@ -73,7 +75,7 @@ public class ThreadPoolMonitor {
 
         if (taskCount > 0) {
             LOGGER.info("Thread pool {} monitor. task-count: {}, completed-task-count: {}, largest-pool-size: {}, pool-size: {}, " +
-                            "active-count: {}, core-pool-size: {}, maximum-pool-size: {}, queue-size: {}", threadPoolExecutor.getPrefix(),
+                            "active-count: {}, core-pool-size: {}, maximum-pool-size: {}, queue-size: {}", taskThreadPoolExecutor.getPrefix(),
                     taskCount, completedTaskCount, largestPoolSize, poolSize, activeCount, corePoolSize, maximumPoolSize, queueSize);
         }
     }

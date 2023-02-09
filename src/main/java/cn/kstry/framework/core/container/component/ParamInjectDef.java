@@ -19,8 +19,8 @@ package cn.kstry.framework.core.container.component;
 
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import com.google.common.collect.ImmutableList;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class ParamInjectDef {
 
+    private final boolean needInject;
     private final Class<?> paramType;
 
     private final String fieldName;
@@ -43,8 +44,9 @@ public class ParamInjectDef {
 
     private boolean injectSelf;
 
-    public ParamInjectDef(Class<?> paramType, String fieldName, MethodWrapper.TaskFieldProperty taskFieldProperty) {
+    public ParamInjectDef(boolean needInject, Class<?> paramType, String fieldName, MethodWrapper.TaskFieldProperty taskFieldProperty) {
         AssertUtil.notNull(paramType);
+        this.needInject = needInject;
         this.paramType = paramType;
         this.fieldName = fieldName;
         if (taskFieldProperty != null) {
@@ -52,6 +54,10 @@ public class ParamInjectDef {
             this.scopeTypeEnum = taskFieldProperty.getScopeDataEnum();
             this.injectSelf = taskFieldProperty.isInjectSelf();
         }
+    }
+
+    public boolean notNeedInject() {
+        return !needInject;
     }
 
     public Class<?> getParamType() {
@@ -73,7 +79,7 @@ public class ParamInjectDef {
     public void setFieldInjectDefList(List<ParamInjectDef> fieldInjectDefList) {
         AssertUtil.isNull(this.fieldInjectDefList);
         if (fieldInjectDefList != null) {
-            this.fieldInjectDefList = ImmutableList.copyOf(fieldInjectDefList);
+            this.fieldInjectDefList = Collections.unmodifiableList(fieldInjectDefList);
         }
     }
 

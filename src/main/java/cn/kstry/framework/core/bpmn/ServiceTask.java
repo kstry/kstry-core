@@ -22,6 +22,8 @@ import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Map;
+
 /**
  * ServiceTask
  */
@@ -66,6 +68,13 @@ public interface ServiceTask extends Task {
      * @return 任务属性
      */
     String getTaskProperty();
+
+    /**
+     * 指定任务参数
+     *
+     * @return 指定参数
+     */
+    Map<String, Object> getTaskParams();
 
     /**
      * 获取任务指令

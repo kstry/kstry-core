@@ -19,17 +19,9 @@ package cn.kstry.framework.core.component.expression;
 
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.core.Ordered;
 
-import java.util.Objects;
 import java.util.function.BiPredicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author lykan
@@ -37,9 +29,19 @@ import java.util.regex.Pattern;
 public class ConditionExpressionImpl implements ConditionExpression {
 
     /**
-     * 表达式
+     * 原表达式
      */
     private String expression;
+
+    /**
+     * 真实参与计算的表达式
+     */
+    private String conditionExpression;
+
+    /**
+     * 需要解析表达式
+     */
+    private boolean needParserExpression;
 
     /**
      * 表达式顺序
@@ -51,8 +53,6 @@ public class ConditionExpressionImpl implements ConditionExpression {
      */
     private final BiPredicate<StoryBus, String> testCondition;
 
-    private final static Pattern itemPattern = Pattern.compile("\\.[\\w-]+");
-
     public ConditionExpressionImpl(BiPredicate<StoryBus, String> testCondition) {
         AssertUtil.notNull(testCondition);
         this.testCondition = testCondition;
@@ -63,8 +63,8 @@ public class ConditionExpressionImpl implements ConditionExpression {
         if (storyBus == null) {
             return false;
         }
-        AssertUtil.notBlank(this.expression);
-        return this.testCondition.test(storyBus, this.expression);
+        AssertUtil.notBlank(this.conditionExpression);
+        return this.testCondition.test(storyBus, this.conditionExpression);
     }
 
     @Override
@@ -73,8 +73,24 @@ public class ConditionExpressionImpl implements ConditionExpression {
     }
 
     @Override
+    public void parserConditionExpression(ExpressionAliasParser aliasParser) {
+        if (StringUtils.isNotBlank(this.conditionExpression)) {
+            return;
+        }
+        if (isNeedParserExpression()) {
+            this.conditionExpression = aliasParser.parserExpression(expression);
+        } else {
+            this.conditionExpression = this.expression;
+        }
+    }
+
+    @Override
     public int getOrder() {
         return order;
+    }
+
+    public boolean isNeedParserExpression() {
+        return needParserExpression;
     }
 
     /**
@@ -83,44 +99,11 @@ public class ConditionExpressionImpl implements ConditionExpression {
      * @param expression 表达式
      * @return 表达式对象
      */
-    public ConditionExpression newWorkConditionExpression(String expression) {
-        Pair<Integer, String> expOrder = parseExpressionOrder(expression);
-        expression = expOrder.getRight();
-        Matcher matcher = itemPattern.matcher(expOrder.getRight());
-        while (matcher.find()) {
-            String group = matcher.group();
-            int endIndex = matcher.end();
-            for (; endIndex < expOrder.getRight().length(); endIndex++) {
-                if (expOrder.getRight().charAt(endIndex) == ' ') {
-                    continue;
-                }
-                if (!Objects.equals(expOrder.getRight().charAt(endIndex), '(')) {
-                    expression = expression.replace(group, GlobalUtil.format("['{}']", group.substring(1)));
-                }
-                break;
-            }
-        }
+    public ConditionExpression newWorkConditionExpression(String expression, int order, boolean needParserExpression) {
         ConditionExpressionImpl conditionExpression = new ConditionExpressionImpl(this.testCondition);
+        conditionExpression.order = order;
         conditionExpression.expression = expression;
-        conditionExpression.order = expOrder.getLeft();
+        conditionExpression.needParserExpression = needParserExpression;
         return conditionExpression;
-    }
-
-    public Pair<Integer, String> parseExpressionOrder(String expression) {
-        String[] split = expression.split(":", 2);
-        if (split.length == 1) {
-            return ImmutablePair.of(Ordered.LOWEST_PRECEDENCE, expression);
-        }
-        String left = StringUtils.trim(split[0]);
-        String right = StringUtils.trim(split[1]);
-        char fChar = left.charAt(0);
-        if (fChar != 'o' && fChar != 'O') {
-            return ImmutablePair.of(Ordered.LOWEST_PRECEDENCE, expression);
-        }
-        left = StringUtils.trim(left.substring(1));
-        if (!NumberUtils.isCreatable(left)) {
-            return ImmutablePair.of(Ordered.LOWEST_PRECEDENCE, expression);
-        }
-        return ImmutablePair.of(NumberUtils.toInt(left), right);
     }
 }

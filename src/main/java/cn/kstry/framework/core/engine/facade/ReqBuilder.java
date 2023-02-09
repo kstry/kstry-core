@@ -27,6 +27,7 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.LambdaUtil;
 
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 /**
@@ -122,6 +123,12 @@ public class ReqBuilder<T> {
 
     public ReqBuilder<T> requestId(String requestId) {
         this.storyRequest.setRequestId(requestId);
+        return this;
+    }
+
+    public ReqBuilder<T> storyExecutor(ThreadPoolExecutor storyExecutor) {
+        AssertUtil.notNull(storyExecutor);
+        this.storyRequest.setStoryExecutor(storyExecutor);
         return this;
     }
 

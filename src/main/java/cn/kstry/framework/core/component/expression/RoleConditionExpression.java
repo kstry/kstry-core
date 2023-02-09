@@ -88,6 +88,11 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
         }
     }
 
+    @Override
+    public boolean isNeedParserExpression() {
+        return false;
+    }
+
     public static RoleCondition getRoleCondition(String expression) {
         RoleCondition roleCondition = new RoleCondition();
         String exp = expression;
@@ -100,7 +105,7 @@ public class RoleConditionExpression extends ConditionExpressionImpl implements 
                 return roleCondition;
             }
             pList.add(permissionOptional.get());
-            exp = exp.replace(ps, GlobalUtil.format("{{}}", i));
+            exp = StringUtils.replaceOnce(exp, ps, GlobalUtil.format("{{}}", i));
         }
 
         try {

@@ -38,7 +38,7 @@ import java.util.concurrent.*;
  *
  * @author lykan
  */
-public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskExecutor, ComponentLifecycle {
+public class TaskThreadPoolExecutor implements TaskExecutor, ComponentLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskThreadPoolExecutor.class);
 
@@ -46,9 +46,11 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
 
     private String prefix;
 
+    private final ThreadPoolExecutor threadPoolExecutor;
+
     public TaskThreadPoolExecutor(ExecutorType executorType, int corePoolSize, int maximumPoolSize, long keepAliveTime,
                                   TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
-        super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
+        this.threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
         this.executorType = executorType;
     }
 
@@ -74,17 +76,19 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
     }
 
     public static TaskThreadPoolExecutor buildTaskExecutor(ExecutorType executorType, String prefix, int corePoolSize, int maximumPoolSize, long keepAliveTime,
-                                                           TimeUnit keepAliveTimeUnit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
-        TaskThreadPoolExecutor poolExecutor = new TaskThreadPoolExecutor(executorType, corePoolSize, maximumPoolSize, keepAliveTime, keepAliveTimeUnit, workQueue, threadFactory, handler);
+                                                           TimeUnit keepAliveTimeUnit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory,
+                                                           RejectedExecutionHandler handler) {
+        TaskThreadPoolExecutor poolExecutor = new TaskThreadPoolExecutor(executorType, corePoolSize, maximumPoolSize, keepAliveTime, keepAliveTimeUnit, workQueue, threadFactory,
+                handler);
         poolExecutor.setPrefix(prefix);
         return poolExecutor;
     }
 
     @Override
-    public AdminFuture submitAdminTask(MainFlowTask mainFlowTask) {
+    public AdminFuture submitAdminTask(ThreadPoolExecutor threadPool, MainFlowTask mainFlowTask) {
         AssertUtil.notNull(mainFlowTask);
         try {
-            Future<AsyncTaskState> future = submit(mainFlowTask);
+            Future<AsyncTaskState> future = getActualExecutor(threadPool).submit(mainFlowTask);
             MainTaskFuture mainTaskFuture = mainFlowTask.buildTaskFuture(future);
             AdminTaskFuture adminTaskFuture = new AdminTaskFuture(mainTaskFuture);
             mainFlowTask.setAdminFuture(adminTaskFuture);
@@ -95,10 +99,10 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
     }
 
     @Override
-    public void submitFragmentTask(FragmentTask fragmentTask) {
+    public void submitFragmentTask(ThreadPoolExecutor threadPool, FragmentTask fragmentTask) {
         AssertUtil.notNull(fragmentTask);
         try {
-            Future<AsyncTaskState> future = submit(fragmentTask);
+            Future<AsyncTaskState> future = getActualExecutor(threadPool).submit(fragmentTask);
             FragmentFuture fragmentFuture = fragmentTask.buildTaskFuture(future);
             FlowRegister flowRegister = fragmentTask.getFlowRegister();
             flowRegister.getAdminFuture().addManagedFuture(fragmentFuture, flowRegister.getStartEventId());
@@ -108,10 +112,10 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
     }
 
     @Override
-    public void submitMonoFlowTask(String parentStartEventId, MonoFlowTask flowTask) {
+    public void submitMonoFlowTask(ThreadPoolExecutor threadPool, String parentStartEventId, MonoFlowTask flowTask) {
         AssertUtil.notNull(flowTask);
         try {
-            Future<AsyncTaskState> future = submit(flowTask);
+            Future<AsyncTaskState> future = getActualExecutor(threadPool).submit(flowTask);
             MonoFlowFuture monoFlowFuture = flowTask.buildTaskFuture(future);
             FlowRegister flowRegister = flowTask.getFlowRegister();
             flowRegister.getAdminFuture().addManagedFuture(parentStartEventId, monoFlowFuture, flowRegister.getStartEventId());
@@ -121,10 +125,10 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
     }
 
     @Override
-    public InvokeFuture submitMethodInvokeTask(MethodInvokeTask methodInvokeTask) {
+    public InvokeFuture submitMethodInvokeTask(ThreadPoolExecutor threadPool, MethodInvokeTask methodInvokeTask) {
         AssertUtil.notNull(methodInvokeTask);
         try {
-            Future<Object> future = submit(methodInvokeTask);
+            Future<Object> future = getActualExecutor(threadPool).submit(methodInvokeTask);
             InvokeFuture invokeFuture = methodInvokeTask.buildTaskFuture(future);
             FlowRegister flowRegister = methodInvokeTask.getFlowRegister();
             flowRegister.getAdminFuture().addManagedFuture(invokeFuture, flowRegister.getStartEventId());
@@ -136,7 +140,7 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
 
     @Override
     public void destroy() {
-        ThreadPoolExecutor asyncThreadPool = this;
+        ThreadPoolExecutor asyncThreadPool = threadPoolExecutor;
         LOGGER.info("Begin shutdown time slot thread pool! active count: {}", asyncThreadPool.getActiveCount());
         asyncThreadPool.shutdown();
         try {
@@ -176,5 +180,13 @@ public class TaskThreadPoolExecutor extends ThreadPoolExecutor implements TaskEx
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+
+    public ThreadPoolExecutor getThreadPoolExecutor() {
+        return threadPoolExecutor;
+    }
+
+    private ThreadPoolExecutor getActualExecutor(ThreadPoolExecutor threadPool) {
+        return threadPool == null ? threadPoolExecutor : threadPool;
     }
 }

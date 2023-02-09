@@ -84,7 +84,12 @@ public enum ExceptionEnum {
      */
     DEMOTION_DEFINITION_ERROR(ExceptionTypeEnum.COMPONENT, "0006", "Service node demotion policy not in effect!"),
 
-    ///////////////////////////////////////////////// ANNOTATION END /////////////////////////////////////////////////
+    /**
+     * [K1020007] 组件参数使用错误
+     */
+    COMPONENT_PARAMS_ERROR(ExceptionTypeEnum.COMPONENT, "0007", "Component parameters are incorrectly used!"),
+
+    ///////////////////////////////////////////////// COMPONENT END /////////////////////////////////////////////////
 
     /**
      * [K1030001] 配置文件解析失败
@@ -235,7 +240,7 @@ public enum ExceptionEnum {
      */
     BUSINESS_INVOKE_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0007", "Business execution failure!"),
 
-    ///////////////////////////////////////////////// PARAMS END /////////////////////////////////////////////////
+    ///////////////////////////////////////////////// NODE_INVOKE END /////////////////////////////////////////////////
 
     /**
      * [K1060001] 异步节点任务被中断

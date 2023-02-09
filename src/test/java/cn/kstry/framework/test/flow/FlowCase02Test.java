@@ -1,14 +1,5 @@
 package cn.kstry.framework.test.flow;
 
-import java.util.stream.IntStream;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.engine.facade.ReqBuilder;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
@@ -16,6 +7,16 @@ import cn.kstry.framework.core.engine.facade.TaskResponse;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Te4Request;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.annotation.Resource;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.IntStream;
 
 /**
  * @author lykan
@@ -26,6 +27,9 @@ public class FlowCase02Test {
 
     @Autowired
     private StoryEngine storyEngine;
+
+    @Resource(name = "custom-fly-t")
+    private ThreadPoolExecutor executor;
 
     /**
      * 【正常】测试：复杂链路场景测试，1次
@@ -38,8 +42,9 @@ public class FlowCase02Test {
         request.setHospitalId(22L);
         request.increase();
 
-        StoryRequest<Goods> fireRequest = ReqBuilder.returnType(Goods.class).timeout(3000).startId("story-def-complex-flow-001").request(request).build();
-        fireRequest.setTrackingType(TrackingTypeEnum.NODE);
+        StoryRequest<Goods> fireRequest = ReqBuilder.returnType(Goods.class).timeout(3000)
+                .storyExecutor(executor).startId("story-def-complex-flow-001").request(request).build();
+        fireRequest.setTrackingType(TrackingTypeEnum.SERVICE_DETAIL);
         TaskResponse<Goods> fire = storyEngine.fire(fireRequest);
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(26, request.getCount());

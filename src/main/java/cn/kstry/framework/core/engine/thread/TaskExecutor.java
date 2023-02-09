@@ -21,14 +21,14 @@ import cn.kstry.framework.core.engine.future.AdminFuture;
 import cn.kstry.framework.core.engine.future.InvokeFuture;
 import cn.kstry.framework.core.enums.ExecutorType;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 任务执行器
  *
  * @author lykan
  */
-public interface TaskExecutor extends Executor {
+public interface TaskExecutor {
 
     /**
      * 提交流程任务，并返回结果操作入口
@@ -36,12 +36,12 @@ public interface TaskExecutor extends Executor {
      * @param mainFlowTask 流程任务
      * @return AdminFuture
      */
-    AdminFuture submitAdminTask(MainFlowTask mainFlowTask);
+    AdminFuture submitAdminTask(ThreadPoolExecutor threadPool, MainFlowTask mainFlowTask);
 
     /**
      * 提交片段任务
      */
-    void submitFragmentTask(FragmentTask fragmentTask);
+    void submitFragmentTask(ThreadPoolExecutor threadPool, FragmentTask fragmentTask);
 
     /**
      * 提交异步流程任务
@@ -49,7 +49,7 @@ public interface TaskExecutor extends Executor {
      * @param parentStartEventId 开始事件id
      * @param flowTask 流程任务
      */
-    void submitMonoFlowTask(String parentStartEventId, MonoFlowTask flowTask);
+    void submitMonoFlowTask(ThreadPoolExecutor threadPool, String parentStartEventId, MonoFlowTask flowTask);
 
     /**
      * 提交方法执行任务
@@ -57,7 +57,7 @@ public interface TaskExecutor extends Executor {
      * @param methodInvokeTask 方法执行任务
      * @return 方法执行任务Future
      */
-    InvokeFuture submitMethodInvokeTask(MethodInvokeTask methodInvokeTask);
+    InvokeFuture submitMethodInvokeTask(ThreadPoolExecutor threadPool, MethodInvokeTask methodInvokeTask);
 
     /**
      * 获取线程池类型

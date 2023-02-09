@@ -127,7 +127,7 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
                 return applicationContext.getBean(def.getParamType());
             }
             return ElementParserUtil.newInstance(def.getParamType()).orElse(null);
-        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(), threadSwitchHookProcessor);
+        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(), threadSwitchHookProcessor, applicationContext);
         return new StoryEngine(storyEngineModule, getBusinessRoleRepository(roleDynamicComponent));
     }
 

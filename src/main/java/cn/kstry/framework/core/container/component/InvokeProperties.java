@@ -60,6 +60,11 @@ public class InvokeProperties {
     private final List<Class<? extends Throwable>> retryExcludeExceptionList;
 
     /**
+     * 自定义执行器名称
+     */
+    private final String customExecutorName;
+
+    /**
      * 服务节点调用失败时降低调用的资源位置，在@Invoke注解中定义
      */
     private final ServiceNodeResource demotionResource;
@@ -70,6 +75,7 @@ public class InvokeProperties {
         this.retry = invoke.retry();
         this.timeout = invoke.timeout();
         this.strictMode = invoke.strictMode();
+        this.customExecutorName = invoke.executor();
         this.retryIncludeExceptionList = ImmutableList.copyOf(invoke.retryIncludeExp());
         this.retryExcludeExceptionList = ImmutableList.copyOf(invoke.retryExcludeExp());
         this.demotionResource = PermissionUtil.parseResource(invoke.demotion())
@@ -103,5 +109,9 @@ public class InvokeProperties {
 
     void invalidDemotion() {
         this.validDemotion = false;
+    }
+
+    public String getCustomExecutorName() {
+        return customExecutorName;
     }
 }

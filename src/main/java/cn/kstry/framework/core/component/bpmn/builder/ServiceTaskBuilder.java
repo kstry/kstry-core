@@ -80,6 +80,11 @@ public class ServiceTaskBuilder {
         return this;
     }
 
+    public ServiceTaskBuilder params(String taskParams) {
+        serviceTask.setTaskParams(taskParams);
+        return this;
+    }
+
     public ServiceTaskBuilder customRole(String customRole) {
         this.serviceTask.setCustomRoleInfo(CustomRoleInfo.buildCustomRole(customRole).orElse(null));
         return this;

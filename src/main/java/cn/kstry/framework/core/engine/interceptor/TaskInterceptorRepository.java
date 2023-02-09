@@ -20,12 +20,12 @@ package cn.kstry.framework.core.engine.interceptor;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.core.OrderComparator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -39,7 +39,7 @@ public class TaskInterceptorRepository {
     public TaskInterceptorRepository(Collection<TaskInterceptor> taskInterceptors) {
         List<TaskInterceptor> taskInterceptorList = new ArrayList<>(taskInterceptors);
         OrderComparator.sort(taskInterceptorList);
-        this.taskInterceptors = ImmutableList.copyOf(taskInterceptorList);
+        this.taskInterceptors = Collections.unmodifiableList(taskInterceptorList);
     }
 
     public Object process(Supplier<Object> supplier, ServiceNodeResource serviceNodeResource, ScopeDataOperator scopeDataOperator, Role role) {

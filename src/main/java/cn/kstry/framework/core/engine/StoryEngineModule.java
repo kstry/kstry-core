@@ -27,6 +27,7 @@ import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
+import org.springframework.context.ApplicationContext;
 
 import java.util.List;
 import java.util.function.Function;
@@ -84,9 +85,14 @@ public class StoryEngineModule {
      */
     private final ThreadSwitchHookProcessor threadSwitchHookProcessor;
 
+    /**
+     * Spring上下文
+     */
+    private final ApplicationContext applicationContext;
+
     public StoryEngineModule(List<TaskThreadPoolExecutor> threadPoolExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
                              Function<ParamInjectDef, Object> paramInitStrategy, SubProcessInterceptorRepository subInterceptorRepository,
-                             TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor) {
+                             TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor, ApplicationContext applicationContext) {
         AssertUtil.anyNotNull(threadPoolExecutors, taskContainer, paramInitStrategy, startEventContainer);
 
         List<TaskThreadPoolExecutor> methodThreadPoolList = threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
@@ -104,6 +110,7 @@ public class StoryEngineModule {
         this.subInterceptorRepository = subInterceptorRepository;
         this.threadSwitchHookProcessor = threadSwitchHookProcessor;
         this.taskInterceptorRepository = taskInterceptorRepository;
+        this.applicationContext = applicationContext;
     }
 
     public TaskThreadPoolExecutor getTaskThreadPool() {
@@ -140,5 +147,9 @@ public class StoryEngineModule {
 
     public TaskInterceptorRepository getTaskInterceptorRepository() {
         return taskInterceptorRepository;
+    }
+
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 }

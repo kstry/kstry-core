@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
@@ -55,6 +56,16 @@ import static cn.kstry.framework.core.monitor.MonitorTracking.BAD_VALUE;
 public class BasicStoryBus implements StoryBus {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicStoryBus.class);
+
+    /**
+     * StoryBus 创建时间作为流程开始时间
+     */
+    private final long beginTimeMillis = System.currentTimeMillis();
+
+    /**
+     * 请求的总超时时间
+     */
+    private final long timeoutMillis;
 
     /**
      * 请求 ID 用来区分不同请求
@@ -111,12 +122,19 @@ public class BasicStoryBus implements StoryBus {
      */
     private ScopeDataOperator scopeDataOperator;
 
-    public BasicStoryBus(String requestId, String startEventId, String businessId,
-                         Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
+    /**
+     * 指定当前任务使用的任务执行器
+     */
+    private final ThreadPoolExecutor storyExecutor;
+
+    public BasicStoryBus(int timeout, ThreadPoolExecutor storyExecutor, String requestId, String startEventId,
+                         String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         this.role = role;
         this.requestId = requestId;
+        this.timeoutMillis = timeout;
         this.startEventId = startEventId;
         this.businessId = businessId;
+        this.storyExecutor = storyExecutor;
         this.monitorTracking = monitorTracking;
         this.reqScopeData = reqScopeData == null ? new InScopeData(ScopeTypeEnum.REQUEST) : reqScopeData;
         this.varScopeData = varScopeData == null ? new InScopeData(ScopeTypeEnum.VARIABLE) : varScopeData;
@@ -221,6 +239,17 @@ public class BasicStoryBus implements StoryBus {
     @Override
     public String getStartId() {
         return startEventId;
+    }
+
+    @Override
+    public ThreadPoolExecutor getStoryExecutor() {
+        return storyExecutor;
+    }
+
+    @Override
+    public int remainTimeMillis() {
+        int t = (int) (timeoutMillis - (System.currentTimeMillis() - beginTimeMillis));
+        return Math.max(t, 0);
     }
 
     @SuppressWarnings("unchecked")

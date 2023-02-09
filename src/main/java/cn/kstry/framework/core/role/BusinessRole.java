@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,11 +84,11 @@ public class BusinessRole {
     }
 
     public List<String> getBusinessIdList() {
-        return ImmutableList.copyOf(businessIdList);
+        return Collections.unmodifiableList(businessIdList);
     }
 
     public List<String> getStartIdList() {
-        return ImmutableList.copyOf(startIdList);
+        return Collections.unmodifiableList(startIdList);
     }
 
     public Role getRole() {

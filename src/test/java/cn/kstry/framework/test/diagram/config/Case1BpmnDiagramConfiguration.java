@@ -25,7 +25,7 @@ import cn.kstry.framework.core.component.bpmn.joinpoint.InclusiveJoinPoint;
 import cn.kstry.framework.core.component.bpmn.joinpoint.ParallelJoinPoint;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.bpmn.link.StartProcessLink;
-import cn.kstry.framework.core.util.KeyUtil;
+import cn.kstry.framework.core.component.expression.Exp;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import cn.kstry.framework.test.diagram.constants.StoryNameConstants;
 import org.springframework.context.annotation.Bean;
@@ -68,11 +68,11 @@ public class Case1BpmnDiagramConfiguration {
                     .nextExclusive().build();
 
             eg1
-                    .nextTask(KeyUtil.req("d", ">=", "0")).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                    .nextTask(Exp.b(e -> e.req("d").ge().value(0))).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();
             eg1
-                    .nextTask("req.d<0", SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                    .nextTask(Exp.b(e -> e.req("d").lt().value(0)), SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .nextService(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                     .end();

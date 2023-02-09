@@ -82,4 +82,9 @@ public @interface Invoke {
      * @return 异常列表
      */
     Class<? extends Throwable>[] retryExcludeExp() default {};
+
+    /**
+     * 指定服务节点执行器，不为空时从Spring容器中使用名称获取 ThreadPoolExecutor 实例来作为执行器执行当前服务节点，默认不指定自定义执行器
+     */
+    String executor() default StringUtils.EMPTY;
 }

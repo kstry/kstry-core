@@ -29,6 +29,11 @@
     "type": "java.lang.String",
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
     "description": "requestId 名字，默认：ks-request-id"
+  },{
+    "name": "kstry.story.define-node-params",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "允许流程配置中指定服务节点入参，默认：true"
   }, {
     "name": "kstry.thread.pool.core-size",
     "type": "java.lang.String",

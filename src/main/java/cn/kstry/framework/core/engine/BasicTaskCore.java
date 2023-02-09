@@ -20,6 +20,7 @@ package cn.kstry.framework.core.engine;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.component.validator.RequestValidator;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskInstructWrapper;
@@ -34,6 +35,7 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,7 +200,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                 CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
                     engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                     return doInvokeMethod(futureList.isEmpty(), next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
-                }, engineModule.getIteratorThreadPool());
+                }, engineModule.getIteratorThreadPool().getThreadPoolExecutor());
                 futureList.add(f);
             });
         } else {
@@ -208,7 +210,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                 CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
                     engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                     return doInvokeMethod(futureList.isEmpty(), next, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
-                }, engineModule.getIteratorThreadPool());
+                }, engineModule.getIteratorThreadPool().getThreadPoolExecutor());
                 futureList.add(f);
             });
         }
@@ -237,10 +239,26 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             if (CollectionUtils.isEmpty(paramInjectDefs)) {
                 return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget());
             }
+
             Function<ParamInjectDef, Object> paramInitStrategy = engineModule.getParamInitStrategy();
             TaskInstructWrapper taskInstructWrapper = methodWrapper.getTaskInstructWrapper().orElse(null);
-            return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget(),
-                    () -> TaskServiceUtil.getTaskParams(methodWrapper.isCustomRole(), tracking, serviceTask, storyBus, role, taskInstructWrapper, paramInjectDefs, paramInitStrategy));
+            return ProxyUtil.invokeMethod(storyBus, methodWrapper, serviceTask, targetProxy.getTarget(), () -> {
+                Object[] params = TaskServiceUtil.getTaskParams(methodWrapper.isCustomRole(), tracking,
+                        serviceTask, storyBus, role, taskInstructWrapper, paramInjectDefs, paramInitStrategy, engineModule.getApplicationContext());
+                TaskServiceUtil.fillTaskParams(params, serviceTask.getTaskParams(), paramInjectDefs, paramInitStrategy, storyBus.getScopeDataOperator());
+                if (ArrayUtils.isNotEmpty(params)) {
+                    boolean supportValidate = GlobalUtil.supportValidate();
+                    for (Object param : params) {
+                        if (param instanceof ParamLifecycle) {
+                            ((ParamLifecycle) param).after(storyBus.getScopeDataOperator());
+                        }
+                        if (supportValidate) {
+                            RequestValidator.validate(param);
+                        }
+                    }
+                }
+                return params;
+            });
         } catch (Throwable e) {
             if (!serviceTask.iterable() || serviceTask.getIteStrategy() == null || serviceTask.getIteStrategy() == IterateStrategyEnum.ALL_SUCCESS) {
                 throw e;

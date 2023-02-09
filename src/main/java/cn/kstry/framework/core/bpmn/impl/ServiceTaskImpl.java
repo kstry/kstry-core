@@ -24,8 +24,15 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONValidator;
+import com.alibaba.fastjson.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * ServiceTaskImpl
@@ -67,6 +74,11 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      * 任务指令参数
      */
     private String taskInstructContent;
+
+    /**
+     * 任务参数
+     */
+    private Map<String, Object> taskParams;
 
     @Override
     public String getTaskComponent() {
@@ -143,7 +155,28 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
 
     public void setTaskInstruct(String taskInstruct) {
         AssertUtil.notBlank(taskInstruct, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, GlobalUtil.format("TaskInstruct cannot be blank!"));
-        this.taskInstruct = taskInstruct.replaceFirst(BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT, StringUtils.EMPTY);
+        this.taskInstruct = StringUtils.replaceOnceIgnoreCase(taskInstruct, BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT, StringUtils.EMPTY);
+    }
+
+    @Override
+    public Map<String, Object> getTaskParams() {
+        return taskParams;
+    }
+
+    public void setTaskParams(String taskParams) {
+        if (StringUtils.isBlank(taskParams)) {
+            return;
+        }
+        AssertUtil.equals(JSONValidator.from(taskParams).getType(), JSONValidator.Type.Object,
+                ExceptionEnum.COMPONENT_PARAMS_ERROR, "taskParams is not a valid object string. taskParams: {}", taskParams);
+        Map<String, Object> taskParamsObj = JSON.parseObject(taskParams, new TypeReference<Map<String, Object>>() {
+        });
+        taskParamsObj.forEach((k, v) -> {
+            AssertUtil.notBlank(k, ExceptionEnum.SERVICE_PARAM_ERROR, "taskParams specifies that the input key cannot be empty. taskParams: {}", taskParams);
+            AssertUtil.isTrue(v == null || v instanceof String || v instanceof Map, ExceptionEnum.SERVICE_PARAM_ERROR,
+                    "taskParams does not allow invalid value types to appear. taskParams: {}", taskParams);
+        });
+        this.taskParams = Collections.unmodifiableMap(taskParamsObj);
     }
 
     /**

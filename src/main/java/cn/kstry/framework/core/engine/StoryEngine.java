@@ -110,7 +110,7 @@ public class StoryEngine {
         FlowRegister flowRegister = getFlowRegister(storyRequest, scopeDataQuery);
         BasicStoryBus storyBus = getStoryBus(storyRequest, flowRegister, role);
         FlowTask flowTask = new FlowTask(storyEngineModule, flowRegister, role, storyBus);
-        AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(flowTask);
+        AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(storyBus.getStoryExecutor(), flowTask);
         try {
             int timeout = storyRequest.getTimeout();
             FlowFuture flowFuture = GlobalUtil.transferNotEmpty(adminFuture.getMainTaskFuture(), FlowFuture.class);
@@ -170,7 +170,7 @@ public class StoryEngine {
             }
         };
         MonoFlowTask monoFlowTask = new MonoFlowTask(storyEngineModule, flowRegister, role, storyBus, flowTaskSubscriber);
-        AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(monoFlowTask);
+        AdminFuture adminFuture = storyEngineModule.getTaskThreadPool().submitAdminTask(storyBus.getStoryExecutor(), monoFlowTask);
         MonoFlowFuture monoFlowFuture = GlobalUtil.transferNotEmpty(adminFuture.getMainTaskFuture(), MonoFlowFuture.class);
         return monoFlowFuture.getMonoFuture().handle((t, sink) -> {
             String requestLogIdKey = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
@@ -222,7 +222,8 @@ public class StoryEngine {
         ScopeData varScopeData = storyRequest.getVarScopeData();
         ScopeData staScopeData = storyRequest.getStaScopeData();
         MonitorTracking monitorTracking = flowRegister.getMonitorTracking();
-        return new BasicStoryBus(storyRequest.getRequestId(), storyRequest.getStartId(), businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
+        return new BasicStoryBus(storyRequest.getTimeout(), storyRequest.getStoryExecutor(),
+                storyRequest.getRequestId(), storyRequest.getStartId(), businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
     }
 
     @SuppressWarnings("unchecked")

@@ -20,8 +20,8 @@ package cn.kstry.framework.test.iterator.service;
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
+import cn.kstry.framework.core.component.expression.Exp;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
-import cn.kstry.framework.core.util.KeyUtil;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -44,7 +44,7 @@ public class CalculateService {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<Integer> iterDataItem = dataOperator.iterDataItem();
         iterDataItem.ifPresent(i ->
-                dataOperator.computeIfAbsent(KeyUtil.sta("squareResult", "a"), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
+                dataOperator.computeIfAbsent(Exp.b(e -> e.sta("squareResult", "a")), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
                     list.add(i * i);
                     dataOperator.setResult(list);
                 })
@@ -73,7 +73,7 @@ public class CalculateService {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<List<Integer>> iterDataItem = dataOperator.iterDataItem();
         iterDataItem.ifPresent(ds -> ds.forEach(i ->
-                        dataOperator.computeIfAbsent(KeyUtil.sta("squareResult", "a"), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
+                        dataOperator.computeIfAbsent(Exp.b(e -> e.sta("squareResult", "a")), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
                             list.add(i * i);
                             dataOperator.setResult(list);
                         })
@@ -106,7 +106,7 @@ public class CalculateService {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<Integer> iterDataItem = dataOperator.iterDataItem();
         iterDataItem.ifPresent(i ->
-                dataOperator.computeIfAbsent(KeyUtil.var("squareResult"), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
+                dataOperator.computeIfAbsent(Exp.b(e -> e.var("squareResult")), Lists::newCopyOnWriteArrayList).ifPresent(list -> {
                     if (i == 0 || i == 1 || i == 2) {
                         throw new RuntimeException("系统中偶发的异常！！！");
                     }

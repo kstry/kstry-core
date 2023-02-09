@@ -67,7 +67,7 @@ public class ProxyUtil {
         return AopUtils.getTargetClass(candidate);
     }
 
-    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask, Object target) {
+    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask,  Object target) {
         return invokeMethod(storyBus, methodWrapper, serviceTask, target, () -> new Object[0]);
     }
 

@@ -17,25 +17,19 @@
  */
 package cn.kstry.framework.core.component.expression;
 
-import org.apache.commons.lang3.BooleanUtils;
+import java.util.List;
 
 /**
+ * 表达式别名注册器
  *
  * @author lykan
  */
-public class BooleanConditionExpression extends ConditionExpressionImpl implements ConditionExpression {
+public interface ExpressionAliasRegister {
 
-    public BooleanConditionExpression() {
-        super((scopeData, exp) -> BooleanUtils.toBoolean(exp));
-    }
-
-    @Override
-    public boolean isNeedParserExpression() {
-        return false;
-    }
-
-    @Override
-    public boolean match(String expression) {
-        return BooleanUtils.toBooleanObject(expression) != null;
-    }
+    /**
+     * 注册别名列表
+     *
+     * @return 表达式别名列表
+     */
+    List<ExpressionAlias> registerAlias();
 }

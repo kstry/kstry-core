@@ -10,6 +10,8 @@ import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.test.flow.bo.MethodInvokeBo;
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -331,5 +333,20 @@ public class FlowCase01Test {
         TaskResponse<Integer> fire2 = storyEngine.fire(fireRequest2);
         Assert.assertTrue(fire2.isSuccess());
         Assert.assertEquals(9, fire2.getResult().intValue());
+    }
+
+    @Test
+    public void testFlow16() {
+        InScopeData var = new InScopeData(ScopeTypeEnum.VARIABLE);
+        var.put("a", "a");
+        var.put("b", "45");
+        var.put("bb", 67);
+        var.put("c", Lists.newArrayList(""));
+        var.put("cc", new int[]{1, 2, 3});
+        var.put("ccc", Maps.newHashMap());
+        StoryRequest<Integer> fireRequest = ReqBuilder.returnType(Integer.class)
+                .varScopeData(var).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("expressionAliasProcessTest").build();
+        TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
     }
 }

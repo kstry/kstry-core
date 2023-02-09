@@ -4,7 +4,8 @@ import cn.kstry.framework.core.component.bpmn.BpmnProcessParser;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.dynamic.creator.DynamicSubProcess;
-import cn.kstry.framework.core.util.KeyUtil;
+import cn.kstry.framework.core.component.expression.Exp;
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import com.google.common.collect.Lists;
 import org.springframework.stereotype.Component;
@@ -61,7 +62,7 @@ public class DynamicBpmnSubDiagram implements DynamicSubProcess {
                 SubProcessLink.build("a-call-link-diagram-sub-process2",
                         link -> link
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
-                                .nextSubProcess("req.d != null", "gateway-sub-process2").build()
+                                .nextSubProcess(Exp.b(e -> e.notNull(ScopeTypeEnum.REQUEST, "d")), "gateway-sub-process2").build()
                                 .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                                 .end()
                 ), SubProcessLink.build(DynamicBpmnSubDiagram::getSubProcessLinks,
@@ -77,11 +78,11 @@ public class DynamicBpmnSubDiagram implements DynamicSubProcess {
                             .nextExclusive().build();
 
                     eg1
-                            .nextTask(KeyUtil.req("d", ">=", "0")).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                            .nextTask(Exp.b(e -> e.order(1).req("d").ge().value(0))).component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                             .nextTask().component(SCS.F.CALCULATE_SERVICE).service(SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                             .end();
                     eg1
-                            .nextTask("req.d<0", SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
+                            .nextTask(Exp.b(e -> e.req("d").lt().value(0)), SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                             .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                             .nextTask(SCS.F.CALCULATE_SERVICE, SCS.CALCULATE_SERVICE.F.INCREASE_ONE).build()
                             .end();

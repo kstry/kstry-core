@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 /**
@@ -97,6 +98,11 @@ public class StoryRequest<T> {
      * - 判断过滤耗时高的节点，进行报警
      */
     private Consumer<RecallStory> recallStoryHook;
+
+    /**
+     * 指定当前任务使用的任务执行器
+     */
+    private ThreadPoolExecutor storyExecutor;
 
     public String getStartId() {
         return startId;
@@ -198,5 +204,13 @@ public class StoryRequest<T> {
 
     public void setBusinessId(String businessId) {
         this.businessId = businessId;
+    }
+
+    public ThreadPoolExecutor getStoryExecutor() {
+        return storyExecutor;
+    }
+
+    public void setStoryExecutor(ThreadPoolExecutor storyExecutor) {
+        this.storyExecutor = storyExecutor;
     }
 }

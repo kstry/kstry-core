@@ -70,7 +70,7 @@ public abstract class SpringDynamicComponent<Component> implements DynamicCompon
             if (CollectionUtils.isEmpty(creatorList)) {
                 this.componentCreatorList = ImmutableList.of();
             } else {
-                this.componentCreatorList = ImmutableList.copyOf(creatorList);
+                this.componentCreatorList = Collections.unmodifiableList(creatorList);
             }
         }
     }

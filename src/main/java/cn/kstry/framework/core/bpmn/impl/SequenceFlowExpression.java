@@ -23,6 +23,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,8 +45,9 @@ public class SequenceFlowExpression extends BaseElementImpl implements Expressio
         AssertUtil.notBlank(expression);
         expression = expression.trim();
         for (ConditionExpressionImpl cExp : actualWorkExpressionList) {
-            if (cExp.match(cExp.parseExpressionOrder(expression).getRight())) {
-                conditionExpression = cExp.newWorkConditionExpression(expression);
+            Pair<Integer, String> expPair = ExpressionAliasParser.parseExpressionOrder(expression);
+            if (cExp.match(expPair.getRight())) {
+                conditionExpression = cExp.newWorkConditionExpression(expPair.getRight(), expPair.getLeft(), cExp.isNeedParserExpression());
                 return;
             }
         }

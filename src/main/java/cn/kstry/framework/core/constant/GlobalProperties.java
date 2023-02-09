@@ -82,4 +82,9 @@ public class GlobalProperties {
      * 监控中节点出入参快照最大长度，默认为 -1 代表不限制， 0 时不记录入参， >0 时会对节点出入参快照截取到该字段长度。仅在 TrackingTypeEnum == SERVICE_DETAIL 时生效
      */
     public static int KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = -1;
+
+    /**
+     * 允许流程配置中指定服务节点入参，默认：true
+     */
+    public static boolean SERVICE_NODE_DEFINE_PARAMS = true;
 }

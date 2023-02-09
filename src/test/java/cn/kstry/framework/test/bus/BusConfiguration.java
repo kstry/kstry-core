@@ -18,9 +18,15 @@
 package cn.kstry.framework.test.bus;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -32,4 +38,15 @@ import org.springframework.context.annotation.PropertySource;
 @ComponentScan(basePackageClasses = BusConfiguration.class)
 public class BusConfiguration {
 
+    @Bean(name = "custom-mmm")
+    public ThreadPoolExecutor executor() {
+        return new ThreadPoolExecutor(
+                5,
+                10,
+                10,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(3),
+                new ThreadFactoryBuilder().setNameFormat("custom-mmm-%d").build(),
+                new ThreadPoolExecutor.AbortPolicy());
+    }
 }

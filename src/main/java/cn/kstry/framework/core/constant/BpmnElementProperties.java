@@ -55,6 +55,11 @@ public interface BpmnElementProperties {
     String SERVICE_TASK_CUSTOM_ROLE = "custom-role";
 
     /**
+     * ServiceTask: 服务节点参数指定
+     */
+    String SERVICE_TASK_TASK_PARAMS = "task-params";
+
+    /**
      * AsyncFlowElement(InclusiveGateway/ParallelGateway/ElementIterator(SubProcess/ServiceTask)): open-async
      */
     String ASYNC_ELEMENT_OPEN_ASYNC = "open-async";

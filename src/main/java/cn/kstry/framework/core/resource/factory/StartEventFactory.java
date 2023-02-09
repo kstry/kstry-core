@@ -33,7 +33,6 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -44,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import javax.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,7 +84,7 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
         Map<String, SubProcess> aspMap = getAllSubProcessMap(bpmnResourceList, bpmnDiagramResourceList);
         List<StartEvent> list = getStartEvents(aspMap, bpmnResourceList, bpmnDiagramResourceList);
         notDuplicateCheck(list);
-        this.resourceList = ImmutableList.copyOf(list);
+        this.resourceList = Collections.unmodifiableList(list);
         this.allSubProcessMap = ImmutableMap.copyOf(aspMap);
     }
 

@@ -20,6 +20,7 @@ package cn.kstry.framework.test.bus.bo;
 import cn.kstry.framework.core.annotation.NoticeScope;
 import cn.kstry.framework.core.annotation.NoticeSta;
 import cn.kstry.framework.core.annotation.NoticeVar;
+import cn.kstry.framework.core.annotation.TaskField;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 
@@ -38,6 +39,7 @@ public class BusStep1Bo {
     @NoticeSta
     private int size;
 
+    @TaskField("br-br")
     @NoticeVar(target = "step1.br")
     private Br br;
 

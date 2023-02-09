@@ -140,7 +140,9 @@ public class MethodWrapper {
         Parameter[] parameters = method.getParameters();
         String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
         if (ArrayUtils.isNotEmpty(parameters)) {
-            AssertUtil.equals(parameters.length, parameterNames.length);
+            AssertUtil.isTrue(parameterNames != null && Objects.equals(parameters.length, parameterNames.length), ExceptionEnum.SERVICE_PARAM_ERROR,
+                    "The actual parameters of the method do not match the number of parameters resolved by the method entry name. except: {}, actual: {}",
+                    parameters.length, (parameterNames == null ? -1 : parameterNames.length));
             parametersParser(parameters, parameterNames);
         }
     }
@@ -156,21 +158,26 @@ public class MethodWrapper {
                 if (!annOptional.isPresent()) {
                     continue;
                 }
-                injectDefs[i] = new ParamInjectDef(p.getType(), parameterNames[i], annOptional.get());
+                boolean needInject = GlobalConstant.STORY_DATA_SCOPE.contains(annOptional.get().getScopeDataEnum());
+                injectDefs[i] = new ParamInjectDef(needInject, p.getType(), parameterNames[i], annOptional.get());
                 continue;
             }
 
             if (Role.class.isAssignableFrom(p.getType()) || ScopeDataQuery.class.isAssignableFrom(p.getType()) || InstructContent.class.isAssignableFrom(p.getType())) {
-                injectDefs[i] = new ParamInjectDef(p.getType(), parameterNames[i], null);
+                injectDefs[i] = new ParamInjectDef(true, p.getType(), parameterNames[i], null);
                 continue;
             }
 
             List<ParamInjectDef> injectDefList = getFieldInjectDefs(p.getType());
             boolean isSpringInitialization = ElementParserUtil.isSpringInitialization(p.getType());
             if (annOptional.isPresent() || CollectionUtils.isNotEmpty(injectDefList) || p.getType().isPrimitive() || isSpringInitialization) {
-                ParamInjectDef injectDef = new ParamInjectDef(p.getType(), parameterNames[i], annOptional.orElse(null));
+                boolean needInject = !annOptional.isPresent() || GlobalConstant.STORY_DATA_SCOPE.contains(annOptional.get().getScopeDataEnum());
+                ParamInjectDef injectDef = new ParamInjectDef(needInject, p.getType(), parameterNames[i], annOptional.orElse(null));
                 injectDef.setFieldInjectDefList(injectDefList);
                 injectDef.setSpringInitialization(isSpringInitialization);
+                injectDefs[i] = injectDef;
+            } else {
+                ParamInjectDef injectDef = new ParamInjectDef(false, p.getType(), parameterNames[i], null);
                 injectDefs[i] = injectDef;
             }
         }
@@ -348,8 +355,6 @@ public class MethodWrapper {
         private boolean injectSelf;
 
         public TaskFieldProperty(String name, ScopeTypeEnum scopeTypeEnum) {
-            AssertUtil.isTrue(GlobalConstant.STORY_DATA_SCOPE.contains(scopeTypeEnum),
-                    ExceptionEnum.ANNOTATION_USAGE_ERROR, "Existence of an impermissible scopeType! scopeType: {}", scopeTypeEnum);
             this.name = name;
             this.scopeTypeEnum = scopeTypeEnum;
         }

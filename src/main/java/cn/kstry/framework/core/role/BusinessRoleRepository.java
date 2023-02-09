@@ -25,7 +25,6 @@ import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
@@ -33,10 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -64,7 +60,7 @@ public class BusinessRoleRepository {
         }
         checkDuplicated(businessRoleList);
         this.roleDynamicComponent = roleDynamicComponent;
-        this.businessRoleList = ImmutableList.copyOf(businessRoleList.stream().filter(Objects::nonNull).collect(Collectors.toList()));
+        this.businessRoleList = Collections.unmodifiableList(businessRoleList.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
     public Optional<Role> getRole(StoryRequest<?> storyRequest, ScopeDataQuery scopeDataQuery) {

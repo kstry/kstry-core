@@ -27,6 +27,7 @@ import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -96,7 +97,7 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
     public void addFlowTrack(List<Integer> flowTrack) {
         AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         if (!ElementPropertyUtil.isSupportAggregation(this)) {
-            this.flowTrack = ImmutableList.copyOf(flowTrack);
+            this.flowTrack = Collections.unmodifiableList(flowTrack);
         }
     }
 
@@ -112,8 +113,8 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
         if (isImmutable()) {
             return;
         }
-        outingFlowElementList = ImmutableList.copyOf(outingFlowElementList);
-        comingFlowElementList = ImmutableList.copyOf(comingFlowElementList);
+        outingFlowElementList = Collections.unmodifiableList(outingFlowElementList);
+        comingFlowElementList = Collections.unmodifiableList(comingFlowElementList);
         immutable = true;
     }
 

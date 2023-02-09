@@ -24,11 +24,11 @@ import cn.kstry.framework.core.component.expression.ConditionExpression;
 import cn.kstry.framework.core.component.expression.Expression;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.core.Ordered;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,7 +98,7 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
 
     @Override
     public void immutableEndElement() {
-        this.endElementList = ImmutableList.copyOf(this.endElementList);
+        this.endElementList = Collections.unmodifiableList(this.endElementList);
         immutable = true;
     }
 }

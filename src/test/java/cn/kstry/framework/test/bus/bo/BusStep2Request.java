@@ -19,13 +19,16 @@ package cn.kstry.framework.test.bus.bo;
 
 import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
-import cn.kstry.framework.core.engine.ParamLifecycle;
+import cn.kstry.framework.core.engine.SpringParamLifecycle;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.bus.service.BusTestService;
 import lombok.Data;
+import org.apache.commons.collections.MapUtils;
 import org.junit.Assert;
+import org.springframework.context.ApplicationContext;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  *
@@ -33,7 +36,7 @@ import javax.annotation.Resource;
  */
 @Data
 @SpringInitialization
-public class BusStep2Request implements ParamLifecycle {
+public class BusStep2Request implements SpringParamLifecycle {
 
     @VarTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
     private int varId;
@@ -61,7 +64,7 @@ public class BusStep2Request implements ParamLifecycle {
     @Override
     public void before(ScopeDataOperator scopeDataOperator) {
         Assert.assertNotNull(scopeDataOperator);
-        ParamLifecycle.super.before(scopeDataOperator);
+        SpringParamLifecycle.super.before(scopeDataOperator);
         br = new Br();
     }
 
@@ -76,6 +79,12 @@ public class BusStep2Request implements ParamLifecycle {
         Assert.assertNotNull(name);
         br.setName(name);
         varId = busTestService.incr(varId);
+    }
+
+    @Override
+    public void initContext(ApplicationContext applicationContext) {
+        Map<String, BusTestService> map = applicationContext.getBeansOfType(BusTestService.class);
+        assert MapUtils.isNotEmpty(map);
     }
 
     @Data

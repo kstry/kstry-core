@@ -51,6 +51,11 @@ public class SpelConditionExpression extends ConditionExpressionImpl implements 
     }
 
     @Override
+    public boolean isNeedParserExpression() {
+        return true;
+    }
+
+    @Override
     public boolean match(String expression) {
         return true;
     }

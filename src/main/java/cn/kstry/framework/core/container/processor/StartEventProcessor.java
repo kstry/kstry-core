@@ -18,9 +18,9 @@
 package cn.kstry.framework.core.container.processor;
 
 import cn.kstry.framework.core.bpmn.StartEvent;
-import com.google.common.collect.ImmutableList;
 import org.springframework.core.OrderComparator;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +38,7 @@ public class StartEventProcessor {
 
     public StartEventProcessor(List<StartEventPostProcessor> startEventPostProcessors) {
         OrderComparator.sort(startEventPostProcessors);
-        this.startEventPostProcessors = ImmutableList.copyOf(startEventPostProcessors);
+        this.startEventPostProcessors = Collections.unmodifiableList(startEventPostProcessors);
     }
 
     public Optional<StartEvent> postStartEvent(StartEvent startEvent) {

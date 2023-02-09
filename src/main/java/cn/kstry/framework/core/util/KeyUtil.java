@@ -19,21 +19,14 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.enums.PermissionType;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
-import com.google.common.collect.Lists;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  *
  * @author lykan
  */
 public class KeyUtil {
-
-    private final static Pattern scopeItemPattern = Pattern.compile("[a-zA-Z_][\\w-()]*");
-
-    private final static List<String> valueKeyword = Lists.newArrayList("true", "false", "null");
 
     public static String r(String service) {
         AssertUtil.anyNotBlank(service);
@@ -77,34 +70,32 @@ public class KeyUtil {
         return "!" + pr(component, service, ability);
     }
 
-    public static String req(Object... items) {
+    public static String req(String... items) {
         return scopeKeyAppend(ScopeTypeEnum.REQUEST, items);
     }
 
-    public static String sta(Object... items) {
+    public static String sta(String... items) {
         return scopeKeyAppend(ScopeTypeEnum.STABLE, items);
     }
 
-    public static String var(Object... items) {
+    public static String var(String... items) {
         return scopeKeyAppend(ScopeTypeEnum.VARIABLE, items);
     }
 
-    public static String res(Object... items) {
+    public static String res(String... items) {
         return scopeKeyAppend(ScopeTypeEnum.RESULT, items);
     }
 
-    private static String scopeKeyAppend(ScopeTypeEnum typeEnum, Object... items) {
+    public static String scopeKeyAppend(ScopeTypeEnum typeEnum, String... items) {
+        AssertUtil.notNull(typeEnum);
+        AssertUtil.isTrue(typeEnum == ScopeTypeEnum.RESULT || (items != null && items.length > 0), ExceptionEnum.COMPONENT_PARAMS_ERROR);
         if (items == null || items.length == 0) {
             return typeEnum.getKey();
         }
         StringBuilder sb = new StringBuilder(typeEnum.getKey());
-        for (Object itemObj : items) {
-            AssertUtil.notNull(itemObj);
-            String item = itemObj.toString();
-            if (!valueKeyword.contains(item.toLowerCase()) && scopeItemPattern.matcher(item).matches()) {
-                sb.append(".");
-            }
-            sb.append(item);
+        for (String item : items) {
+            AssertUtil.notBlank(item);
+            sb.append(".").append(item);
         }
         return sb.toString();
     }

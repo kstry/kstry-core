@@ -81,6 +81,7 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
         try {
             engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
             asyncTaskSwitch.await();
+            flowRegister.getMonitorTracking().getServiceNodeTracking(serviceTask).ifPresent(nodeTracking -> nodeTracking.setThreadId(Thread.currentThread().getName()));
             AssertUtil.notTrue(adminFuture.isCancelled(flowRegister.getStartEventId()), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
                     "Task interrupted. Method invoke task was interrupted! taskName: {}", getTaskName());
             return doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);

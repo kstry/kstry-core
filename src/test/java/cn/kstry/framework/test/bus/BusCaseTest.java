@@ -18,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.annotation.Resource;
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  *
  * @author lykan
@@ -29,6 +32,9 @@ public class BusCaseTest {
     @Autowired
     private StoryEngine storyEngine;
 
+    @Resource(name = "custom-mmm")
+    private ThreadPoolExecutor threadPoolExecutor;
+
     @Test
     public void test01() {
         BusTestRequest.Ar ar = new BusTestRequest.Ar();
@@ -39,11 +45,29 @@ public class BusCaseTest {
 
         InScopeData varScopeData = new InScopeData(ScopeTypeEnum.VARIABLE);
         varScopeData.put("step1", new BusStep1Bo());
-        StoryRequest<BusTestResult> fireRequest = ReqBuilder.returnType(BusTestResult.class)
+        StoryRequest<BusTestResult> fireRequest = ReqBuilder.returnType(BusTestResult.class).storyExecutor(threadPoolExecutor)
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(busTestRequest).varScopeData(varScopeData).startId("story-def-bus-test-01").build();
         TaskResponse<BusTestResult> result = storyEngine.fire(fireRequest);
         System.out.println(JSON.toJSONString(result));
         Assert.assertTrue(result.isSuccess());
         Assert.assertEquals(235, result.getResult().getId());
+    }
+
+    @Test
+    public void test02() {
+        BusTestRequest.Ar ar = new BusTestRequest.Ar();
+        ar.setName("ar");
+        BusTestRequest busTestRequest = new BusTestRequest();
+        busTestRequest.setId(234);
+        busTestRequest.setAr(ar);
+
+        InScopeData varScopeData = new InScopeData(ScopeTypeEnum.VARIABLE);
+        varScopeData.put("step1", new BusStep1Bo());
+
+        StoryRequest<Void> fireRequest = ReqBuilder.returnType(Void.class)
+                .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(busTestRequest).varScopeData(varScopeData).startId("testBusDataTaskParams").build();
+        TaskResponse<Void> result = storyEngine.fire(fireRequest);
+        Assert.assertTrue(result.isSuccess());
+        System.out.println(JSON.toJSONString(result));
     }
 }

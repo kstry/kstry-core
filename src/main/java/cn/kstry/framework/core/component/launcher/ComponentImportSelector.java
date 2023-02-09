@@ -21,6 +21,9 @@ import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.SubProcessDynamicComponent;
+import cn.kstry.framework.core.component.expression.BasicExpressionAliasRegister;
+import cn.kstry.framework.core.component.expression.ExpressionAliasParser;
+import cn.kstry.framework.core.component.expression.ExpressionAliasRegister;
 import cn.kstry.framework.core.component.instruct.JsScriptInstruct;
 import cn.kstry.framework.core.container.processor.*;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
@@ -68,6 +71,11 @@ public class ComponentImportSelector {
     @Bean
     public StartEventPostProcessor getVerifyFlowPostProcessor(ApplicationContext applicationContext) {
         return new VerifyFlowPostProcessor(applicationContext);
+    }
+
+    @Bean
+    public StartEventPostProcessor getExpressionParserProcessor(ExpressionAliasParser expressionAliasParser) {
+        return new ExpressionParserProcessor(expressionAliasParser);
     }
 
     @Bean
@@ -119,5 +127,15 @@ public class ComponentImportSelector {
     @Bean
     public JsScriptInstruct jsScriptInstruct() {
         return new JsScriptInstruct();
+    }
+
+    @Bean
+    public ExpressionAliasParser expressionAliasParser(List<ExpressionAliasRegister> registerList) {
+        return new ExpressionAliasParser(registerList);
+    }
+
+    @Bean
+    public BasicExpressionAliasRegister basicExpressionAliasRegister() {
+        return new BasicExpressionAliasRegister();
     }
 }

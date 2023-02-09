@@ -15,27 +15,21 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.component.expression;
+package cn.kstry.framework.core.engine;
 
-import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.context.ApplicationContext;
 
 /**
+ * 参数生命周期接口
  *
  * @author lykan
  */
-public class BooleanConditionExpression extends ConditionExpressionImpl implements ConditionExpression {
+public interface SpringParamLifecycle extends ParamLifecycle {
 
-    public BooleanConditionExpression() {
-        super((scopeData, exp) -> BooleanUtils.toBoolean(exp));
-    }
-
-    @Override
-    public boolean isNeedParserExpression() {
-        return false;
-    }
-
-    @Override
-    public boolean match(String expression) {
-        return BooleanUtils.toBooleanObject(expression) != null;
+    /**
+     * 使用 Spring ApplicationContext 初始化参数上下文
+     */
+    default void initContext(ApplicationContext applicationContext) {
+        // do nothing
     }
 }

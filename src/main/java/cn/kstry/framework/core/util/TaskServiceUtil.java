@@ -20,22 +20,31 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bus.InstructContent;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.component.validator.RequestValidator;
+import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskInstructWrapper;
 import cn.kstry.framework.core.engine.ParamLifecycle;
+import cn.kstry.framework.core.engine.SpringParamLifecycle;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.ParamTracking;
 import cn.kstry.framework.core.role.Role;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationContext;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -75,8 +84,9 @@ public class TaskServiceUtil {
      * 获取目标方法入参
      */
     public static Object[] getTaskParams(boolean isCustomRole, boolean tracking, ServiceTask serviceTask, StoryBus storyBus, Role role, TaskInstructWrapper taskInstructWrapper,
-                                         List<ParamInjectDef> paramInjectDefs, Function<ParamInjectDef, Object> paramInitStrategy) {
+                                         List<ParamInjectDef> paramInjectDefs, Function<ParamInjectDef, Object> paramInitStrategy, ApplicationContext applicationContext) {
         AssertUtil.notNull(serviceTask);
+
         Optional<MonitorTracking> trackingOptional = Optional.of(storyBus.getMonitorTracking()).filter(t -> tracking);
         Object[] params = new Object[paramInjectDefs.size()];
         for (int i = 0; i < paramInjectDefs.size(); i++) {
@@ -87,6 +97,15 @@ public class TaskServiceUtil {
             // 没有参数定义时，取默认值
             ParamInjectDef iDef = paramInjectDefs.get(i);
             if (iDef == null) {
+                continue;
+            }
+
+            // 如果是基本数据类型，进行基本数据类型初始化
+            boolean isPrimitive = iDef.getParamType().isPrimitive();
+            if (isPrimitive) {
+                params[i] = ElementParserUtil.initPrimitive(iDef.getParamType());
+            }
+            if (iDef.notNeedInject()) {
                 continue;
             }
 
@@ -118,12 +137,6 @@ public class TaskServiceUtil {
                 continue;
             }
 
-            // 如果是基本数据类型，进行基本数据类型初始化
-            boolean isPrimitive = iDef.getParamType().isPrimitive();
-            if (isPrimitive) {
-                params[i] = ElementParserUtil.initPrimitive(iDef.getParamType());
-            }
-
             // 参数被 @TaskParam、@ReqTaskParam、@VarTaskParam、@StaTaskParam 注解修饰时，从 StoryBus 中直接获取变量并赋值给参数
             if (iDef.getScopeDataEnum() != null && StringUtils.isNotBlank(iDef.getTargetName())) {
                 Object r = storyBus.getValue(iDef.getScopeDataEnum(), iDef.getTargetName()).orElse(null);
@@ -147,9 +160,11 @@ public class TaskServiceUtil {
             // case 1：参数 Bean 需要解析注入
             // case 2：参数需要 Spring 容器实例化
             // case 3：参数实现 ParamLifecycle 接口
-            if (CollectionUtils.isNotEmpty(iDef.getFieldInjectDefList())
-                    || iDef.isSpringInitialization() || ParamLifecycle.class.isAssignableFrom(iDef.getParamType())) {
+            if (CollectionUtils.isNotEmpty(iDef.getFieldInjectDefList()) || iDef.isSpringInitialization() || ParamLifecycle.class.isAssignableFrom(iDef.getParamType())) {
                 Object o = paramInitStrategy.apply(iDef);
+                if (o instanceof SpringParamLifecycle) {
+                    ((SpringParamLifecycle) o).initContext(applicationContext);
+                }
                 if (o instanceof ParamLifecycle) {
                     ((ParamLifecycle) o).before(storyBus.getScopeDataOperator());
                 }
@@ -157,6 +172,9 @@ public class TaskServiceUtil {
                 List<ParamInjectDef> fieldInjectDefList = iDef.getFieldInjectDefList();
                 if (CollectionUtils.isNotEmpty(fieldInjectDefList)) {
                     fieldInjectDefList.forEach(def -> {
+                        if (def.notNeedInject()) {
+                            return;
+                        }
                         Object value = storyBus.getValue(def.getScopeDataEnum(), def.getTargetName()).orElse(null);
                         if (value == PropertyUtil.GET_PROPERTY_ERROR_SIGN) {
                             trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
@@ -170,13 +188,6 @@ public class TaskServiceUtil {
                                     ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), value, def.getScopeDataEnum(), def.getTargetName())));
                         }
                     });
-                }
-
-                if (o instanceof ParamLifecycle) {
-                    ((ParamLifecycle) o).after(storyBus.getScopeDataOperator());
-                }
-                if (GlobalUtil.supportValidate()) {
-                    RequestValidator.validate(o);
                 }
                 params[i] = o;
             }
@@ -192,5 +203,79 @@ public class TaskServiceUtil {
                     return Lists.newArrayList(flowElement.getName(), actual, def.getParamType().getName());
                 }
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fillTaskParams(Object[] params, Map<String, Object> taskParams,
+                                      List<ParamInjectDef> paramInjectDefs, Function<ParamInjectDef, Object> paramInitStrategy, ScopeDataOperator scopeDataOperator) {
+        if (!GlobalProperties.SERVICE_NODE_DEFINE_PARAMS) {
+            return;
+        }
+        if (params == null || params.length == 0 || MapUtils.isEmpty(taskParams) || CollectionUtils.isEmpty(paramInjectDefs)) {
+            return;
+        }
+        for (int i = 0; i < paramInjectDefs.size(); i++) {
+            ParamInjectDef iDef = paramInjectDefs.get(i);
+            if (iDef == null) {
+                continue;
+            }
+            String fName = StringUtils.isBlank(iDef.getTargetName()) ? iDef.getFieldName() : iDef.getTargetName();
+            AssertUtil.notBlank(fName);
+            if (!taskParams.containsKey(fName)) {
+                continue;
+            }
+            Object val = taskParams.get(fName);
+            if (val == null) {
+                params[i] = iDef.getParamType().isPrimitive() ? ElementParserUtil.initPrimitive(iDef.getParamType()) : null;
+                continue;
+            }
+            try {
+                if (val instanceof String) {
+                    params[i] = parseParamValue((String) val, scopeDataOperator, iDef.getParamType());
+                    continue;
+                }
+                if (val instanceof Map) {
+                    if (params[i] == null) {
+                        params[i] = paramInitStrategy.apply(iDef);
+                    }
+                    AssertUtil.notNull(params[i]);
+                    Map<String, ?> valMap = (Map<String, ?>) val;
+                    if (MapUtils.isEmpty(valMap)) {
+                        continue;
+                    }
+
+                    Map<String, ParamInjectDef> defMap = Maps.newHashMap();
+                    if (CollectionUtils.isNotEmpty(iDef.getFieldInjectDefList())) {
+                        iDef.getFieldInjectDefList().forEach(def -> defMap.put(def.getFieldName(), def));
+                    }
+                    for (Field field : params[i].getClass().getDeclaredFields()) {
+                        String targetName = Optional.ofNullable(defMap.get(field.getName()))
+                                .filter(def -> field.getType() == def.getParamType()).map(ParamInjectDef::getTargetName).orElse(field.getName());
+                        if (!valMap.containsKey(targetName)) {
+                            continue;
+                        }
+                        Object v = valMap.get(targetName);
+                        if (v == null) {
+                            PropertyUtil.setProperty(params[i], field.getName(), field.getType().isPrimitive() ? ElementParserUtil.initPrimitive(field.getType()) : null);
+                            continue;
+                        }
+                        Object vObj = parseParamValue(v instanceof String ? (String) v : JSON.toJSONString(v), scopeDataOperator, field.getType());
+                        PropertyUtil.setProperty(params[i], field.getName(), vObj);
+                    }
+                    continue;
+                }
+            } catch (JSONException e) {
+                throw ExceptionUtil.buildException(e, ExceptionEnum.TYPE_TRANSFER_ERROR,
+                        GlobalUtil.format("External specified parameter type conversion exception. index: {}, paramName: {}, message: {}", i, fName, e.getMessage()));
+            }
+            AssertUtil.isTrue(false, ExceptionEnum.SERVICE_PARAM_ERROR, "taskParams does not allow invalid value types to appear. taskParams: {}", taskParams);
+        }
+    }
+
+    private static Object parseParamValue(String valStr, ScopeDataOperator scopeDataOperator, Class<?> type) {
+        if (valStr.startsWith("@") && ElementParserUtil.isValidDataExpression(valStr.substring(1))) {
+            return scopeDataOperator.getData(valStr.substring(1)).orElse(null);
+        }
+        return JSON.parseObject(valStr, type);
     }
 }

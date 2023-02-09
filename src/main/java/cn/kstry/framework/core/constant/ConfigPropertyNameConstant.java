@@ -54,6 +54,11 @@ public interface ConfigPropertyNameConstant {
     String KSTRY_STORY_REQUEST_ID_NAME = "kstry.story.request-id";
 
     /**
+     * 允许流程配置中指定服务节点入参，默认：true
+     */
+    String KSTRY_STORY_DEFINE_NODE_PARAMS = "kstry.story.define-node-params";
+
+    /**
      *  kstry 线程池核心线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2)
      */
     String KSTRY_THREAD_POOL_CORE_SIZE = "kstry.thread.pool.core-size";

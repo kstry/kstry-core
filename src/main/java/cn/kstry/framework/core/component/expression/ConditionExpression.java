@@ -40,4 +40,11 @@ public interface ConditionExpression extends Ordered {
      * @return 匹配结果
      */
     boolean match(String expression);
+
+    /**
+     * 构建真实参与计算的条件表达式
+     *
+     * @param aliasParser 别名解析器
+     */
+    void parserConditionExpression(ExpressionAliasParser aliasParser);
 }
