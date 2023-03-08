@@ -22,6 +22,7 @@ import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.bus.InstructContent;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.constant.GlobalConstant;
+import cn.kstry.framework.core.engine.ParamLifecycle;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -170,7 +171,8 @@ public class MethodWrapper {
 
             List<ParamInjectDef> injectDefList = getFieldInjectDefs(p.getType());
             boolean isSpringInitialization = ElementParserUtil.isSpringInitialization(p.getType());
-            if (annOptional.isPresent() || CollectionUtils.isNotEmpty(injectDefList) || p.getType().isPrimitive() || isSpringInitialization) {
+            if (annOptional.isPresent() || CollectionUtils.isNotEmpty(injectDefList)
+                    || p.getType().isPrimitive() || isSpringInitialization || ParamLifecycle.class.isAssignableFrom(p.getType())) {
                 boolean needInject = !annOptional.isPresent() || GlobalConstant.STORY_DATA_SCOPE.contains(annOptional.get().getScopeDataEnum());
                 ParamInjectDef injectDef = new ParamInjectDef(needInject, p.getType(), parameterNames[i], annOptional.orElse(null));
                 injectDef.setFieldInjectDefList(injectDefList);

@@ -18,18 +18,25 @@
 package cn.kstry.framework.test.bus.bo;
 
 import cn.kstry.framework.core.annotation.NoticeResult;
-import cn.kstry.framework.core.annotation.TaskField;
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
+import cn.kstry.framework.core.engine.ParamLifecycle;
 import lombok.Data;
+
+import java.util.Optional;
 
 /**
  *
  * @author lykan
  */
 @Data
-public class BusStep2Bo {
+public class BusStep2Bo implements ParamLifecycle {
 
     @NoticeResult
-    @TaskField(scopeEnum = ScopeTypeEnum.RESULT)
     private BusTestResult busTestResult;
+
+    @Override
+    public void after(ScopeDataOperator scopeDataOperator) {
+        Optional<BusTestResult> result = scopeDataOperator.getResult();
+        this.busTestResult = result.orElse(null);
+    }
 }

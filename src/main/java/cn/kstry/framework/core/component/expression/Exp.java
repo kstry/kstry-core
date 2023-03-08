@@ -31,7 +31,8 @@ import java.util.function.Consumer;
  *
  * @author lykan
  */
-public class Exp {
+@SuppressWarnings({"unchecked", "unused"})
+public class Exp<T extends Exp<?>> {
 
     public static String equals = "equals";
 
@@ -97,376 +98,379 @@ public class Exp {
 
     protected String expression = StringUtils.EMPTY;
 
-    public static String b(Consumer<Exp> builder) {
-        Exp exp = new Exp();
-        builder.accept(exp);
-        return exp.build();
+    public static <E extends Exp<?>> String b(Consumer<E> builder) {
+        return b((E) new Exp<>(), builder);
     }
 
-    public Exp order(int order) {
+    protected static <E extends Exp<?>> String b(E instance, Consumer<E> builder) {
+        builder.accept(instance);
+        return instance.build();
+    }
+
+    public T order(int order) {
         this.order = order;
-        return this;
+        return (T) this;
     }
 
-    public Exp and() {
+    public T and() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " && ";
-        return this;
+        return (T) this;
     }
 
-    public Exp and(String exp) {
+    public T and(String exp) {
         AssertUtil.notBlank(exp);
         this.expression = GlobalUtil.format("({}) && ({})", this.expression, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp or() {
+    public T or() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " || ";
-        return this;
+        return (T) this;
     }
 
-    public Exp or(String exp) {
+    public T or(String exp) {
         AssertUtil.notBlank(exp);
         this.expression = GlobalUtil.format("({}) || ({})", this.expression, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp not(String exp) {
+    public T not(String exp) {
         validExpression(exp);
         this.expression = this.expression + "!" + exp;
-        return this;
+        return (T) this;
     }
 
-    public Exp lt() {
+    public T lt() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " < ";
-        return this;
+        return (T) this;
     }
 
-    public Exp le() {
+    public T le() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " <= ";
-        return this;
+        return (T) this;
     }
 
-    public Exp gt() {
+    public T gt() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " > ";
-        return this;
+        return (T) this;
     }
 
-    public Exp ge() {
+    public T ge() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " >= ";
-        return this;
+        return (T) this;
     }
 
-    public Exp eq() {
+    public T eq() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " == ";
-        return this;
+        return (T) this;
     }
 
-    public Exp ne() {
+    public T ne() {
         AssertUtil.notBlank(this.expression);
         this.expression = this.expression + " != ";
-        return this;
+        return (T) this;
     }
 
-    public Exp sta(String... keys) {
+    public T sta(String... keys) {
         AssertUtil.notNull(keys);
         AssertUtil.anyNotBlank(keys);
         this.expression = this.expression + KeyUtil.sta(keys);
-        return this;
+        return (T) this;
     }
 
-    public Exp var(String... keys) {
+    public T var(String... keys) {
         AssertUtil.notNull(keys);
         AssertUtil.anyNotBlank(keys);
         this.expression = this.expression + KeyUtil.var(keys);
-        return this;
+        return (T) this;
     }
 
-    public Exp req(String... keys) {
+    public T req(String... keys) {
         AssertUtil.notNull(keys);
         AssertUtil.anyNotBlank(keys);
         this.expression = this.expression + KeyUtil.req(keys);
-        return this;
+        return (T) this;
     }
 
-    public Exp res(String... keys) {
+    public T res(String... keys) {
         AssertUtil.anyNotBlank(keys);
         this.expression = this.expression + KeyUtil.res(keys);
-        return this;
+        return (T) this;
     }
 
-    public Exp value(Object value) {
+    public T value(Object value) {
         AssertUtil.notNull(value);
         this.expression = this.expression + value.toString();
-        return this;
+        return (T) this;
     }
 
-    public Exp equals(String exp, String key) {
+    public T equals(String exp, String key) {
         validExpression(exp);
         AssertUtil.notBlank(key);
         this.expression = GlobalUtil.format("{}@{}({}, {})", this.expression, equals, exp, key);
-        return this;
+        return (T) this;
     }
 
-    public Exp notEquals(String exp, String key) {
+    public T notEquals(String exp, String key) {
         validExpression(exp);
         AssertUtil.notBlank(key);
         this.expression = GlobalUtil.format("{}@{}({}, {})", this.expression, notEquals, exp, key);
-        return this;
+        return (T) this;
     }
 
-    public Exp isNull(String exp) {
+    public T isNull(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, isNull, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp isNull(ScopeTypeEnum type, String... keys) {
+    public T isNull(ScopeTypeEnum type, String... keys) {
         return isNull(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp notNull(String exp) {
+    public T notNull(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, notNull, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp notNull(ScopeTypeEnum type, String... keys) {
+    public T notNull(ScopeTypeEnum type, String... keys) {
         return notNull(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp anyNull(String... exp) {
+    public T anyNull(String... exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, anyNull, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp noneNull(String... exp) {
+    public T noneNull(String... exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, noneNull, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp isBlank(String exp) {
+    public T isBlank(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, isBlank, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp isBlank(ScopeTypeEnum type, String... keys) {
+    public T isBlank(ScopeTypeEnum type, String... keys) {
         return isBlank(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp notBlank(String exp) {
+    public T notBlank(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, notBlank, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp notBlank(ScopeTypeEnum type, String... keys) {
+    public T notBlank(ScopeTypeEnum type, String... keys) {
         return notBlank(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp noneBlank(String... exp) {
+    public T noneBlank(String... exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, noneBlank, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp allBlank(String... exp) {
+    public T allBlank(String... exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, allBlank, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp anyBlank(String... exp) {
+    public T anyBlank(String... exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, anyBlank, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp isNumber(String exp) {
+    public T isNumber(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, isNumber, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp isNumber(ScopeTypeEnum type, String... keys) {
+    public T isNumber(ScopeTypeEnum type, String... keys) {
         return isNumber(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toInt(String exp) {
+    public T toInt(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toInt, exp);
-        return this;
+        return (T) this;
     }
 
 
-    public Exp toInt(ScopeTypeEnum type, String... keys) {
+    public T toInt(ScopeTypeEnum type, String... keys) {
         return toInt(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toLong(String exp) {
+    public T toLong(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toLong, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp toLong(ScopeTypeEnum type, String... keys) {
+    public T toLong(ScopeTypeEnum type, String... keys) {
         return toLong(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toDouble(String exp) {
+    public T toDouble(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toDouble, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp toDouble(ScopeTypeEnum type, String... keys) {
+    public T toDouble(ScopeTypeEnum type, String... keys) {
         return toDouble(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toFloat(String exp) {
+    public T toFloat(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toFloat, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp toFloat(ScopeTypeEnum type, String... keys) {
+    public T toFloat(ScopeTypeEnum type, String... keys) {
         return toFloat(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toByte(String exp) {
+    public T toByte(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toByte, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp toByte(ScopeTypeEnum type, String... keys) {
+    public T toByte(ScopeTypeEnum type, String... keys) {
         return toByte(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toShort(String exp) {
+    public T toShort(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toShort, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp toShort(ScopeTypeEnum type, String... keys) {
+    public T toShort(ScopeTypeEnum type, String... keys) {
         return toShort(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp toBool(String exp) {
+    public T toBool(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, toBool, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp toBool(ScopeTypeEnum type, String... keys) {
+    public T toBool(ScopeTypeEnum type, String... keys) {
         return toBool(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp isTrue(String exp) {
+    public T isTrue(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, isTrue, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp isTrue(ScopeTypeEnum type, String... keys) {
+    public T isTrue(ScopeTypeEnum type, String... keys) {
         return isTrue(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp isFalse(String exp) {
+    public T isFalse(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, isFalse, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp isFalse(ScopeTypeEnum type, String... keys) {
+    public T isFalse(ScopeTypeEnum type, String... keys) {
         return isFalse(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp notFalse(String exp) {
+    public T notFalse(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, notFalse, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp notFalse(ScopeTypeEnum type, String... keys) {
+    public T notFalse(ScopeTypeEnum type, String... keys) {
         return notFalse(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp notTrue(String exp) {
+    public T notTrue(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, notTrue, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp notTrue(ScopeTypeEnum type, String... keys) {
+    public T notTrue(ScopeTypeEnum type, String... keys) {
         return notTrue(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp max(String... exp) {
+    public T max(String... exp) {
         AssertUtil.anyNotBlank(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, max, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp min(String... exp) {
+    public T min(String... exp) {
         AssertUtil.anyNotBlank(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, min, String.join(", ", exp));
-        return this;
+        return (T) this;
     }
 
-    public Exp isEmpty(String exp) {
+    public T isEmpty(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, isEmpty, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp isEmpty(ScopeTypeEnum type, String... keys) {
+    public T isEmpty(ScopeTypeEnum type, String... keys) {
         return isEmpty(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp notEmpty(String exp) {
+    public T notEmpty(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, notEmpty, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp notEmpty(ScopeTypeEnum type, String... keys) {
+    public T notEmpty(ScopeTypeEnum type, String... keys) {
         return notEmpty(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp contains(String coll, String key) {
+    public T contains(String coll, String key) {
         AssertUtil.anyNotBlank(coll, key);
         this.expression = GlobalUtil.format("{}@{}({}, {})", this.expression, contains, coll, key);
-        return this;
+        return (T) this;
     }
 
-    public Exp size(String exp) {
+    public T size(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, size, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp size(ScopeTypeEnum type, String... keys) {
+    public T size(ScopeTypeEnum type, String... keys) {
         return size(KeyUtil.scopeKeyAppend(type, keys));
     }
 
-    public Exp validId(String exp) {
+    public T validId(String exp) {
         validExpression(exp);
         this.expression = GlobalUtil.format("{}@{}({})", this.expression, validId, exp);
-        return this;
+        return (T) this;
     }
 
-    public Exp validId(ScopeTypeEnum type, String... keys) {
+    public T validId(ScopeTypeEnum type, String... keys) {
         return validId(KeyUtil.scopeKeyAppend(type, keys));
     }
 
@@ -478,7 +482,7 @@ public class Exp {
         }
     }
 
-    private String build() {
+    protected String build() {
         AssertUtil.notBlank(this.expression);
         if (order != null) {
             return GlobalUtil.format("O{}: {}", order, this.expression);
