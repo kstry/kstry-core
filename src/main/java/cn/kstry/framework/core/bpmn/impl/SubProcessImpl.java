@@ -61,6 +61,10 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
         return startEvent;
     }
 
+    public void setStartEvent(StartEvent startEvent) {
+        this.startEvent = startEvent;
+    }
+
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.SUB_PROCESS;

@@ -56,6 +56,12 @@ public interface ElementIterable extends AsyncFlowElement {
     Integer getStride();
 
     /**
+     * 迭代时，是否将返回值、入参两集合中的索引进行一一对应。默认false不进行索引对齐
+     * 注意：如果进行一一对齐，返回值集合中的null值将不会被过滤，需要考虑集合中元素出现null的情况
+     */
+    Boolean getIteAlignIndex();
+
+    /**
      * 是否可以被遍历执行
      *
      * @return boolean

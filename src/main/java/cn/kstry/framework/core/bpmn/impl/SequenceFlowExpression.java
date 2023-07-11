@@ -47,7 +47,7 @@ public class SequenceFlowExpression extends BaseElementImpl implements Expressio
         for (ConditionExpressionImpl cExp : actualWorkExpressionList) {
             Pair<Integer, String> expPair = ExpressionAliasParser.parseExpressionOrder(expression);
             if (cExp.match(expPair.getRight())) {
-                conditionExpression = cExp.newWorkConditionExpression(expPair.getRight(), expPair.getLeft(), cExp.isNeedParserExpression());
+                conditionExpression = cExp.newWorkConditionExpression(expression, expPair.getRight(), expPair.getLeft(), cExp.isNeedParserExpression());
                 return;
             }
         }

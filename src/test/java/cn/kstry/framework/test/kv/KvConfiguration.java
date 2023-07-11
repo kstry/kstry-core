@@ -18,6 +18,7 @@
 package cn.kstry.framework.test.kv;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
+import cn.kstry.framework.test.util.TestUtil;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.PropertySource;
  * @author lykan
  */
 @Configuration
-@EnableKstry(bpmnPath = "./bpmn/kv/*.bpmn", propertiesPath = "./bpmn/kv/*.yml")
+@EnableKstry(bpmnPath = "./bpmn/kv/*." + TestUtil.TEST_PROCESS_TYPE, propertiesPath = "./bpmn/kv/*.yml")
 @PropertySource("classpath:application.properties")
 @ComponentScan(basePackageClasses = KvConfiguration.class)
 public class KvConfiguration {

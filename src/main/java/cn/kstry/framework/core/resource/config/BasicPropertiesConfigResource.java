@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.resource.config;
 
+import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.kv.BasicKValue;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
@@ -28,6 +29,7 @@ import org.springframework.core.io.Resource;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author lykan
@@ -54,7 +56,7 @@ public class BasicPropertiesConfigResource extends AbstractConfigResource implem
         yamlMapFactoryBean.setResources(resource);
         yamlMapFactoryBean.afterPropertiesSet();
         Map<String, BasicKValue> kValueMap = Maps.newHashMap();
-        yamlMapFactoryBean.getObject().forEach((k, v) -> {
+        Objects.requireNonNull(yamlMapFactoryBean.getObject()).forEach((k, v) -> {
             if (!(v instanceof Map)) {
                 return;
             }
@@ -65,5 +67,10 @@ public class BasicPropertiesConfigResource extends AbstractConfigResource implem
             });
         });
         return Lists.newArrayList(kValueMap.values());
+    }
+
+    @Override
+    public ResourceTypeEnum getResourceType() {
+        return ResourceTypeEnum.KV_PROPERTIES;
     }
 }

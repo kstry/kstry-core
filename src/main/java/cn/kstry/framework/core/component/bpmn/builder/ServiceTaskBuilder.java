@@ -95,6 +95,14 @@ public class ServiceTaskBuilder {
         return this;
     }
 
+    public ServiceTaskBuilder retryTimes(Integer retryTimes) {
+        if (retryTimes == null || retryTimes <= 0) {
+            return this;
+        }
+        this.serviceTask.setRetryTimes(retryTimes);
+        return this;
+    }
+
     public ServiceTaskBuilder notStrictMode() {
         this.serviceTask.setStrictMode(false);
         return this;

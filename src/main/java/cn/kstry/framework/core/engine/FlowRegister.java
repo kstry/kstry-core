@@ -30,6 +30,7 @@ import cn.kstry.framework.core.engine.future.AdminFuture;
 import cn.kstry.framework.core.enums.ElementAllowNextEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
+import cn.kstry.framework.core.monitor.SerializeTracking;
 import cn.kstry.framework.core.monitor.TrackingStack;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementPropertyUtil;
@@ -107,7 +108,7 @@ public class FlowRegister {
 
     }
 
-    public FlowRegister(FlowElement startEvent, StoryRequest<?> storyRequest) {
+    public FlowRegister(FlowElement startEvent, StoryRequest<?> storyRequest, SerializeTracking serializeTracking) {
         AssertUtil.isTrue(startEvent instanceof StartEvent);
 
         // init start event
@@ -119,7 +120,7 @@ public class FlowRegister {
         requestId = GlobalUtil.getOrSetRequestId(storyRequest);
 
         // init monitor tracking
-        monitorTracking = new MonitorTracking(startEvent, storyRequest.getTrackingType());
+        monitorTracking = new MonitorTracking(startEvent, storyRequest.getTrackingType(), serializeTracking);
 
         // init stack
         flowElementStack = monitorTracking.newTrackingStack();

@@ -25,6 +25,9 @@ import java.util.stream.IntStream;
  */
 public class TestUtil {
 
+//        public static final String TEST_PROCESS_TYPE = "json";
+    public static final String TEST_PROCESS_TYPE = "bpmn";
+
     /**
      * 重复测试
      */

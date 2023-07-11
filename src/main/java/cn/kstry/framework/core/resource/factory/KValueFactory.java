@@ -25,7 +25,7 @@ import org.springframework.context.ApplicationContext;
 
 import com.google.common.collect.Lists;
 
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import cn.kstry.framework.core.enums.SourceTypeEnum;
 import cn.kstry.framework.core.kv.KValue;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.resource.config.PropertiesConfigResource;
@@ -44,7 +44,7 @@ public class KValueFactory extends BasicResourceFactory<KValue> {
 
     @Override
     public List<KValue> getResourceList() {
-        List<ConfigResource> configResourceList = getConfigResource(ResourceTypeEnum.PROPERTIES);
+        List<ConfigResource> configResourceList = getConfigResource(SourceTypeEnum.PROPERTIES);
         if (CollectionUtils.isEmpty(configResourceList)) {
             return Lists.newArrayList();
         }

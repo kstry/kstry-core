@@ -17,8 +17,10 @@
  */
 package cn.kstry.framework.core.component.launcher;
 
+import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
 import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
+import cn.kstry.framework.core.component.jsprocess.transfer.JsonSerializeProcessParser;
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.ComponentLifecycle;
@@ -37,6 +39,8 @@ import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.kv.*;
+import cn.kstry.framework.core.monitor.FieldSerializeTracking;
+import cn.kstry.framework.core.monitor.SerializeTracking;
 import cn.kstry.framework.core.monitor.ThreadPoolMonitor;
 import cn.kstry.framework.core.resource.factory.KValueFactory;
 import cn.kstry.framework.core.resource.factory.StartEventFactory;
@@ -119,15 +123,22 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     }
 
     @Bean
-    public StoryEngine getFlowEngine(StartEventContainer startEventContainer, RoleDynamicComponent roleDynamicComponent,
-                                     TaskContainer taskContainer, List<TaskThreadPoolExecutor> taskThreadPoolExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor) {
+    @Conditional(MissingSerializeTracking.class)
+    public SerializeTracking getSerializeTracking() {
+        return new FieldSerializeTracking();
+    }
+
+    @Bean
+    public StoryEngine getFlowEngine(StartEventContainer startEventContainer, RoleDynamicComponent roleDynamicComponent, TaskContainer taskContainer,
+                                     List<TaskThreadPoolExecutor> taskThreadPoolExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor,
+                                     SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking) {
         StoryEngineModule storyEngineModule = new StoryEngineModule(taskThreadPoolExecutor, startEventContainer, taskContainer, def -> {
             AssertUtil.notNull(def);
             if (def.isSpringInitialization()) {
                 return applicationContext.getBean(def.getParamType());
             }
             return ElementParserUtil.newInstance(def.getParamType()).orElse(null);
-        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(), threadSwitchHookProcessor, applicationContext);
+        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(), threadSwitchHookProcessor, applicationContext, serializeProcessParser, serializeTracking);
         return new StoryEngine(storyEngineModule, getBusinessRoleRepository(roleDynamicComponent));
     }
 
@@ -135,6 +146,12 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     @Conditional(ThreadPoolMonitorCondition.class)
     public ThreadPoolMonitor getThreadPoolMonitor(List<TaskThreadPoolExecutor> taskThreadPoolExecutor) {
         return new ThreadPoolMonitor(taskThreadPoolExecutor);
+    }
+
+    @Bean
+    @Conditional(MissingSerializeProcessParser.class)
+    public SerializeProcessParser<?> serializeProcessParser() {
+        return new JsonSerializeProcessParser();
     }
 
     @Override
@@ -208,6 +225,17 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
         }
     }
 
+    private static class MissingSerializeProcessParser implements Condition {
+
+        @Override
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
+            return MapUtils.isEmpty(context.getBeanFactory().getBeansOfType(SerializeProcessParser.class));
+        }
+    }
+
     private static class KvSelectorCondition implements Condition {
 
         @Override
@@ -226,6 +254,17 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
         public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             String enable = context.getEnvironment().getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_POOL_MONITOR_ENABLE);
             return BooleanUtils.isNotFalse(BooleanUtils.toBooleanObject(enable));
+        }
+    }
+
+    private static class MissingSerializeTracking implements Condition {
+
+        @Override
+        public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            if (context.getBeanFactory() == null) {
+                return false;
+            }
+            return MapUtils.isEmpty(context.getBeanFactory().getBeansOfType(SerializeTracking.class));
         }
     }
 }

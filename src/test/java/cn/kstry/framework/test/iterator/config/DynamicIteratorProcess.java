@@ -42,9 +42,8 @@ public class DynamicIteratorProcess implements DynamicProcess {
         }
 
         if (ITERATE_PROCESS_02.equals(startId)) {
-            BasicElementIterable iterable = ElementIterable.builder("req.numList").stride(3).openAsync().build();
             ProcessLink processLink = StartProcessLink.build(ITERATE_PROCESS_02);
-            processLink.nextTask("calculate-service", "batch-square").iterable(iterable).build().end();
+            processLink.nextTask("calculate-service", "batch-square").build().end();
             return Optional.of(processLink);
         }
         if (ITERATE_PROCESS_03.equals(startId)) {

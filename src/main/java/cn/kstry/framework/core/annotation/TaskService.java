@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.annotation;
 
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.annotation.ElementType;
@@ -67,4 +68,9 @@ public @interface TaskService {
      * @return 调用属性
      */
     Invoke invoke() default @Invoke();
+
+    /**
+     * 服务节点迭代器
+     */
+    Iterator iterator() default @Iterator();
 }

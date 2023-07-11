@@ -15,38 +15,34 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.component.bpmn;
+package cn.kstry.framework.core.resource.config;
 
+import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
-import cn.kstry.framework.core.resource.config.ConfigResource;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
- * 将 BPMN 文件解析成链路流程对象
+ * 流程配置文件定义
  *
  * @author lykan
  */
-public interface BpmnModelTransfer<T> {
+public interface ProcessConfigResource extends ConfigResource {
 
     /**
-     * 从 其他 Bpmn Model 转化为 Kstry Model
+     * 获取配置文件实例中全部 SubProcess
+     * - k：SubProcess id
+     * - v: SubProcess 对象
      *
-     * @param config   config
-     * @param instance Bpmn Model
-     * @param startId  startId
-     * @return Bpmn Model
+     * @return SubProcess Map
      */
-    Optional<ProcessLink> getProcessLink(ConfigResource config, T instance, String startId);
+    Map<String, SubProcessLink> getSubProcessMap();
 
     /**
-     * 获取 子流程
+     * 获取 StartEvent 集合
      *
-     * @param config   config
-     * @param instance Bpmn Model
-     * @return 子流程
+     * @return StartEvent 集合
      */
-    Map<String, SubProcessLink> getAllSubProcessLink(ConfigResource config, T instance);
+    List<StartEvent> getStartEventList();
 }

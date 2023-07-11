@@ -17,17 +17,18 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import java.util.List;
-
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
-import com.google.common.collect.Lists;
-
-import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.util.AssertUtil;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 类路径配置来源
@@ -48,13 +49,19 @@ public abstract class ClassPathConfigSource implements ConfigSource {
 
     protected List<Resource> getResourceList() {
         ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource[] resources;
+        List<Resource> resources;
         try {
-            resources = resolver.getResources(configName);
+            resources = Stream.of(configName).flatMap(c -> Stream.of(c.split(","))).flatMap(c -> {
+                try {
+                    return Stream.of(resolver.getResources(c));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }).collect(Collectors.toList());
         } catch (Throwable e) {
             throw ExceptionUtil.buildException(e, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, null);
         }
-        if (resources == null || resources.length == 0) {
+        if (CollectionUtils.isEmpty(resources)) {
             return Lists.newArrayList();
         }
         return Lists.newArrayList(resources);

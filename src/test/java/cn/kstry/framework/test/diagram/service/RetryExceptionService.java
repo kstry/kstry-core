@@ -36,7 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @TaskComponent
 public class RetryExceptionService {
 
-    @TaskService(invoke = @Invoke(timeout = 100, retry = 3, retryExcludeExp = AExp.class))
+    // , retry = 3
+    @TaskService(invoke = @Invoke(timeout = 100, retryExcludeExp = AExp.class))
     public void simpleExceptionAsync(@ReqTaskParam(reqSelf = true) AtomicInteger req) {
         req.incrementAndGet();
         int i = 1 / 0;
@@ -70,7 +71,7 @@ public class RetryExceptionService {
     public void simpleExceptionAsync2(@ReqTaskParam(reqSelf = true) AtomicInteger req) {
         req.incrementAndGet();
         try {
-            TimeUnit.MILLISECONDS.sleep(110);
+            TimeUnit.MILLISECONDS.sleep(210);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

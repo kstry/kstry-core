@@ -47,6 +47,11 @@ public class IterablePropertyBuilder {
         return this;
     }
 
+    public IterablePropertyBuilder alignIndex() {
+        elementIterable.setIteAlignIndex(true);
+        return this;
+    }
+
     public IterablePropertyBuilder stride(Integer stride) {
         elementIterable.setStride(stride);
         return this;

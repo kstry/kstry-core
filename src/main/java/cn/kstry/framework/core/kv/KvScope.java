@@ -32,15 +32,16 @@ public class KvScope {
         this.scope = Optional.ofNullable(scope).filter(StringUtils::isNotBlank).orElse(GlobalConstant.VARIABLE_SCOPE_DEFAULT);
     }
 
+    public KvScope(String scope, String businessId) {
+        this(scope);
+        this.businessId = businessId;
+    }
+
     public String getScope() {
         return scope;
     }
 
     public Optional<String> getBusinessId() {
         return Optional.ofNullable(businessId).filter(StringUtils::isNotBlank);
-    }
-
-    public void setBusinessId(String businessId) {
-        this.businessId = businessId;
     }
 }

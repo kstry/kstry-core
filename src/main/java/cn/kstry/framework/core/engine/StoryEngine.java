@@ -154,6 +154,15 @@ public class StoryEngine {
     }
 
     @SuppressWarnings("unchecked")
+    public <T> Optional<T> serialize(StoryRequest<?> storyRequest) {
+        if (storyRequest == null) {
+            return Optional.empty();
+        }
+        Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(getScopeDataQuery(storyRequest));
+        return startEventOptional.flatMap(startEvent -> storyEngineModule.getSerializeProcessParser().serialize(startEvent).map(t -> (T) t));
+    }
+
+    @SuppressWarnings("unchecked")
     private <T> Mono<T> doFireAsync(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) {
         Role role = storyRequest.getRole();
         FlowRegister flowRegister = getFlowRegister(storyRequest, scopeDataQuery);
@@ -207,7 +216,7 @@ public class StoryEngine {
         Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(scopeDataQuery);
         StartEvent startEvent = startEventOptional.orElseThrow(() -> ExceptionUtil
                 .buildException(null, ExceptionEnum.PARAMS_ERROR, GlobalUtil.format("StartId did not match a valid StartEvent! startId: {}", startId)));
-        return new FlowRegister(startEvent, storyRequest);
+        return new FlowRegister(startEvent, storyRequest, storyEngineModule.getSerializeTracking());
     }
 
     private <T> void initRole(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) {

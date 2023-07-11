@@ -30,7 +30,7 @@ public class SubDiagramBpmnLink extends StartDiagramProcessLink implements SubBp
     private final SubProcessImpl subProcess;
 
     public SubDiagramBpmnLink(SubProcessLink builder, ConfigResource configResource, String id, String name, String startId, String startName) {
-        super(StringUtils.isBlank(startId) ? SubBpmnLink.relatedStartId(id) : startId, StringUtils.isBlank(startName) ? name : startName);
+        super(StringUtils.isBlank(startId) ? SubBpmnLink.relatedStartId(id) : startId, StringUtils.isBlank(startName) ? name : startName, id, name);
         SubProcessImpl subProcess = new SubProcessImpl(allSub -> {
             SubDiagramBpmnLink processLink = builder.buildSubDiagramBpmnLink(configResource);
             SubProcessImpl sp = processLink.getElement();

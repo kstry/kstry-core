@@ -1,0 +1,49 @@
+[
+  {
+    "process-id": "Process_027m9ap",
+    "process-nodes": [
+      {
+        "id": "story-def-kv-test_001",
+        "next-nodes": [
+          "Flow_1a2t1yq"
+        ],
+        "type": "start_event"
+      },
+      {
+        "id": "Flow_1a2t1yq",
+        "next-nodes": [
+          "Activity_1hthdiz"
+        ],
+        "type": "sequence_flow"
+      },
+      {
+        "id": "Activity_1hthdiz",
+        "name": "获取变量",
+        "next-nodes": [
+          "Flow_09w4534"
+        ],
+        "properties": {
+          "task-component": "kv-test",
+          "allow-absent": false,
+          "strict-mode": true,
+          "task-service": "kv-service-business"
+        },
+        "type": "service_task"
+      },
+      {
+        "id": "Flow_09w4534",
+        "next-nodes": [
+          "a9c501c8f22541aa9b2ec55883f7dea9"
+        ],
+        "type": "sequence_flow"
+      },
+      {
+        "id": "a9c501c8f22541aa9b2ec55883f7dea9",
+        "next-nodes": [],
+        "type": "end_event"
+      }
+    ],
+    "start-id": "story-def-kv-test_001",
+    "sub-process": false
+  }
+]

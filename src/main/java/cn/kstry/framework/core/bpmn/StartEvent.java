@@ -53,4 +53,32 @@ public interface StartEvent extends Event {
      * @param endEvent 非空
      */
     void setEndEvent(EndEvent endEvent);
+
+    /**
+     * 获取流程Id
+     *
+     * @return 流程Id
+     */
+    String getProcessId();
+
+    /**
+     * 设置流程Id
+     *
+     * @param processId 流程Id
+     */
+    void setProcessId(String processId);
+
+    /**
+     * 获取流程名称
+     *
+     * @return 流程名称
+     */
+    String getProcessName();
+
+    /**
+     * 设置流程名称
+     *
+     * @param processName 流程名称
+     */
+    void setProcessName(String processName);
 }

@@ -27,7 +27,7 @@ import java.util.Optional;
 /**
  * InclusiveGatewayImpl
  */
-public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGateway, ServiceTaskSupport {
+public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGateway {
 
     /**
      * 支持异步流程

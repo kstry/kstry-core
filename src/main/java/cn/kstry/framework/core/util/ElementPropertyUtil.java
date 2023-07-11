@@ -22,11 +22,15 @@ import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.Gateway;
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
+import cn.kstry.framework.core.component.jsprocess.metadata.JsonPropertySupport;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowNode;
@@ -67,6 +71,33 @@ public class ElementPropertyUtil {
         }
         AsyncFlowElement asyncFlowElement = GlobalUtil.transferNotEmpty(flowElement, AsyncFlowElement.class);
         return BooleanUtils.isTrue(asyncFlowElement.openAsync());
+    }
+
+    public static Optional<String> getJsonNodeProperty(JsonPropertySupport jsonNode, String name) {
+        if (jsonNode == null || MapUtils.isEmpty(jsonNode.getProperties()) || StringUtils.isBlank(name)) {
+            return Optional.empty();
+        }
+
+        for (Map.Entry<String, Object> entry : jsonNode.getProperties().entrySet()) {
+            if (Objects.equals(entry.getKey().trim().toLowerCase(Locale.ROOT), name)) {
+                return Optional.ofNullable(entry.getValue()).map(prop -> (prop instanceof String) ? prop.toString() : JSON.toJSONString(prop));
+            }
+        }
+        return Optional.empty();
+    }
+
+    public static List<Pair<String, String>> getJsonNodeProperties(JsonPropertySupport jsonNode, String name) {
+        if (jsonNode == null || MapUtils.isEmpty(jsonNode.getProperties()) || StringUtils.isBlank(name)) {
+            return Lists.newArrayList();
+        }
+
+        List<Pair<String, String>> result = Lists.newArrayList();
+        jsonNode.getProperties().forEach((k, v) -> {
+            if (k.trim().toLowerCase(Locale.ROOT).startsWith(name)) {
+                result.add(ImmutablePair.of(k, (v instanceof String) ? v.toString() : JSON.toJSONString(v)));
+            }
+        });
+        return result;
     }
 
     public static Optional<String> getNodeProperty(FlowNode flowNode, String name) {

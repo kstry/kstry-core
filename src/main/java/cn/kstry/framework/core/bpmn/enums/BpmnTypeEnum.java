@@ -17,6 +17,10 @@
  */
 package cn.kstry.framework.core.bpmn.enums;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 /**
  * BPMN 元素类型
  *
@@ -106,6 +110,14 @@ public enum BpmnTypeEnum {
      */
     public BpmnTypeEnum getParent() {
         return parent;
+    }
+
+    public static Optional<BpmnTypeEnum> of(String type) {
+        return Stream.of(BpmnTypeEnum.values()).filter(e -> Objects.equals(e.getType(), type)).findFirst();
+    }
+
+    public boolean is(String type) {
+        return BpmnTypeEnum.of(type).orElse(null) == this;
     }
 
     /**

@@ -19,10 +19,7 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bus.InstructContent;
-import cn.kstry.framework.core.bus.ScopeDataOperator;
-import cn.kstry.framework.core.bus.ScopeDataQuery;
-import cn.kstry.framework.core.bus.StoryBus;
+import cn.kstry.framework.core.bus.*;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskInstructWrapper;
@@ -84,7 +81,8 @@ public class TaskServiceUtil {
      * 获取目标方法入参
      */
     public static Object[] getTaskParams(boolean isCustomRole, boolean tracking, ServiceTask serviceTask, StoryBus storyBus, Role role, TaskInstructWrapper taskInstructWrapper,
-                                         List<ParamInjectDef> paramInjectDefs, Function<ParamInjectDef, Object> paramInitStrategy, ApplicationContext applicationContext) {
+                                         List<ParamInjectDef> paramInjectDefs, Function<ParamInjectDef, Object> paramInitStrategy, ApplicationContext applicationContext,
+                                         IterDataItem<?> iterDataItem) {
         AssertUtil.notNull(serviceTask);
 
         Optional<MonitorTracking> trackingOptional = Optional.of(storyBus.getMonitorTracking()).filter(t -> tracking);
@@ -113,27 +111,49 @@ public class TaskServiceUtil {
             if (iDef.getScopeDataEnum() == ScopeTypeEnum.REQUEST && iDef.isInjectSelf()) {
                 params[i] = storyBus.getReq();
                 trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
-                        ParamTracking.build(iDef.getFieldName(), storyBus.getReq(), ScopeTypeEnum.REQUEST, ScopeTypeEnum.REQUEST.name().toLowerCase())));
+                        ParamTracking.build(iDef.getFieldName(), ScopeTypeEnum.REQUEST.name().toLowerCase(), ScopeTypeEnum.REQUEST, storyBus.getReq(), storyBus.getReq().getClass()))
+                );
                 continue;
             }
 
-            if (taskInstructWrapper != null && StringUtils.isNotBlank(serviceTask.getTaskInstruct()) && InstructContent.class.isAssignableFrom(iDef.getParamType())) {
+            if (InstructContent.class.isAssignableFrom(iDef.getParamType())) {
+                if (taskInstructWrapper == null || StringUtils.isBlank(serviceTask.getTaskInstruct())) {
+                    continue;
+                }
                 InstructContent instructContent = new InstructContent(serviceTask.getTaskInstruct(), serviceTask.getTaskInstructContent());
                 params[i] = instructContent;
-                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName(), null, ScopeTypeEnum.EMPTY, "instruct")));
+                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                        () -> ParamTracking.build(iDef.getFieldName(), InstructContent.class.getSimpleName(), ScopeTypeEnum.EMPTY, instructContent, InstructContent.class))
+                );
+                continue;
+            }
+
+            if (IterDataItem.class.isAssignableFrom(iDef.getParamType())) {
+                if (iterDataItem == null) {
+                    continue;
+                }
+                params[i] = iterDataItem;
+                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                        () -> ParamTracking.build(iDef.getFieldName(), IterDataItem.class.getSimpleName(), ScopeTypeEnum.EMPTY, iterDataItem, IterDataItem.class))
+                );
+                continue;
             }
 
             // 如果目标类是 CustomRole 且方法入参需要 Role 时，直接透传 role
             if (isCustomRole && Role.class.isAssignableFrom(iDef.getParamType())) {
                 params[i] = role;
-                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName(), null, ScopeTypeEnum.EMPTY, "role")));
+                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                        () -> ParamTracking.build(iDef.getFieldName(), Role.class.getSimpleName(), ScopeTypeEnum.EMPTY, null, Role.class))
+                );
                 continue;
             }
 
             // 入参是 ScopeDataOperator 时，注入ScopeDataOperator
             if (ScopeDataQuery.class.isAssignableFrom(iDef.getParamType())) {
                 params[i] = storyBus.getScopeDataOperator();
-                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName(), null, ScopeTypeEnum.EMPTY, "dataOperator")));
+                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                        () -> ParamTracking.build(iDef.getFieldName(), ScopeDataOperator.class.getSimpleName(), ScopeTypeEnum.EMPTY, null, ScopeDataQuery.class))
+                );
                 continue;
             }
 
@@ -141,19 +161,23 @@ public class TaskServiceUtil {
             if (iDef.getScopeDataEnum() != null && StringUtils.isNotBlank(iDef.getTargetName())) {
                 Object r = storyBus.getValue(iDef.getScopeDataEnum(), iDef.getTargetName()).orElse(null);
                 if (r == PropertyUtil.GET_PROPERTY_ERROR_SIGN) {
-                    trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
-                            ParamTracking.build(iDef.getFieldName(), BAD_VALUE, iDef.getScopeDataEnum(), iDef.getTargetName())));
+                    trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                            () -> ParamTracking.build(iDef.getFieldName(), iDef.getTargetName(), iDef.getScopeDataEnum(), BAD_VALUE, iDef.getParamType()))
+                    );
                     continue;
                 }
                 if (isPrimitive && r == null) {
                     Object primitiveFinalObj = params[i];
-                    trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
-                            ParamTracking.build(iDef.getFieldName(), primitiveFinalObj, iDef.getScopeDataEnum(), iDef.getTargetName())));
+                    trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                            () -> ParamTracking.build(iDef.getFieldName(), iDef.getTargetName(), iDef.getScopeDataEnum(), primitiveFinalObj, iDef.getParamType()))
+                    );
                     continue;
                 }
                 checkParamType(serviceTask, iDef, r);
                 params[i] = r;
-                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName(), r, iDef.getScopeDataEnum(), iDef.getTargetName())));
+                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
+                        () -> ParamTracking.build(iDef.getFieldName(), iDef.getTargetName(), iDef.getScopeDataEnum(), r, iDef.getParamType()))
+                );
                 continue;
             }
 
@@ -178,14 +202,16 @@ public class TaskServiceUtil {
                         Object value = storyBus.getValue(def.getScopeDataEnum(), def.getTargetName()).orElse(null);
                         if (value == PropertyUtil.GET_PROPERTY_ERROR_SIGN) {
                             trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
-                                    ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), BAD_VALUE, def.getScopeDataEnum(), def.getTargetName())));
+                                    ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), def.getTargetName(), def.getScopeDataEnum(), BAD_VALUE, def.getParamType()))
+                            );
                             return;
                         }
                         checkParamType(serviceTask, def, value);
                         boolean setSuccess = PropertyUtil.setProperty(o, def.getFieldName(), value);
                         if (setSuccess) {
                             trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
-                                    ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), value, def.getScopeDataEnum(), def.getTargetName())));
+                                    ParamTracking.build(iDef.getFieldName() + "." + def.getFieldName(), def.getTargetName(), def.getScopeDataEnum(), value, def.getParamType()))
+                            );
                         }
                     });
                 }
@@ -274,7 +300,7 @@ public class TaskServiceUtil {
 
     private static Object parseParamValue(String valStr, ScopeDataOperator scopeDataOperator, Class<?> type) {
         if (valStr.startsWith("@") && ElementParserUtil.isValidDataExpression(valStr.substring(1))) {
-            return scopeDataOperator.getData(valStr.substring(1)).orElse(null);
+            return scopeDataOperator.getData(valStr.substring(1)).orElse(type.isPrimitive() ? ElementParserUtil.initPrimitive(type) : null);
         }
         return JSON.parseObject(valStr, type);
     }

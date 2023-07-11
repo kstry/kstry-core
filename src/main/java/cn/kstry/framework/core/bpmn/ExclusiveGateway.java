@@ -17,10 +17,12 @@
  */
 package cn.kstry.framework.core.bpmn;
 
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
+
 /**
  * ExclusiveGateway
  */
-public interface ExclusiveGateway extends Gateway {
+public interface ExclusiveGateway extends Gateway, ServiceTaskSupport {
 
 
 }

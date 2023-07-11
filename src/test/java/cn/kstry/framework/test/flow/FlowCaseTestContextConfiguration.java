@@ -1,6 +1,7 @@
 package cn.kstry.framework.test.flow;
 
 import cn.kstry.framework.core.annotation.EnableKstry;
+import cn.kstry.framework.test.util.TestUtil;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -12,7 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-@EnableKstry(bpmnPath = "./bpmn/flow/*.bpmn")
+@EnableKstry(bpmnPath = "./bpmn/flow/*." + TestUtil.TEST_PROCESS_TYPE)
 @ComponentScan(basePackageClasses = FlowCaseTestContextConfiguration.class)
 @PropertySource("classpath:application.properties")
 public class FlowCaseTestContextConfiguration {

@@ -19,15 +19,12 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.exception.ResourceException;
-import cn.kstry.framework.core.kv.KvScope;
-import cn.kstry.framework.core.kv.KvThreadLocal;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -67,15 +64,12 @@ public class ProxyUtil {
         return AopUtils.getTargetClass(candidate);
     }
 
-    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask,  Object target) {
-        return invokeMethod(storyBus, methodWrapper, serviceTask, target, () -> new Object[0]);
+    public static Object invokeMethod(MethodWrapper methodWrapper, ServiceTask serviceTask, Object target) {
+        return invokeMethod(methodWrapper, serviceTask, target, () -> new Object[0]);
     }
 
-    public static Object invokeMethod(StoryBus storyBus, MethodWrapper methodWrapper, ServiceTask serviceTask, Object target, Supplier<Object[]> paramsSupplier) {
+    public static Object invokeMethod(MethodWrapper methodWrapper, ServiceTask serviceTask, Object target, Supplier<Object[]> paramsSupplier) {
         try {
-            KvScope newKvScope = new KvScope(methodWrapper.getKvScope());
-            newKvScope.setBusinessId(storyBus.getBusinessId());
-            KvThreadLocal.setKvScope(newKvScope);
             Object[] params = paramsSupplier.get();
             return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, params);
         } catch (Throwable e) {
@@ -92,8 +86,6 @@ public class ProxyUtil {
             businessException.setTaskIdentity(TaskServiceUtil.joinName(serviceTask.getTaskComponent(), serviceTask.getTaskService()));
             businessException.setMethodName(methodWrapper.getMethod().getName());
             throw businessException;
-        } finally {
-            KvThreadLocal.clear();
         }
     }
 

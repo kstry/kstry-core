@@ -21,7 +21,6 @@ import cn.kstry.framework.core.bus.StoryBus;
 import org.springframework.core.Ordered;
 
 /**
- *
  * @author lykan
  */
 public interface ConditionExpression extends Ordered {
@@ -47,4 +46,9 @@ public interface ConditionExpression extends Ordered {
      * @param aliasParser 别名解析器
      */
     void parserConditionExpression(ExpressionAliasParser aliasParser);
+
+    /**
+     * 获取未加工的，最初的条件表达式
+     */
+    String getPlainExpression();
 }

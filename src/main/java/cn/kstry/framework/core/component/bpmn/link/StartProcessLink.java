@@ -86,7 +86,20 @@ public interface StartProcessLink extends ProcessLink {
      * @return ProcessLink
      */
     static StartProcessLink build(String id, String name) {
-        return new StartDiagramProcessLink(id, name);
+        return build(id, name, null, null);
+    }
+
+    /**
+     * 构建
+     *
+     * @param startId     非空
+     * @param startName   允许为空
+     * @param processId   允许为空
+     * @param processName 允许为空
+     * @return ProcessLink
+     */
+    static StartProcessLink build(String startId, String startName, String processId, String processName) {
+        return new StartDiagramProcessLink(startId, startName, processId, processName);
     }
 
     /**

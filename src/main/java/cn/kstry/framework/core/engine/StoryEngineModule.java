@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.engine;
 
+import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.element.StartEventContainer;
@@ -26,6 +27,7 @@ import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.monitor.SerializeTracking;
 import cn.kstry.framework.core.util.AssertUtil;
 import org.springframework.context.ApplicationContext;
 
@@ -86,13 +88,21 @@ public class StoryEngineModule {
     private final ThreadSwitchHookProcessor threadSwitchHookProcessor;
 
     /**
+     * 流程序列化解析器
+     */
+    private final SerializeProcessParser<?> serializeProcessParser;
+
+    /**
      * Spring上下文
      */
     private final ApplicationContext applicationContext;
 
+    private final SerializeTracking serializeTracking;
+
     public StoryEngineModule(List<TaskThreadPoolExecutor> threadPoolExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
                              Function<ParamInjectDef, Object> paramInitStrategy, SubProcessInterceptorRepository subInterceptorRepository,
-                             TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor, ApplicationContext applicationContext) {
+                             TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor, ApplicationContext applicationContext,
+                             SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking) {
         AssertUtil.anyNotNull(threadPoolExecutors, taskContainer, paramInitStrategy, startEventContainer);
 
         List<TaskThreadPoolExecutor> methodThreadPoolList = threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
@@ -111,6 +121,8 @@ public class StoryEngineModule {
         this.threadSwitchHookProcessor = threadSwitchHookProcessor;
         this.taskInterceptorRepository = taskInterceptorRepository;
         this.applicationContext = applicationContext;
+        this.serializeProcessParser = serializeProcessParser;
+        this.serializeTracking = serializeTracking;
     }
 
     public TaskThreadPoolExecutor getTaskThreadPool() {
@@ -151,5 +163,13 @@ public class StoryEngineModule {
 
     public ApplicationContext getApplicationContext() {
         return applicationContext;
+    }
+
+    public SerializeProcessParser<?> getSerializeProcessParser() {
+        return serializeProcessParser;
+    }
+
+    public SerializeTracking getSerializeTracking() {
+        return serializeTracking;
     }
 }

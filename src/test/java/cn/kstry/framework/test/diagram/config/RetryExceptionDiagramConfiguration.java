@@ -39,7 +39,7 @@ public class RetryExceptionDiagramConfiguration {
     @Bean
     public ProcessLink retryExceptionProcess2() {
         StartProcessLink processLink = StartProcessLink.build(RetryExceptionDiagramConfiguration::retryExceptionProcess2);
-        processLink.nextService(RetryExceptionService::simpleExceptionAsync).build().end();
+        processLink.nextService(RetryExceptionService::simpleExceptionAsync).retryTimes(3).build().end();
         return processLink;
     }
 

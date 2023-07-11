@@ -215,7 +215,9 @@ public class BasicStoryBus implements StoryBus {
             }
             if (this.returnResult == null) {
                 this.returnResult = r;
-                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, r));
+                monitorTracking.trackingNodeNotice(flowElement,
+                        () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, r, Optional.ofNullable(r).map(Object::getClass).orElse(null))
+                );
             } else {
                 LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}",
                         ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), taskServiceDef.getName());
@@ -404,7 +406,7 @@ public class BasicStoryBus implements StoryBus {
 
                 @Override
                 public <T> Optional<T> iterDataItem() {
-                    return InvokeMethodThreadLocal.getDataItem().map(t -> (T) t);
+                    return InvokeMethodThreadLocal.getDataItem().map(t -> (T) (t.isBatch() ? t.getDataList() : t.getData().orElse(null)));
                 }
 
                 @Override
@@ -437,6 +439,9 @@ public class BasicStoryBus implements StoryBus {
                             return false;
                         }
                         BasicStoryBus.this.returnResult = target;
+                        InvokeMethodThreadLocal.getServiceTask().ifPresent(element ->
+                                monitorTracking.trackingNodeNotice(element, () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, target, target.getClass()))
+                        );
                         return true;
                     } finally {
                         wLock.unlock();
@@ -474,8 +479,13 @@ public class BasicStoryBus implements StoryBus {
                                 return false;
                             }
                         }
+                        Class<?> targetClass = t.getClass();
                         String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
-                        return PropertyUtil.setProperty(t, fieldName, target);
+                        boolean setRes = PropertyUtil.setProperty(t, fieldName, target);
+                        InvokeMethodThreadLocal.getServiceTask().filter(s -> setRes).ifPresent(element ->
+                                monitorTracking.trackingNodeNotice(element, () -> NoticeTracking.build(null, name, scopeData.getScopeDataEnum(), target, targetClass))
+                        );
+                        return setRes;
                     } finally {
                         wLock.unlock();
                     }
@@ -509,7 +519,7 @@ public class BasicStoryBus implements StoryBus {
                 t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
             }
             if (t == null) {
-                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_TARGET));
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_TARGET, data.getClass()));
                 return;
             }
 
@@ -523,12 +533,13 @@ public class BasicStoryBus implements StoryBus {
             }
 
             Object r;
+            Class<?> targetClass = t.getClass();
             if (def.isResultSelf()) {
                 r = result;
             } else {
                 r = PropertyUtil.getProperty(result, def.getFieldName()).orElse(null);
                 if (r == PropertyUtil.GET_PROPERTY_ERROR_SIGN) {
-                    monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_VALUE));
+                    monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_VALUE, targetClass));
                     return;
                 }
             }
@@ -542,7 +553,7 @@ public class BasicStoryBus implements StoryBus {
             }
             boolean setSuccess = PropertyUtil.setProperty(t, fieldName, r);
             if (setSuccess) {
-                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r));
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r, targetClass));
             }
         });
     }

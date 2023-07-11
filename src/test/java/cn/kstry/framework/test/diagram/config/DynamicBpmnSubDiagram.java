@@ -1,19 +1,25 @@
 package cn.kstry.framework.test.diagram.config;
 
 import cn.kstry.framework.core.component.bpmn.BpmnProcessParser;
+import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.dynamic.creator.DynamicSubProcess;
 import cn.kstry.framework.core.component.expression.Exp;
+import cn.kstry.framework.core.component.jsprocess.transfer.JsonSerializeProcessParser;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import com.google.common.collect.Lists;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 @Component
 public class DynamicBpmnSubDiagram implements DynamicSubProcess {
+
+    @Resource
+    private SerializeProcessParser<String> jsonSerializeProcessParser;
 
     @Override
     public List<SubProcessLink> getSubProcessLinks() {
@@ -58,6 +64,7 @@ public class DynamicBpmnSubDiagram implements DynamicSubProcess {
                 + "  </bpmn:process>"
                 + "</bpmn:definitions>";
         BpmnProcessParser parser = new BpmnProcessParser("自定义XML子流程", subXml);
+        jsonSerializeProcessParser.bpmnSerialize(subXml).ifPresent(System.out::println);
         return Lists.newArrayList(parser.getSubProcessLink("Activity_1t2opos").orElse(null),
                 SubProcessLink.build("a-call-link-diagram-sub-process2",
                         link -> link

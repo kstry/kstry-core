@@ -48,11 +48,13 @@ public class StartDiagramProcessLink extends BpmnDiagramLink implements StartPro
      */
     private final EndEvent endEvent;
 
-    public StartDiagramProcessLink(String id, String name) {
-        AssertUtil.notBlank(id, ExceptionEnum.PARAMS_ERROR, "Id is not allowed to be empty!");
+    public StartDiagramProcessLink(String startId, String startName, String processId, String processName) {
+        AssertUtil.notBlank(startId, ExceptionEnum.PARAMS_ERROR, "Id is not allowed to be empty!");
         StartEventImpl se = new StartEventImpl();
-        se.setId(id);
-        se.setName(name);
+        se.setId(startId);
+        se.setName(startName);
+        se.setProcessId(processId);
+        se.setProcessName(processName);
         this.startEvent = se;
 
         EndEventImpl endEvent = new EndEventImpl();

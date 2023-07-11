@@ -17,9 +17,13 @@
  */
 package cn.kstry.framework.core.container.component;
 
+import cn.kstry.framework.core.annotation.Iterator;
 import cn.kstry.framework.core.annotation.NoticeScope;
 import cn.kstry.framework.core.annotation.TaskService;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bus.InstructContent;
+import cn.kstry.framework.core.bus.IterDataItem;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.engine.ParamLifecycle;
@@ -31,6 +35,7 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.KeyUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -76,6 +81,8 @@ public class MethodWrapper {
 
     private final InvokeProperties invokeProperties;
 
+    private final ElementIterable elementIterable;
+
     private final boolean isCustomRole;
 
     private final TaskInstructWrapper taskInstructWrapper;
@@ -92,6 +99,7 @@ public class MethodWrapper {
         this.isCustomRole = isCustomRole;
         this.taskInstructWrapper = taskInstructWrapper;
         this.invokeProperties = new InvokeProperties(annotation.invoke());
+        this.elementIterable = getElementIterable(annotation.iterator());
 
         methodParser(method);
     }
@@ -126,6 +134,10 @@ public class MethodWrapper {
 
     public InvokeProperties getInvokeProperties() {
         return invokeProperties;
+    }
+
+    public ElementIterable getElementIterable() {
+        return elementIterable;
     }
 
     public Optional<TaskInstructWrapper> getTaskInstructWrapper() {
@@ -164,7 +176,8 @@ public class MethodWrapper {
                 continue;
             }
 
-            if (Role.class.isAssignableFrom(p.getType()) || ScopeDataQuery.class.isAssignableFrom(p.getType()) || InstructContent.class.isAssignableFrom(p.getType())) {
+            if (Role.class.isAssignableFrom(p.getType()) || ScopeDataQuery.class.isAssignableFrom(p.getType())
+                    || InstructContent.class.isAssignableFrom(p.getType()) || IterDataItem.class.isAssignableFrom(p.getType())) {
                 injectDefs[i] = new ParamInjectDef(true, p.getType(), parameterNames[i], null);
                 continue;
             }
@@ -261,6 +274,21 @@ public class MethodWrapper {
             NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeScope.target(), returnType, noticeAnn.isNotField());
             noticeScopeDef(noticeScope, noticeFieldItem);
         });
+    }
+
+    private ElementIterable getElementIterable(Iterator iterator) {
+        BasicElementIterable iterable = new BasicElementIterable();
+        if (iterator == null) {
+            return iterable;
+        }
+        if (GlobalConstant.STORY_DATA_SCOPE.contains(iterator.sourceScope()) && StringUtils.isNotBlank(iterator.source())) {
+            iterable.setIteSource(KeyUtil.scopeKeyAppend(iterator.sourceScope(), iterator.source()));
+        }
+        iterable.setIteAlignIndex(iterator.alignIndex());
+        iterable.setStride(iterator.stride());
+        iterable.setOpenAsync(iterator.async());
+        iterable.setIteStrategy(iterator.strategy());
+        return iterable;
     }
 
     public static class ReturnTypeNoticeDef {

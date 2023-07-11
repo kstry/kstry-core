@@ -17,12 +17,12 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import cn.kstry.framework.core.enums.SourceTypeEnum;
 import com.google.common.collect.Lists;
 
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 类路径配资资源：属性变量
@@ -40,12 +40,12 @@ public class PropertiesClassPathConfigSource extends ClassPathConfigSource imple
     @Override
     public List<ConfigResource> getConfigResourceList() {
         return getResourceList().stream()
-                .filter(resource -> YAML_SUFFIX_NAME_LIST.stream().anyMatch(resource.getFilename()::endsWith))
+                .filter(resource -> YAML_SUFFIX_NAME_LIST.stream().anyMatch(Objects.requireNonNull(resource.getFilename())::endsWith))
                 .map(BasicPropertiesConfigResource::new).collect(Collectors.toList());
     }
 
     @Override
-    public ResourceTypeEnum getResourceType() {
-        return ResourceTypeEnum.PROPERTIES;
+    public SourceTypeEnum getSourceType() {
+        return SourceTypeEnum.PROPERTIES;
     }
 }

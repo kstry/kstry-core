@@ -25,18 +25,4 @@ import java.util.Optional;
  */
 public class KvThreadLocal {
 
-    private static final ThreadLocal<KvScope> KV_THREAD_LOCAL = new ThreadLocal<>();
-
-    public static void setKvScope(KvScope kvScope) {
-        KV_THREAD_LOCAL.set(kvScope);
-    }
-
-    public static Optional<KvScope> getKvScope() {
-        return Optional.ofNullable(KV_THREAD_LOCAL.get());
-    }
-
-    public static void clear() {
-        KV_THREAD_LOCAL.remove();
-    }
-
 }

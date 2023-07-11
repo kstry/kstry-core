@@ -22,6 +22,7 @@ import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,6 +47,10 @@ public interface DynamicSubProcess extends DynamicComponentCreator<SubProcessLin
             return Optional.empty();
         }
 
+        Optional<SubProcessLink> subProcessLinkOptional = getSubProcessLink(key);
+        if (subProcessLinkOptional.isPresent()) {
+            return subProcessLinkOptional;
+        }
         List<SubProcessLink> subProcessLinks = getSubProcessLinks();
         if (CollectionUtils.isEmpty(subProcessLinks)) {
             return Optional.empty();
@@ -59,5 +64,11 @@ public interface DynamicSubProcess extends DynamicComponentCreator<SubProcessLin
         return Optional.of(links.get(0));
     }
 
-    List<SubProcessLink> getSubProcessLinks();
+    default Optional<SubProcessLink> getSubProcessLink(String key) {
+        return Optional.empty();
+    }
+
+    default List<SubProcessLink> getSubProcessLinks() {
+        return Lists.newArrayList();
+    }
 }

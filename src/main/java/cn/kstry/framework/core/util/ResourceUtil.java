@@ -15,34 +15,29 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.resource.config;
+package cn.kstry.framework.core.util;
 
-import cn.kstry.framework.core.bpmn.StartEvent;
-import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
-
-import java.util.List;
-import java.util.Map;
+import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import cn.kstry.framework.core.resource.config.ConfigResource;
 
 /**
- * BPMN 配置文件定义
+ * ResourceUtil
  *
  * @author lykan
  */
-public interface BpmnConfigResource extends ConfigResource {
+public class ResourceUtil {
 
-    /**
-     * 获取配置文件实例中全部 SubProcess
-     * - k：SubProcess id
-     * - v: SubProcess 对象
-     *
-     * @return SubProcess Map
-     */
-    Map<String, SubProcessLink> getSubProcessMap();
+    public static ConfigResource getConfigResource(String resourceName, ResourceTypeEnum resourceType) {
+        return new ConfigResource() {
+            @Override
+            public String getConfigName() {
+                return resourceName;
+            }
 
-    /**
-     * 获取 StartEvent 集合
-     *
-     * @return StartEvent 集合
-     */
-    List<StartEvent> getStartEventList();
+            @Override
+            public ResourceTypeEnum getResourceType() {
+                return resourceType;
+            }
+        };
+    }
 }

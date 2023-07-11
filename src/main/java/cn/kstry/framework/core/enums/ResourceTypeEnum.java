@@ -18,14 +18,37 @@
 package cn.kstry.framework.core.enums;
 
 /**
- *
  * @author lykan
  */
 public enum ResourceTypeEnum {
 
-    BPMN_DIAGRAM,
+    /**
+     * BPMN 流程定义
+     */
+    BPMN_PROCESS,
 
-    BPMN,
+    /**
+     * JSON流程定义
+     */
+    JSON_PROCESS,
 
-    PROPERTIES
+    /**
+     * 变量
+     */
+    KV_PROPERTIES,
+
+    /**
+     * 动态流程
+     */
+    DYNAMIC_PROCESS,
+
+    /**
+     * 代码定义流程
+     */
+    CODE_PROCESS,
+
+    /**
+     * 自定义资源
+     */
+    CUSTOM,
 }

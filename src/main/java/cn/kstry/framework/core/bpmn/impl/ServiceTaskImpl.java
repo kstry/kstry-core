@@ -27,7 +27,6 @@ import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONValidator;
 import com.alibaba.fastjson.TypeReference;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -79,6 +78,11 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      * 任务参数
      */
     private Map<String, Object> taskParams;
+
+    /**
+     * 服务节点重试次数
+     */
+    private Integer retryTimes;
 
     @Override
     public String getTaskComponent() {
@@ -186,6 +190,15 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      */
     public void setAllowAbsent(Boolean allowAbsent) {
         this.allowAbsent = allowAbsent;
+    }
+
+    @Override
+    public Integer getRetryTimes() {
+        return retryTimes;
+    }
+
+    public void setRetryTimes(Integer retryTimes) {
+        this.retryTimes = retryTimes;
     }
 
     @Override

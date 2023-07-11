@@ -17,38 +17,29 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import cn.kstry.framework.core.component.bpmn.BpmnDiagramRegister;
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections.MapUtils;
-import org.springframework.context.ApplicationContext;
+import cn.kstry.framework.core.enums.SourceTypeEnum;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
+ * BPMN 文件类路径配置来源
  *
  * @author lykan
  */
-public class BpmnDiagramConfigSource implements ConfigSource {
+public class ProcessClassPathConfigSource extends ClassPathConfigSource implements ConfigSource {
 
-    private final ApplicationContext applicationContext;
-
-    public BpmnDiagramConfigSource(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public ProcessClassPathConfigSource(String configName) {
+        super(configName);
     }
 
     @Override
     public List<ConfigResource> getConfigResourceList() {
-        Map<String, BpmnDiagramRegister> beanMap = applicationContext.getBeansOfType(BpmnDiagramRegister.class);
-        if (MapUtils.isEmpty(beanMap)) {
-            return Lists.newArrayList();
-        }
-        return Lists.newArrayList(beanMap.values());
+        return getResourceList().stream().map(MultiProtocolProcessConfigResource::new).collect(Collectors.toList());
     }
 
     @Override
-    public ResourceTypeEnum getResourceType() {
-        return ResourceTypeEnum.BPMN_DIAGRAM;
+    public SourceTypeEnum getSourceType() {
+        return SourceTypeEnum.PROCESS;
     }
 }

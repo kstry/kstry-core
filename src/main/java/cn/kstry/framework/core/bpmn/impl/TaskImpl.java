@@ -19,7 +19,6 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.Task;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
@@ -71,28 +70,8 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
     }
 
     @Override
-    public String getIteSource() {
-        return Optional.ofNullable(elementIterable).map(ElementIterable::getIteSource).orElse(null);
-    }
-
-    @Override
-    public Boolean openAsync() {
-        return Optional.ofNullable(elementIterable).map(ElementIterable::openAsync).orElse(false);
-    }
-
-    @Override
-    public IterateStrategyEnum getIteStrategy() {
-        return Optional.ofNullable(elementIterable).map(ElementIterable::getIteStrategy).orElse(null);
-    }
-
-    @Override
-    public Integer getStride() {
-        return Optional.ofNullable(elementIterable).map(ElementIterable::getStride).orElse(null);
-    }
-
-    @Override
-    public boolean iterable() {
-        return Optional.ofNullable(elementIterable).map(ElementIterable::iterable).orElse(false);
+    public Optional<ElementIterable> getElementIterable() {
+        return Optional.ofNullable(elementIterable);
     }
 
     public void mergeElementIterable(ElementIterable elementIterable) {

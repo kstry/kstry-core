@@ -19,9 +19,9 @@ package cn.kstry.framework.core.engine.interceptor;
 
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.OrderComparator;
 
 import java.util.*;
@@ -113,6 +113,6 @@ public class SubProcessInterceptorRepository {
     }
 
     private String getStartEventId(String startEventId) {
-        return startEventId.replaceAll("-\\d+$", StringUtils.EMPTY);
+        return GlobalUtil.getOriginalId(true, startEventId);
     }
 }

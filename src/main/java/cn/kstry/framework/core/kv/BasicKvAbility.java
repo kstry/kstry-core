@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.kv;
 
 import cn.kstry.framework.core.constant.GlobalConstant;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
@@ -50,7 +51,7 @@ public class BasicKvAbility implements KvAbility {
         if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+        KvScope kvScope = InvokeMethodThreadLocal.getKvScope().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
         try {
             return doGetValue(key, kvScope);
         } catch (Throwable e) {
@@ -63,9 +64,8 @@ public class BasicKvAbility implements KvAbility {
         if (StringUtils.isBlank(key)) {
             return Optional.empty();
         }
-        KvScope kvScope = KvThreadLocal.getKvScope().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
-        KvScope inKvScope = new KvScope(scope);
-        inKvScope.setBusinessId(kvScope.getBusinessId().orElse(null));
+        KvScope kvScope = InvokeMethodThreadLocal.getKvScope().orElseThrow(() -> ExceptionUtil.buildException(null, ExceptionEnum.SYSTEM_ERROR, null));
+        KvScope inKvScope = new KvScope(scope, kvScope.getBusinessId().orElse(null));
         try {
             return doGetValue(key, inKvScope);
         } catch (Throwable e) {

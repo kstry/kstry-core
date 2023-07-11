@@ -162,4 +162,14 @@ public class GlobalUtil {
     public static String uuid() {
         return UUID.randomUUID().toString().replace("-", StringUtils.EMPTY);
     }
+
+    public static String getOriginalId(boolean needOriginalId, String elementId) {
+        if (!needOriginalId) {
+            return elementId;
+        }
+        if (StringUtils.isBlank(elementId)) {
+            return elementId;
+        }
+        return elementId.replaceAll("-\\d+$", StringUtils.EMPTY);
+    }
 }

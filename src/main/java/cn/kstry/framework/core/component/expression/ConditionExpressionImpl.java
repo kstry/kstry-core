@@ -29,9 +29,14 @@ import java.util.function.BiPredicate;
 public class ConditionExpressionImpl implements ConditionExpression {
 
     /**
-     * 原表达式
+     * 去除排序属性的表达式
      */
     private String expression;
+
+    /**
+     * 原表达式
+     */
+    private String plainExpression;
 
     /**
      * 真实参与计算的表达式
@@ -85,6 +90,11 @@ public class ConditionExpressionImpl implements ConditionExpression {
     }
 
     @Override
+    public String getPlainExpression() {
+        return plainExpression;
+    }
+
+    @Override
     public int getOrder() {
         return order;
     }
@@ -99,10 +109,11 @@ public class ConditionExpressionImpl implements ConditionExpression {
      * @param expression 表达式
      * @return 表达式对象
      */
-    public ConditionExpression newWorkConditionExpression(String expression, int order, boolean needParserExpression) {
+    public ConditionExpression newWorkConditionExpression(String plainExpression, String expression, int order, boolean needParserExpression) {
         ConditionExpressionImpl conditionExpression = new ConditionExpressionImpl(this.testCondition);
         conditionExpression.order = order;
         conditionExpression.expression = expression;
+        conditionExpression.plainExpression = plainExpression;
         conditionExpression.needParserExpression = needParserExpression;
         return conditionExpression;
     }

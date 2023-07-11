@@ -15,31 +15,15 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.resource.config;
+package cn.kstry.framework.core.component.jsprocess.metadata;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import java.util.HashMap;
 
 /**
- * BPMN 文件类路径配置来源
+ * JSON 节点属性
  *
  * @author lykan
  */
-public class BpmnClassPathConfigSource extends ClassPathConfigSource implements ConfigSource {
+public class JsonNodeProperties extends HashMap<String, Object> {
 
-    public BpmnClassPathConfigSource(String configName) {
-        super(configName);
-    }
-
-    @Override
-    public List<ConfigResource> getConfigResourceList() {
-        return getResourceList().stream().map(BasicBpmnConfigResource::new).collect(Collectors.toList());
-    }
-
-    @Override
-    public ResourceTypeEnum getResourceType() {
-        return ResourceTypeEnum.BPMN;
-    }
 }

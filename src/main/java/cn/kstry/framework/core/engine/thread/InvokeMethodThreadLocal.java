@@ -17,27 +17,50 @@
  */
 package cn.kstry.framework.core.engine.thread;
 
+import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.bus.IterDataItem;
+import cn.kstry.framework.core.kv.KvScope;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
 /**
- *
  * @author lykan
  */
 public class InvokeMethodThreadLocal {
 
-    private static final ThreadLocal<Object> ITERATOR_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<IterDataItem<?>> ITERATOR_THREAD_LOCAL = new ThreadLocal<>();
 
     private static final ThreadLocal<String> TASK_PROPERTY_THREAD_LOCAL = new ThreadLocal<>();
 
-    public static void setDataItem(Object data) {
-        if (data != null) {
-            ITERATOR_THREAD_LOCAL.set(data);
+    private static final ThreadLocal<KvScope> KV_THREAD_LOCAL = new ThreadLocal<>();
+
+    private static final ThreadLocal<ServiceTask> SERVICE_TASK_THREAD_LOCAL = new ThreadLocal<>();
+
+    public static void setKvScope(KvScope kvScope) {
+        KV_THREAD_LOCAL.set(kvScope);
+    }
+
+    public static Optional<KvScope> getKvScope() {
+        return Optional.ofNullable(KV_THREAD_LOCAL.get());
+    }
+
+    public static void setServiceTask(ServiceTask serviceTask) {
+        SERVICE_TASK_THREAD_LOCAL.set(serviceTask);
+    }
+
+    public static Optional<FlowElement> getServiceTask() {
+        return Optional.ofNullable(SERVICE_TASK_THREAD_LOCAL.get());
+    }
+
+    public static void setDataItem(IterDataItem<?> iterDataItem) {
+        if (iterDataItem != null) {
+            ITERATOR_THREAD_LOCAL.set(iterDataItem);
         }
     }
 
-    public static Optional<Object> getDataItem() {
+    public static Optional<IterDataItem<?>> getDataItem() {
         return Optional.ofNullable(ITERATOR_THREAD_LOCAL.get());
     }
 
@@ -54,5 +77,11 @@ public class InvokeMethodThreadLocal {
     public static void clear() {
         ITERATOR_THREAD_LOCAL.remove();
         TASK_PROPERTY_THREAD_LOCAL.remove();
+        KV_THREAD_LOCAL.remove();
+        SERVICE_TASK_THREAD_LOCAL.remove();
+    }
+
+    public static void clearServiceTask() {
+        SERVICE_TASK_THREAD_LOCAL.remove();
     }
 }

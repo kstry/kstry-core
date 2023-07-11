@@ -17,9 +17,9 @@
  */
 package cn.kstry.framework.core.resource.config;
 
-import java.util.List;
+import cn.kstry.framework.core.enums.SourceTypeEnum;
 
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import java.util.List;
 
 /**
  * 配置信息来源接口
@@ -38,7 +38,7 @@ public interface ConfigSource {
     /**
      * 获取资源类型
      *
-     * @return cn.kstry.framework.core.enums.ResourceTypeEnum
+     * @return cn.kstry.framework.core.enums.SourceTypeEnum
      */
-    ResourceTypeEnum getResourceType();
+    SourceTypeEnum getSourceType();
 }

@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.resource.factory;
 
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import cn.kstry.framework.core.enums.SourceTypeEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.resource.config.ConfigSource;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -45,13 +45,13 @@ public abstract class BasicResourceFactory<R> implements ResourceFactory<R> {
         this.applicationContext = applicationContext;
     }
 
-    protected List<ConfigResource> getConfigResource(ResourceTypeEnum resourceType) {
+    protected List<ConfigResource> getConfigResource(SourceTypeEnum resourceType) {
         AssertUtil.notNull(resourceType);
         Map<String, ConfigSource> configSourceMap = applicationContext.getBeansOfType(ConfigSource.class);
         if (MapUtils.isEmpty(configSourceMap)) {
             return Lists.newArrayList();
         }
-        List<ConfigSource> configSource = configSourceMap.values().stream().filter(source -> source.getResourceType() == resourceType).collect(Collectors.toList());
+        List<ConfigSource> configSource = configSourceMap.values().stream().filter(source -> source.getSourceType() == resourceType).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(configSource)) {
             return Lists.newArrayList();
         }

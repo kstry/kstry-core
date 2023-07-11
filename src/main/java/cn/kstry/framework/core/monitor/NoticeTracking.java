@@ -18,14 +18,13 @@
 package cn.kstry.framework.core.monitor;
 
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 
 /**
- *
  * @author lykan
  */
 @SuppressWarnings("unused")
-public class NoticeTracking {
+public class NoticeTracking implements FieldTracking {
 
     private final String fieldName;
 
@@ -33,38 +32,57 @@ public class NoticeTracking {
 
     private final ScopeTypeEnum noticeScopeType;
 
-    private final String value;
+    private final Object passValue;
 
-    private NoticeTracking(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, String value) {
+    private final Class<?> passTarget;
+
+    private String value;
+
+    private NoticeTracking(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value, Class<?> passTarget) {
         this.fieldName = fieldName;
         this.noticeName = noticeName;
         this.noticeScopeType = noticeScopeType;
-        this.value = value;
+        this.passValue = value;
+        this.passTarget = passTarget;
     }
 
-    public static NoticeTracking build(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value) {
-        String v;
-        if (value instanceof String) {
-            v = (String) value;
-        } else {
-            v = JSON.toJSONString(value);
-        }
-        return new NoticeTracking(fieldName, noticeName, noticeScopeType, v);
+    public static NoticeTracking build(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value, Class<?> passTarget) {
+        return new NoticeTracking(fieldName, noticeName, noticeScopeType, value, passTarget);
     }
 
-    public String getFieldName() {
+    @Override
+    public String getSourceName() {
         return fieldName;
     }
 
-    public String getNoticeName() {
+    @Override
+    public String getTargetName() {
         return noticeName;
     }
 
-    public ScopeTypeEnum getNoticeScopeType() {
+    @Override
+    public ScopeTypeEnum getScopeType() {
         return noticeScopeType;
     }
 
+    @Override
+    @JSONField(serialize = false)
+    public Object getPassValue() {
+        return passValue;
+    }
+
+    @Override
+    @JSONField(serialize = false)
+    public Class<?> getPassTarget() {
+        return passTarget;
+    }
+
+    @Override
     public String getValue() {
         return value;
+    }
+
+    public void valueSerialize(SerializeTracking serialize) {
+        this.value = serialize.valueSerialize(this);
     }
 }

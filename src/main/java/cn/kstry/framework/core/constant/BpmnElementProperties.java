@@ -60,6 +60,11 @@ public interface BpmnElementProperties {
     String SERVICE_TASK_TASK_PARAMS = "task-params";
 
     /**
+     * ServiceTask: 指定服务节点重试次数
+     */
+    String SERVICE_TASK_RETRY_TIMES = "retry-times";
+
+    /**
      * AsyncFlowElement(InclusiveGateway/ParallelGateway/ElementIterator(SubProcess/ServiceTask)): open-async
      */
     String ASYNC_ELEMENT_OPEN_ASYNC = "open-async";
@@ -88,6 +93,11 @@ public interface BpmnElementProperties {
      * ElementIterator(SubProcess/ServiceTask): ite-strategy
      */
     String ITERATE_STRATEGY = "ite-strategy";
+
+    /**
+     * ElementIterator(SubProcess/ServiceTask): ite-align-index
+     */
+    String ITERATE_ALIGN_INDEX = "ite-align-index";
 
     /**
      * ElementIterator(SubProcess/ServiceTask): ite-stride

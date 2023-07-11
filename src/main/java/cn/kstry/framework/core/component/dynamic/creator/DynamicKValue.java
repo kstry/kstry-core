@@ -31,7 +31,7 @@ import java.util.Optional;
 public interface DynamicKValue extends DynamicComponentCreator<Object>, ComponentCacheSupport {
 
     /**
-     * 获取动态键值对版本，默认 -1，不是用缓存
+     * 获取动态键值对版本，默认 -1，不使用缓存
      *
      * @param key key
      * @return version

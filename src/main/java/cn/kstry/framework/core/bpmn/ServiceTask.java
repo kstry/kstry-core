@@ -91,6 +91,13 @@ public interface ServiceTask extends Task {
     String getTaskInstructContent();
 
     /**
+     * 获取服务节点重试次数
+     *
+     * @return 服务节点重试次数
+     */
+    Integer getRetryTimes();
+
+    /**
      * 获取Service Task 构造器
      *
      * @return ServiceTaskBuilder

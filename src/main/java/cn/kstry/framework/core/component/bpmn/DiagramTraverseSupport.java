@@ -42,7 +42,7 @@ import java.util.function.Supplier;
  */
 public class DiagramTraverseSupport<T> {
 
-    private final boolean recursiveSubProcess;
+    protected final boolean recursiveSubProcess;
 
     /**
      * 遍历时产生中间变量，不传中间变量为空

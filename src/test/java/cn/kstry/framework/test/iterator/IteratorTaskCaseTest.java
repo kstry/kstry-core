@@ -18,6 +18,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ public class IteratorTaskCaseTest {
     @Test
     public void test01() {
         List<SkuBo> list = Lists.newArrayList();
-        StoryRequest<List<SkuBo>> fireRequest = ReqBuilder.returnType(list).startId("story-def-iterate-test_100").build();
+        StoryRequest<List<SkuBo>> fireRequest = ReqBuilder.returnType(list).startId("story-def-iterate-test_100").trackingType(TrackingTypeEnum.SERVICE_DETAIL).build();
         TaskResponse<List<SkuBo>> fire = storyEngine.fire(fireRequest);
         System.out.println(JSON.toJSONString(fire));
         Assert.assertTrue(fire.isSuccess());
@@ -51,7 +52,7 @@ public class IteratorTaskCaseTest {
         DataSource dataSource = new DataSource();
         ArrayList<Integer> integers = Lists.newArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         dataSource.setNumList(integers.toArray(new Integer[0]));
-        List<Integer> list = Lists.newCopyOnWriteArrayList();
+        List<Integer> list = Lists.newArrayList();
         StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list).timeout(1000).request(dataSource).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId(DynamicIteratorProcess.ITERATE_PROCESS_01).build();
 
         TaskResponse<List<Integer>> fire = storyEngine.fire(fireRequest);
@@ -69,7 +70,7 @@ public class IteratorTaskCaseTest {
         DataSource dataSource = new DataSource();
         ArrayList<Integer> integers = Lists.newArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         dataSource.setNumList(integers.toArray(new Integer[0]));
-        List<Integer> list = Lists.newCopyOnWriteArrayList();
+        List<Integer> list = Lists.newArrayList();
         StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list).trackingType(TrackingTypeEnum.SERVICE_DETAIL).timeout(1000).request(dataSource).startId(DynamicIteratorProcess.ITERATE_PROCESS_02).build();
 
         TaskResponse<List<Integer>> fire = storyEngine.fire(fireRequest);

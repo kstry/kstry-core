@@ -20,6 +20,7 @@ package cn.kstry.framework.core.container.processor;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
@@ -42,14 +43,15 @@ public class IterablePostProcessor extends DiagramTraverseSupport<Object> implem
 
     @Override
     public void doPlainElement(Object course, FlowElement node, SubProcess subProcess) {
-        if (subProcess == null || !subProcess.iterable() || !(node instanceof ServiceTaskImpl)) {
+        if (subProcess == null) {
+            return;
+        }
+        ElementIterable elementIterable = subProcess.getElementIterable().orElse(null);
+        if (elementIterable == null || !elementIterable.iterable() || !(node instanceof ServiceTaskImpl)) {
             return;
         }
         BasicElementIterable beIterable = new BasicElementIterable();
-        beIterable.setIteSource(subProcess.getIteSource());
-        beIterable.setOpenAsync(subProcess.openAsync());
-        beIterable.setIteStrategy(subProcess.getIteStrategy());
-        beIterable.setStride(subProcess.getStride());
+        beIterable.mergeProperty(elementIterable);
         GlobalUtil.transferNotEmpty(node, ServiceTaskImpl.class).mergeElementIterable(beIterable);
     }
 

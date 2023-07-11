@@ -31,6 +31,7 @@ import cn.kstry.framework.core.engine.future.InvokeFuture;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptorRepository;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
 import cn.kstry.framework.core.engine.thread.FragmentTask;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.engine.thread.MethodInvokeTask;
 import cn.kstry.framework.core.engine.thread.MonoFlowTask;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -118,17 +119,20 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
 
         Object result;
         try {
+            InvokeMethodThreadLocal.setServiceTask(serviceTask);
             TaskInterceptorRepository taskInterceptorRepository = engineModule.getTaskInterceptorRepository();
             result = taskInterceptorRepository.process(() -> doInvokeMethod(serviceTask, taskServiceDef, storyBus, role), taskServiceDef.getGetServiceNodeResource(), storyBus.getScopeDataOperator(), role);
         } catch (Throwable exception) {
             flowRegister.getMonitorTracking().finishTaskTracking(flowElement, exception);
             InvokeProperties invokeProperties = taskServiceDef.getMethodWrapper().getInvokeProperties();
             if (!(serviceTask.strictMode() && invokeProperties.isStrictMode())) {
-                LOGGER.info("[{}] Target method execution failure, error is ignored in non-strict mode. exception: {}",
-                        ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), exception.getMessage(), exception);
+                LOGGER.info("[{}] Target method execution failure, error is ignored in non-strict mode. identity: {}, exception: {}",
+                        ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), serviceTask.identity(), exception.getMessage(), exception);
                 return true;
             }
             throw exception;
+        } finally {
+            InvokeMethodThreadLocal.clearServiceTask();
         }
         if (result instanceof Mono) {
             monoResultHandler(role, storyBus, flowRegister, serviceTask, taskServiceDef, result);
@@ -160,7 +164,9 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 Optional<TaskServiceDef> demotionServiceDefOptional = needDemotionSupplier.get();
                 KstryException kstryException = ExceptionUtil.buildException(throwable, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
                 if (!flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()) && demotionServiceDefOptional.isPresent()) {
-                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failed. taskName: {}, exception: {}", e.getErrorCode(), getTaskName(), throwable.getMessage(), e));
+                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failed. identity: {}, taskName: {}, exception: {}",
+                            e.getErrorCode(), serviceTask.identity(), getTaskName(), throwable.getMessage(), e)
+                    );
                     TaskServiceDef demotionTaskServiceDef = demotionServiceDefOptional.get();
                     DemotionInfo demotionInfo = new DemotionInfo();
                     demotionInfo.setRetryTimes(0);
@@ -180,8 +186,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                                 @Override
                                 protected void hookOnError(@Nonnull Throwable e) {
                                     engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
-                                            ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
+                                    LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
+                                            ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
                                     dispose();
                                 }
 
@@ -197,14 +203,17 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                         doNextHook(o);
                         return;
                     } catch (Throwable e) {
-                        LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
-                                ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), getTaskName(), e.getMessage(), e);
+                        LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
+                                ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
                     } finally {
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                     }
                 }
                 if (!isStrictMode()) {
-                    kstryException.log(e -> LOGGER.warn("[{}] Target method execution failure, error is ignored in non-strict mode. exception: {}", e.getErrorCode(), throwable.getMessage(), e));
+                    kstryException.log(e ->
+                            LOGGER.warn("[{}] Target method execution failure, error is ignored in non-strict mode. identity: {}, exception: {}",
+                                    e.getErrorCode(), serviceTask.identity(), throwable.getMessage(), e)
+                    );
                     doNextElement(flowRegister, serviceTask, storyBus, role);
                     return;
                 }
@@ -225,7 +234,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         if (timeout != null) {
             mono = mono.timeout(Duration.ofMillis(timeout), Mono.fromRunnable(() -> {
                 KstryException e = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
-                        GlobalUtil.format("Target method execution timeout! maximum time limit: {}ms, taskName: {}", timeout, GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
+                        GlobalUtil.format("Target method execution timeout! maximum time limit: {}ms, identity: {}, taskName: {}",
+                                timeout, serviceTask.identity(), GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
                 flowTaskSubscriber.onError(e);
                 flowTaskSubscriber.dispose();
             }));
@@ -307,7 +317,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         InvokeProperties invokeProperties = methodWrapper.getInvokeProperties();
         Supplier<Optional<TaskServiceDef>> needDemotionSupplier = getNeedDemotionSupplier(role, invokeProperties);
-        int retry = invokeProperties.getRetry();
+        int retry = Optional.ofNullable(serviceTask.getRetryTimes()).filter(t -> t > 0).orElse(invokeProperties.getRetry());
         for (int i = 0; i <= retry; i++) {
             try {
                 MethodInvokeTask.MethodInvokePedometer pedometer =
@@ -320,8 +330,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 }
                 String taskName = GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId());
                 int iFinal = i;
-                ke.log(e -> LOGGER.warn("[{}] Target method execution failed, retry for the {}th time. taskName: {}, exception: {}",
-                        ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), iFinal, taskName, exception.getMessage(), e));
+                ke.log(e -> LOGGER.warn("[{}] Target method execution failed, retry for the {}th time. identity: {}, taskName: {}, exception: {}",
+                        ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), iFinal, serviceTask.identity(), taskName, exception.getMessage(), e));
                 if (i >= retry || notAllowRetry(exception, invokeProperties)) {
                     Optional<TaskServiceDef> serviceDefOptional = needDemotionSupplier.get();
                     if (!serviceDefOptional.isPresent()) {
@@ -338,8 +348,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     } catch (Throwable ex) {
                         demotionInfo.setDemotionSuccess(false);
                         KstryException kex = ExceptionUtil.buildException(ex, ExceptionEnum.DEMOTION_DEFINITION_ERROR, null);
-                        kex.log(e -> LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. taskName: {}, exception: {}",
-                                e.getErrorCode(), taskName, ex.getMessage(), e));
+                        kex.log(e -> LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
+                                e.getErrorCode(), serviceTask.identity(), taskName, ex.getMessage(), e));
                         throw kex;
                     } finally {
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);

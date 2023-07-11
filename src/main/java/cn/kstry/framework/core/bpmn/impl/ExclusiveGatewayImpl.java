@@ -27,7 +27,7 @@ import java.util.Optional;
 /**
  * ExclusiveGatewayImpl
  */
-public class ExclusiveGatewayImpl extends GatewayImpl implements ExclusiveGateway, ServiceTaskSupport {
+public class ExclusiveGatewayImpl extends GatewayImpl implements ExclusiveGateway {
 
     /**
      * 支持定义 ServiceTask

@@ -19,6 +19,7 @@ package cn.kstry.framework.core.component.bpmn;
 
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.List;
  *
  * @author lykan
  */
-public interface BpmnDiagramRegister extends ConfigResource {
+public interface ProcessDiagramRegister extends ConfigResource {
 
     /**
      * 获取配置文件名称
@@ -54,4 +55,9 @@ public interface BpmnDiagramRegister extends ConfigResource {
      * @param processLinkList 流程配置
      */
     void registerDiagram(List<ProcessLink> processLinkList);
+
+    @Override
+    default ResourceTypeEnum getResourceType() {
+        return ResourceTypeEnum.CODE_PROCESS;
+    }
 }

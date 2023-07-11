@@ -74,9 +74,12 @@ public class MonitorTracking {
 
     private final FlowElement startEvent;
 
-    public MonitorTracking(FlowElement startEvent, TrackingTypeEnum trackingTypeEnum) {
+    private final SerializeTracking serializeTracking;
+
+    public MonitorTracking(FlowElement startEvent, TrackingTypeEnum trackingTypeEnum, SerializeTracking serializeTracking) {
         this.startTime = LocalDateTime.now();
         this.startEvent = startEvent;
+        this.serializeTracking = serializeTracking;
         this.trackingTypeEnum = Optional.ofNullable(trackingTypeEnum).orElse(TrackingTypeEnum.of(GlobalProperties.STORY_MONITOR_TRACKING_TYPE));
     }
 
@@ -141,54 +144,36 @@ public class MonitorTracking {
     /**
      * 对 TaskService 入参进行监控
      *
-     * @param flowElement flowElement
+     * @param flowElement           flowElement
      * @param paramTrackingSupplier paramTrackingSupplier
      */
     public void trackingNodeParams(FlowElement flowElement, Supplier<ParamTracking> paramTrackingSupplier) {
         AssertUtil.notNull(flowElement);
         getServiceNodeTracking(flowElement).filter(t -> trackingTypeEnum.needServiceDetailTracking()).ifPresent(tracking -> {
             ParamTracking paramTracking = paramTrackingSupplier.get();
-            if (paramTracking == null || paramTracking.getValue() == null || GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == 0) {
+            if (paramTracking == null) {
                 return;
             }
-            if (GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == -1
-                    || (paramTracking.getValue().length() <= GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)) {
-                tracking.addParamTracking(paramTracking);
-            } else {
-                try {
-                    tracking.addParamTracking(ParamTracking.build(paramTracking.getParamName(), paramTracking.getValue()
-                            .substring(0, GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT), paramTracking.getSourceScopeType(), paramTracking.getSourceName()));
-                } catch (Exception e) {
-                    LOGGER.error("build ParamTracking error! paramTracking: {}", paramTracking, e);
-                }
-            }
+            paramTracking.valueSerialize(serializeTracking);
+            tracking.addParamTracking(paramTracking);
         });
     }
 
     /**
      * 对执行结果对 StoryBus 的通知进行监控
      *
-     * @param flowElement flowElement
+     * @param flowElement            flowElement
      * @param noticeTrackingSupplier noticeTrackingSupplier
      */
     public void trackingNodeNotice(FlowElement flowElement, Supplier<NoticeTracking> noticeTrackingSupplier) {
         AssertUtil.notNull(flowElement);
         getServiceNodeTracking(flowElement).filter(t -> trackingTypeEnum.needServiceDetailTracking()).ifPresent(tracking -> {
             NoticeTracking noticeTracking = noticeTrackingSupplier.get();
-            if (noticeTracking == null || noticeTracking.getValue() == null || GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == 0) {
+            if (noticeTracking == null) {
                 return;
             }
-            if (GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == -1
-                    || (noticeTracking.getValue().length() <= GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)) {
-                tracking.addNoticeTracking(noticeTracking);
-            } else {
-                try {
-                    tracking.addNoticeTracking(NoticeTracking.build(noticeTracking.getFieldName(), noticeTracking.getNoticeName(),
-                            noticeTracking.getNoticeScopeType(), noticeTracking.getValue().substring(0, GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)));
-                } catch (Exception e) {
-                    LOGGER.error("build NoticeTracking error! noticeTracking: {}", noticeTracking, e);
-                }
-            }
+            noticeTracking.valueSerialize(serializeTracking);
+            tracking.addNoticeTracking(noticeTracking);
         });
     }
 
@@ -196,7 +181,7 @@ public class MonitorTracking {
      * TaskService 执行完成后监控记录数据
      *
      * @param flowElement flowElement
-     * @param exception exception
+     * @param exception   exception
      */
     public void finishTaskTracking(FlowElement flowElement, Throwable exception) {
         getServiceNodeTracking(flowElement).ifPresent(tracking -> {
@@ -215,8 +200,10 @@ public class MonitorTracking {
             return;
         }
         getServiceNodeTracking(flowElement).ifPresent(tracking -> {
-            tracking.setIterateCount(count);
-            tracking.setIterateStride(stride);
+            IterateInfo iterateInfo = new IterateInfo();
+            iterateInfo.setIterateCount(count);
+            iterateInfo.setIterateStride(stride);
+            tracking.setIterateInfo(iterateInfo);
         });
     }
 

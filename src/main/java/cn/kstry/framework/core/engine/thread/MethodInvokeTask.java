@@ -83,7 +83,7 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
             asyncTaskSwitch.await();
             flowRegister.getMonitorTracking().getServiceNodeTracking(serviceTask).ifPresent(nodeTracking -> nodeTracking.setThreadId(Thread.currentThread().getName()));
             AssertUtil.notTrue(adminFuture.isCancelled(flowRegister.getStartEventId()), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
-                    "Task interrupted. Method invoke task was interrupted! taskName: {}", getTaskName());
+                    "Task interrupted. Method invoke task was interrupted! identity: {}, taskName: {}", serviceTask.identity(), getTaskName());
             return doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);
         } catch (Throwable e) {
             if (adminFuture.isCancelled(flowRegister.getStartEventId())) {
@@ -100,8 +100,8 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
             }
             // 非严格模式
             if (!(serviceTask.strictMode() && methodInvokePedometer.strictMode)) {
-                LOGGER.warn("[{}] Target method execution failure, error is ignored in non-strict mode. exception: {}",
-                        ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), e.getMessage(), e);
+                LOGGER.warn("[{}] Target method execution failure, error is ignored in non-strict mode. identity: {}, exception: {}",
+                        ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), serviceTask.identity(), e.getMessage(), e);
                 throw e;
             }
             adminFuture.errorNotice(e, flowRegister.getStartEventId());

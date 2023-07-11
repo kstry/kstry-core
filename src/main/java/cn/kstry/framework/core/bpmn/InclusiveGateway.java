@@ -19,11 +19,12 @@ package cn.kstry.framework.core.bpmn;
 
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
+import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 
 /**
  * InclusiveGateway
  */
-public interface InclusiveGateway extends Gateway, AggregationFlowElement, AsyncFlowElement {
+public interface InclusiveGateway extends Gateway, AggregationFlowElement, AsyncFlowElement, ServiceTaskSupport {
 
 
 }

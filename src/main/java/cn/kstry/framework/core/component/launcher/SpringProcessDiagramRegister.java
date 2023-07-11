@@ -17,7 +17,7 @@
  */
 package cn.kstry.framework.core.component.launcher;
 
-import cn.kstry.framework.core.component.bpmn.BpmnDiagramRegister;
+import cn.kstry.framework.core.component.bpmn.ProcessDiagramRegister;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import org.apache.commons.collections.MapUtils;
@@ -26,11 +26,11 @@ import org.springframework.context.ApplicationContext;
 import java.util.List;
 import java.util.Map;
 
-public class SpringBpmnDiagramRegister implements BpmnDiagramRegister {
+public class SpringProcessDiagramRegister implements ProcessDiagramRegister {
 
     private final ApplicationContext applicationContext;
 
-    public SpringBpmnDiagramRegister(ApplicationContext applicationContext) {
+    public SpringProcessDiagramRegister(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 

@@ -23,6 +23,7 @@ import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.container.processor.StartEventProcessor;
 import cn.kstry.framework.core.enums.DynamicComponentType;
+import cn.kstry.framework.core.enums.ResourceTypeEnum;
 import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
@@ -95,5 +96,10 @@ public class ProcessDynamicComponent extends SpringDynamicComponent<ProcessLink>
     @Override
     public String getConfigName() {
         return ProcessDynamicComponent.class.getName();
+    }
+
+    @Override
+    public ResourceTypeEnum getResourceType() {
+        return ResourceTypeEnum.DYNAMIC_PROCESS;
     }
 }

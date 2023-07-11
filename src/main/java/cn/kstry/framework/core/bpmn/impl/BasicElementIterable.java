@@ -47,6 +47,11 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
      */
     private Integer stride;
 
+    /**
+     * 迭代时，是否将返回值、入参两集合中的索引进行一一对应
+     */
+    private Boolean iteAlignIndex;
+
     @Override
     public String getIteSource() {
         return this.source;
@@ -65,6 +70,15 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
     @Override
     public Integer getStride() {
         return stride;
+    }
+
+    @Override
+    public Boolean getIteAlignIndex() {
+        return iteAlignIndex;
+    }
+
+    public void setIteAlignIndex(Boolean iterAlignIndex) {
+        this.iteAlignIndex = iterAlignIndex;
     }
 
     public void setIteSource(String source) {
@@ -91,17 +105,20 @@ public class BasicElementIterable extends BasicAsyncFlowElement implements Eleme
             return;
         }
 
-        if (this.getIteStrategy() == null) {
+        if (this.getIteStrategy() == null && elementIterable.getIteStrategy() != null) {
             this.setIteStrategy(elementIterable.getIteStrategy());
         }
-        if (this.getIteSource() == null) {
+        if (this.getIteSource() == null && elementIterable.getIteSource() != null) {
             this.setIteSource(elementIterable.getIteSource());
         }
-        if (this.openAsync() == null) {
+        if (this.openAsync() == null && elementIterable.openAsync() != null) {
             this.setOpenAsync(elementIterable.openAsync());
         }
-        if (this.getStride() == null) {
+        if (this.getStride() == null && elementIterable.getStride() != null) {
             this.setStride(elementIterable.getStride());
+        }
+        if (this.getIteAlignIndex() == null && elementIterable.getIteAlignIndex() != null) {
+            this.setIteAlignIndex(elementIterable.getIteAlignIndex());
         }
     }
 }

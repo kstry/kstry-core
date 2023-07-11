@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19f8kh7" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19f8kh7" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:process id="Process_1yqcpmk" isExecutable="true">
     <bpmn:subProcess id="Activity_17wccem">
-      <bpmn:startEvent id="Event_1vbqnob" />
+      <bpmn:startEvent id="Event_1vbqnob">
+        <bpmn:outgoing>Flow_1jw0shw</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:task id="Activity_05ns9ii">
+        <bpmn:extensionElements>
+          <camunda:properties>
+            <camunda:property name="task-service" value="test" />
+          </camunda:properties>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1jw0shw</bpmn:incoming>
+        <bpmn:outgoing>Flow_0f31dga</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="Flow_1jw0shw" sourceRef="Event_1vbqnob" targetRef="Activity_05ns9ii" />
+      <bpmn:endEvent id="Event_0p8wq41">
+        <bpmn:incoming>Flow_0f31dga</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_0f31dga" sourceRef="Activity_05ns9ii" targetRef="Event_0p8wq41" />
       <bpmn:textAnnotation id="TextAnnotation_1opkotw">
         <bpmn:text>【异常】测试：配置文件中存在两个相同ID的子流程</bpmn:text>
       </bpmn:textAnnotation>
@@ -12,13 +28,27 @@
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1yqcpmk">
       <bpmndi:BPMNShape id="Activity_17wccem_di" bpmnElement="Activity_17wccem" isExpanded="true">
-        <dc:Bounds x="160" y="80" width="350" height="260" />
+        <dc:Bounds x="160" y="80" width="350" height="370" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1jw0shw_di" bpmnElement="Flow_1jw0shw">
+        <di:waypoint x="236" y="240" />
+        <di:waypoint x="290" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0f31dga_di" bpmnElement="Flow_0f31dga">
+        <di:waypoint x="390" y="240" />
+        <di:waypoint x="452" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1vbqnob_di" bpmnElement="Event_1vbqnob">
+        <dc:Bounds x="200" y="222" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_1opkotw_di" bpmnElement="TextAnnotation_1opkotw">
         <dc:Bounds x="240" y="140" width="100" height="68" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1vbqnob_di" bpmnElement="Event_1vbqnob">
-        <dc:Bounds x="200" y="222" width="36" height="36" />
+      <bpmndi:BPMNShape id="Activity_05ns9ii_di" bpmnElement="Activity_05ns9ii">
+        <dc:Bounds x="290" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0p8wq41_di" bpmnElement="Event_0p8wq41">
+        <dc:Bounds x="452" y="222" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Association_097t3hf_di" bpmnElement="Association_097t3hf">
         <di:waypoint x="230" y="226" />

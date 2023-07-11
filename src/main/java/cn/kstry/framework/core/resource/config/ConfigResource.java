@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.resource.config;
 
+import cn.kstry.framework.core.enums.ResourceTypeEnum;
+
 /**
  * 配置文件定义
  *
@@ -30,4 +32,11 @@ public interface ConfigResource {
      * @return 配置文件名称
      */
     String getConfigName();
+
+    /**
+     * 获取资源类型
+     *
+     * @return 资源类型
+     */
+    ResourceTypeEnum getResourceType();
 }

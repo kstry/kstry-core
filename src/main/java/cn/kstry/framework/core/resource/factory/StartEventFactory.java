@@ -21,13 +21,13 @@ import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
-import cn.kstry.framework.core.component.bpmn.BpmnDiagramRegister;
+import cn.kstry.framework.core.component.bpmn.ProcessDiagramRegister;
 import cn.kstry.framework.core.component.bpmn.builder.SubProcessLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
 import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
-import cn.kstry.framework.core.enums.ResourceTypeEnum;
+import cn.kstry.framework.core.enums.SourceTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import cn.kstry.framework.core.resource.config.BpmnConfigResource;
+import cn.kstry.framework.core.resource.config.ProcessConfigResource;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ElementParserUtil;
@@ -70,19 +70,19 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
 
     @PostConstruct
     public void initResourceList() {
-        List<ConfigResource> configResourceList = getConfigResource(ResourceTypeEnum.BPMN);
-        List<ConfigResource> diagramConfigResourceList = getConfigResource(ResourceTypeEnum.BPMN_DIAGRAM);
+        List<ConfigResource> configResourceList = getConfigResource(SourceTypeEnum.PROCESS);
+        List<ConfigResource> diagramConfigResourceList = getConfigResource(SourceTypeEnum.PROCESS_DIAGRAM);
         if (CollectionUtils.isEmpty(configResourceList) && CollectionUtils.isEmpty(diagramConfigResourceList)) {
             this.resourceList = Lists.newArrayList();
             return;
         }
 
-        List<BpmnConfigResource> bpmnResourceList =
-                configResourceList.stream().map(c -> GlobalUtil.transferNotEmpty(c, BpmnConfigResource.class)).collect(Collectors.toList());
-        List<BpmnDiagramRegister> bpmnDiagramResourceList =
-                diagramConfigResourceList.stream().map(r -> GlobalUtil.transferNotEmpty(r, BpmnDiagramRegister.class)).collect(Collectors.toList());
-        Map<String, SubProcess> aspMap = getAllSubProcessMap(bpmnResourceList, bpmnDiagramResourceList);
-        List<StartEvent> list = getStartEvents(aspMap, bpmnResourceList, bpmnDiagramResourceList);
+        List<ProcessConfigResource> processResourceList =
+                configResourceList.stream().map(c -> GlobalUtil.transferNotEmpty(c, ProcessConfigResource.class)).collect(Collectors.toList());
+        List<ProcessDiagramRegister> bpmnDiagramResourceList =
+                diagramConfigResourceList.stream().map(r -> GlobalUtil.transferNotEmpty(r, ProcessDiagramRegister.class)).collect(Collectors.toList());
+        Map<String, SubProcess> aspMap = getAllSubProcessMap(processResourceList, bpmnDiagramResourceList);
+        List<StartEvent> list = getStartEvents(aspMap, processResourceList, bpmnDiagramResourceList);
         notDuplicateCheck(list);
         this.resourceList = Collections.unmodifiableList(list);
         this.allSubProcessMap = ImmutableMap.copyOf(aspMap);
@@ -109,24 +109,24 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
                 GlobalUtil.format("There are duplicate start event ids defined! identity: {}, fileName: {}", es.identity(), fileName));
     }
 
-    private List<StartEvent> getStartEvents(Map<String, SubProcess> allSubProcess, List<BpmnConfigResource> bpmnResourceList, List<BpmnDiagramRegister> bpmnDiagramResourceList) {
-        List<StartEvent> startEventList = bpmnResourceList.stream().flatMap(bpmnResource ->
+    private List<StartEvent> getStartEvents(Map<String, SubProcess> allSubProcess, List<ProcessConfigResource> processResourceList, List<ProcessDiagramRegister> bpmnDiagramResourceList) {
+        List<StartEvent> startEventList = processResourceList.stream().flatMap(bpmnResource ->
                 bpmnResource.getStartEventList().stream()).peek(startEvent -> ElementParserUtil.fillSubProcess(allSubProcess, startEvent)).collect(Collectors.toList());
 
-        bpmnDiagramResourceList.forEach(bpmnDiagramRegister -> {
+        bpmnDiagramResourceList.forEach(processDiagramRegister -> {
             List<ProcessLink> processLinkList = Lists.newArrayList();
-            bpmnDiagramRegister.registerDiagram(processLinkList);
+            processDiagramRegister.registerDiagram(processLinkList);
             if (CollectionUtils.isEmpty(processLinkList)) {
                 return;
             }
-            LOGGER.info("Load bpmn code register. name: {}", bpmnDiagramRegister.getConfigName());
+            LOGGER.info("Load bpmn code register. name: {}", processDiagramRegister.getConfigName());
             List<StartEvent> sList = Lists.newArrayList();
             for (ProcessLink processLink : processLinkList) {
                 if (processLink == null) {
                     continue;
                 }
                 StartEvent startEvent = processLink.getElement();
-                startEvent.setConfig(bpmnDiagramRegister);
+                startEvent.setConfig(processDiagramRegister);
                 ElementParserUtil.fillSubProcess(allSubProcess, startEvent);
                 sList.add(startEvent);
             }
@@ -135,9 +135,9 @@ public class StartEventFactory extends BasicResourceFactory<StartEvent> {
         return startEventList;
     }
 
-    private Map<String, SubProcess> getAllSubProcessMap(List<BpmnConfigResource> bpmnResourceList, List<BpmnDiagramRegister> bpmnDiagramResourceList) {
+    private Map<String, SubProcess> getAllSubProcessMap(List<ProcessConfigResource> processResourceList, List<ProcessDiagramRegister> bpmnDiagramResourceList) {
         Map<String, SubProcess> allSubProcess = Maps.newHashMap();
-        bpmnResourceList.forEach(bpmnResource -> {
+        processResourceList.forEach(bpmnResource -> {
             Map<String, SubProcessLink> sbMap = bpmnResource.getSubProcessMap();
             if (MapUtils.isEmpty(sbMap)) {
                 return;

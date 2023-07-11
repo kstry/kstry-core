@@ -29,7 +29,7 @@ import java.net.URI;
 /**
  * @author lykan
  */
-public class AbstractConfigResource implements ConfigResource {
+public abstract class AbstractConfigResource implements ConfigResource {
 
     /**
      * 配置文件名

@@ -19,10 +19,12 @@ package cn.kstry.framework.core.bpmn;
 
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 
+import java.util.Optional;
+
 /**
  * Task
  */
-public interface Task extends FlowElement, ElementIterable {
+public interface Task extends FlowElement {
 
     /**
      * 获取超时时间
@@ -37,4 +39,11 @@ public interface Task extends FlowElement, ElementIterable {
      * @return 默认 true
      */
     boolean strictMode();
+
+    /**
+     * 获取元素迭代器
+     *
+     * @return 元素迭代器
+     */
+    Optional<ElementIterable> getElementIterable();
 }

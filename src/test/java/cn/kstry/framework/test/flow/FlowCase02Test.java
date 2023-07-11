@@ -15,6 +15,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.annotation.Resource;
+import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.IntStream;
 
@@ -48,6 +49,9 @@ public class FlowCase02Test {
         TaskResponse<Goods> fire = storyEngine.fire(fireRequest);
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(26, request.getCount());
+
+        Optional<Object> serializeOptional = storyEngine.serialize(fireRequest);
+        serializeOptional.ifPresent(System.out::println);
     }
 
     /**

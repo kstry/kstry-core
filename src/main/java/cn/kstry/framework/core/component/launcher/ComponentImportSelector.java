@@ -84,8 +84,8 @@ public class ComponentImportSelector {
     }
 
     @Bean
-    public SpringBpmnDiagramRegister springBpmnDiagramRegister(ApplicationContext applicationContext) {
-        return new SpringBpmnDiagramRegister(applicationContext);
+    public SpringProcessDiagramRegister springBpmnDiagramRegister(ApplicationContext applicationContext) {
+        return new SpringProcessDiagramRegister(applicationContext);
     }
 
     @Bean

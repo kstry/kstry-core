@@ -26,10 +26,10 @@ import com.google.common.collect.Sets;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
- *
  * @author lykan
  */
 @SuppressWarnings("unused")
@@ -59,15 +59,13 @@ public class NodeTracking {
 
     private volatile Long spendTime;
 
-    private final List<ParamTracking> paramTracking = Lists.newArrayList();
+    private final List<FieldTracking> paramTracking = Lists.newArrayList();
 
-    private final List<NoticeTracking> noticeTracking = Lists.newArrayList();
+    private final List<FieldTracking> noticeTracking = Lists.newArrayList();
+
+    private IterateInfo iterateInfo;
 
     private DemotionInfo demotionInfo;
-
-    private Integer iterateCount;
-
-    private Integer iterateStride;
 
     @JSONField(serialize = false)
     private Throwable taskException;
@@ -149,7 +147,7 @@ public class NodeTracking {
         this.spendTime = spendTime;
     }
 
-    public List<ParamTracking> getParamTracking() {
+    public List<FieldTracking> getParamTracking() {
         return paramTracking;
     }
 
@@ -158,12 +156,15 @@ public class NodeTracking {
         this.paramTracking.add(paramTracking);
     }
 
-    public List<NoticeTracking> getNoticeTracking() {
+    public List<FieldTracking> getNoticeTracking() {
         return noticeTracking;
     }
 
     public void addNoticeTracking(NoticeTracking noticeTracking) {
         AssertUtil.notNull(noticeTracking);
+        this.noticeTracking.stream().filter(nt ->
+                Objects.equals(nt.getTargetName(), noticeTracking.getTargetName()) && nt.getPassTarget() == noticeTracking.getPassTarget()
+        ).findFirst().ifPresent(this.noticeTracking::remove);
         this.noticeTracking.add(noticeTracking);
     }
 
@@ -221,19 +222,11 @@ public class NodeTracking {
         this.demotionInfo = demotionInfo;
     }
 
-    public Integer getIterateCount() {
-        return iterateCount;
+    public IterateInfo getIterateInfo() {
+        return iterateInfo;
     }
 
-    public void setIterateCount(Integer iterateCount) {
-        this.iterateCount = iterateCount;
-    }
-
-    public Integer getIterateStride() {
-        return iterateStride;
-    }
-
-    public void setIterateStride(Integer iterateStride) {
-        this.iterateStride = iterateStride;
+    public void setIterateInfo(IterateInfo iterateInfo) {
+        this.iterateInfo = iterateInfo;
     }
 }

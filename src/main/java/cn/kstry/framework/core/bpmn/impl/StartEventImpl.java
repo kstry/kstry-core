@@ -39,6 +39,10 @@ public class StartEventImpl extends EventImpl implements StartEvent {
      */
     private EndEvent endEvent;
 
+    private String processId;
+
+    private String processName;
+
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.START_EVENT;
@@ -62,5 +66,25 @@ public class StartEventImpl extends EventImpl implements StartEvent {
     @Override
     public void setEndEvent(EndEvent endEvent) {
         this.endEvent = endEvent;
+    }
+
+    @Override
+    public String getProcessId() {
+        return processId;
+    }
+
+    @Override
+    public void setProcessId(String processId) {
+        this.processId = processId;
+    }
+
+    @Override
+    public String getProcessName() {
+        return processName;
+    }
+
+    @Override
+    public void setProcessName(String processName) {
+        this.processName = processName;
     }
 }
