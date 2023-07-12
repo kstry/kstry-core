@@ -1,6 +1,7 @@
 package cn.kstry.framework.test.iterator;
 
 import cn.kstry.framework.core.bus.InScopeData;
+import cn.kstry.framework.core.bus.ScopeData;
 import cn.kstry.framework.core.engine.StoryEngine;
 import cn.kstry.framework.core.engine.facade.ReqBuilder;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
@@ -129,14 +130,19 @@ public class IteratorSubProcessCaseTest {
             ArrayList<Integer> integers = Lists.newArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
             dataSource.setNumList(integers.toArray(new Integer[0]));
             List<Integer> list = Lists.newArrayList();
-            StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list).timeout(2500).request(dataSource).startId("story-def-iterate-test_005").build();
+            InVarScopeData inVarScopeData = new InVarScopeData();
+            StoryRequest<List<Integer>> fireRequest = ReqBuilder.returnType(list).timeout(2500)
+                    .request(dataSource).varScopeData(inVarScopeData).startId("story-def-iterate-test_005").build();
 
             TaskResponse<List<Integer>> fire = storyEngine.fire(fireRequest);
             System.out.println(JSON.toJSONString(fire));
             Assert.assertTrue(fire.isSuccess());
             Assert.assertEquals(11, fire.getResult().size());
+            Assert.assertEquals(11, inVarScopeData.getVarRes().size());
             Assert.assertNull(fire.getResult().get(4));
+            Assert.assertNull(inVarScopeData.getVarRes().get(4));
             Assert.assertEquals(fire.getResult().stream().filter(Objects::nonNull).mapToInt(i -> i).sum(), 369);
+            Assert.assertEquals(inVarScopeData.getVarRes().stream().filter(Objects::nonNull).mapToInt(i -> i).sum(), 369);
         });
     }
 
@@ -192,5 +198,23 @@ public class IteratorSubProcessCaseTest {
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(11, fire.getResult().size());
         Assert.assertEquals(fire.getResult().stream().mapToInt(i -> i).sum(), 385);
+    }
+
+    public static class InVarScopeData implements ScopeData {
+
+        @Override
+        public ScopeTypeEnum getScopeDataEnum() {
+            return ScopeTypeEnum.VARIABLE;
+        }
+
+        private List<Integer> varRes;
+
+        public List<Integer> getVarRes() {
+            return varRes;
+        }
+
+        public void setVarRes(List<Integer> varRes) {
+            this.varRes = varRes;
+        }
     }
 }

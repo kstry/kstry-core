@@ -18,6 +18,8 @@
 package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
@@ -26,10 +28,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
-import cn.kstry.framework.core.util.PropertyUtil;
+import cn.kstry.framework.core.util.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -37,10 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -197,12 +193,13 @@ public class BasicStoryBus implements StoryBus {
             return;
         }
 
+        ElementIterable elementIterable = taskServiceDef.getMethodWrapper().getElementIterable();
         MethodWrapper.ReturnTypeNoticeDef returnTypeNoticeDef = taskServiceDef.getMethodWrapper().getReturnTypeNoticeDef();
         ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
-            doNoticeResult(flowElement, result, returnTypeNoticeDef.getNoticeStaDefSet(), ScopeTypeEnum.STABLE);
-            doNoticeResult(flowElement, result, returnTypeNoticeDef.getNoticeVarDefSet(), ScopeTypeEnum.VARIABLE);
+            doNoticeResult(flowElement, result, elementIterable, returnTypeNoticeDef.getNoticeStaDefSet(), ScopeTypeEnum.STABLE);
+            doNoticeResult(flowElement, result, elementIterable, returnTypeNoticeDef.getNoticeVarDefSet(), ScopeTypeEnum.VARIABLE);
             if (returnTypeNoticeDef.getStoryResultDef() == null) {
                 return;
             }
@@ -219,8 +216,8 @@ public class BasicStoryBus implements StoryBus {
                         () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, r, Optional.ofNullable(r).map(Object::getClass).orElse(null))
                 );
             } else {
-                LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}",
-                        ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), taskServiceDef.getName());
+                LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}, identity: {}",
+                        ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), taskServiceDef.getName(), flowElement.identity());
             }
         } finally {
             writeLock.unlock();
@@ -497,7 +494,8 @@ public class BasicStoryBus implements StoryBus {
         }
     }
 
-    private void doNoticeResult(FlowElement flowElement, Object result, Set<MethodWrapper.NoticeFieldItem> noticeStaDefSet, ScopeTypeEnum dataEnum) {
+    private void doNoticeResult(FlowElement flowElement, Object result,
+                                ElementIterable elementIterable, Set<MethodWrapper.NoticeFieldItem> noticeStaDefSet, ScopeTypeEnum dataEnum) {
         if (CollectionUtils.isEmpty(noticeStaDefSet)) {
             return;
         }
@@ -526,8 +524,8 @@ public class BasicStoryBus implements StoryBus {
             if (ScopeTypeEnum.STABLE == dataEnum) {
                 Optional<Object> oldResult = PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
                 if (oldResult.isPresent()) {
-                    LOGGER.warn("[{}] Existing values in the immutable union are not allowed to be set repeatedly! k: {}, oldV: {}",
-                            ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), def.getTargetName(), oldResult.get());
+                    LOGGER.warn("[{}] Existing values in the immutable union are not allowed to be set repeatedly! k: {}, oldV: {}, identity: {}",
+                            ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), def.getTargetName(), oldResult.get(), flowElement.identity());
                     return;
                 }
             }
@@ -546,10 +544,20 @@ public class BasicStoryBus implements StoryBus {
 
             String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
             if (!(t instanceof Map)) {
+                ServiceTask serviceTask = GlobalUtil.transferNotEmpty(flowElement, ServiceTask.class);
                 Field field = FieldUtils.getField(t.getClass(), fieldName, true);
-                AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(field.getType(), def.getFieldClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
-                        "{} expect: {}, actual: {}", ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(),
-                        Optional.ofNullable(field).map(Field::getType).map(Class::getName).orElse(StringUtils.EMPTY), def.getFieldClass().getName());
+                String targetTypeName = Optional.ofNullable(field).map(Field::getType).map(Class::getName).orElse(StringUtils.EMPTY);
+
+                boolean codeIterable = elementIterable != null && elementIterable.iterable();
+                boolean configIterable = serviceTask.getElementIterable().map(ElementIterable::iterable).orElse(false);
+                if (codeIterable || configIterable) {
+                    AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(List.class, field.getType()), ExceptionEnum.ITERATE_ITEM_ERROR,
+                            "The return value type in iteration must be list. fieldName: {}, type: {}, identity: {}", fieldName, targetTypeName, serviceTask.identity());
+                } else {
+                    AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(field.getType(), def.getFieldClass()),
+                            ExceptionEnum.TYPE_TRANSFER_ERROR, "{} fieldName: {}, expect: {}, actual: {}, identity: {}",
+                            ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(), fieldName, targetTypeName, def.getFieldClass().getName(), serviceTask.identity());
+                }
             }
             boolean setSuccess = PropertyUtil.setProperty(t, fieldName, r);
             if (setSuccess) {

@@ -196,16 +196,16 @@ public class FlowRegister {
     }
 
     private Optional<FlowElement> doNextElement(ContextStoryBus contextStoryBus) {
-        AssertUtil.notTrue(adminFuture.isCancelled(startEventId), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
-                "Task interrupted. Story task was interrupted! taskName: {}", GlobalUtil.getTaskName(getStartElement(), getRequestId()));
         Optional<FlowElement> elementOptional = flowElementStack.pop();
         if (!elementOptional.isPresent()) {
             return Optional.empty();
         }
-
         // 获取当前执行节点
         FlowElement currentFlowElement = elementOptional.get();
         monitorTracking.buildNodeTracking(currentFlowElement);
+
+        AssertUtil.notTrue(adminFuture.isCancelled(startEventId), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
+                "Task interrupted. Story task was interrupted! taskName: {}, identity: {}", GlobalUtil.getTaskName(getStartElement(), getRequestId()), currentFlowElement.identity());
 
         // 获取执行决策
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);

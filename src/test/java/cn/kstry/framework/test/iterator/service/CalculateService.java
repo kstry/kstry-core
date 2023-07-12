@@ -89,8 +89,8 @@ public class CalculateService {
     /**
      * 求平方再放回，测试 IterateStrategyEnum.BEST_SUCCESS 策略
      */
-    @NoticeResult
     @TaskService(name = "square-best-strategy", iterator = @Iterator(alignIndex = true))
+    @NoticeScope(target = "varRes", scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.VARIABLE})
     public Integer squareBestStrategy(ScopeDataOperator dataOperator, IterDataItem<Integer> data) throws InterruptedException {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<Integer> iterDataItem = data.getData();
