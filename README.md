@@ -6,6 +6,8 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry 使用文档](http://kstry.cn/doc/specification/quick_start.html)
 
+&nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry流程配置台](http://kstry.cn/modeler)
+
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry 使用demo](https://gitee.com/kstry/kstry-demo)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry 流程注解+flux 使用demo](https://gitee.com/kstry/kstry-flux-demo)

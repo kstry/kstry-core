@@ -17,7 +17,6 @@
  */
 package cn.kstry.framework.core.annotation;
 
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.annotation.ElementType;
