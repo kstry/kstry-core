@@ -24,6 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
  *
  * @author lykan
  */
+@SuppressWarnings("unused")
 public class LambdaUtil {
 
     public static <Component> String getServiceName(LambdaParam.LambdaParam0<Component> service) {

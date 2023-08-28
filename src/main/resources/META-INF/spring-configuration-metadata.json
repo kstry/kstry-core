@@ -74,5 +74,10 @@
     "type": "java.lang.String",
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
     "description": "Thread Pool shutdown 失败之后，再 shutdownNow 之后的等待时间，单位：ms，默认：5000"
+  }, {
+    "name": "kstry.converter.date-format",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "类型转换中日期格式，默认：yyyy-MM-dd HH:mm:ss"
   }]
 }

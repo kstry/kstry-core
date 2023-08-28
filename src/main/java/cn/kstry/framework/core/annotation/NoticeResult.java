@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.annotation;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -33,4 +35,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 public @interface NoticeResult {
 
+    /**
+     * 类型转换器，默认不指定，需要时进行自动匹配
+     */
+    String converter() default StringUtils.EMPTY;
 }

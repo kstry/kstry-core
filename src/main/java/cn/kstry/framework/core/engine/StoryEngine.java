@@ -19,8 +19,10 @@ package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bus.BasicStoryBus;
+import cn.kstry.framework.core.bus.OperatorStoryBus;
 import cn.kstry.framework.core.bus.ScopeData;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
+import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.facade.TaskResponse;
@@ -230,8 +232,10 @@ public class StoryEngine {
         String businessId = storyRequest.getBusinessId();
         ScopeData varScopeData = storyRequest.getVarScopeData();
         ScopeData staScopeData = storyRequest.getStaScopeData();
+        Class<?> returnType = storyRequest.getReturnType();
+        TypeConverterProcessor typeConverterProcessor = storyEngineModule.getTypeConverterProcessor();
         MonitorTracking monitorTracking = flowRegister.getMonitorTracking();
-        return new BasicStoryBus(storyRequest.getTimeout(), storyRequest.getStoryExecutor(),
+        return new OperatorStoryBus(typeConverterProcessor, returnType, storyRequest.getTimeout(), storyRequest.getStoryExecutor(),
                 storyRequest.getRequestId(), storyRequest.getStartId(), businessId, role, monitorTracking, storyRequest.getRequest(), varScopeData, staScopeData);
     }
 

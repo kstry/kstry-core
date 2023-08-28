@@ -56,7 +56,7 @@ public class ExpressionParserProcessor extends DiagramTraverseSupport<Object> im
         if (conditionExpression == null) {
             return;
         }
-        conditionExpression.parserConditionExpression(expressionAliasParser);
+        conditionExpression.parseConditionExpression(expressionAliasParser);
     }
 
     @Override

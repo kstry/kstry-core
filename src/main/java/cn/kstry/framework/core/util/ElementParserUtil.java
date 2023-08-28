@@ -57,6 +57,8 @@ public class ElementParserUtil {
      */
     private static final Map<Class<?>, Object> PRIMITIVE_INIT_MAP = Maps.newHashMap();
 
+    private static final Map<Class<?>, Object> PRIMITIVE_PACK_TYPE = Maps.newHashMap();
+
     static {
         PRIMITIVE_INIT_MAP.put(long.class, 0L);
         PRIMITIVE_INIT_MAP.put(int.class, 0);
@@ -66,6 +68,15 @@ public class ElementParserUtil {
         PRIMITIVE_INIT_MAP.put(double.class, 0.0);
         PRIMITIVE_INIT_MAP.put(float.class, 0.0f);
         PRIMITIVE_INIT_MAP.put(boolean.class, false);
+
+        PRIMITIVE_PACK_TYPE.put(long.class, Long.class);
+        PRIMITIVE_PACK_TYPE.put(int.class, Integer.class);
+        PRIMITIVE_PACK_TYPE.put(short.class, Short.class);
+        PRIMITIVE_PACK_TYPE.put(byte.class, Byte.class);
+        PRIMITIVE_PACK_TYPE.put(char.class, Character.class);
+        PRIMITIVE_PACK_TYPE.put(double.class, Double.class);
+        PRIMITIVE_PACK_TYPE.put(float.class, Float.class);
+        PRIMITIVE_PACK_TYPE.put(boolean.class, Boolean.class);
     }
 
     public static Object initPrimitive(Class<?> clazz) {
@@ -97,7 +108,7 @@ public class ElementParserUtil {
             if (StringUtils.isNotBlank(taskParamAnn.value())) {
                 paramName = taskParamAnn.value();
             }
-            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, taskParamAnn.scopeEnum()));
+            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, taskParamAnn.scopeEnum(), taskParamAnn.converter()));
         }
 
         ReqTaskParam reqTaskParamAnn = p.getAnnotation(ReqTaskParam.class);
@@ -105,7 +116,7 @@ public class ElementParserUtil {
             if (StringUtils.isNotBlank(reqTaskParamAnn.value())) {
                 paramName = reqTaskParamAnn.value();
             }
-            MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.REQUEST);
+            MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.REQUEST, reqTaskParamAnn.converter());
             taskFieldProperty.setInjectSelf(reqTaskParamAnn.reqSelf());
             return Optional.of(taskFieldProperty);
         }
@@ -115,7 +126,7 @@ public class ElementParserUtil {
             if (StringUtils.isNotBlank(staTaskParamAnn.value())) {
                 paramName = staTaskParamAnn.value();
             }
-            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.STABLE));
+            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.STABLE, staTaskParamAnn.converter()));
         }
 
         VarTaskParam varTaskParamAnn = p.getAnnotation(VarTaskParam.class);
@@ -123,7 +134,7 @@ public class ElementParserUtil {
             if (StringUtils.isNotBlank(varTaskParamAnn.value())) {
                 paramName = varTaskParamAnn.value();
             }
-            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.VARIABLE));
+            return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.VARIABLE, varTaskParamAnn.converter()));
         }
         return Optional.empty();
     }
@@ -145,7 +156,7 @@ public class ElementParserUtil {
                 TaskField taskFieldAnn = field.getAnnotation(TaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(TaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
-                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum());
+                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum(), taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(GlobalConstant.STORY_DATA_SCOPE.contains(taskFieldProperty.getScopeDataEnum()), field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
@@ -161,7 +172,7 @@ public class ElementParserUtil {
                 ReqTaskField taskFieldAnn = field.getAnnotation(ReqTaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(ReqTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
-                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.REQUEST);
+                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.REQUEST, taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
@@ -177,7 +188,7 @@ public class ElementParserUtil {
                 StaTaskField taskFieldAnn = field.getAnnotation(StaTaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(StaTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
-                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.STABLE);
+                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.STABLE, taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
@@ -193,7 +204,7 @@ public class ElementParserUtil {
                 VarTaskField taskFieldAnn = field.getAnnotation(VarTaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
                 String targetName = Optional.of(taskFieldAnn).map(VarTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
-                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.VARIABLE);
+                MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.VARIABLE, taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
@@ -208,19 +219,16 @@ public class ElementParserUtil {
         if (left == right) {
             return true;
         }
-        if (left.isAssignableFrom(right)) {
-            return true;
+        if (Objects.equals(GlobalConstant.VOID, left.getName()) || Objects.equals(GlobalConstant.VOID, right.getName())) {
+            return false;
         }
-        try {
-            if (left.isPrimitive() && !right.isPrimitive()) {
-                return right.getField("TYPE").get(null) == left;
-            } else if (!left.isPrimitive() && right.isPrimitive()) {
-                return left.getField("TYPE").get(null) == right;
-            }
-        } catch (Throwable e) {
-            // ignore
+        if (left.isPrimitive()) {
+            left = (Class<?>) PRIMITIVE_PACK_TYPE.get(left);
         }
-        return false;
+        if (right.isPrimitive()) {
+            right = (Class<?>) PRIMITIVE_PACK_TYPE.get(right);
+        }
+        return left.isAssignableFrom(right);
     }
 
     public static boolean isSpringInitialization(Class<?> clazz) {

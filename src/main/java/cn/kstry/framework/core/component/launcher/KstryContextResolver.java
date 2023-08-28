@@ -18,6 +18,8 @@
 package cn.kstry.framework.core.component.launcher;
 
 import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
+import cn.kstry.framework.core.component.conversion.TypeConverter;
+import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
 import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
 import cn.kstry.framework.core.component.jsprocess.transfer.JsonSerializeProcessParser;
@@ -47,12 +49,14 @@ import cn.kstry.framework.core.resource.factory.StartEventFactory;
 import cn.kstry.framework.core.role.BusinessRole;
 import cn.kstry.framework.core.role.BusinessRoleRegister;
 import cn.kstry.framework.core.role.BusinessRoleRepository;
-import cn.kstry.framework.core.util.*;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.KValueUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -74,7 +78,7 @@ import java.util.stream.Collectors;
  *
  * @author lykan
  */
-public class KstryContextResolver implements ApplicationContextAware, InitializingBean {
+public class KstryContextResolver implements ApplicationContextAware {
 
     private ConfigurableApplicationContext applicationContext;
 
@@ -129,16 +133,22 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     }
 
     @Bean
+    public TypeConverterProcessor getTypeConverterProcessor(List<TypeConverter<?, ?>> typeConverterList) {
+        return new TypeConverterProcessor(typeConverterList);
+    }
+
+    @Bean
     public StoryEngine getFlowEngine(StartEventContainer startEventContainer, RoleDynamicComponent roleDynamicComponent, TaskContainer taskContainer,
                                      List<TaskThreadPoolExecutor> taskThreadPoolExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor,
-                                     SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking) {
+                                     SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor) {
         StoryEngineModule storyEngineModule = new StoryEngineModule(taskThreadPoolExecutor, startEventContainer, taskContainer, def -> {
             AssertUtil.notNull(def);
             if (def.isSpringInitialization()) {
                 return applicationContext.getBean(def.getParamType());
             }
             return ElementParserUtil.newInstance(def.getParamType()).orElse(null);
-        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(), threadSwitchHookProcessor, applicationContext, serializeProcessParser, serializeTracking);
+        }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(),
+                threadSwitchHookProcessor, applicationContext, serializeProcessParser, serializeTracking, typeConverterProcessor);
         return new StoryEngine(storyEngineModule, getBusinessRoleRepository(roleDynamicComponent));
     }
 
@@ -157,11 +167,6 @@ public class KstryContextResolver implements ApplicationContextAware, Initializi
     @Override
     public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = GlobalUtil.transferNotEmpty(applicationContext, ConfigurableApplicationContext.class);
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        PropertyUtil.initGlobalProperties(applicationContext.getEnvironment());
     }
 
     private void initKValue(KValueFactory kValueFactory) {

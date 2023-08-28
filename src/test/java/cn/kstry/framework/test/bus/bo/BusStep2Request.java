@@ -41,6 +41,9 @@ public class BusStep2Request implements SpringParamLifecycle {
     @VarTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
     private int varId;
 
+    @VarTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
+    private String convId;
+
     @StaTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
     private int staId;
 
@@ -58,6 +61,12 @@ public class BusStep2Request implements SpringParamLifecycle {
 
     private Br br;
 
+    @ReqTaskField("now")
+    private String now;
+
+    @ReqTaskField("localNow")
+    private String localNow;
+
     @Resource
     private BusTestService busTestService;
 
@@ -73,8 +82,10 @@ public class BusStep2Request implements SpringParamLifecycle {
         Assert.assertNotNull(scopeDataOperator);
         Assert.assertTrue(reqId > 0);
         Assert.assertEquals(reqId, varId);
+        Assert.assertEquals(convId, String.valueOf(varId));
         Assert.assertEquals(reqId, staId);
         Assert.assertEquals(reqId, oneId);
+        Assert.assertEquals(now, localNow);
         Assert.assertEquals(1, size);
         Assert.assertNotNull(name);
         br.setName(name);

@@ -15,52 +15,57 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.monitor;
-
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
+package cn.kstry.framework.core.constant;
 
 /**
+ * 类型转换器名字列表
+ *
  * @author lykan
  */
-public interface FieldTracking {
+public interface TypeConverterNames {
 
     /**
-     * @return 参数来源字段名
+     * Object -> Object
      */
-    String getSourceName();
+    String BASIC_CONVERTER = "BASIC_CONVERTER";
 
     /**
-     * @return 被赋值字段名
+     * Date -> String
      */
-    String getTargetName();
+    String DATE_TO_STRING = "DATE_TO_STRING";
 
     /**
-     * @return 操作字段所在的数据域
+     * String -> Date
      */
-    ScopeTypeEnum getScopeType();
+    String STRING_TO_DATE = "STRING_TO_DATE";
 
     /**
-     * @return 实际传递的值
+     * LocalDateTime -> String
      */
-    Object getPassValue();
+    String LOCAL_DATETIME_TO_STRING = "LOCAL_DATETIME_TO_STRING";
 
     /**
-     * @return 实际传递值的类型
+     * String -> LocalDateTime
      */
-    Class<?> getPassTarget();
+    String STRING_TO_LOCAL_DATETIME = "STRING_TO_LOCAL_DATETIME";
 
     /**
-     * @return 实际传递值的类型名称
+     * Object -> List
      */
-    String getTargetType();
+    String ONE_ITEM_TO_LIST = "ONE_ITEM_TO_LIST";
 
     /**
-     * @return 序列化后的实际传递的值
+     * Object -> Set
      */
-    String getValue();
+    String ONE_ITEM_TO_SET = "ONE_ITEM_TO_SET";
 
     /**
-     * 使用到的类型转换器
+     * Object -> Boolean
      */
-    String getConverter();
+    String OBJECT_TO_BOOLEAN = "OBJECT_TO_BOOLEAN";
+
+    /**
+     * List -> Object
+     */
+    String FIRST_ITEM_FROM_LIST = "FIRST_ITEM_FROM_LIST";
 }

@@ -36,18 +36,21 @@ public class ParamTracking implements FieldTracking {
 
     private final Class<?> passTarget;
 
+    private final String converter;
+
     private String value;
 
-    private ParamTracking(String paramName, String sourceName, ScopeTypeEnum sourceScopeType, Object value, Class<?> passTarget) {
+    private ParamTracking(String paramName, String sourceName, ScopeTypeEnum sourceScopeType, Object value, Class<?> passTarget, String converter) {
         this.paramName = paramName;
         this.sourceScopeType = sourceScopeType;
         this.sourceName = sourceName;
         this.passValue = value;
         this.passTarget = passTarget;
+        this.converter = converter;
     }
 
-    public static ParamTracking build(String paramName, String sourceName, ScopeTypeEnum sourceScopeType, Object value, Class<?> passTarget) {
-        return new ParamTracking(paramName, sourceName, sourceScopeType, value, passTarget);
+    public static ParamTracking build(String paramName, String sourceName, ScopeTypeEnum sourceScopeType, Object value, Class<?> passTarget, String converter) {
+        return new ParamTracking(paramName, sourceName, sourceScopeType, value, passTarget, converter);
     }
 
     @Override
@@ -78,8 +81,21 @@ public class ParamTracking implements FieldTracking {
     }
 
     @Override
+    public String getTargetType() {
+        if (passTarget != null) {
+            return passTarget.getName();
+        }
+        return null;
+    }
+
+    @Override
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String getConverter() {
+        return converter;
     }
 
     public void valueSerialize(SerializeTracking serialize) {

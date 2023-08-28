@@ -158,7 +158,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     }
 
     public void setTaskInstruct(String taskInstruct) {
-        AssertUtil.notBlank(taskInstruct, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, GlobalUtil.format("TaskInstruct cannot be blank!"));
+        AssertUtil.notBlank(taskInstruct, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskInstruct cannot be blank!");
         this.taskInstruct = StringUtils.replaceOnceIgnoreCase(taskInstruct, BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT, StringUtils.EMPTY);
     }
 

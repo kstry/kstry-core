@@ -34,6 +34,8 @@ public class ParamInjectDef {
 
     private final String fieldName;
 
+    private String converter;
+
     private String targetName;
 
     private List<ParamInjectDef> fieldInjectDefList;
@@ -53,6 +55,7 @@ public class ParamInjectDef {
             this.targetName = taskFieldProperty.getName();
             this.scopeTypeEnum = taskFieldProperty.getScopeDataEnum();
             this.injectSelf = taskFieldProperty.isInjectSelf();
+            this.converter = taskFieldProperty.getConverter();
         }
     }
 
@@ -74,6 +77,10 @@ public class ParamInjectDef {
 
     public ScopeTypeEnum getScopeDataEnum() {
         return scopeTypeEnum;
+    }
+
+    public String getConverter() {
+        return converter;
     }
 
     public void setFieldInjectDefList(List<ParamInjectDef> fieldInjectDefList) {

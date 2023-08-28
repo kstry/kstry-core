@@ -41,6 +41,11 @@ public @interface ReqTaskParam {
     String value() default StringUtils.EMPTY;
 
     /**
+     * 类型转换器，默认不指定，需要时进行自动匹配
+     */
+    String converter() default StringUtils.EMPTY;
+
+    /**
      * 是否直接拿取 client 传入的 request
      *
      * @return true：直接将 client 传入的 request 赋值给变量

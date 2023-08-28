@@ -50,4 +50,9 @@ public @interface NoticeScope {
      * @return noticeScope
      */
     ScopeTypeEnum[] scope() default {};
+
+    /**
+     * 类型转换器，默认不指定，需要时进行自动匹配
+     */
+    String converter() default StringUtils.EMPTY;
 }

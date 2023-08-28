@@ -78,7 +78,7 @@ public class GlobalUtil {
         if (source == null) {
             return Optional.empty();
         }
-        AssertUtil.isTrue(targetClass.isAssignableFrom(source.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
+        AssertUtil.isTrue(ElementParserUtil.isAssignable(targetClass, source.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
                 "{} expect: {}, actual: {}", ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(), targetClass.getName(), source.getClass().getName());
         return Optional.of((T) source);
     }

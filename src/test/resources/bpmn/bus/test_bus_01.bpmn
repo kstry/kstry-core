@@ -36,7 +36,7 @@
       <bpmn:extensionElements>
         <camunda:properties>
           <camunda:property name="task-service" value="testBusDataTaskParams" />
-          <camunda:property name="task-params" value="{ 	&#34;b&#34;: null, 	&#34;c&#34;: null, 	&#34;d&#34;: &#34;3.24&#34;, 	&#34;reqId&#34;: &#34;@req.id&#34;, 	&#34;bo&#34;: { 		&#34;id&#34;: &#34;@req.id&#34;, 		&#34;size&#34;: null, 		&#34;br-br&#34;: { 			&#34;name&#34;: &#34;张三&#34; 		} 	} }" />
+          <camunda:property name="task-params" value="{&#10;	&#34;a1&#34;: &#34;111&#34;,&#10;	&#34;b&#34;: null,&#10;	&#34;c&#34;: null,&#10;	&#34;d&#34;: &#34;3.24&#34;,&#10;	&#34;reqId&#34;: &#34;@req.id&#34;,&#10;	&#34;bo&#34;: {&#10;		&#34;id&#34;: &#34;@req.id&#34;,&#10;		&#34;size&#34;: null,&#10;		&#34;br-br&#34;: {&#10;			&#34;name&#34;: &#34;张三&#34;&#10;		}&#10;	}&#10;}" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0ivonek</bpmn:incoming>
@@ -59,33 +59,27 @@
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_0spzab1" sourceRef="Activity_1e7zswb" targetRef="Activity_01a8ha2" />
     <bpmn:sequenceFlow id="Flow_0z2uomb" sourceRef="Activity_01a8ha2" targetRef="Event_119p18r" />
+    <bpmn:startEvent id="testCustomParams" name="testCustomParams">
+      <bpmn:outgoing>Flow_04qz83o</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_0sz46qo" name="testCustomParams">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="testCustomParams" />
+          <camunda:property name="task-params" value="{&#10;	&#34;busTestRequest&#34;: {&#10;		&#34;id&#34;: &#34;@var.id&#34;,&#10;		&#34;desc&#34;: &#34;测试&#34;,&#10;		&#34;num&#34;: 20,&#10;		&#34;num2&#34;: &#34;@var.num2&#34;,&#10;		&#34;ar&#34;: {&#10;			&#34;name&#34;: &#34;阿三&#34;&#10;		}&#10;	}&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04qz83o</bpmn:incoming>
+      <bpmn:outgoing>Flow_1c07nj3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_04qz83o" sourceRef="testCustomParams" targetRef="Activity_0sz46qo" />
+    <bpmn:endEvent id="Event_0ljt2ru">
+      <bpmn:incoming>Flow_1c07nj3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1c07nj3" sourceRef="Activity_0sz46qo" targetRef="Event_0ljt2ru" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_08ansyz">
-      <bpmndi:BPMNEdge id="Flow_0z2uomb_di" bpmnElement="Flow_0z2uomb">
-        <di:waypoint x="650" y="120" />
-        <di:waypoint x="702" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0spzab1_di" bpmnElement="Flow_0spzab1">
-        <di:waypoint x="500" y="120" />
-        <di:waypoint x="550" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_11iy13d_di" bpmnElement="Flow_11iy13d">
-        <di:waypoint x="370" y="330" />
-        <di:waypoint x="422" y="330" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0ivonek_di" bpmnElement="Flow_0ivonek">
-        <di:waypoint x="218" y="330" />
-        <di:waypoint x="270" y="330" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_027ks4c_di" bpmnElement="Flow_027ks4c">
-        <di:waypoint x="350" y="120" />
-        <di:waypoint x="400" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1b4j1m9_di" bpmnElement="Flow_1b4j1m9">
-        <di:waypoint x="188" y="120" />
-        <di:waypoint x="250" y="120" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="story-def-bus-test-01">
         <dc:Bounds x="152" y="102" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -118,6 +112,51 @@
         <dc:Bounds x="550" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_10ujjzi_di" bpmnElement="testCustomParams">
+        <dc:Bounds x="182" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="161" y="515" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0sz46qo_di" bpmnElement="Activity_0sz46qo">
+        <dc:Bounds x="270" y="450" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ljt2ru_di" bpmnElement="Event_0ljt2ru">
+        <dc:Bounds x="422" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1b4j1m9_di" bpmnElement="Flow_1b4j1m9">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="250" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_027ks4c_di" bpmnElement="Flow_027ks4c">
+        <di:waypoint x="350" y="120" />
+        <di:waypoint x="400" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ivonek_di" bpmnElement="Flow_0ivonek">
+        <di:waypoint x="218" y="330" />
+        <di:waypoint x="270" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11iy13d_di" bpmnElement="Flow_11iy13d">
+        <di:waypoint x="370" y="330" />
+        <di:waypoint x="422" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0spzab1_di" bpmnElement="Flow_0spzab1">
+        <di:waypoint x="500" y="120" />
+        <di:waypoint x="550" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0z2uomb_di" bpmnElement="Flow_0z2uomb">
+        <di:waypoint x="650" y="120" />
+        <di:waypoint x="702" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04qz83o_di" bpmnElement="Flow_04qz83o">
+        <di:waypoint x="218" y="490" />
+        <di:waypoint x="270" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c07nj3_di" bpmnElement="Flow_1c07nj3">
+        <di:waypoint x="370" y="490" />
+        <di:waypoint x="422" y="490" />
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

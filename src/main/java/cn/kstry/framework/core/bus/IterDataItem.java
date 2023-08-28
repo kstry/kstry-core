@@ -35,11 +35,14 @@ public class IterDataItem<T> {
 
     private final List<T> dataList;
 
-    public IterDataItem(boolean batchItem, T data, List<T> dataList, int index) {
+    private final int size;
+
+    public IterDataItem(boolean batchItem, T data, List<T> dataList, int index, int size) {
         this.batchItem = batchItem;
         this.data = data;
         this.dataList = dataList;
         this.index = index;
+        this.size = size;
     }
 
     public int getIndex() {
@@ -56,5 +59,9 @@ public class IterDataItem<T> {
 
     public List<T> getDataList() {
         return dataList;
+    }
+
+    public int getSize() {
+        return size;
     }
 }

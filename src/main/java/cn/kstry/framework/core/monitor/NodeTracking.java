@@ -153,6 +153,9 @@ public class NodeTracking {
 
     public void addParamTracking(ParamTracking paramTracking) {
         AssertUtil.notNull(paramTracking);
+        this.paramTracking.stream().filter(nt ->
+                Objects.equals(nt.getTargetName(), paramTracking.getTargetName()) && nt.getPassTarget() == paramTracking.getPassTarget()
+        ).findFirst().ifPresent(this.paramTracking::remove);
         this.paramTracking.add(paramTracking);
     }
 

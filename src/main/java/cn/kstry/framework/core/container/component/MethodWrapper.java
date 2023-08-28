@@ -56,7 +56,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 /**
- *
  * @author lykan
  */
 public class MethodWrapper {
@@ -257,21 +256,21 @@ public class MethodWrapper {
         AssertUtil.anyNotNull(noticeAnn, returnType);
 
         noticeAnn.getNoticeSta().ifPresent(noticeSta -> {
-            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeSta.target(), returnType, noticeAnn.isNotField());
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeSta.target(), returnType, noticeAnn.isNotField(), noticeSta.converter());
             returnTypeNoticeDef.noticeStaDefSet.add(noticeFieldItem);
         });
         noticeAnn.getNoticeVar().ifPresent(noticeVar -> {
-            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeVar.target(), returnType, noticeAnn.isNotField());
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeVar.target(), returnType, noticeAnn.isNotField(), noticeVar.converter());
             returnTypeNoticeDef.noticeVarDefSet.add(noticeFieldItem);
         });
         noticeAnn.getNoticeResult().ifPresent(noticeResult -> {
             if (returnTypeNoticeDef.storyResultDef != null) {
                 return;
             }
-            returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(fieldName, null, returnType, noticeAnn.isNotField());
+            returnTypeNoticeDef.storyResultDef = new NoticeFieldItem(fieldName, null, returnType, noticeAnn.isNotField(), noticeResult.converter());
         });
         noticeAnn.getNoticeScope().ifPresent(noticeScope -> {
-            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeScope.target(), returnType, noticeAnn.isNotField());
+            NoticeFieldItem noticeFieldItem = new NoticeFieldItem(fieldName, noticeScope.target(), returnType, noticeAnn.isNotField(), noticeScope.converter());
             noticeScopeDef(noticeScope, noticeFieldItem);
         });
     }
@@ -346,13 +345,16 @@ public class MethodWrapper {
          */
         private final boolean resultSelf;
 
-        public NoticeFieldItem(String fieldName, String targetName, Class<?> fieldClass, boolean resultSelf) {
+        private final String converter;
+
+        public NoticeFieldItem(String fieldName, String targetName, Class<?> fieldClass, boolean resultSelf, String converter) {
             super(Optional.ofNullable(targetName).filter(StringUtils::isNotBlank).orElse(fieldName), IdentityTypeEnum.NOTICE_FIELD);
             AssertUtil.notNull(fieldClass);
             this.fieldName = fieldName;
             this.targetName = this.getIdentityId();
             this.fieldClass = fieldClass;
             this.resultSelf = resultSelf;
+            this.converter = converter;
         }
 
         public String getFieldName() {
@@ -370,10 +372,13 @@ public class MethodWrapper {
         public boolean isResultSelf() {
             return resultSelf;
         }
+
+        public String getConverter() {
+            return converter;
+        }
     }
 
     /**
-     *
      * @author lykan
      */
     public static class TaskFieldProperty {
@@ -382,11 +387,14 @@ public class MethodWrapper {
 
         private final ScopeTypeEnum scopeTypeEnum;
 
+        private final String converter;
+
         private boolean injectSelf;
 
-        public TaskFieldProperty(String name, ScopeTypeEnum scopeTypeEnum) {
+        public TaskFieldProperty(String name, ScopeTypeEnum scopeTypeEnum, String converter) {
             this.name = name;
             this.scopeTypeEnum = scopeTypeEnum;
+            this.converter = converter;
         }
 
         public String getName() {
@@ -403,6 +411,10 @@ public class MethodWrapper {
 
         public void setInjectSelf(boolean injectSelf) {
             this.injectSelf = injectSelf;
+        }
+
+        public String getConverter() {
+            return converter;
         }
     }
 }

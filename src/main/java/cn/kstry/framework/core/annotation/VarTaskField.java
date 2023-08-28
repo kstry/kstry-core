@@ -38,4 +38,9 @@ public @interface VarTaskField {
      * @return value
      */
     String value() default StringUtils.EMPTY;
+
+    /**
+     * 类型转换器，默认不指定，需要时进行自动匹配
+     */
+    String converter() default StringUtils.EMPTY;
 }

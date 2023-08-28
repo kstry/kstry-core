@@ -18,28 +18,32 @@
 package cn.kstry.framework.core.bus;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.ServiceTask;
-import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
-import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.*;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
+import cn.kstry.framework.core.util.PropertyUtil;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 
 import static cn.kstry.framework.core.monitor.MonitorTracking.BAD_TARGET;
 import static cn.kstry.framework.core.monitor.MonitorTracking.BAD_VALUE;
@@ -49,85 +53,91 @@ import static cn.kstry.framework.core.monitor.MonitorTracking.BAD_VALUE;
  *
  * @author lykan
  */
-public class BasicStoryBus implements StoryBus {
+public abstract class BasicStoryBus implements StoryBus {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicStoryBus.class);
 
     /**
      * StoryBus 创建时间作为流程开始时间
      */
-    private final long beginTimeMillis = System.currentTimeMillis();
+    final long beginTimeMillis = System.currentTimeMillis();
 
     /**
      * 请求的总超时时间
      */
-    private final long timeoutMillis;
+    final long timeoutMillis;
 
     /**
      * 请求 ID 用来区分不同请求
      */
-    private final String requestId;
+    final String requestId;
 
     /**
      * 开始事件ID
      */
-    private final String startEventId;
+    final String startEventId;
 
     /**
      * 业务ID
      */
-    private final String businessId;
+    final String businessId;
 
     /**
      * req 域
      */
-    private final Object reqScopeData;
+    final Object reqScopeData;
 
     /**
      * var 域
      */
-    private final ScopeData varScopeData;
+    final ScopeData varScopeData;
 
     /**
      * sta 域
      */
-    private final ScopeData staScopeData;
+    final ScopeData staScopeData;
 
     /**
      * return result
      */
-    private volatile Object returnResult = null;
+    volatile Object returnResult = null;
 
     /**
      * 角色
      */
-    private final Role role;
+    final Role role;
 
     /**
      * 链路追踪器
      */
-    private final MonitorTracking monitorTracking;
+    final MonitorTracking monitorTracking;
 
     /**
      * Bus 读写锁
      */
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-    /**
-     * StoryBus 中的数据操作接口
-     */
-    private ScopeDataOperator scopeDataOperator;
+    final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     /**
      * 指定当前任务使用的任务执行器
      */
-    private final ThreadPoolExecutor storyExecutor;
+    final ThreadPoolExecutor storyExecutor;
 
-    public BasicStoryBus(int timeout, ThreadPoolExecutor storyExecutor, String requestId, String startEventId,
-                         String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
+    /**
+     * 类型转换处理器
+     */
+    final TypeConverterProcessor typeConverterProcessor;
+
+    /**
+     * Story 返回值类型
+     */
+    final Class<?> returnType;
+
+    public BasicStoryBus(TypeConverterProcessor typeConverterProcessor, Class<?> returnType, int timeout, ThreadPoolExecutor storyExecutor, String requestId,
+                         String startEventId, String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         this.role = role;
         this.requestId = requestId;
         this.timeoutMillis = timeout;
+        this.returnType = returnType;
         this.startEventId = startEventId;
         this.businessId = businessId;
         this.storyExecutor = storyExecutor;
@@ -135,6 +145,7 @@ public class BasicStoryBus implements StoryBus {
         this.reqScopeData = reqScopeData == null ? new InScopeData(ScopeTypeEnum.REQUEST) : reqScopeData;
         this.varScopeData = varScopeData == null ? new InScopeData(ScopeTypeEnum.VARIABLE) : varScopeData;
         this.staScopeData = staScopeData == null ? new InScopeData(ScopeTypeEnum.STABLE) : staScopeData;
+        this.typeConverterProcessor = typeConverterProcessor;
     }
 
     @Override
@@ -193,13 +204,12 @@ public class BasicStoryBus implements StoryBus {
             return;
         }
 
-        ElementIterable elementIterable = taskServiceDef.getMethodWrapper().getElementIterable();
         MethodWrapper.ReturnTypeNoticeDef returnTypeNoticeDef = taskServiceDef.getMethodWrapper().getReturnTypeNoticeDef();
         ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
-            doNoticeResult(flowElement, result, elementIterable, returnTypeNoticeDef.getNoticeStaDefSet(), ScopeTypeEnum.STABLE);
-            doNoticeResult(flowElement, result, elementIterable, returnTypeNoticeDef.getNoticeVarDefSet(), ScopeTypeEnum.VARIABLE);
+            doNoticeResult(flowElement, result, returnTypeNoticeDef.getNoticeStaDefSet(), ScopeTypeEnum.STABLE);
+            doNoticeResult(flowElement, result, returnTypeNoticeDef.getNoticeVarDefSet(), ScopeTypeEnum.VARIABLE);
             if (returnTypeNoticeDef.getStoryResultDef() == null) {
                 return;
             }
@@ -211,9 +221,13 @@ public class BasicStoryBus implements StoryBus {
                 r = PropertyUtil.getProperty(result, srDef.getFieldName()).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
             }
             if (this.returnResult == null) {
+                Pair<String, ?> convertPair = typeConverterProcessor.convert(srDef.getConverter(), r, returnType);
+                if (convertPair.getValue() != null) {
+                    r = convertPair.getValue();
+                }
                 this.returnResult = r;
-                monitorTracking.trackingNodeNotice(flowElement,
-                        () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, r, Optional.ofNullable(r).map(Object::getClass).orElse(null))
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(
+                        null, null, ScopeTypeEnum.RESULT, this.returnResult, Optional.ofNullable(this.returnResult).map(Object::getClass).orElse(null), convertPair.getKey())
                 );
             } else {
                 LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}, identity: {}",
@@ -251,251 +265,7 @@ public class BasicStoryBus implements StoryBus {
         return Math.max(t, 0);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public ScopeDataOperator getScopeDataOperator() {
-        if (scopeDataOperator != null) {
-            return scopeDataOperator;
-        }
-        ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
-        writeLock.lock();
-        try {
-            if (scopeDataOperator != null) {
-                return scopeDataOperator;
-            }
-            this.scopeDataOperator = new ScopeDataOperator() {
-
-                @Override
-                public <T> T getReqScope() {
-                    return (T) BasicStoryBus.this.getReq();
-                }
-
-                @Override
-                public <T extends ScopeData> T getStaScope() {
-                    return (T) BasicStoryBus.this.getSta();
-                }
-
-                @Override
-                public <T extends ScopeData> T getVarScope() {
-                    return (T) BasicStoryBus.this.getVar();
-                }
-
-                @Override
-                public <T> Optional<T> getResult() {
-                    return BasicStoryBus.this.getResult().map(r -> (T) r);
-                }
-
-                @Override
-                public String getRequestId() {
-                    return BasicStoryBus.this.requestId;
-                }
-
-                @Override
-                public String getStartId() {
-                    return BasicStoryBus.this.getStartId();
-                }
-
-                @Override
-                public Optional<String> getBusinessId() {
-                    return Optional.ofNullable(BasicStoryBus.this.getBusinessId()).filter(StringUtils::isNotBlank);
-                }
-
-                @Override
-                public <T> Optional<T> getReqData(String name) {
-                    if (StringUtils.isBlank(name)) {
-                        return Optional.empty();
-                    }
-                    return BasicStoryBus.this.getValue(ScopeTypeEnum.REQUEST, name).map(r -> (T) r);
-                }
-
-                @Override
-                public <T> Optional<T> getStaData(String name) {
-                    if (StringUtils.isBlank(name)) {
-                        return Optional.empty();
-                    }
-                    return BasicStoryBus.this.getValue(ScopeTypeEnum.STABLE, name).map(r -> (T) r);
-                }
-
-                @Override
-                public <T> Optional<T> getVarData(String name) {
-                    if (StringUtils.isBlank(name)) {
-                        return Optional.empty();
-                    }
-                    return BasicStoryBus.this.getValue(ScopeTypeEnum.VARIABLE, name).map(r -> (T) r);
-                }
-
-                @Override
-                public <T> Optional<T> getData(String expression) {
-                    if (!ElementParserUtil.isValidDataExpression(expression)) {
-                        return Optional.empty();
-                    }
-                    String[] expArr = expression.split("\\.", 2);
-                    String key = (expArr.length == 2) ? expArr[1] : null;
-                    return ScopeTypeEnum.of(expArr[0])
-                            .filter(e -> e == ScopeTypeEnum.RESULT || StringUtils.isNotBlank(key)).flatMap(scope -> BasicStoryBus.this.getValue(scope, key).map(r -> (T) r));
-                }
-
-                @Override
-                public <T> Optional<T> computeIfAbsent(String expression, Supplier<T> supplier) {
-                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
-                    wLock.lock();
-                    try {
-                        Optional<Object> dataOptional = getData(expression);
-                        if (dataOptional.isPresent()) {
-                            return dataOptional.map(d -> (T) d);
-                        }
-                        if (!ElementParserUtil.isValidDataExpression(expression)) {
-                            return Optional.empty();
-                        }
-                        if (Objects.equals(ScopeTypeEnum.RESULT.getKey(), expression)) {
-                            T t = supplier.get();
-                            if (setResult(t)) {
-                                return Optional.of(t);
-                            }
-                            return Optional.empty();
-                        }
-                        String[] expArr = expression.split("\\.", 2);
-                        return ScopeTypeEnum.of(expArr[0]).filter(e -> !e.isNotEdit()).map(e -> {
-                            if (e == ScopeTypeEnum.STABLE) {
-                                return BasicStoryBus.this.staScopeData;
-                            }
-                            if (e == ScopeTypeEnum.VARIABLE) {
-                                return BasicStoryBus.this.varScopeData;
-                            }
-                            return null;
-                        }).map(scope -> {
-                            T t = supplier.get();
-                            if (doSetData(expArr[1], scope, t)) {
-                                return t;
-                            }
-                            return null;
-                        });
-                    } finally {
-                        wLock.unlock();
-                    }
-                }
-
-                @Override
-                public boolean setData(String expression, Object target) {
-                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
-                    wLock.lock();
-                    try {
-                        if (!ElementParserUtil.isValidDataExpression(expression)) {
-                            return false;
-                        }
-                        if (Objects.equals(ScopeTypeEnum.RESULT.getKey(), expression)) {
-                            return setResult(target);
-                        }
-                        String[] expArr = expression.split("\\.", 2);
-                        return ScopeTypeEnum.of(expArr[0]).filter(e -> !e.isNotEdit()).map(e -> {
-                            if (e == ScopeTypeEnum.VARIABLE) {
-                                return BasicStoryBus.this.varScopeData;
-                            }
-                            if (e == ScopeTypeEnum.STABLE) {
-                                return BasicStoryBus.this.staScopeData;
-                            }
-                            return null;
-                        }).map(scope -> doSetData(expArr[1], scope, target)).orElse(false);
-                    } finally {
-                        wLock.unlock();
-                    }
-                }
-
-                @Override
-                public <T> Optional<T> iterDataItem() {
-                    return InvokeMethodThreadLocal.getDataItem().map(t -> (T) (t.isBatch() ? t.getDataList() : t.getData().orElse(null)));
-                }
-
-                @Override
-                public Optional<String> getTaskProperty() {
-                    return InvokeMethodThreadLocal.getTaskProperty();
-                }
-
-                @Override
-                public boolean setStaData(String name, Object target) {
-                    return doSetData(name, BasicStoryBus.this.staScopeData, target);
-                }
-
-                @Override
-                public boolean setVarData(String name, Object target) {
-                    return doSetData(name, BasicStoryBus.this.varScopeData, target);
-                }
-
-                @Override
-                public boolean setResult(Object target) {
-                    if (target == null) {
-                        return false;
-                    }
-                    if (BasicStoryBus.this.returnResult != null) {
-                        return false;
-                    }
-                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
-                    wLock.lock();
-                    try {
-                        if (BasicStoryBus.this.returnResult != null) {
-                            return false;
-                        }
-                        BasicStoryBus.this.returnResult = target;
-                        InvokeMethodThreadLocal.getServiceTask().ifPresent(element ->
-                                monitorTracking.trackingNodeNotice(element, () -> NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, target, target.getClass()))
-                        );
-                        return true;
-                    } finally {
-                        wLock.unlock();
-                    }
-                }
-
-                @Override
-                public ReentrantReadWriteLock.ReadLock readLock() {
-                    return BasicStoryBus.this.readWriteLock.readLock();
-                }
-
-                @Override
-                public ReentrantReadWriteLock.WriteLock writeLock() {
-                    return BasicStoryBus.this.readWriteLock.writeLock();
-                }
-
-                private boolean doSetData(String name, ScopeData scopeData, Object target) {
-                    if (StringUtils.isBlank(name) || scopeData.getScopeDataEnum().isNotEdit()) {
-                        return false;
-                    }
-                    ReentrantReadWriteLock.WriteLock wLock = this.writeLock();
-                    wLock.lock();
-                    try {
-                        Object t = scopeData;
-                        String[] fieldNameSplit = name.split("\\.");
-                        for (int i = 0; i < fieldNameSplit.length - 1 && t != null; i++) {
-                            t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
-                        }
-                        if (t == null) {
-                            return false;
-                        }
-                        if (scopeData.getScopeDataEnum() == ScopeTypeEnum.STABLE) {
-                            Optional<Object> oldResult = PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
-                            if (oldResult.isPresent()) {
-                                return false;
-                            }
-                        }
-                        Class<?> targetClass = t.getClass();
-                        String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
-                        boolean setRes = PropertyUtil.setProperty(t, fieldName, target);
-                        InvokeMethodThreadLocal.getServiceTask().filter(s -> setRes).ifPresent(element ->
-                                monitorTracking.trackingNodeNotice(element, () -> NoticeTracking.build(null, name, scopeData.getScopeDataEnum(), target, targetClass))
-                        );
-                        return setRes;
-                    } finally {
-                        wLock.unlock();
-                    }
-                }
-            };
-            return this.scopeDataOperator;
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    private void doNoticeResult(FlowElement flowElement, Object result,
-                                ElementIterable elementIterable, Set<MethodWrapper.NoticeFieldItem> noticeStaDefSet, ScopeTypeEnum dataEnum) {
+    private void doNoticeResult(FlowElement flowElement, Object result, Set<MethodWrapper.NoticeFieldItem> noticeStaDefSet, ScopeTypeEnum dataEnum) {
         if (CollectionUtils.isEmpty(noticeStaDefSet)) {
             return;
         }
@@ -517,7 +287,7 @@ public class BasicStoryBus implements StoryBus {
                 t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
             }
             if (t == null) {
-                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_TARGET, data.getClass()));
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_TARGET, data.getClass(), null));
                 return;
             }
 
@@ -537,31 +307,37 @@ public class BasicStoryBus implements StoryBus {
             } else {
                 r = PropertyUtil.getProperty(result, def.getFieldName()).orElse(null);
                 if (r == PropertyUtil.GET_PROPERTY_ERROR_SIGN) {
-                    monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_VALUE, targetClass));
+                    monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_VALUE, targetClass, null));
                     return;
                 }
             }
 
+            Pair<String, ?> convertPair;
             String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
-            if (!(t instanceof Map)) {
-                ServiceTask serviceTask = GlobalUtil.transferNotEmpty(flowElement, ServiceTask.class);
-                Field field = FieldUtils.getField(t.getClass(), fieldName, true);
-                String targetTypeName = Optional.ofNullable(field).map(Field::getType).map(Class::getName).orElse(StringUtils.EMPTY);
-
-                boolean codeIterable = elementIterable != null && elementIterable.iterable();
-                boolean configIterable = serviceTask.getElementIterable().map(ElementIterable::iterable).orElse(false);
-                if (codeIterable || configIterable) {
-                    AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(List.class, field.getType()), ExceptionEnum.ITERATE_ITEM_ERROR,
-                            "The return value type in iteration must be list. fieldName: {}, type: {}, identity: {}", fieldName, targetTypeName, serviceTask.identity());
-                } else {
-                    AssertUtil.isTrue(field != null && ElementParserUtil.isAssignable(field.getType(), def.getFieldClass()),
-                            ExceptionEnum.TYPE_TRANSFER_ERROR, "{} fieldName: {}, expect: {}, actual: {}, identity: {}",
-                            ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(), fieldName, targetTypeName, def.getFieldClass().getName(), serviceTask.identity());
+            if (t instanceof Map) {
+                convertPair = typeConverterProcessor.convert(def.getConverter(), r);
+                if (convertPair.getValue() != null) {
+                    r = convertPair.getValue();
                 }
+            } else {
+                Field field = FieldUtils.getField(t.getClass(), fieldName, true);
+                convertPair = typeConverterProcessor.convert(def.getConverter(), r, Optional.ofNullable(field).map(Field::getType).orElse(null));
+                if (convertPair.getValue() != null) {
+                    r = convertPair.getValue();
+                }
+                Object rFinal = r;
+                AssertUtil.isTrue(r == null || (field != null && ElementParserUtil.isAssignable(field.getType(), r.getClass())),
+                        ExceptionEnum.TYPE_TRANSFER_ERROR, "Return value result notification exceptions. fieldName: {}, expect: {}, actual: {}, identity: {}",
+                        () -> {
+                            String actual = (rFinal == null) ? "null" : rFinal.getClass().getName();
+                            String expect = Optional.ofNullable(field).map(Field::getType).map(Class::getName).orElse(StringUtils.EMPTY);
+                            return Lists.newArrayList(def.getTargetName(), expect, actual, flowElement.identity());
+                        });
             }
-            boolean setSuccess = PropertyUtil.setProperty(t, fieldName, r);
+            Object rFinal = r;
+            boolean setSuccess = PropertyUtil.setProperty(t, fieldName, rFinal);
             if (setSuccess) {
-                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, r, targetClass));
+                monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, rFinal, targetClass, convertPair.getKey()));
             }
         });
     }

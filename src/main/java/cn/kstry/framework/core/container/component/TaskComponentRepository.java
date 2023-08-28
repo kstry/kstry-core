@@ -149,7 +149,7 @@ public abstract class TaskComponentRepository implements TaskContainer {
                     "TaskService with the same identity is not allowed to be set repeatedly! methodNames: {}", list.stream().map(Method::getName).collect(Collectors.toList()));
 
             list.sort((m1, m2) -> {
-                if (!m1.getReturnType().isAssignableFrom(m2.getReturnType())) {
+                if (!ElementParserUtil.isAssignable(m1.getReturnType(), m2.getReturnType())) {
                     return -1;
                 }
                 Class<?>[] p1List = m1.getParameterTypes();
@@ -158,7 +158,7 @@ public abstract class TaskComponentRepository implements TaskContainer {
                     return 0;
                 }
                 for (int i = 0; i < p1List.length; i++) {
-                    if (!p1List[i].isAssignableFrom(p2List[i])) {
+                    if (!ElementParserUtil.isAssignable(p1List[i], p2List[i])) {
                         return -1;
                     }
                 }

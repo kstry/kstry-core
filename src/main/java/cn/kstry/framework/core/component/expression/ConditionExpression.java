@@ -45,7 +45,7 @@ public interface ConditionExpression extends Ordered {
      *
      * @param aliasParser 别名解析器
      */
-    void parserConditionExpression(ExpressionAliasParser aliasParser);
+    void parseConditionExpression(ExpressionAliasParser aliasParser);
 
     /**
      * 获取未加工的，最初的条件表达式

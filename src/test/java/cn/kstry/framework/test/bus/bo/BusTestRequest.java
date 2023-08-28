@@ -19,8 +19,10 @@ package cn.kstry.framework.test.bus.bo;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
 /**
- *
  * @author lykan
  */
 @Data
@@ -28,7 +30,17 @@ public class BusTestRequest {
 
     private int id;
 
+    private String desc;
+
     private Ar ar;
+
+    private int num;
+
+    private int num2;
+
+    private Date now;
+
+    private LocalDateTime localNow;
 
     @Data
     public static class Ar {

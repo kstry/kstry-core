@@ -19,6 +19,7 @@ package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bus.ContextStoryBus;
 import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.component.hook.AsyncFlowHook;
@@ -418,7 +419,11 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         }
         ThreadPoolExecutor executor = null;
         if (StringUtils.isNotBlank(invokeProperties.getCustomExecutorName())) {
-            executor = engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ThreadPoolExecutor.class);
+            ElementIterable elementIterable = getElementIterable(serviceTask, methodWrapper.getElementIterable());
+            boolean notNeedIterate = !elementIterable.iterable() || taskServiceDef.isDemotionNode();
+            if (notNeedIterate || notNeedAsyncIterate(methodWrapper, elementIterable)) {
+                executor = engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ThreadPoolExecutor.class);
+            }
         }
         if (executor == null && (timeout == null || methodWrapper.isMonoResult())) {
             return super.doInvokeMethod(serviceTask, taskServiceDef, storyBus, role);

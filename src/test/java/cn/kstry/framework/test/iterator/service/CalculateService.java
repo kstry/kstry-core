@@ -25,6 +25,7 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.junit.Assert;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -48,6 +49,9 @@ public class CalculateService {
     @TaskService(name = "square")
     @NoticeScope(target = "squareResult.a", scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.STABLE})
     public Mono<Integer> square(ScopeDataOperator dataOperator, IterDataItem<Integer> data) {
+
+        int size = data.getSize();
+        Assert.assertEquals(11, size);
         Optional<Integer> iterDataItem = dataOperator.iterDataItem();
         Optional<Integer> data1 = data.getData();
         CompletableFuture<Integer> integerCompletableFuture = CompletableFuture.supplyAsync(() -> {
@@ -82,6 +86,7 @@ public class CalculateService {
     public Mono<List<Integer>> batchSquare2(ScopeDataOperator dataOperator, IterDataItem<Integer> data) throws InterruptedException {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<List<Integer>> iterDataItem = dataOperator.iterDataItem();
+        Assert.assertEquals(3, data.getSize());
         AssertUtil.equals(iterDataItem.map(CollectionUtils::size).orElse(null), Optional.of(data.getDataList()).map(CollectionUtils::size).orElse(null));
         return Mono.just(data.getDataList().stream().map(i -> i * i).collect(Collectors.toList()));
     }
@@ -93,6 +98,7 @@ public class CalculateService {
     @NoticeScope(target = "varRes", scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.VARIABLE})
     public Integer squareBestStrategy(ScopeDataOperator dataOperator, IterDataItem<Integer> data) throws InterruptedException {
         TimeUnit.MILLISECONDS.sleep(230);
+        Assert.assertEquals(11, data.getSize());
         Optional<Integer> iterDataItem = data.getData();
         Integer integer = iterDataItem.orElse(-1);
         if (integer == 4) {

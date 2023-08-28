@@ -36,18 +36,21 @@ public class NoticeTracking implements FieldTracking {
 
     private final Class<?> passTarget;
 
+    private final String converter;
+
     private String value;
 
-    private NoticeTracking(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value, Class<?> passTarget) {
+    private NoticeTracking(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value, Class<?> passTarget, String converter) {
         this.fieldName = fieldName;
         this.noticeName = noticeName;
         this.noticeScopeType = noticeScopeType;
         this.passValue = value;
         this.passTarget = passTarget;
+        this.converter = converter;
     }
 
-    public static NoticeTracking build(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value, Class<?> passTarget) {
-        return new NoticeTracking(fieldName, noticeName, noticeScopeType, value, passTarget);
+    public static NoticeTracking build(String fieldName, String noticeName, ScopeTypeEnum noticeScopeType, Object value, Class<?> passTarget, String converter) {
+        return new NoticeTracking(fieldName, noticeName, noticeScopeType, value, passTarget, converter);
     }
 
     @Override
@@ -78,8 +81,21 @@ public class NoticeTracking implements FieldTracking {
     }
 
     @Override
+    public String getTargetType() {
+        if (passTarget != null) {
+            return passTarget.getName();
+        }
+        return null;
+    }
+
+    @Override
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String getConverter() {
+        return converter;
     }
 
     public void valueSerialize(SerializeTracking serialize) {

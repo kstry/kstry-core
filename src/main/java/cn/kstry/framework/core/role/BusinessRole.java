@@ -18,7 +18,6 @@
 package cn.kstry.framework.core.role;
 
 import cn.kstry.framework.core.util.AssertUtil;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;

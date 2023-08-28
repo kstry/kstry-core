@@ -20,7 +20,6 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.InclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
-import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 
 import java.util.Optional;
 

@@ -20,7 +20,6 @@ package cn.kstry.framework.core.util;
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.exception.ExceptionEnum;
-import com.alibaba.fastjson.JSON;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -69,11 +68,11 @@ public class PropertyUtil {
             PropertyUtils.setProperty(target, propertyName, value);
             return true;
         } catch (NoSuchMethodException e) {
-            LOGGER.warn("[{}] Unknown property to set bean property! target: {}, propertyName: {}, value: {}",
-                    ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value);
+            LOGGER.warn("[{}] Unknown property to set bean property! targetName: {}, propertyName: {}, value: {}",
+                    ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), target.getClass(), propertyName, value);
         } catch (Throwable e) {
-            LOGGER.warn("[{}] BeanUtils Failed to set bean property! target: {}, propertyName: {}, value: {}",
-                    ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), JSON.toJSONString(target), propertyName, value, e);
+            LOGGER.warn("[{}] BeanUtils Failed to set bean property! targetName: {}, propertyName: {}, value: {}",
+                    ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), target.getClass(), propertyName, value, e);
         }
         return false;
     }
@@ -102,12 +101,9 @@ public class PropertyUtil {
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_SHUTDOWN_NOW_AWAIT), GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS
         );
         GlobalProperties.STORY_SUCCESS_CODE = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_SUCCESS_CODE, GlobalProperties.STORY_SUCCESS_CODE);
+        GlobalProperties.TYPE_CONVERTER_DATE_FORMAT = environment.getProperty(ConfigPropertyNameConstant.TYPE_CONVERTER_DATE_FORMAT, GlobalProperties.TYPE_CONVERTER_DATE_FORMAT);
         GlobalProperties.STORY_MONITOR_TRACKING_TYPE =
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_TYPE, GlobalProperties.STORY_MONITOR_TRACKING_TYPE);
-
-        GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = NumberUtils.toInt(
-                environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT), GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT
-        );
 
         GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = NumberUtils.toInt(
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT), GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT

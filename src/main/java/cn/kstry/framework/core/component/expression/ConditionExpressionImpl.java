@@ -78,12 +78,12 @@ public class ConditionExpressionImpl implements ConditionExpression {
     }
 
     @Override
-    public void parserConditionExpression(ExpressionAliasParser aliasParser) {
+    public void parseConditionExpression(ExpressionAliasParser aliasParser) {
         if (StringUtils.isNotBlank(this.conditionExpression)) {
             return;
         }
         if (isNeedParserExpression()) {
-            this.conditionExpression = aliasParser.parserExpression(expression);
+            this.conditionExpression = aliasParser.parseExpression(expression);
         } else {
             this.conditionExpression = this.expression;
         }

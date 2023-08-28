@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
+import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.element.StartEventContainer;
@@ -99,10 +100,15 @@ public class StoryEngineModule {
 
     private final SerializeTracking serializeTracking;
 
+    /**
+     * 类型转换处理器
+     */
+    private final TypeConverterProcessor typeConverterProcessor;
+
     public StoryEngineModule(List<TaskThreadPoolExecutor> threadPoolExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
                              Function<ParamInjectDef, Object> paramInitStrategy, SubProcessInterceptorRepository subInterceptorRepository,
                              TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor, ApplicationContext applicationContext,
-                             SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking) {
+                             SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor) {
         AssertUtil.anyNotNull(threadPoolExecutors, taskContainer, paramInitStrategy, startEventContainer);
 
         List<TaskThreadPoolExecutor> methodThreadPoolList = threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
@@ -123,6 +129,7 @@ public class StoryEngineModule {
         this.applicationContext = applicationContext;
         this.serializeProcessParser = serializeProcessParser;
         this.serializeTracking = serializeTracking;
+        this.typeConverterProcessor = typeConverterProcessor;
     }
 
     public TaskThreadPoolExecutor getTaskThreadPool() {
@@ -171,5 +178,9 @@ public class StoryEngineModule {
 
     public SerializeTracking getSerializeTracking() {
         return serializeTracking;
+    }
+
+    public TypeConverterProcessor getTypeConverterProcessor() {
+        return typeConverterProcessor;
     }
 }

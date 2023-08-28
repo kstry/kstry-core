@@ -23,10 +23,9 @@ import cn.kstry.framework.core.bpmn.extend.ElementIterable;
 import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bus.IterDataItem;
 import cn.kstry.framework.core.bus.StoryBus;
-import cn.kstry.framework.core.component.validator.RequestValidator;
+import cn.kstry.framework.core.container.component.InvokeProperties;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
-import cn.kstry.framework.core.container.component.TaskInstructWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.container.task.impl.TaskComponentProxy;
 import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
@@ -36,12 +35,15 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.*;
+import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +54,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -102,6 +104,11 @@ public abstract class BasicTaskCore<T> implements Task<T> {
      */
     private final String taskName;
 
+    /**
+     * 参数解析器
+     */
+    private final TaskParamParser taskParamParser;
+
     protected final Map<ThreadSwitchHook<Object>, Object> threadSwitchHookObjectMap;
 
     public BasicTaskCore(StoryEngineModule engineModule, FlowRegister flowRegister, StoryBus storyBus, Role role, String taskName) {
@@ -112,6 +119,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         this.storyBus = storyBus;
         this.role = role;
         this.taskName = taskName;
+        this.taskParamParser = new TaskParamParser(engineModule);
         this.threadSwitchHookObjectMap = engineModule.getThreadSwitchHookProcessor().getPreviousData(storyBus.getScopeDataOperator());
     }
 
@@ -172,24 +180,27 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             return null;
         }
 
+        List<Object> iteratorList = Lists.newArrayList();
+        iterator.forEachRemaining(iteratorList::add);
         List<Object> resultList = Lists.newArrayList();
         List<ImmutablePair<Mono<?>, Integer>> monoResultList = Lists.newArrayList();
         int stride = Optional.ofNullable(elementIterable.getStride()).filter(i -> i > 0).orElse(1);
         boolean isOneStride = stride == 1;
-        if (BooleanUtils.isNotTrue(elementIterable.openAsync()) || elementIterable.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS || methodWrapper.isMonoResult()) {
+        if (notNeedAsyncIterate(methodWrapper, elementIterable)) {
             int count = 0;
             List<Object> batchParamList = isOneStride ? null : Lists.newArrayList();
-            for (int i = 0; iterator.hasNext(); i++) {
-                Object next = iterator.next();
+            int size = isOneStride ? iteratorList.size() : (iteratorList.size() / stride + (iteratorList.size() % stride == 0 ? 0 : 1));
+            for (int i = 0; i < iteratorList.size(); i++) {
+                Object next = iteratorList.get(i);
                 if (!isOneStride) {
                     batchParamList.add(next);
                     next = batchParamList;
                 }
-                if (!isOneStride && batchParamList.size() < stride && iterator.hasNext()) {
+                if (!isOneStride && batchParamList.size() < stride && (i + 1) < iteratorList.size()) {
                     continue;
                 }
                 int batchParamSize = Optional.ofNullable(batchParamList).map(List::size).orElse(0);
-                IterDataItem<Object> iterDataItem = new IterDataItem<>(!isOneStride, isOneStride ? next : null, isOneStride ? Lists.newArrayList() : batchParamList, count++);
+                IterDataItem<Object> iterDataItem = new IterDataItem<>(!isOneStride, isOneStride ? next : null, isOneStride ? Lists.newArrayList() : batchParamList, count++, size);
                 Object r = doInvokeMethod(i == 0, elementIterable, iterDataItem, serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
                 if (r == INVOKE_ERROR_SIGN) {
                     if (BooleanUtils.isNotTrue(elementIterable.getIteAlignIndex())) {
@@ -218,7 +229,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                 } else {
                     addSuccessResult(serviceTask, isOneStride, resultList, elementIterable, r, batchParamSize);
                 }
-                if (!isOneStride && iterator.hasNext()) {
+                if (!isOneStride && (i + 1) < iteratorList.size()) {
                     batchParamList = Lists.newArrayList();
                 }
             }
@@ -247,39 +258,43 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             monitorTracking.iterateCountTracking(serviceTask, count, stride);
             return resultList;
         }
-        return asyncIterate(elementIterable, serviceTask, storyBus, role, methodWrapper, targetProxy, monitorTracking, iterator, stride, isOneStride);
+        return asyncIterate(elementIterable, serviceTask, storyBus, role, methodWrapper, targetProxy, monitorTracking, iteratorList, stride, isOneStride);
     }
 
     private Object asyncIterate(ElementIterable elementIterable, ServiceTask serviceTask, StoryBus storyBus, Role role, MethodWrapper methodWrapper,
-                                TaskComponentProxy targetProxy, MonitorTracking monitorTracking, Iterator<?> iterator, int stride, boolean isOneStride) {
+                                TaskComponentProxy targetProxy, MonitorTracking monitorTracking, List<Object> iteratorList, int stride, boolean isOneStride) {
         List<Object> resultList = Lists.newArrayList();
         List<ParamInjectDef> paramInjectDefs = methodWrapper.getParamInjectDefs();
-
-        List<Object> asyncIterator = Lists.newArrayList();
-        iterator.forEachRemaining(asyncIterator::add);
+        InvokeProperties invokeProperties = methodWrapper.getInvokeProperties();
+        ThreadPoolExecutor executor;
+        if (StringUtils.isBlank(invokeProperties.getCustomExecutorName())) {
+            executor = engineModule.getIteratorThreadPool().getThreadPoolExecutor();
+        } else {
+            executor = engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ThreadPoolExecutor.class);
+        }
         Map<CompletableFuture<Object>, Integer> batchParamSizeMap = Maps.newHashMap();
         List<CompletableFuture<Object>> futureList = Lists.newArrayList();
         if (isOneStride) {
-            for (int i = 0; i < asyncIterator.size(); i++) {
+            for (int i = 0; i < iteratorList.size(); i++) {
                 int index = i;
-                Object next = asyncIterator.get(index);
+                Object next = iteratorList.get(index);
                 CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
                     engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                     return doInvokeMethod(index == 0, elementIterable,
-                            new IterDataItem<>(false, next, Lists.newArrayList(), index), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
-                }, engineModule.getIteratorThreadPool().getThreadPoolExecutor());
+                            new IterDataItem<>(false, next, Lists.newArrayList(), index, iteratorList.size()), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+                }, executor);
                 futureList.add(f);
             }
         } else {
-            List<List<Object>> partition = Lists.partition(asyncIterator, stride);
+            List<List<Object>> partition = Lists.partition(iteratorList, stride);
             for (int i = 0; i < partition.size(); i++) {
                 int index = i;
                 List<Object> next = partition.get(index);
                 CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
                     engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
                     return doInvokeMethod(index == 0, elementIterable,
-                            new IterDataItem<>(true, null, next, index), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
-                }, engineModule.getIteratorThreadPool().getThreadPoolExecutor());
+                            new IterDataItem<>(true, null, next, index, partition.size()), serviceTask, storyBus, role, methodWrapper, targetProxy, paramInjectDefs);
+                }, executor);
                 futureList.add(f);
                 batchParamSizeMap.put(f, next.size());
             }
@@ -339,26 +354,9 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             if (CollectionUtils.isEmpty(paramInjectDefs)) {
                 return ProxyUtil.invokeMethod(methodWrapper, serviceTask, targetProxy.getTarget());
             }
-
-            Function<ParamInjectDef, Object> paramInitStrategy = engineModule.getParamInitStrategy();
-            TaskInstructWrapper taskInstructWrapper = methodWrapper.getTaskInstructWrapper().orElse(null);
-            return ProxyUtil.invokeMethod(methodWrapper, serviceTask, targetProxy.getTarget(), () -> {
-                Object[] params = TaskServiceUtil.getTaskParams(methodWrapper.isCustomRole(), tracking,
-                        serviceTask, storyBus, role, taskInstructWrapper, paramInjectDefs, paramInitStrategy, engineModule.getApplicationContext(), iterDataItem);
-                TaskServiceUtil.fillTaskParams(params, serviceTask.getTaskParams(), paramInjectDefs, paramInitStrategy, storyBus.getScopeDataOperator());
-                if (ArrayUtils.isNotEmpty(params)) {
-                    boolean supportValidate = GlobalUtil.supportValidate();
-                    for (Object param : params) {
-                        if (param instanceof ParamLifecycle) {
-                            ((ParamLifecycle) param).after(storyBus.getScopeDataOperator());
-                        }
-                        if (supportValidate) {
-                            RequestValidator.validate(param);
-                        }
-                    }
-                }
-                return params;
-            });
+            return ProxyUtil.invokeMethod(methodWrapper, serviceTask, targetProxy.getTarget(), () ->
+                    taskParamParser.parseParams(tracking, iterDataItem, serviceTask, storyBus, role, methodWrapper, paramInjectDefs)
+            );
         } catch (Throwable e) {
             if (elementIterable == null || !elementIterable.iterable() || elementIterable.getIteStrategy() == null || elementIterable.getIteStrategy() == IterateStrategyEnum.ALL_SUCCESS) {
                 throw e;
@@ -370,7 +368,11 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         }
     }
 
-    private ElementIterable getElementIterable(ServiceTask serviceTask, ElementIterable elementIterable) {
+    boolean notNeedAsyncIterate(MethodWrapper methodWrapper, ElementIterable elementIterable) {
+        return BooleanUtils.isNotTrue(elementIterable.openAsync()) || elementIterable.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS || methodWrapper.isMonoResult();
+    }
+
+    ElementIterable getElementIterable(ServiceTask serviceTask, ElementIterable elementIterable) {
         BasicElementIterable iterable = new BasicElementIterable();
         serviceTask.getElementIterable().ifPresent(iterable::mergeProperty);
         iterable.mergeProperty(elementIterable);

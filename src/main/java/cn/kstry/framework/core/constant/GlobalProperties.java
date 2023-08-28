@@ -87,4 +87,9 @@ public class GlobalProperties {
      * 允许流程配置中指定服务节点入参，默认：true
      */
     public static boolean SERVICE_NODE_DEFINE_PARAMS = true;
+
+    /**
+     * 类型转换中日期格式
+     */
+    public static String TYPE_CONVERTER_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 }

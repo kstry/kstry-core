@@ -97,4 +97,9 @@ public interface ConfigPropertyNameConstant {
      *  shutdown失败之后，Thread Pool shutdownNow 之后的等待时间，单位：ms，默认：5000
      */
     String KSTRY_THREAD_SHUTDOWN_NOW_AWAIT = "kstry.thread.pool.shutdown-now-await";
+
+    /**
+     * 类型转换中日期格式，默认：yyyy-MM-dd HH:mm:ss
+     */
+    String TYPE_CONVERTER_DATE_FORMAT = "kstry.converter.date-format";
 }

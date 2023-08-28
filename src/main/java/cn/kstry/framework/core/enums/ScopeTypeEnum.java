@@ -50,6 +50,11 @@ public enum ScopeTypeEnum {
     RESULT("res", false),
 
     /**
+     * config 配置文件中设置的参数
+     */
+    CONFIG("config", true),
+
+    /**
      * empty
      */
     EMPTY("empty", true);

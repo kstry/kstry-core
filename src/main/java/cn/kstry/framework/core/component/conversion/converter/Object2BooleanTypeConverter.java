@@ -15,36 +15,34 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bus;
+package cn.kstry.framework.core.component.conversion.converter;
 
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.component.conversion.TypeConverter;
+import cn.kstry.framework.core.constant.TypeConverterNames;
+import org.apache.commons.lang3.BooleanUtils;
 
 import javax.annotation.Nullable;
-import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * InScopeData
- *
- * @author lykan
- */
-public class InScopeData extends ConcurrentHashMap<Object, Object> implements ScopeData {
 
-    private final ScopeTypeEnum scopeTypeEnum;
+public class Object2BooleanTypeConverter implements TypeConverter<Object, Boolean> {
 
-    public InScopeData(ScopeTypeEnum scopeTypeEnum) {
-        this.scopeTypeEnum = scopeTypeEnum;
+    @Override
+    public Boolean doConvert(Object source, @Nullable Class<?> needType) {
+        return BooleanUtils.toBoolean(source.toString());
     }
 
     @Override
-    public Object put(@Nullable Object key, @Nullable Object value) {
-        if (key == null || value == null) {
-            return null;
-        }
-        return super.put(key, value);
+    public Class<Object> getSourceType() {
+        return Object.class;
     }
 
     @Override
-    public ScopeTypeEnum getScopeDataEnum() {
-        return this.scopeTypeEnum;
+    public Class<Boolean> getTargetType() {
+        return Boolean.class;
+    }
+
+    @Override
+    public String getConvertName() {
+        return TypeConverterNames.OBJECT_TO_BOOLEAN;
     }
 }

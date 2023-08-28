@@ -70,7 +70,7 @@ public class ExpressionAliasParser {
         this.expressionAliasList = Collections.unmodifiableList(aList);
     }
 
-    public String parserExpression(String expression) {
+    public String parseExpression(String expression) {
         if (StringUtils.isBlank(expression)) {
             return expression;
         }
