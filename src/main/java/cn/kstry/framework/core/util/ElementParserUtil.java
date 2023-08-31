@@ -43,6 +43,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -105,16 +106,16 @@ public class ElementParserUtil {
 
         TaskParam taskParamAnn = p.getAnnotation(TaskParam.class);
         if (taskParamAnn != null) {
-            if (StringUtils.isNotBlank(taskParamAnn.value())) {
-                paramName = taskParamAnn.value();
+            if (taskParamAnn.value() != null && taskParamAnn.value().length > 0) {
+                paramName = Stream.of(taskParamAnn.value()).filter(StringUtils::isNotBlank).collect(Collectors.joining("."));
             }
             return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, taskParamAnn.scopeEnum(), taskParamAnn.converter()));
         }
 
         ReqTaskParam reqTaskParamAnn = p.getAnnotation(ReqTaskParam.class);
         if (reqTaskParamAnn != null) {
-            if (StringUtils.isNotBlank(reqTaskParamAnn.value())) {
-                paramName = reqTaskParamAnn.value();
+            if (reqTaskParamAnn.value() != null && reqTaskParamAnn.value().length > 0) {
+                paramName = Stream.of(reqTaskParamAnn.value()).filter(StringUtils::isNotBlank).collect(Collectors.joining("."));
             }
             MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.REQUEST, reqTaskParamAnn.converter());
             taskFieldProperty.setInjectSelf(reqTaskParamAnn.reqSelf());
@@ -123,16 +124,16 @@ public class ElementParserUtil {
 
         StaTaskParam staTaskParamAnn = p.getAnnotation(StaTaskParam.class);
         if (staTaskParamAnn != null) {
-            if (StringUtils.isNotBlank(staTaskParamAnn.value())) {
-                paramName = staTaskParamAnn.value();
+            if (staTaskParamAnn.value() != null && staTaskParamAnn.value().length > 0) {
+                paramName = Stream.of(staTaskParamAnn.value()).filter(StringUtils::isNotBlank).collect(Collectors.joining("."));
             }
             return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.STABLE, staTaskParamAnn.converter()));
         }
 
         VarTaskParam varTaskParamAnn = p.getAnnotation(VarTaskParam.class);
         if (varTaskParamAnn != null) {
-            if (StringUtils.isNotBlank(varTaskParamAnn.value())) {
-                paramName = varTaskParamAnn.value();
+            if (varTaskParamAnn.value() != null && varTaskParamAnn.value().length > 0) {
+                paramName = Stream.of(varTaskParamAnn.value()).filter(StringUtils::isNotBlank).collect(Collectors.joining("."));
             }
             return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, ScopeTypeEnum.VARIABLE, varTaskParamAnn.converter()));
         }
@@ -155,7 +156,10 @@ public class ElementParserUtil {
                 fieldSet.add(field);
                 TaskField taskFieldAnn = field.getAnnotation(TaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
-                String targetName = Optional.of(taskFieldAnn).map(TaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
+                String targetName = Optional.of(taskFieldAnn).map(TaskField::value).map(s ->
+                                Stream.of(s).filter(StringUtils::isNotBlank).collect(Collectors.joining("."))
+                        )
+                        .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum(), taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(GlobalConstant.STORY_DATA_SCOPE.contains(taskFieldProperty.getScopeDataEnum()), field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
@@ -171,7 +175,10 @@ public class ElementParserUtil {
                 fieldSet.add(field);
                 ReqTaskField taskFieldAnn = field.getAnnotation(ReqTaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
-                String targetName = Optional.of(taskFieldAnn).map(ReqTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
+                String targetName = Optional.of(taskFieldAnn).map(ReqTaskField::value).map(s ->
+                                Stream.of(s).filter(StringUtils::isNotBlank).collect(Collectors.joining("."))
+                        )
+                        .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.REQUEST, taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
@@ -187,7 +194,10 @@ public class ElementParserUtil {
                 fieldSet.add(field);
                 StaTaskField taskFieldAnn = field.getAnnotation(StaTaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
-                String targetName = Optional.of(taskFieldAnn).map(StaTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
+                String targetName = Optional.of(taskFieldAnn).map(StaTaskField::value).map(s ->
+                                Stream.of(s).filter(StringUtils::isNotBlank).collect(Collectors.joining("."))
+                        )
+                        .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.STABLE, taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
@@ -203,7 +213,10 @@ public class ElementParserUtil {
                 fieldSet.add(field);
                 VarTaskField taskFieldAnn = field.getAnnotation(VarTaskField.class);
                 AssertUtil.notNull(taskFieldAnn);
-                String targetName = Optional.of(taskFieldAnn).map(VarTaskField::value).filter(StringUtils::isNotBlank).orElse(field.getName());
+                String targetName = Optional.of(taskFieldAnn).map(VarTaskField::value).map(s ->
+                                Stream.of(s).filter(StringUtils::isNotBlank).collect(Collectors.joining("."))
+                        )
+                        .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.VARIABLE, taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);

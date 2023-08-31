@@ -40,7 +40,7 @@ public @interface NoticeSta {
      *
      * @return target
      */
-    String target() default StringUtils.EMPTY;
+    String[] target() default {};
 
     /**
      * 类型转换器，默认不指定，需要时进行自动匹配

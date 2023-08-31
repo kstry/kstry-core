@@ -47,7 +47,7 @@ public class CalculateService {
      * 求平方再放回
      */
     @TaskService(name = "square")
-    @NoticeScope(target = "squareResult.a", scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.STABLE})
+    @NoticeScope(target = {"squareResult", "a"}, scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.STABLE})
     public Mono<Integer> square(ScopeDataOperator dataOperator, IterDataItem<Integer> data) {
 
         int size = data.getSize();
@@ -82,7 +82,7 @@ public class CalculateService {
      * 求平方再放回
      */
     @TaskService(name = "batch-square2")
-    @NoticeScope(target = "squareResult.a", scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.STABLE})
+    @NoticeScope(target = {"squareResult", "a"}, scope = {ScopeTypeEnum.RESULT, ScopeTypeEnum.STABLE})
     public Mono<List<Integer>> batchSquare2(ScopeDataOperator dataOperator, IterDataItem<Integer> data) throws InterruptedException {
         TimeUnit.MILLISECONDS.sleep(230);
         Optional<List<Integer>> iterDataItem = dataOperator.iterDataItem();

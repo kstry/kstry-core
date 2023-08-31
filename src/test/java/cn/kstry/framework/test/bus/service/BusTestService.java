@@ -67,9 +67,9 @@ public class BusTestService {
     @TaskService(name = "bus-step-2")
     public BusStep2Bo busStep2(BusStep2Request busStep2Request,
                                @ReqTaskParam BusTestRequest.Ar ar,
-                               @StaTaskParam("busStep1Bo.br.name") String staName,
-                               @VarTaskParam("step1.br.name") String varName,
-                               @TaskParam(scopeEnum = ScopeTypeEnum.STABLE, value = "busStep1Bo.br.name") String scopeName) {
+                               @StaTaskParam({"busStep1Bo", "br", "name"}) String staName,
+                               @VarTaskParam({"step1", "br", "name"}) String varName,
+                               @TaskParam(scopeEnum = ScopeTypeEnum.STABLE, value = {"busStep1Bo", "br", "name"}) String scopeName) {
         Assert.assertNotNull(ar.getName());
         Assert.assertEquals(ar.getName(), staName);
         Assert.assertEquals(ar.getName(), varName);

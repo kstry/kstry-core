@@ -25,8 +25,16 @@ import org.apache.commons.collections.CollectionUtils;
 import javax.annotation.Nullable;
 import java.util.List;
 
+/**
+ * 取List集合中的首个元素。默认不启用，使用时需要显示指定转换器名
+ */
 @SuppressWarnings("rawtypes")
 public class FirstItemFromListTypeConverter implements TypeConverter<List, Object> {
+
+    @Override
+    public boolean match(Object source, Class<?> needType) {
+        return false;
+    }
 
     @Override
     public Object doConvert(List source, @Nullable Class<?> needType) {

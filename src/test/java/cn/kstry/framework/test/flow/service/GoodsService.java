@@ -2,8 +2,8 @@ package cn.kstry.framework.test.flow.service;
 
 import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.bus.InstructContent;
+import cn.kstry.framework.core.bus.ScopeDataNotice;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Hospital;
 import cn.kstry.framework.test.flow.bo.Te4Request;
@@ -15,14 +15,13 @@ import reactor.core.publisher.Mono;
 @TaskComponent(name = "goods_service")
 public class GoodsService {
 
-    @NoticeScope(scope = {ScopeTypeEnum.STABLE}, target = "goods")
     @TaskService(name = "get_goods")
-    public Goods getGoods(@ReqTaskParam("goodsId") Long id) {
+    public ScopeDataNotice getGoods(@ReqTaskParam("goodsId") Long id) {
         Goods goods = new Goods();
         goods.setId(id);
         goods.setName("商品名称");
         goods.setPrice(20L);
-        return goods;
+        return ScopeDataNotice.sta().notice("goods", goods);
     }
 
     @TaskInstruct(name = "goods-fill")

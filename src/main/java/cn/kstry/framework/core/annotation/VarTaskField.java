@@ -37,7 +37,7 @@ public @interface VarTaskField {
      * 字段名称
      * @return value
      */
-    String value() default StringUtils.EMPTY;
+    String[] value() default {};
 
     /**
      * 类型转换器，默认不指定，需要时进行自动匹配

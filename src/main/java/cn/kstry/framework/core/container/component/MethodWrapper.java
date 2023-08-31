@@ -54,6 +54,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author lykan
@@ -347,8 +349,11 @@ public class MethodWrapper {
 
         private final String converter;
 
-        public NoticeFieldItem(String fieldName, String targetName, Class<?> fieldClass, boolean resultSelf, String converter) {
-            super(Optional.ofNullable(targetName).filter(StringUtils::isNotBlank).orElse(fieldName), IdentityTypeEnum.NOTICE_FIELD);
+        public NoticeFieldItem(String fieldName, String[] targetNames, Class<?> fieldClass, boolean resultSelf, String converter) {
+            super(Optional.ofNullable(targetNames).map(s ->
+                            Stream.of(targetNames).filter(StringUtils::isNotBlank).collect(Collectors.joining("."))
+                    )
+                    .filter(StringUtils::isNotBlank).orElse(fieldName), IdentityTypeEnum.NOTICE_FIELD);
             AssertUtil.notNull(fieldClass);
             this.fieldName = fieldName;
             this.targetName = this.getIdentityId();

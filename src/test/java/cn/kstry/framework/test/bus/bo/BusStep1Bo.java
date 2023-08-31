@@ -40,7 +40,7 @@ public class BusStep1Bo {
     private int size;
 
     @TaskField("br-br")
-    @NoticeVar(target = "step1.br")
+    @NoticeVar(target = {"step1", "br"})
     private Br br;
 
     @Data

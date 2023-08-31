@@ -8,11 +8,11 @@ import cn.kstry.framework.core.annotation.StaTaskField;
 @SpringInitialization
 public class Hospital {
 
-    @StaTaskField("hospital.id")
+    @StaTaskField({"hospital", "id"})
     private Long id;
 
     @NoticeSta
-    @StaTaskField("hospital.name")
+    @StaTaskField({"hospital", "name"})
     private String name;
 
     public Long getId() {

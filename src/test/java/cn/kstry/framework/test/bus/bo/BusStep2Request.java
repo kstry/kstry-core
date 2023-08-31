@@ -38,13 +38,13 @@ import java.util.Map;
 @SpringInitialization
 public class BusStep2Request implements SpringParamLifecycle {
 
-    @VarTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
+    @VarTaskField({"busStep1Bo", BusStep1Bo.Fields.id})
     private int varId;
 
-    @VarTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
+    @VarTaskField({"busStep1Bo", BusStep1Bo.Fields.id})
     private String convId;
 
-    @StaTaskField("busStep1Bo." + BusStep1Bo.Fields.id)
+    @StaTaskField({"busStep1Bo", BusStep1Bo.Fields.id})
     private int staId;
 
     @ReqTaskField("id")
@@ -56,7 +56,7 @@ public class BusStep2Request implements SpringParamLifecycle {
     @StaTaskField("size")
     private int size;
 
-    @TaskField(scopeEnum = ScopeTypeEnum.STABLE, value = "busStep1Bo.br.name")
+    @TaskField(scopeEnum = ScopeTypeEnum.STABLE, value = {"busStep1Bo", "br", "name"})
     private String name;
 
     private Br br;

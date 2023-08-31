@@ -17,9 +17,12 @@
  */
 package cn.kstry.framework.test.iterator.service;
 
-import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.annotation.NoticeResult;
+import cn.kstry.framework.core.annotation.StaTaskParam;
+import cn.kstry.framework.core.annotation.TaskComponent;
+import cn.kstry.framework.core.annotation.TaskService;
+import cn.kstry.framework.core.bus.ScopeDataNotice;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
-import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.iterator.bo.SkuBo;
 import com.alibaba.fastjson.JSON;
 import org.junit.Assert;
@@ -37,16 +40,15 @@ import java.util.stream.LongStream;
 @TaskComponent(name = "sku-service")
 public class SkuService {
 
-    @NoticeScope(target = "sku-list", scope = ScopeTypeEnum.STABLE)
     @TaskService(name = "get-sku-list")
-    public List<SkuBo> getSkuList() {
+    public ScopeDataNotice getSkuList() {
         List<SkuBo> collect = LongStream.range(1, 11).mapToObj(i -> {
             SkuBo skuBo = new SkuBo();
             skuBo.setId(i);
             return skuBo;
         }).collect(Collectors.toList());
         System.out.println(Thread.currentThread().getName() + " - init sku ->" + JSON.toJSONString(collect));
-        return collect;
+        return ScopeDataNotice.sta().notice("sku-list", collect);
     }
 
     @NoticeResult

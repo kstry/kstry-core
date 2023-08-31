@@ -1,6 +1,7 @@
 package cn.kstry.framework.test.bus.bo;
 
 import cn.kstry.framework.core.annotation.VarTaskField;
+import cn.kstry.framework.core.constant.TypeConverterNames;
 import lombok.Data;
 
 import java.util.List;
@@ -24,9 +25,9 @@ public class ConvTBo {
     @VarTaskField
     private Set<String> oneItemSet;
 
-    @VarTaskField
+    @VarTaskField(converter = TypeConverterNames.FIRST_ITEM_FROM_LIST)
     private String firstItemList;
 
-    @VarTaskField
+    @VarTaskField(converter = TypeConverterNames.FIRST_ITEM_FROM_LIST)
     private int zzInt;
 }

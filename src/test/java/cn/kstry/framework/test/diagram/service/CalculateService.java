@@ -1,6 +1,7 @@
 package cn.kstry.framework.test.diagram.service;
 
 import cn.kstry.framework.core.annotation.*;
+import cn.kstry.framework.core.bus.ScopeDataNotice;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.diagram.bo.CalculateServiceRequest;
@@ -33,10 +34,9 @@ public class CalculateService {
         TimeUnit.SECONDS.sleep(10);
     }
 
-    @NoticeResult
     @TaskService(name = SCS.CALCULATE_SERVICE.F.MULTIPLY_PLUS)
-    public int multiply(@StaTaskParam("ai") int a, @StaTaskParam("bi") int b, @StaTaskParam("ci") int c) {
-        return (a * b) + c;
+    public ScopeDataNotice multiply(@StaTaskParam("ai") int a, @StaTaskParam("bi") int b, @StaTaskParam("ci") int c) {
+        return ScopeDataNotice.res((a * b) + c);
     }
 
     @TaskService(name = SCS.CALCULATE_SERVICE.F.INCREASE_ARRAY_ONE)

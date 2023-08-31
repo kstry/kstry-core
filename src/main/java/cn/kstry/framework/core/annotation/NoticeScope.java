@@ -42,7 +42,7 @@ public @interface NoticeScope {
      *
      * @return target
      */
-    String target() default StringUtils.EMPTY;
+    String[] target() default {};
 
     /**
      *  指定结果到哪些 Scope。标注在方法上且该参数不为空时会使 Response Class 上的 @Notice... 类注解失效

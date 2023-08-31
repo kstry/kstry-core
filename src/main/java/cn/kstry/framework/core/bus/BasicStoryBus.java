@@ -26,10 +26,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
-import cn.kstry.framework.core.util.ExceptionUtil;
-import cn.kstry.framework.core.util.PropertyUtil;
+import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -201,6 +198,19 @@ public abstract class BasicStoryBus implements StoryBus {
     @Override
     public void noticeResult(FlowElement flowElement, Object result, TaskServiceDef taskServiceDef) {
         if (result == null) {
+            return;
+        }
+
+        if (result instanceof ScopeDataNotice) {
+            ScopeDataOperator scopeDataOperator = getScopeDataOperator();
+            ScopeDataNotice scopeDataNotice = GlobalUtil.transferNotEmpty(result, ScopeDataNotice.class);
+            scopeDataOperator.setResult(scopeDataNotice.getResult());
+            if (scopeDataNotice.isNoticeStaScope()) {
+                scopeDataNotice.forEach(scopeDataOperator::setStaData);
+            }
+            if (scopeDataNotice.isNoticeVarScope()) {
+                scopeDataNotice.forEach(scopeDataOperator::setVarData);
+            }
             return;
         }
 

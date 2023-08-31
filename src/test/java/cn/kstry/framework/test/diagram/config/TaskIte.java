@@ -1,5 +1,6 @@
 package cn.kstry.framework.test.diagram.config;
 
+import cn.kstry.framework.core.bus.ScopeDataNotice;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.engine.interceptor.Iter;
 import cn.kstry.framework.core.engine.interceptor.IterData;
@@ -52,7 +53,11 @@ public class TaskIte {
                 scopeDataOperator.setStaData("ai", 3);
                 Object next = iter.next();
                 if ("ite".equals(scopeDataOperator.getBusinessId().orElse(null)) && scopeDataOperator.getStaData("ai").isPresent()) {
-                    AssertUtil.equals(next, 22);
+                    if (next instanceof ScopeDataNotice) {
+                        AssertUtil.equals(((ScopeDataNotice) next).getResult(), 22);
+                    } else {
+                        AssertUtil.equals(next, 22);
+                    }
                 }
                 return next;
             }
