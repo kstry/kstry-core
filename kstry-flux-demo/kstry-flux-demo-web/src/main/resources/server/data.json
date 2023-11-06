@@ -1,0 +1,19 @@
+{
+	"login": {
+		"success": true,
+		"code": 0,
+		"msg": "success",
+		"data": {
+			"token": "EAE703BE58A511EE8C990242AC120002"
+		}
+	},
+	"queryStudent": {
+		"success": true,
+		"code": 0,
+		"msg": "success",
+		"data": {
+			"id": 16,
+			"name": "学生16"
+		}
+	}
+}

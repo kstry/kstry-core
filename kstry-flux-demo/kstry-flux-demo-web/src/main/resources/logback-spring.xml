@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="spring_application_name" source="spring.application.name" defaultValue="default-app"/>
+
+    <property name="INFO_LOG_FILE" value="/data/logs/${spring_application_name}/${spring_application_name}.log"/>
+    <property name="SQL_LOG_FILE" value="/data/logs/${spring_application_name}/${spring_application_name}-sql.log"/>
+    <property name="ERROR_LOG_FILE" value="/data/logs/${spring_application_name}/${spring_application_name}-error.log"/>
+    <property name="KSTRY_THREAD_LOG_FILE" value="/data/logs/${spring_application_name}/${spring_application_name}-kstry-thread.log"/>
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%X{traceId}] %-5level %logger{20} - %msg%n"/>
+
+    <property name="LOG_FILE_CLEAN_HISTORY_ON_START" value="false"/>
+    <property name="LOG_FILE_MAX_SIZE" value="100MB"/>
+    <property name="LOG_FILE_MAX_HISTORY" value="7"/>
+    <property name="LOG_FILE_TOTAL_SIZE_CAP" value="0"/>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <logger name="cn.kstry" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    <root level="WARN">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

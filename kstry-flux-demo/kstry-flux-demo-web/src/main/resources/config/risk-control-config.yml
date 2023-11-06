@@ -1,0 +1,10 @@
+# risk-control-config.yml 同样是为了维护和阅读方便才新建的文件
+
+# 风控默认配置
+risk-control:
+  img-max-size: 100
+
+# 业务维度变量配置
+special-channel: # 请求入参传入的businessId
+  risk-control: # 在修改风控域变量时
+    img-max-size: 200 # 将该字段的风控域默认变量，替换成这个变量的值

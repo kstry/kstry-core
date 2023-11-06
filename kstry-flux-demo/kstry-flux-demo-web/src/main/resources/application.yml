@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: kstry-flux-demo
+  profiles:
+    active: dev
+
+kstry:
+  thread:
+    pool:
+      shutdown-now-await: 3000
+      shutdown-await: 3000
+      queue-size: 5000
+      keep-alive-time: 10
+      max-size: 16
+      core-size: 8
+      monitor:
+        enable: true
+        delay: 60000
+  story:
+    request-id: traceId
+    tracking:
+      log: true
+      type: service
+    success-code: 200
+    timeout: 3000

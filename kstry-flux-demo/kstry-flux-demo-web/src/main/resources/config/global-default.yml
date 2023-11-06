@@ -1,0 +1,12 @@
+default:
+  banner: https://aass.png
+  shop-blacklist-ids:
+    - 2
+    - 3
+    - 4
+    - 5
+
+default@dev:
+  shop-blacklist-ids:
+    - 8
+    - 9

@@ -1,0 +1,120 @@
+[{
+  "process-id": "Process_1693841776073",
+  "start-id": "student-score-query-json-process",
+  "process-nodes": [{
+    "id": "student-score-query-json-process",
+    "name": "student-score-query-json-process",
+    "next-nodes": ["Gateway_0moclik"],
+    "type": "start_event"
+  }, {
+    "id": "Gateway_0moclik",
+    "next-nodes": ["Activity_1tuuink", "Activity_1lzcrrr", "Flow_1jmfkgr"],
+    "properties": {
+      "open-async": true
+    },
+    "type": "inclusive_gateway"
+  }, {
+    "id": "Activity_1tuuink",
+    "name": "查询学生\n基本信息",
+    "next-nodes": ["Gateway_0avnapl"],
+    "properties": {
+      "task-component": "studentScoreService",
+      "task-service": "getStudentBasic"
+    },
+    "type": "service_task"
+  }, {
+    "id": "Activity_1lzcrrr",
+    "name": "查询学生\n敏感信息",
+    "next-nodes": ["Gateway_0avnapl"],
+    "properties": {
+      "task-component": "studentScoreService",
+      "task-service": "getStudentPrivacy"
+    },
+    "type": "service_task"
+  }, {
+    "id": "Gateway_0avnapl",
+    "next-nodes": ["Activity_1x55mgq"],
+    "properties": {},
+    "type": "inclusive_gateway"
+  }, {
+    "id": "Activity_1x55mgq",
+    "name": "装配学生信息",
+    "next-nodes": ["Gateway_02qlo7f"],
+    "properties": {
+      "task-component": "studentScoreService",
+      "task-service": "assembleStudentInfo"
+    },
+    "type": "service_task"
+  }, {
+    "flow-expression": "req.needScore",
+    "id": "Flow_1jmfkgr",
+    "name": "if（need-score-list）",
+    "next-nodes": ["Activity_0q5ad88"],
+    "type": "sequence_flow"
+  }, {
+    "id": "Activity_0q5ad88",
+    "name": "获取学生\n学年列表",
+    "next-nodes": ["Gateway_0qmo5am"],
+    "properties": {
+      "task-service": "getStudyExperienceList",
+      "c-jscript": "var classIds = [];\nfor (var i = 0; i< kvar.studyExperienceList.length; i++)\n{\n    classIds.push(kvar.studyExperienceList[i].classId);\n}\nreturn JSON.stringify(classIds)",
+      "task-property": "{\n    \"result-converter\": \"object_to_long_list\",\n    \"return-target\": \"var.classIds\"\n}"
+    },
+    "type": "service_task"
+  }, {
+    "id": "Gateway_0qmo5am",
+    "next-nodes": ["Activity_1h1otxv", "Activity_1v1y60m"],
+    "properties": {
+      "open-async": true
+    },
+    "type": "inclusive_gateway"
+  }, {
+    "id": "Activity_1h1otxv",
+    "name": "查询班级信息",
+    "next-nodes": ["Gateway_0t2t6ox"],
+    "properties": {
+      "task-service": "getClasInfoById"
+    },
+    "type": "service_task"
+  }, {
+    "id": "Activity_1v1y60m",
+    "name": "查询学生\n分数列表",
+    "next-nodes": ["Gateway_0t2t6ox"],
+    "properties": {
+      "task-service": "getStudentScoreList"
+    },
+    "type": "service_task"
+  }, {
+    "id": "Gateway_0t2t6ox",
+    "next-nodes": ["Activity_0itm6m7"],
+    "properties": {
+      "strict-mode": false
+    },
+    "type": "parallel_gateway"
+  }, {
+    "id": "Activity_0itm6m7",
+    "name": "组装历年成绩列表",
+    "next-nodes": ["Gateway_02qlo7f"],
+    "properties": {
+      "task-service": "assembleScoreClassInfo"
+    },
+    "type": "service_task"
+  }, {
+    "id": "Gateway_02qlo7f",
+    "next-nodes": ["Activity_0n1ystm"],
+    "properties": {},
+    "type": "inclusive_gateway"
+  }, {
+    "id": "Activity_0n1ystm",
+    "name": "各维度信息聚合",
+    "next-nodes": ["2e5a5716e4404ca6843abffb807e23b3"],
+    "properties": {
+      "task-service": "getQueryScoreResponse"
+    },
+    "type": "service_task"
+  }, {
+    "id": "2e5a5716e4404ca6843abffb807e23b3",
+    "next-nodes": [],
+    "type": "end_event"
+  }]
+}]

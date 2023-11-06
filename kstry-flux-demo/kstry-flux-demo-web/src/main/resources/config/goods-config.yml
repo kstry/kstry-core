@@ -1,0 +1,8 @@
+init-shop-info:
+  labels:
+    - url: https://xxx.png
+      name: L1
+      index: 1
+    - url: https://xxx2.png
+      name: L2
+      index: 2

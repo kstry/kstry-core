@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_15jdgl8" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="Process_08ansyz" isExecutable="true">
+    <bpmn:startEvent id="story-def-bus-test-01" name="story-def-bus-test-01">
+      <bpmn:outgoing>Flow_1b4j1m9</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_1lba2id" name="bus-step-1">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="bus-test-service" />
+          <camunda:property name="task-service" value="bus-step-1" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1b4j1m9</bpmn:incoming>
+      <bpmn:outgoing>Flow_027ks4c</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1b4j1m9" sourceRef="story-def-bus-test-01" targetRef="Activity_1lba2id" />
+    <bpmn:serviceTask id="Activity_1e7zswb" name="bus-step-2">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="bus-test-service" />
+          <camunda:property name="task-service" value="bus-step-2" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_027ks4c</bpmn:incoming>
+      <bpmn:outgoing>Flow_0spzab1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_027ks4c" sourceRef="Activity_1lba2id" targetRef="Activity_1e7zswb" />
+    <bpmn:endEvent id="Event_119p18r">
+      <bpmn:incoming>Flow_0z2uomb</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="testBusDataTaskParams" name="testBusDataTaskParams">
+      <bpmn:outgoing>Flow_0ivonek</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Activity_1a4ox1q" name="testBusDataTaskParams">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="testBusDataTaskParams" />
+          <camunda:property name="task-params" value="{&#10;	&#34;a1&#34;: &#34;111&#34;,&#10;	&#34;b&#34;: null,&#10;	&#34;c&#34;: null,&#10;	&#34;d&#34;: &#34;3.24&#34;,&#10;	&#34;reqId&#34;: &#34;@req.id&#34;,&#10;	&#34;bo&#34;: {&#10;		&#34;id&#34;: &#34;@req.id&#34;,&#10;		&#34;size&#34;: null,&#10;		&#34;br-br&#34;: {&#10;			&#34;name&#34;: &#34;张三&#34;&#10;		}&#10;	}&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ivonek</bpmn:incoming>
+      <bpmn:outgoing>Flow_11iy13d</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0ivonek" sourceRef="testBusDataTaskParams" targetRef="Activity_1a4ox1q" />
+    <bpmn:endEvent id="Event_1ug278f">
+      <bpmn:incoming>Flow_11iy13d</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_11iy13d" sourceRef="Activity_1a4ox1q" targetRef="Event_1ug278f" />
+    <bpmn:serviceTask id="Activity_01a8ha2" name="bus-step-3">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="bus-test-service" />
+          <camunda:property name="task-service" value="bus-step-3" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0spzab1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0z2uomb</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0spzab1" sourceRef="Activity_1e7zswb" targetRef="Activity_01a8ha2" />
+    <bpmn:sequenceFlow id="Flow_0z2uomb" sourceRef="Activity_01a8ha2" targetRef="Event_119p18r" />
+    <bpmn:startEvent id="testCustomParams" name="testCustomParams">
+      <bpmn:outgoing>Flow_04qz83o</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_0sz46qo" name="testCustomParams">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="testCustomParams" />
+          <camunda:property name="task-params" value="{&#10;	&#34;busTestRequest&#34;: {&#10;		&#34;id[t:basic_converter]&#34;: &#34;@var.id&#34;,&#10;		&#34;desc&#34;: &#34;测试&#34;,&#10;		&#34;num&#34;: 20,&#10;		&#34;num2&#34;: &#34;@var.num2&#34;,&#10;		&#34;ar&#34;: {&#10;			&#34;name&#34;: &#34;阿三&#34;&#10;		}&#10;	}&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04qz83o</bpmn:incoming>
+      <bpmn:outgoing>Flow_1c07nj3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_04qz83o" sourceRef="testCustomParams" targetRef="Activity_0sz46qo" />
+    <bpmn:endEvent id="Event_0ljt2ru">
+      <bpmn:incoming>Flow_1c07nj3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1c07nj3" sourceRef="Activity_0sz46qo" targetRef="Event_0ljt2ru" />
+    <bpmn:startEvent id="testConverterMappingProcess" name="testConverterMappingProcess">
+      <bpmn:outgoing>Flow_072utyk</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_1a8eorw" name="testConverterMapping">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="testConverterMapping" />
+          <camunda:property name="task-params" value="{&#10;	&#34;params&#34;: {&#10;		&#34;busTest[t:map-to-bus-test]&#34;: {&#10;			&#34;id&#34;: 12,&#10;			&#34;desc&#34;: &#34;描述信息12&#34;,&#10;			&#34;ar&#34;: {&#10;				&#34;name&#34;: &#34;@var.arName&#34;&#10;			},&#10;			&#34;localNow[t:string_to_local_datetime]&#34;: &#34;@var.dateStr&#34;&#10;		},&#10;		&#34;requests&#34;: [{&#10;			&#34;id&#34;: &#34;@$.var.requests[0].id&#34;,&#10;			&#34;desc&#34;: &#34;@var.requests.[0].desc&#34;&#10;		}, {&#10;			&#34;id&#34;: &#34;@var.requests.[1].id&#34;,&#10;			&#34;desc&#34;: &#34;@var.requests.[1].desc&#34;,&#10;			&#34;now[t:string_to_date]&#34;: &#34;@var.dateStr&#34;&#10;		}, {&#10;			&#34;id&#34;: 19,&#10;			&#34;desc&#34;: &#34;描述信息19&#34;&#10;		}],&#10;		&#34;reqDescList2&#34;: [&#10;			[&#34;@var.requests.[0].desc&#34;, 1, 2, 3],&#10;			[&#34;@var.requests.[0].desc&#34;, &#34;@var.requests.[1].desc&#34;]&#10;		],&#10;		&#34;requests2&#34;: [&#10;			[&#10;				[{&#10;					&#34;descList&#34;: [&#34;@var.requests.[0].desc&#34;, &#34;@var.requests.[1].desc&#34;]&#10;				}]&#10;			]&#10;		]&#10;	},&#10;	&#34;reqDescList[t:basic_converter]&#34;: [&#34;@var.requests.[0].desc&#34;, &#34;@var.requests.[1].desc&#34;]&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_072utyk</bpmn:incoming>
+      <bpmn:outgoing>Flow_1xanerk</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_14cmftr">
+      <bpmn:incoming>Flow_1xanerk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_072utyk" sourceRef="testConverterMappingProcess" targetRef="Activity_1a8eorw" />
+    <bpmn:sequenceFlow id="Flow_1xanerk" sourceRef="Activity_1a8eorw" targetRef="Event_14cmftr" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_08ansyz">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="story-def-bus-test-01">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="138" y="145" width="69" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lba2id_di" bpmnElement="Activity_1lba2id">
+        <dc:Bounds x="250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1e7zswb_di" bpmnElement="Activity_1e7zswb">
+        <dc:Bounds x="400" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_119p18r_di" bpmnElement="Event_119p18r">
+        <dc:Bounds x="702" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1uflwzv_di" bpmnElement="testBusDataTaskParams">
+        <dc:Bounds x="182" y="312" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="355" width="83" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1a4ox1q_di" bpmnElement="Activity_1a4ox1q">
+        <dc:Bounds x="270" y="290" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ug278f_di" bpmnElement="Event_1ug278f">
+        <dc:Bounds x="422" y="312" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1d3hh8w" bpmnElement="Activity_01a8ha2">
+        <dc:Bounds x="550" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_10ujjzi_di" bpmnElement="testCustomParams">
+        <dc:Bounds x="182" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="161" y="515" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0sz46qo_di" bpmnElement="Activity_0sz46qo">
+        <dc:Bounds x="270" y="450" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ljt2ru_di" bpmnElement="Event_0ljt2ru">
+        <dc:Bounds x="422" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1vewn2q" bpmnElement="testConverterMappingProcess">
+        <dc:Bounds x="182" y="652" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="160" y="695" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_117sqwj" bpmnElement="Activity_1a8eorw">
+        <dc:Bounds x="270" y="630" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0zjisvl" bpmnElement="Event_14cmftr">
+        <dc:Bounds x="422" y="652" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1b4j1m9_di" bpmnElement="Flow_1b4j1m9">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="250" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_027ks4c_di" bpmnElement="Flow_027ks4c">
+        <di:waypoint x="350" y="120" />
+        <di:waypoint x="400" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ivonek_di" bpmnElement="Flow_0ivonek">
+        <di:waypoint x="218" y="330" />
+        <di:waypoint x="270" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11iy13d_di" bpmnElement="Flow_11iy13d">
+        <di:waypoint x="370" y="330" />
+        <di:waypoint x="422" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0spzab1_di" bpmnElement="Flow_0spzab1">
+        <di:waypoint x="500" y="120" />
+        <di:waypoint x="550" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0z2uomb_di" bpmnElement="Flow_0z2uomb">
+        <di:waypoint x="650" y="120" />
+        <di:waypoint x="702" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04qz83o_di" bpmnElement="Flow_04qz83o">
+        <di:waypoint x="218" y="490" />
+        <di:waypoint x="270" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c07nj3_di" bpmnElement="Flow_1c07nj3">
+        <di:waypoint x="370" y="490" />
+        <di:waypoint x="422" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0xi7n99" bpmnElement="Flow_072utyk">
+        <di:waypoint x="218" y="670" />
+        <di:waypoint x="270" y="670" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_09fweda" bpmnElement="Flow_1xanerk">
+        <di:waypoint x="370" y="670" />
+        <di:waypoint x="422" y="670" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

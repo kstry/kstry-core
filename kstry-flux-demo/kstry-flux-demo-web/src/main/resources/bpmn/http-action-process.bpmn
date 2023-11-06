@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_0001" targetNamespace="http://bpmn.io/schema/bpmn">
+    <bpmn:process id="Process_1695318832377" name="业务流程_1695318832377" isExecutable="true">
+        <bpmn:startEvent id="http-action-test001" name="http-action-test001">
+            <bpmn:outgoing>Flow_0sfx9m5</bpmn:outgoing>
+        </bpmn:startEvent>
+        <bpmn:serviceTask id="Activity_1arlfr7" name="登录">
+            <bpmn:extensionElements>
+                <camunda:properties>
+                    <camunda:property name="task-service" value="http-post" />
+                    <camunda:property name="task-params" value="{&#10;	&#34;url&#34;: &#34;http://127.0.0.1:8787/login&#34;,&#10;	&#34;result&#34;: {&#10;		&#34;target&#34;: &#34;var.login&#34;,&#10;		&#34;type&#34;: &#34;java.util.HashMap&#34;&#10;	},&#10;	&#34;data&#34;: {&#10;		&#34;username&#34;: &#34;admin&#34;,&#10;		&#34;password&#34;: &#34;admin&#34;&#10;	}&#10;}" />
+                </camunda:properties>
+            </bpmn:extensionElements>
+            <bpmn:incoming>Flow_0sfx9m5</bpmn:incoming>
+            <bpmn:outgoing>Flow_1kfxwxr</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:sequenceFlow id="Flow_0sfx9m5" sourceRef="http-action-test001" targetRef="Activity_1arlfr7" />
+        <bpmn:serviceTask id="Activity_0w6dbdp" name="学生信息查询">
+            <bpmn:extensionElements>
+                <camunda:properties>
+                    <camunda:property name="task-service" value="async-http-post" />
+                    <camunda:property name="task-params" value="{&#10;	&#34;url&#34;: &#34;http://127.0.0.1:8787/queryStudent&#34;,&#10;	&#34;result&#34;: {&#10;		&#34;target&#34;: &#34;var.student&#34;,&#10;		&#34;converter&#34;: &#34;map-to-student&#34;&#10;	},&#10;	&#34;header&#34;: {&#10;		&#34;Authorization&#34;: &#34;@var.login.data.token&#34;&#10;	},&#10;	&#34;data&#34;: {&#10;		&#34;id&#34;: 16&#10;	}&#10;}" />
+                </camunda:properties>
+            </bpmn:extensionElements>
+            <bpmn:incoming>Flow_1kfxwxr</bpmn:incoming>
+            <bpmn:outgoing>Flow_03c3tgy</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:sequenceFlow id="Flow_1kfxwxr" sourceRef="Activity_1arlfr7" targetRef="Activity_0w6dbdp" />
+        <bpmn:endEvent id="Event_02d73kj">
+            <bpmn:incoming>Flow_03c3tgy</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_03c3tgy" sourceRef="Activity_0w6dbdp" targetRef="Event_02d73kj" />
+    </bpmn:process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1695318832377">
+            <bpmndi:BPMNShape id="Event_1hogd19_di" bpmnElement="http-action-test001">
+                <dc:Bounds x="472" y="302" width="36" height="36" />
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="462" y="345" width="56" height="27" />
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_1arlfr7_di" bpmnElement="Activity_1arlfr7">
+                <dc:Bounds x="560" y="280" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="BPMNShape_0hncca9" bpmnElement="Activity_0w6dbdp">
+                <dc:Bounds x="710" y="280" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_02d73kj_di" bpmnElement="Event_02d73kj">
+                <dc:Bounds x="862" y="302" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_0sfx9m5_di" bpmnElement="Flow_0sfx9m5">
+                <di:waypoint x="508" y="320" />
+                <di:waypoint x="560" y="320" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1kfxwxr_di" bpmnElement="Flow_1kfxwxr">
+                <di:waypoint x="660" y="320" />
+                <di:waypoint x="710" y="320" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_03c3tgy_di" bpmnElement="Flow_03c3tgy">
+                <di:waypoint x="810" y="320" />
+                <di:waypoint x="862" y="320" />
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</bpmn:definitions>
