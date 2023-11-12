@@ -59,7 +59,7 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
     private final Map<String, List<ServiceNodeResource>> serviceNodeResourceMap;
 
     public VerifyFlowPostProcessor(ApplicationContext applicationContext) {
-        super(Sets::newHashSet, true);
+        super(start -> Sets.newHashSet(), true);
         Map<String, TaskContainer> taskContainerMap = applicationContext.getBeansOfType(TaskContainer.class);
         AssertUtil.oneSize(taskContainerMap.values());
         this.taskContainer = taskContainerMap.values().iterator().next();

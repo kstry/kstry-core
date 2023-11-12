@@ -113,6 +113,11 @@ public class StoryRequest<T> {
      */
     private ThreadPoolExecutor storyExecutor;
 
+    /**
+     * 中途执行流程的开始Id
+     */
+    private String midwayStartId;
+
     public String getStartId() {
         return startId;
     }
@@ -229,5 +234,13 @@ public class StoryRequest<T> {
 
     public void setStoryExecutor(ThreadPoolExecutor storyExecutor) {
         this.storyExecutor = storyExecutor;
+    }
+
+    public String getMidwayStartId() {
+        return midwayStartId;
+    }
+
+    public void setMidwayStartId(String midwayStartId) {
+        this.midwayStartId = midwayStartId;
     }
 }

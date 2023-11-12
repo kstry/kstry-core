@@ -58,7 +58,7 @@
     "properties": {
       "task-service": "getStudyExperienceList",
       "c-jscript": "var classIds = [];\nfor (var i = 0; i< kvar.studyExperienceList.length; i++)\n{\n    classIds.push(kvar.studyExperienceList[i].classId);\n}\nreturn JSON.stringify(classIds)",
-      "task-property": "{\n    \"result-converter\": \"object_to_long_list\",\n    \"return-target\": \"var.classIds\"\n}"
+      "task-property": "{\n    \"result-converter\": \"basic_converter\",\n    \"return-target\": \"var.classIds\"\n}"
     },
     "type": "service_task"
   }, {

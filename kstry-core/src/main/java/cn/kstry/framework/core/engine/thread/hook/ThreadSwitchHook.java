@@ -38,10 +38,20 @@ public interface ThreadSwitchHook<T> extends Ordered {
     /**
      * 将线程切换前的数据应用到新的线程
      *
-     * @param data 线程切换前的数据
+     * @param data           线程切换前的数据
      * @param scopeDataQuery 域数据查询
      */
     void usePreviousData(T data, ScopeDataQuery scopeDataQuery);
+
+    /**
+     * 释放资源
+     *
+     * @param data           线程切换前的数据
+     * @param scopeDataQuery 域数据查询
+     */
+    default void clear(T data, ScopeDataQuery scopeDataQuery) {
+        // DO NOTHING
+    }
 
     default int getOrder() {
         return LOWEST_PRECEDENCE;

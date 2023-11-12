@@ -33,7 +33,7 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * 遍历流程图对象的模版。传入 StartEvent 可遍历整个流程图
@@ -47,14 +47,14 @@ public class DiagramTraverseSupport<T> {
     /**
      * 遍历时产生中间变量，不传中间变量为空
      */
-    private final Supplier<T> supplier;
+    private final Function<StartEvent, T> courseFunction;
 
     public DiagramTraverseSupport() {
         this(null, true);
     }
 
-    public DiagramTraverseSupport(Supplier<T> supplier, boolean recursiveSubProcess) {
-        this.supplier = supplier;
+    public DiagramTraverseSupport(Function<StartEvent, T> courseFunction, boolean recursiveSubProcess) {
+        this.courseFunction = courseFunction;
         this.recursiveSubProcess = recursiveSubProcess;
     }
 
@@ -64,7 +64,7 @@ public class DiagramTraverseSupport<T> {
 
     private void doTraverse(StartEvent startEvent, SubProcess subProcess) {
         AssertUtil.notNull(startEvent);
-        T course = Optional.ofNullable(supplier).map(Supplier::get).orElse(null);
+        T course = Optional.ofNullable(courseFunction).map(cf -> courseFunction.apply(startEvent)).orElse(null);
         Map<FlowElement, Integer> comingCountMap = Maps.newHashMap();
         InStack<FlowElement> basicInStack = new BasicInStack<>();
         basicInStack.push(startEvent);

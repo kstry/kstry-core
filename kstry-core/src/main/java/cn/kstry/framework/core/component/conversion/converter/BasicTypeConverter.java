@@ -20,11 +20,20 @@ package cn.kstry.framework.core.component.conversion.converter;
 import cn.kstry.framework.core.component.conversion.TypeConverter;
 import cn.kstry.framework.core.constant.TypeConverterNames;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.ElementParserUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.springframework.core.Ordered;
 
+import java.util.Collection;
+
 public class BasicTypeConverter implements TypeConverter<Object, Object> {
+
+    private final CollectionGenericTypeConverter collectionGenericTypeConverter;
+
+    public BasicTypeConverter(CollectionGenericTypeConverter collectionGenericTypeConverter) {
+        this.collectionGenericTypeConverter = collectionGenericTypeConverter;
+    }
 
     @Override
     public Class<Object> getSourceType() {
@@ -37,18 +46,31 @@ public class BasicTypeConverter implements TypeConverter<Object, Object> {
     }
 
     @Override
-    public Object doConvert(Object source, Class<?> needType) {
-        AssertUtil.notNull(needType);
+    public Object convert(Object source, Class<?> needType, Class<?> collGeneric) {
+        AssertUtil.notNull(source);
+        if (needType == null || ElementParserUtil.isAssignable(needType, source.getClass())) {
+            return source;
+        }
         if (source instanceof String && String.class.isAssignableFrom(needType)) {
             return source;
         }
+        Object target;
         if (source instanceof String) {
-            return JSON.parseObject((String) source, needType);
+            target = JSON.parseObject((String) source, needType);
+        } else if (String.class.isAssignableFrom(needType)) {
+            target = JSON.toJSONString(source, SerializerFeature.DisableCircularReferenceDetect);
+        } else {
+            target = JSON.parseObject(JSON.toJSONString(source, SerializerFeature.DisableCircularReferenceDetect), needType);
         }
-        if (String.class.isAssignableFrom(needType)) {
-            return JSON.toJSONString(source, SerializerFeature.DisableCircularReferenceDetect);
+        if (!collectionGenericTypeConverter.match(target, needType, collGeneric)) {
+            return target;
         }
-        return JSON.parseObject(JSON.toJSONString(source, SerializerFeature.DisableCircularReferenceDetect), needType);
+        return collectionGenericTypeConverter.convert((Collection<?>) target, needType, collGeneric);
+    }
+
+    @Override
+    public Object doConvert(Object source, Class<?> needType) {
+        return null;
     }
 
     @Override

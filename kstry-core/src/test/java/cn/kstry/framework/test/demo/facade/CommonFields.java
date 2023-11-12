@@ -4,6 +4,7 @@ import cn.kstry.framework.test.demo.bo.ClassInfo;
 import cn.kstry.framework.test.demo.bo.Student;
 import lombok.experimental.FieldNameConstants;
 
+@SuppressWarnings("unused")
 @FieldNameConstants(innerTypeName = "F")
 public class CommonFields {
 
@@ -15,7 +16,13 @@ public class CommonFields {
 
     private String factor;
 
+    private boolean lockStockResult;
+
     private int calculateRes;
+
+    private long goodsId;
+
+    private long price;
 
     private Long studentId;
 

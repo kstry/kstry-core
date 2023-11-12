@@ -34,6 +34,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 public interface StoryBus {
 
     /**
+     * 是否在入口处设置了req
+     */
+    boolean isSetReqScope();
+
+    /**
      * 获取 Request 域 数据
      *
      * @return data

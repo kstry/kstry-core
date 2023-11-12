@@ -75,6 +75,11 @@ public interface BpmnElementProperties {
     String INCLUSIVE_GATEWAY_COMPLETED_COUNT = "completed-count";
 
     /**
+     * InclusiveGateway: midway-start-id
+     */
+    String INCLUSIVE_GATEWAY_MIDWAY_START_ID = "midway-start-id";
+
+    /**
      * SubProcess/ParallelGateway/ServiceTask: strict-mode
      */
     String TASK_STRICT_MODE = "strict-mode";

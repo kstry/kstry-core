@@ -167,12 +167,13 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     ProcessLink inclusiveProcessLink = nextBpmnLinkMap.computeIfAbsent(targetNode.getId(), node -> {
                         ServiceTaskImpl serviceTask = getServiceTask(jsonNodeMap.get(node), config, true);
                         InclusiveJoinPoint beforeMockLink = processLink.inclusive(targetNode.getId() + "-Inclusive-" + GlobalUtil.uuid()).build();
-                        ProcessLink nextMockLink = instructWrapper(true, targetNode, serviceTask, null, beforeMockLink);
+                        ProcessLink nextMockLink = instructWrapper(config, true, targetNode, serviceTask, null, beforeMockLink);
                         InclusiveJoinPointBuilder inclusiveJoinPointBuilder = processLink.inclusive(targetNode.getId());
                         ElementPropertyUtil.getJsonNodeProperty(targetNode,
                                 BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC).map(BooleanUtils::toBoolean).filter(b -> b).ifPresent(b -> inclusiveJoinPointBuilder.openAsync());
                         ElementPropertyUtil.getJsonNodeProperty(targetNode,
                                 BpmnElementProperties.INCLUSIVE_GATEWAY_COMPLETED_COUNT).map(NumberUtils::toInt).ifPresent(inclusiveJoinPointBuilder::completedCount);
+                        ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.INCLUSIVE_GATEWAY_MIDWAY_START_ID).ifPresent(inclusiveJoinPointBuilder::midwayStartId);
                         InclusiveJoinPoint actualInclusive = inclusiveJoinPointBuilder.build();
                         if (beforeMockLink == nextMockLink) {
                             return actualInclusive;
@@ -186,7 +187,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 } else if (BpmnTypeEnum.EXCLUSIVE_GATEWAY.is(targetNode.getType())) {
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, true);
                     SequenceFlow sf = sequenceFlowMapping(config, nextNode);
-                    ProcessLink nextProcessLink = instructWrapper(true, targetNode, serviceTask, sf, beforeProcessLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, serviceTask, sf, beforeProcessLink);
                     if (nextProcessLink != beforeProcessLink) {
                         sf = buildSequenceFlow(targetNode.getId());
                     }
@@ -195,7 +196,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     basicInStack.push(targetNode);
                 } else if (BpmnTypeEnum.SERVICE_TASK.is(targetNode.getType())) {
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, false);
-                    ProcessLink nextProcessLink = instructWrapper(false, targetNode, serviceTask, sequenceFlowMapping(config, nextNode), beforeProcessLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, sequenceFlowMapping(config, nextNode), beforeProcessLink);
                     nextBpmnLinkMap.put(targetNode.getId(), nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (BpmnTypeEnum.SUB_PROCESS.is(targetNode.getType())) {
@@ -258,9 +259,9 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         return sequenceFlow;
     }
 
-    private ProcessLink instructWrapper(boolean allowEmpty, JsonNode targetNode, ServiceTaskImpl serviceTask, SequenceFlow firstSequenceFlow, ProcessLink nextProcessLink) {
+    private ProcessLink instructWrapper(ConfigResource config, boolean allowEmpty, JsonNode targetNode, ServiceTaskImpl serviceTask, SequenceFlow firstSequenceFlow, ProcessLink nextProcessLink) {
         ProcessLink before = nextProcessLink;
-        String nodeProperty = ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.SERVICE_TASK_TASK_PROPERTY).orElse(null);
+        ServiceTaskImpl sTask = getServiceTask(targetNode, config, true);
 
         List<InstructContent> beforeInstructContentList = getInstructContentList(targetNode, true);
         if (CollectionUtils.isNotEmpty(beforeInstructContentList)) {
@@ -273,8 +274,8 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     firstSequenceFlow = null;
                 }
                 String instruct = instructContent.getInstruct().substring(1);
-                nextProcessLink = nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent())
-                        .name(instruct + "@" + serviceTask.getName()).property(nodeProperty).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent()), sTask)
+                        .name(instruct + "@" + serviceTask.getName()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
             }
         }
 
@@ -300,14 +301,16 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     sf = firstSequenceFlow;
                     firstSequenceFlow = null;
                 }
-                nextProcessLink = nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent())
-                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).property(nodeProperty).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent()), sTask)
+                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
             }
         }
         AssertUtil.isTrue(allowEmpty || before != nextProcessLink,
                 ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "Invalid serviceNode definition, please add the necessary attributes! elementId: {}", targetNode.getId());
         return nextProcessLink;
     }
+
+
 
     private List<InstructContent> getInstructContentList(JsonNode flowNode, boolean isBefore) {
         List<Pair<String, String>> instructPairList =

@@ -19,10 +19,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DefProcess {
 
-    /**
-     * 定义bpmn可视化流程图（当前类代码定义与bpmn定义等效）：
-     * <a href="https://gitee.com/kstry/kstry-flux-demo/blob/master/kstry-flux-demo-common/src/main/resources/img/goods-show-demo-flow.png">查看图片</a>
-     */
     @Bean
     public ProcessLink buildShowGoodsLink() {
         StartProcessLink bpmnLink = StartProcessLink.build(DefProcess::buildShowGoodsLink, "展示商品详情");

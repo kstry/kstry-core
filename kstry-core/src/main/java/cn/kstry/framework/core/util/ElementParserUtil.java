@@ -161,7 +161,9 @@ public class ElementParserUtil {
                         )
                         .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum(), taskFieldAnn.converter());
-                ParamInjectDef injectDef = new ParamInjectDef(GlobalConstant.STORY_DATA_SCOPE.contains(taskFieldProperty.getScopeDataEnum()), field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(GlobalConstant.STORY_DATA_SCOPE.contains(
+                        taskFieldProperty.getScopeDataEnum()), field.getType(), ProxyUtil.getCollGenericType(field).orElse(null), field.getName(), taskFieldProperty
+                );
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -180,7 +182,7 @@ public class ElementParserUtil {
                         )
                         .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.REQUEST, taskFieldAnn.converter());
-                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), ProxyUtil.getCollGenericType(field).orElse(null), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -199,7 +201,7 @@ public class ElementParserUtil {
                         )
                         .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.STABLE, taskFieldAnn.converter());
-                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), ProxyUtil.getCollGenericType(field).orElse(null), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }
@@ -218,7 +220,7 @@ public class ElementParserUtil {
                         )
                         .filter(StringUtils::isNotBlank).orElse(field.getName());
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, ScopeTypeEnum.VARIABLE, taskFieldAnn.converter());
-                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), field.getName(), taskFieldProperty);
+                ParamInjectDef injectDef = new ParamInjectDef(true, field.getType(), ProxyUtil.getCollGenericType(field).orElse(null), field.getName(), taskFieldProperty);
                 fieldInjectDefList.add(injectDef);
             });
         }

@@ -70,12 +70,7 @@ public interface TypeConverterNames {
     String FIRST_ITEM_FROM_LIST = "FIRST_ITEM_FROM_LIST";
 
     /**
-     * Object -> List<Long>
+     * Collection<A> -> Collection<B>
      */
-    String OBJECT_TO_LONG_LIST = "OBJECT_TO_LONG_LIST";
-
-    /**
-     * Object -> Set<Long>
-     */
-    String OBJECT_TO_LONG_SET = "OBJECT_TO_LONG_SET";
+    String COLLECTION_GENERIC_TYPE_CONVERTER = "COLLECTION_GENERIC_TYPE_CONVERTER";
 }

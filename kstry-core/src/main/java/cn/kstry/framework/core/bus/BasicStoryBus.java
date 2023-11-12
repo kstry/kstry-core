@@ -131,6 +131,8 @@ public abstract class BasicStoryBus implements StoryBus {
      */
     final Class<?> returnType;
 
+    final boolean setReqScope;
+
     public BasicStoryBus(TypeConverterProcessor typeConverterProcessor, Class<?> returnType, int timeout, ThreadPoolExecutor storyExecutor, String requestId,
                          String startEventId, String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         this.role = role;
@@ -141,10 +143,15 @@ public abstract class BasicStoryBus implements StoryBus {
         this.businessId = businessId;
         this.storyExecutor = storyExecutor;
         this.monitorTracking = monitorTracking;
+        this.setReqScope = reqScopeData != null;
         this.reqScopeData = reqScopeData == null ? new InScopeData(ScopeTypeEnum.REQUEST) : reqScopeData;
         this.varScopeData = varScopeData == null ? new InScopeData(ScopeTypeEnum.VARIABLE) : varScopeData;
         this.staScopeData = staScopeData == null ? new InScopeData(ScopeTypeEnum.STABLE) : staScopeData;
         this.typeConverterProcessor = typeConverterProcessor;
+    }
+
+    public boolean isSetReqScope() {
+        return setReqScope;
     }
 
     @Override
@@ -342,7 +349,7 @@ public abstract class BasicStoryBus implements StoryBus {
                 r = convertPair.getValue();
             } else {
                 Field field = FieldUtils.getField(t.getClass(), fieldName, true);
-                convertPair = typeConverterProcessor.convert(def.getConverter(), r, Optional.ofNullable(field).map(Field::getType).orElse(null));
+                convertPair = typeConverterProcessor.convert(def.getConverter(), r, Optional.ofNullable(field).map(Field::getType).orElse(null), ProxyUtil.getCollGenericType(field).orElse(null));
                 r = convertPair.getValue();
                 Object rFinal = r;
                 AssertUtil.isTrue(r == null || (field != null && ElementParserUtil.isAssignable(field.getType(), r.getClass())),

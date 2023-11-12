@@ -17,6 +17,10 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
+import cn.kstry.framework.core.component.bpmn.builder.ServiceTaskBuilder;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -74,5 +78,24 @@ public class TaskServiceUtil {
             }
         }
         return ImmutablePair.nullPair();
+    }
+
+    public static ServiceTaskBuilder instructTaskBuilder(ServiceTaskBuilder taskBuilder, ServiceTaskImpl sTask) {
+        if (taskBuilder == null || sTask == null) {
+            return taskBuilder;
+        }
+        taskBuilder.property(sTask.getTaskProperty());
+        taskBuilder.params(sTask.getTaskParams() == null ? null : JSON.toJSONString(sTask.getTaskParams(), SerializerFeature.DisableCircularReferenceDetect));
+        taskBuilder.retryTimes(sTask.getRetryTimes());
+        if (sTask.allowAbsent()) {
+            taskBuilder.allowAbsent();
+        }
+        if (!sTask.strictMode()) {
+            taskBuilder.notStrictMode();
+        }
+        if (sTask.getTimeout() != null && sTask.getTimeout() > 0) {
+            taskBuilder.timeout(sTask.getTimeout());
+        }
+        return taskBuilder;
     }
 }

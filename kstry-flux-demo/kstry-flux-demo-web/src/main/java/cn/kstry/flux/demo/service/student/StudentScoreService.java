@@ -9,6 +9,7 @@ import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bus.IterDataItem;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @TaskComponent
 @SuppressWarnings("unused")
 public class StudentScoreService {
@@ -88,7 +90,7 @@ public class StudentScoreService {
         // mock return result
         Optional<Long> idOptional = classIdItem.getData();
         ClassInfo classInfo = new ClassInfo();
-        classInfo.setId(idOptional.orElse(null));
+        classInfo.setId(idOptional.map((Object o) -> Long.valueOf(String.valueOf(o))).orElse(null));
         classInfo.setName("班级" + idOptional.orElse(null));
         return classInfo;
     }
@@ -107,8 +109,9 @@ public class StudentScoreService {
     }
 
     @TaskService(desc = "组装成绩及班级信息")
-    public void assembleScoreClassInfo(@VarTaskParam(QueryScoreVarScope.F.scoreInfos) List<ScoreInfo> scoreInfos,
-                                       @VarTaskParam(QueryScoreVarScope.F.classInfos) List<ClassInfo> classInfos) {
+    @NoticeVar(target = QueryScoreVarScope.F.scoreInfos)
+    public List<ScoreInfo> assembleScoreClassInfo(@VarTaskParam(QueryScoreVarScope.F.scoreInfos) List<ScoreInfo> scoreInfos,
+                                                  @VarTaskParam(QueryScoreVarScope.F.classInfos) List<ClassInfo> classInfos) {
         Map<Long, ClassInfo> classInfoMap = classInfos.stream().collect(Collectors.toMap(ClassInfo::getId, Function.identity(), (x, y) -> y));
         scoreInfos.forEach(scoreInfo -> {
             ClassInfo classInfo = classInfoMap.get(scoreInfo.getClassId());
@@ -117,6 +120,7 @@ public class StudentScoreService {
             }
             scoreInfo.setClassInfo(classInfo);
         });
+        return scoreInfos;
     }
 
     @NoticeResult
@@ -127,5 +131,12 @@ public class StudentScoreService {
         response.setStudent(student);
         response.setScoreInfos(scoreInfos);
         return response;
+    }
+
+    @NoticeResult
+    @TaskService
+    public boolean gotoSchool(int askWeek, boolean askRain, boolean askHungry) {
+        log.info("gotoSchool. askWeek: {}, askRain: {}, askHungry: {}", askWeek, askRain, askHungry);
+        return true;
     }
 }

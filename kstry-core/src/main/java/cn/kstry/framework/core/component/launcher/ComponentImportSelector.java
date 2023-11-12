@@ -30,6 +30,7 @@ import cn.kstry.framework.core.component.preheat.StoryEnginePreheatService;
 import cn.kstry.framework.core.component.preheat.TriggerProcessPreheat;
 import cn.kstry.framework.core.container.processor.*;
 import cn.kstry.framework.core.engine.StoryEngine;
+import cn.kstry.framework.core.engine.thread.hook.ThreadLocalSwitchHook;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchLogHook;
@@ -74,6 +75,11 @@ public class ComponentImportSelector implements ApplicationContextAware, Initial
     @Bean
     public StartEventPostProcessor getIterablePostProcessor() {
         return new IterablePostProcessor();
+    }
+
+    @Bean
+    public StartEventPostProcessor getMainProcessPostProcessor() {
+        return new MainProcessPostProcessor();
     }
 
     @Bean
@@ -135,6 +141,11 @@ public class ComponentImportSelector implements ApplicationContextAware, Initial
     @Bean
     public ThreadSwitchLogHook logThreadSwitchHook() {
         return new ThreadSwitchLogHook();
+    }
+
+    @Bean
+    public ThreadLocalSwitchHook threadLocalSwitchHook() {
+        return new ThreadLocalSwitchHook();
     }
 
     @Bean

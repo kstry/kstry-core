@@ -115,10 +115,11 @@ public class TaskParamParser {
 
             // 如果拿入参的 request 参数，直接赋值
             if (iDef.getScopeDataEnum() == ScopeTypeEnum.REQUEST && iDef.isInjectSelf()) {
-                params[i] = storyBus.getReq();
-                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
-                        ParamTracking.build(iDef.getFieldName(), ScopeTypeEnum.REQUEST.name().toLowerCase(), ScopeTypeEnum.REQUEST, storyBus.getReq(), storyBus.getReq().getClass(), null))
-                );
+                Object actualReq = storyBus.isSetReqScope() ? storyBus.getReq() : params[i];
+                params[i] = actualReq;
+                trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName(),
+                        ScopeTypeEnum.REQUEST.name().toLowerCase(), ScopeTypeEnum.REQUEST, actualReq, Optional.ofNullable(actualReq).map(Object::getClass).orElse(null), null)
+                ));
                 continue;
             }
 
@@ -179,7 +180,7 @@ public class TaskParamParser {
                     );
                     continue;
                 }
-                Pair<String, ?> convertPair = engineModule.getTypeConverterProcessor().convert(iDef.getConverter(), r, iDef.getParamType());
+                Pair<String, ?> convertPair = engineModule.getTypeConverterProcessor().convert(iDef.getConverter(), r, iDef.getParamType(), iDef.getCollGenericType().orElse(null));
                 r = convertPair.getValue();
                 checkParamType(serviceTask, iDef, r);
                 params[i] = r;
@@ -215,7 +216,7 @@ public class TaskParamParser {
                             );
                             return;
                         }
-                        Pair<String, ?> convertPair = engineModule.getTypeConverterProcessor().convert(def.getConverter(), value, def.getParamType());
+                        Pair<String, ?> convertPair = engineModule.getTypeConverterProcessor().convert(def.getConverter(), value, def.getParamType(), def.getCollGenericType().orElse(null));
                         value = convertPair.getValue();
                         checkParamType(serviceTask, def, value);
                         boolean setSuccess = PropertyUtil.setProperty(o, def.getFieldName(), value);
@@ -295,7 +296,7 @@ public class TaskParamParser {
             }
             try {
                 if (Map.class.isAssignableFrom(iDef.getParamType()) && iDef.getParamType().isAssignableFrom(val.getClass())) {
-                    Pair<String, ?> convertPair = typeConverterProcessor.convert(val, iDef.getParamType());
+                    Pair<String, ?> convertPair = typeConverterProcessor.convert(null, val, iDef.getParamType(), iDef.getCollGenericType().orElse(null));
                     params[i] = convertPair.getValue();
                     trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
                             ParamTracking.build(iDef.getFieldName(), fName, ScopeTypeEnum.CONFIG, convertPair.getValue(), iDef.getParamType(), convertPair.getKey()))
@@ -304,7 +305,7 @@ public class TaskParamParser {
                 }
 
                 if (!(val instanceof Map)) {
-                    Pair<String, Object> paramPair = parseParamValue(val, iDef.getParamType());
+                    Pair<String, Object> paramPair = parseParamValue(val, iDef.getParamType(), iDef.getCollGenericType().orElse(null));
                     params[i] = paramPair.getValue();
                     trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () ->
                             ParamTracking.build(iDef.getFieldName(), fName, ScopeTypeEnum.CONFIG, paramPair.getValue(), iDef.getParamType(), paramPair.getKey()))
@@ -333,7 +334,7 @@ public class TaskParamParser {
                         continue;
                     }
                     Object v = valMap.get(targetName);
-                    Pair<String, Object> fieldPair = parseParamValue(v, field.getType());
+                    Pair<String, Object> fieldPair = parseParamValue(v, field.getType(), ProxyUtil.getCollGenericType(field).orElse(null));
                     PropertyUtil.setProperty(params[i], field.getName(), fieldPair.getValue());
                     trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName() + "." + field.getName(),
                             fName + "." + targetName, ScopeTypeEnum.CONFIG, fieldPair.getValue(), field.getType(), fieldPair.getKey()))
@@ -347,11 +348,11 @@ public class TaskParamParser {
     }
 
     @SuppressWarnings("unchecked")
-    private Pair<String, Object> parseParamValue(Object val, Class<?> type) {
+    private Pair<String, Object> parseParamValue(Object val, Class<?> type, Class<?> collGenericType) {
         if (val == null) {
             return ImmutablePair.of(null, type.isPrimitive() ? ElementParserUtil.initPrimitive(type) : null);
         }
-        Pair<String, Object> convertPair = (Pair<String, Object>) engineModule.getTypeConverterProcessor().convert(val, type);
+        Pair<String, Object> convertPair = (Pair<String, Object>) engineModule.getTypeConverterProcessor().convert(null, val, type, collGenericType);
         return ImmutablePair.of(convertPair.getKey(), convertPair.getValue() == null ? (type.isPrimitive() ? ElementParserUtil.initPrimitive(type) : null) : convertPair.getValue());
     }
 }

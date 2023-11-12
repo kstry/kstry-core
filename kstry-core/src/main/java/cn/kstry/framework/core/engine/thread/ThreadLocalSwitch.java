@@ -15,18 +15,27 @@
  *  * limitations under the License.
  *
  */
-package cn.kstry.framework.core.bpmn;
-
-import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
-import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
-import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
+package cn.kstry.framework.core.engine.thread;
 
 /**
- * InclusiveGateway
+ * 实现该接口的ThreadLocal，在Kstry框架内部发生线程切换时，ThreadLocal中的数据不会丢失
+ *
+ * 注意：服务节点方法或拦截器等组件中，自定义的线程切换不会生效
  */
-public interface InclusiveGateway extends Gateway, AggregationFlowElement, AsyncFlowElement, ServiceTaskSupport {
+public interface ThreadLocalSwitch<T> {
 
-    Integer getCompletedCount();
+    /**
+     * 获取当前ThreadLocal的值
+     */
+    T get();
 
-    String getMidwayStartId();
+    /**
+     * 设置当前ThreadLocal的值
+     */
+    void set(T value);
+
+    /**
+     * 移除当前ThreadLocal的值
+     */
+    void remove();
 }

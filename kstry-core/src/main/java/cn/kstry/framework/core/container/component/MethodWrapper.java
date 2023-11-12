@@ -32,10 +32,7 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
 import cn.kstry.framework.core.role.Role;
-import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.ElementParserUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.KeyUtil;
+import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -166,20 +163,21 @@ public class MethodWrapper {
 
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
+            Class<?> genericType = ProxyUtil.getCollGenericType(p).orElse(null);
             Optional<TaskFieldProperty> annOptional = ElementParserUtil.getTaskParamAnnotation(p, parameterNames[i]);
-            injectDefs[i] = new ParamInjectDef(false, p.getType(), parameterNames[i], annOptional.orElse(null));
+            injectDefs[i] = new ParamInjectDef(false, p.getType(), genericType, parameterNames[i], annOptional.orElse(null));
             if (GlobalUtil.isCollection(p.getType())) {
                 if (!annOptional.isPresent()) {
                     continue;
                 }
                 boolean needInject = GlobalConstant.STORY_DATA_SCOPE.contains(annOptional.get().getScopeDataEnum());
-                injectDefs[i] = new ParamInjectDef(needInject, p.getType(), parameterNames[i], annOptional.get());
+                injectDefs[i] = new ParamInjectDef(needInject, p.getType(), genericType, parameterNames[i], annOptional.get());
                 continue;
             }
 
             if (Role.class.isAssignableFrom(p.getType()) || ScopeDataQuery.class.isAssignableFrom(p.getType())
                     || InstructContent.class.isAssignableFrom(p.getType()) || IterDataItem.class.isAssignableFrom(p.getType())) {
-                injectDefs[i] = new ParamInjectDef(true, p.getType(), parameterNames[i], null);
+                injectDefs[i] = new ParamInjectDef(true, p.getType(), genericType, parameterNames[i], null);
                 continue;
             }
 
@@ -188,12 +186,12 @@ public class MethodWrapper {
             if (annOptional.isPresent() || CollectionUtils.isNotEmpty(injectDefList)
                     || p.getType().isPrimitive() || isSpringInitialization || ParamLifecycle.class.isAssignableFrom(p.getType())) {
                 boolean needInject = !annOptional.isPresent() || GlobalConstant.STORY_DATA_SCOPE.contains(annOptional.get().getScopeDataEnum());
-                ParamInjectDef injectDef = new ParamInjectDef(needInject, p.getType(), parameterNames[i], annOptional.orElse(null));
+                ParamInjectDef injectDef = new ParamInjectDef(needInject, p.getType(), genericType, parameterNames[i], annOptional.orElse(null));
                 injectDef.setFieldInjectDefList(injectDefList);
                 injectDef.setSpringInitialization(isSpringInitialization);
                 injectDefs[i] = injectDef;
             } else {
-                ParamInjectDef injectDef = new ParamInjectDef(false, p.getType(), parameterNames[i], null);
+                ParamInjectDef injectDef = new ParamInjectDef(false, p.getType(), genericType, parameterNames[i], null);
                 injectDefs[i] = injectDef;
             }
         }

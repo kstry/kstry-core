@@ -1,19 +1,128 @@
 {
-	"login": {
-		"success": true,
-		"code": 0,
-		"msg": "success",
-		"data": {
-			"token": "EAE703BE58A511EE8C990242AC120002"
-		}
-	},
-	"queryStudent": {
-		"success": true,
-		"code": 0,
-		"msg": "success",
-		"data": {
-			"id": 16,
-			"name": "学生16"
-		}
-	}
+  "login": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": {
+      "token": "EAE703BE58A511EE8C990242AC120002"
+    }
+  },
+  "queryStudent": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": {
+      "id": 16,
+      "name": "学生16"
+    }
+  },
+  "getStudentBasic": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": {
+      "id": 66,
+      "name": "张一",
+      "address": "XX省XX市XX区"
+    }
+  },
+  "getStudentPrivacy": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": {
+      "id": 66,
+      "idCard": "133133199401012345",
+      "birthday": "1994-01-01"
+    }
+  },
+  "getStudyExperienceList": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": [
+      {
+        "studentId": 66,
+        "classId": 1,
+        "studyYear": "2013-1-2"
+      },
+      {
+        "studentId": 66,
+        "classId": 2,
+        "studyYear": "2014-1-2"
+      },
+      {
+        "studentId": 66,
+        "classId": 3,
+        "studyYear": "2015-1-2"
+      }
+    ]
+  },
+  "getStudentScoreList": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": [
+      {
+        "score": 99,
+        "studentId": 66,
+        "studyYear": "2013-1-2",
+        "course": "语文",
+        "classId": 1
+      },
+      {
+        "score": 88,
+        "studentId": 66,
+        "studyYear": "2013-1-2",
+        "course": "数学",
+        "classId": 1
+      },
+      {
+        "score": 99,
+        "studentId": 66,
+        "studyYear": "2014-1-2",
+        "course": "语文",
+        "classId": 2
+      },
+      {
+        "score": 88,
+        "studentId": 66,
+        "studyYear": "2014-1-2",
+        "course": "数学",
+        "classId": 2
+      },
+      {
+        "score": 99,
+        "studentId": 66,
+        "studyYear": "2015-1-2",
+        "course": "语文",
+        "classId": 3
+      },
+      {
+        "score": 88,
+        "studentId": 66,
+        "studyYear": "2015-1-2",
+        "course": "数学",
+        "classId": 3
+      }
+    ]
+  },
+  "askWeek": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": 5
+  },
+  "askRain": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": false
+  },
+  "askHungry": {
+    "success": true,
+    "code": 0,
+    "msg": "success",
+    "data": false
+  }
 }

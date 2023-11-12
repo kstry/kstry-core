@@ -74,4 +74,17 @@ public class ThreadSwitchHookProcessor {
             }
         });
     }
+
+    public void clear(Map<ThreadSwitchHook<Object>, Object> dataMap, ScopeDataQuery scopeDataQuery) {
+        if (CollectionUtils.isEmpty(threadSwitchHookList) || MapUtils.isEmpty(dataMap)) {
+            return;
+        }
+        threadSwitchHookList.forEach(hook -> {
+            try {
+                hook.clear(dataMap.get(hook), scopeDataQuery);
+            } catch (Throwable e) {
+                LOGGER.warn("[{}] {}", ExceptionEnum.THREAD_SWITCH_HOOK_ERROR.getExceptionCode(), ExceptionEnum.THREAD_SWITCH_HOOK_ERROR.getDesc(), e);
+            }
+        });
+    }
 }

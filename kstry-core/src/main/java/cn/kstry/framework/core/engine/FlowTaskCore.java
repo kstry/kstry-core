@@ -36,6 +36,7 @@ import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
 import cn.kstry.framework.core.engine.thread.FragmentTask;
 import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.engine.thread.MonoFlowTask;
+import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.monitor.DemotionInfo;
@@ -158,7 +159,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         boolean strictMode = serviceTask.strictMode() && invokeProperties.isStrictMode();
         Integer timeout = Optional.ofNullable(serviceTask.getTimeout()).filter(t -> t >= 0).orElse(invokeProperties.getTimeout());
         FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
-                () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()), strictMode, timeout, flowRegister, getTaskName()) {
+                () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()),
+                () -> engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()), strictMode, timeout, flowRegister, getTaskName()) {
 
             @Override
             protected void doNextHook(Object value) {
@@ -170,7 +172,12 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, throwable);
                 Supplier<Optional<TaskServiceDef>> needDemotionSupplier = getNeedDemotionSupplier(role, invokeProperties);
                 Optional<TaskServiceDef> demotionServiceDefOptional = needDemotionSupplier.get();
-                KstryException kstryException = ExceptionUtil.buildException(throwable, ExceptionEnum.SERVICE_INVOKE_ERROR, null);
+                BusinessException kstryException;
+                if (throwable instanceof BusinessException) {
+                    kstryException = GlobalUtil.transferNotEmpty(throwable, BusinessException.class);
+                } else {
+                    kstryException = new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), throwable.getMessage(), throwable);
+                }
                 if (!flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId()) && demotionServiceDefOptional.isPresent()) {
                     kstryException.log(e -> LOGGER.warn("[{}] Target method execution failed. identity: {}, taskName: {}, exception: {}",
                             e.getErrorCode(), serviceTask.identity(), getTaskName(), throwable.getMessage(), e)
@@ -186,23 +193,35 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                             GlobalUtil.transferNotEmpty(o, Mono.class).subscribe(new BaseSubscriber<Object>() {
                                 @Override
                                 protected void hookOnNext(@Nonnull Object value) {
-                                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    doNextHook(value);
+                                    try {
+                                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                                        doNextHook(value);
+                                    } finally {
+                                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                                    }
                                     dispose();
                                 }
 
                                 @Override
                                 protected void hookOnError(@Nonnull Throwable e) {
-                                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
-                                            ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
+                                    try {
+                                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                                        LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
+                                                ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
+                                    } finally {
+                                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                                    }
                                     dispose();
                                 }
 
                                 @Override
                                 protected void hookOnComplete() {
-                                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    doNextHook(null);
+                                    try {
+                                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                                        doNextHook(null);
+                                    } finally {
+                                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                                    }
                                     dispose();
                                 }
                             });
@@ -259,6 +278,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         int timeout = Optional.of(subProcess).map(SubProcess::getTimeout).orElse(storyBus.remainTimeMillis());
         FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
                 () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()),
+                () -> engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()),
                 subProcess.strictMode(), timeout, cloneSubFlowRegister, taskName) {
 
             @Override
@@ -458,8 +478,12 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 int index = i;
                 Object next = iteratorList.get(index);
                 CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
-                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                    return super.retryInvokeMethod(index == 0, elementIterable, new IterDataItem<>(false, next, Lists.newArrayList(), index, iteratorList.size()), taskServiceDef, serviceTask, storyBus, role);
+                    try {
+                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                        return super.retryInvokeMethod(index == 0, elementIterable, new IterDataItem<>(false, next, Lists.newArrayList(), index, iteratorList.size()), taskServiceDef, serviceTask, storyBus, role);
+                    } finally {
+                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                    }
                 }, executor);
                 futureList.add(f);
             }
@@ -469,8 +493,12 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 int index = i;
                 List<Object> next = partition.get(index);
                 CompletableFuture<Object> f = CompletableFuture.supplyAsync(() -> {
-                    engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                    return super.retryInvokeMethod(index == 0, elementIterable, new IterDataItem<>(true, null, next, index, partition.size()), taskServiceDef, serviceTask, storyBus, role);
+                    try {
+                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                        return super.retryInvokeMethod(index == 0, elementIterable, new IterDataItem<>(true, null, next, index, partition.size()), taskServiceDef, serviceTask, storyBus, role);
+                    } finally {
+                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                    }
                 }, executor);
                 futureList.add(f);
                 batchParamSizeMap.put(f, next.size());

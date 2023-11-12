@@ -24,11 +24,6 @@ import org.springframework.context.annotation.Bean;
 public class TypeConverterRegister {
 
     @Bean
-    public TypeConverter<?, ?> getBasicTypeConverter() {
-        return new BasicTypeConverter();
-    }
-
-    @Bean
     public TypeConverter<?, ?> getDate2StringTypeConverter() {
         return new Date2StringTypeConverter();
     }
@@ -54,16 +49,6 @@ public class TypeConverterRegister {
     }
 
     @Bean
-    public TypeConverter<?, ?> getObject2LongListTypeConverter() {
-        return new Object2LongListTypeConverter();
-    }
-
-    @Bean
-    public TypeConverter<?, ?> getObject2LongSetTypeConverter() {
-        return new Object2LongSetTypeConverter();
-    }
-
-    @Bean
     public TypeConverter<?, ?> getOneItem2SetTypeConverter() {
         return new OneItem2SetTypeConverter();
     }
@@ -76,5 +61,15 @@ public class TypeConverterRegister {
     @Bean
     public TypeConverter<?, ?> getFirstItemFromListTypeConverter() {
         return new FirstItemFromListTypeConverter();
+    }
+
+    @Bean
+    public CollectionGenericTypeConverter getCollectionGenericTypeConverter() {
+        return new CollectionGenericTypeConverter();
+    }
+
+    @Bean
+    public TypeConverter<?, ?> getBasicTypeConverter(CollectionGenericTypeConverter collectionGenericTypeConverter) {
+        return new BasicTypeConverter(collectionGenericTypeConverter);
     }
 }

@@ -10,6 +10,7 @@ import cn.kstry.framework.test.demo.config.ProcessConfig;
 import cn.kstry.framework.test.demo.facade.QueryScoreRequest;
 import cn.kstry.framework.test.demo.facade.QueryScoreResponse;
 import cn.kstry.framework.test.demo.facade.QueryScoreVarScope;
+import cn.kstry.framework.test.demo.service.StudentScoreService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.google.common.base.Charsets;
@@ -46,6 +47,7 @@ public class FlowDemoCaseTest {
         request.setStudentId(66L);
         request.setNeedScore(true);
 
+        StudentScoreService.kstryThreadLocal.set(1);
         QueryScoreVarScope varScopeData = new QueryScoreVarScope();
         StoryRequest<QueryScoreResponse> fireRequest = ReqBuilder.returnType(QueryScoreResponse.class)
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).varScopeData(varScopeData).startId("student-score-query-process").build();
@@ -77,7 +79,7 @@ public class FlowDemoCaseTest {
         QueryScoreRequest request = new QueryScoreRequest();
         request.setStudentId(66L);
         request.setNeedScore(true);
-
+        StudentScoreService.kstryThreadLocal.set(1);
         QueryScoreVarScope varScopeData = new QueryScoreVarScope();
         StoryRequest<QueryScoreResponse> fireRequest = ReqBuilder.returnType(QueryScoreResponse.class)
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).varScopeData(varScopeData).startId("student-score-query-json-process").build();
@@ -109,7 +111,7 @@ public class FlowDemoCaseTest {
         QueryScoreRequest request = new QueryScoreRequest();
         request.setStudentId(66L);
         request.setNeedScore(true);
-
+        StudentScoreService.kstryThreadLocal.set(1);
         QueryScoreVarScope varScopeData = new QueryScoreVarScope();
         StoryRequest<QueryScoreResponse> fireRequest = ReqBuilder.returnType(QueryScoreResponse.class)
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).varScopeData(varScopeData).startProcess(ProcessConfig::studentScoreQueryProcess).build();

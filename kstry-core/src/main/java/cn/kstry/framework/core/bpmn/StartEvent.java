@@ -81,4 +81,9 @@ public interface StartEvent extends Event {
      * @param processName 流程名称
      */
     void setProcessName(String processName);
+
+    /**
+     * 获取中途执行流程的开始Id
+     */
+    Optional<FlowElement> getMidwayStartElement(String midwayStartId);
 }

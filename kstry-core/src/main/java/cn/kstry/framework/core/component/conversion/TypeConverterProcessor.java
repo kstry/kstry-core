@@ -34,10 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.OrderComparator;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -77,8 +74,12 @@ public class TypeConverterProcessor {
         return convert(convertName, source, null);
     }
 
-    @SuppressWarnings("unchecked")
     public <S, T> Pair<String, T> convert(String convertName, S source, Class<T> targetType) {
+        return convert(convertName, source, targetType, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <S, T> Pair<String, T> convert(String convertName, S source, Class<T> targetType, Class<?> collGeneric) {
         if (source == null) {
             return ImmutablePair.nullPair();
         }
@@ -87,10 +88,10 @@ public class TypeConverterProcessor {
             if (targetType == null || Objects.equals(GlobalConstant.VOID, targetType.getName())) {
                 return ImmutablePair.of(null, (T) source);
             }
-            if (ElementParserUtil.isAssignable(targetType, source.getClass())) {
+            if (ElementParserUtil.isAssignable(targetType, source.getClass()) && notCollectionTransfer(source, targetType, collGeneric)) {
                 return ImmutablePair.of(null, (T) source);
             }
-            convertName = getMustMatchedConverter(source, targetType);
+            convertName = getMustMatchedConverter(source, targetType, collGeneric);
             if (StringUtils.isBlank(convertName)) {
                 return ImmutablePair.of(null, (T) source);
             }
@@ -114,15 +115,22 @@ public class TypeConverterProcessor {
             return ImmutablePair.of(null, (T) source);
         }
         try {
-            return ImmutablePair.of(convertName, (T) Optional.of(source).map(s -> typeConverter.convert(s, targetType)).orElse(null));
+            return ImmutablePair.of(convertName, (T) Optional.of(source).map(s -> typeConverter.convert(s, targetType, collGeneric)).orElse(null));
         } catch (Exception e) {
             throw ExceptionUtil.buildException(e, ExceptionEnum.TYPE_TRANSFER_ERROR,
                     GlobalUtil.format("TypeConverterProcessor converter exception. converter name: {}, source: {}, targetType: {}", typeConverter.getConvertName(), source, targetType));
         }
     }
 
-    private <S, T> String getMustMatchedConverter(S source, Class<T> targetType) {
-        List<String> converterNames = sortedConverterList.stream().filter(c -> c.match(source, targetType)).map(TypeConverter::getConvertName).collect(Collectors.toList());
+    private <S, T> boolean notCollectionTransfer(S source, Class<T> targetType, Class<?> collGeneric) {
+        if (collGeneric == null) {
+            return true;
+        }
+        return !(source instanceof Set || source instanceof List) || !(List.class.isAssignableFrom(targetType) || Set.class.isAssignableFrom(targetType));
+    }
+
+    private <S, T> String getMustMatchedConverter(S source, Class<T> targetType, Class<?> collGeneric) {
+        List<String> converterNames = sortedConverterList.stream().filter(c -> c.match(source, targetType, collGeneric)).map(TypeConverter::getConvertName).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(converterNames)) {
             return StringUtils.EMPTY;
         }

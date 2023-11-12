@@ -38,6 +38,7 @@ import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.OrderComparator;
@@ -104,13 +105,16 @@ public class FlowRegister {
      */
     private String storyId;
 
+    /**
+     * 中途执行流程的开始元素
+     */
+    private FlowElement midwayStartElement;
+
     private FlowRegister() {
 
     }
 
-    public FlowRegister(FlowElement startEvent, StoryRequest<?> storyRequest, SerializeTracking serializeTracking) {
-        AssertUtil.isTrue(startEvent instanceof StartEvent);
-
+    public FlowRegister(StartEvent startEvent, StoryRequest<?> storyRequest, SerializeTracking serializeTracking) {
         // init start event
         startElement = startEvent;
         startEventId = startEvent.getId();
@@ -124,7 +128,17 @@ public class FlowRegister {
 
         // init stack
         flowElementStack = monitorTracking.newTrackingStack();
-        flowElementStack.push(null, startEvent);
+
+        FlowElement start = startEvent;
+        String midwayStartId = storyRequest.getMidwayStartId();
+        if (StringUtils.isNotBlank(midwayStartId)) {
+            Optional<FlowElement> midwayStartElementOptional = startEvent.getMidwayStartElement(midwayStartId);
+            AssertUtil.isTrue(midwayStartElementOptional.isPresent(), ExceptionEnum.PARAMS_ERROR,
+                    "There is no node element in the process that matches midwayStartId. startEventId: {}, midwayStartId: {}", startEventId, midwayStartId);
+            midwayStartElement = midwayStartElementOptional.orElse(null);
+            start = midwayStartElement;
+        }
+        flowElementStack.push(null, start);
     }
 
     public FlowRegister asyncFlowRegister(FlowElement startFlowElement) {
@@ -216,7 +230,7 @@ public class FlowRegister {
         contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
 
         // 是否跳过当前节点继续执行下一个
-        if (peekStrategy.skip(currentFlowElement, contextStoryBus)) {
+        if (midwayStartElement != currentFlowElement && peekStrategy.skip(currentFlowElement, contextStoryBus)) {
             prevElement = currentFlowElement;
             return nextElement(new ContextStoryBus(contextStoryBus.getStoryBus()));
         }

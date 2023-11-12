@@ -18,10 +18,16 @@
 package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.EndEvent;
+import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
+import cn.kstry.framework.core.util.AssertUtil;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -42,6 +48,8 @@ public class StartEventImpl extends EventImpl implements StartEvent {
     private String processId;
 
     private String processName;
+
+    private Map<String, FlowElement> midwayStartIdMapping;
 
     @Override
     public BpmnTypeEnum getElementType() {
@@ -86,5 +94,25 @@ public class StartEventImpl extends EventImpl implements StartEvent {
     @Override
     public void setProcessName(String processName) {
         this.processName = processName;
+    }
+
+    @Override
+    public Optional<FlowElement> getMidwayStartElement(String midwayStartId) {
+        if (StringUtils.isBlank(midwayStartId)) {
+            return Optional.empty();
+        }
+        AssertUtil.notNull(midwayStartIdMapping);
+        return Optional.ofNullable(midwayStartIdMapping.get(midwayStartId));
+    }
+
+    public void setMidwayStartIdMapping(Map<String, FlowElement> midwayStartIdMapping) {
+        if (this.midwayStartIdMapping != null) {
+            return;
+        }
+        if (MapUtils.isEmpty(midwayStartIdMapping)) {
+            this.midwayStartIdMapping = ImmutableMap.of();
+            return;
+        }
+        this.midwayStartIdMapping = ImmutableMap.copyOf(midwayStartIdMapping);
     }
 }

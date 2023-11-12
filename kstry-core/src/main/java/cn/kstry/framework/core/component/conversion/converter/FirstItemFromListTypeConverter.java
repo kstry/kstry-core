@@ -32,7 +32,7 @@ import java.util.List;
 public class FirstItemFromListTypeConverter implements TypeConverter<List, Object> {
 
     @Override
-    public boolean match(Object source, Class<?> needType) {
+    public boolean match(Object source, Class<?> needType, Class<?> collGeneric) {
         return false;
     }
 

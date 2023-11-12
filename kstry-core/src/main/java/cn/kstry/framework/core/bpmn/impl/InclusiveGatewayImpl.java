@@ -20,6 +20,7 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.InclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
@@ -42,6 +43,11 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
      * 完成几个入度继续向下推进任务，之后到达 InclusiveGateway 的任务不再推进流程的执行
      */
     private Integer completedCount;
+
+    /**
+     * 中途执行流程的开始Id
+     */
+    private String midwayStartId;
 
     public InclusiveGatewayImpl() {
         this.asyncFlowElement = new BasicAsyncFlowElement();
@@ -68,12 +74,25 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
         }
     }
 
+    @Override
     public Integer getCompletedCount() {
         return completedCount != null && completedCount > 0 ? completedCount : null;
     }
 
     public void setCompletedCount(Integer completedCount) {
         this.completedCount = completedCount;
+    }
+
+    public void setMidwayStartId(String midwayStartId) {
+        if (StringUtils.isBlank(midwayStartId)) {
+            return;
+        }
+        this.midwayStartId = midwayStartId;
+    }
+
+    @Override
+    public String getMidwayStartId() {
+        return midwayStartId;
     }
 
     @Override

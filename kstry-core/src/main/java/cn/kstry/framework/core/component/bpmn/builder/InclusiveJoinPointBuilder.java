@@ -46,6 +46,11 @@ public class InclusiveJoinPointBuilder {
         return this;
     }
 
+    public InclusiveJoinPointBuilder midwayStartId(String midwayStartId) {
+        inclusiveGateway.setMidwayStartId(midwayStartId);
+        return this;
+    }
+
     public InclusiveJoinPointBuilder serviceTask(ServiceTask serviceTask) {
         inclusiveGateway.setServiceTask(serviceTask);
         return this;

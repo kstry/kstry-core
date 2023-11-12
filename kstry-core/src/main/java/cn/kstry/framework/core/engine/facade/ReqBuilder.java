@@ -142,6 +142,12 @@ public class ReqBuilder<T> {
         return this;
     }
 
+    public ReqBuilder<T> midwayStartId(String midwayStartId) {
+        AssertUtil.notBlank(midwayStartId);
+        this.storyRequest.setMidwayStartId(midwayStartId);
+        return this;
+    }
+
     private void result(Class<?> returnType) {
         this.storyRequest.setReturnType(returnType);
     }

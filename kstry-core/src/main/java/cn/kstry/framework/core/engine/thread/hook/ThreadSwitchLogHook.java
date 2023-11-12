@@ -60,6 +60,18 @@ public class ThreadSwitchLogHook implements ThreadSwitchHook<TraceLog> {
     }
 
     @Override
+    public void clear(TraceLog traceLog, ScopeDataQuery scopeDataQuery) {
+        String mdcKeyName = GlobalProperties.KSTRY_STORY_REQUEST_ID_NAME;
+        if (traceLog == null || StringUtils.isBlank(traceLog.getLogId())) {
+            return;
+        }
+        if (!Objects.equals(traceLog.getLogId(), scopeDataQuery.getRequestId())) {
+            return;
+        }
+        MDC.remove(mdcKeyName);
+    }
+
+    @Override
     public int getOrder() {
         return HIGHEST_PRECEDENCE;
     }

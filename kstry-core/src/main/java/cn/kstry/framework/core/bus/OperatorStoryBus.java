@@ -27,6 +27,7 @@ import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.PropertyUtil;
+import cn.kstry.framework.core.util.ProxyUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -407,7 +408,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                         Class<?> targetClass = t.getClass();
                         String fieldName = fieldNameSplit[fieldNameSplit.length - 1];
                         Field field = (t instanceof Map) ? null : FieldUtils.getField(targetClass, fieldName, true);
-                        Pair<String, ?> convert = typeConverterProcessor.convert(target, Optional.ofNullable(field).map(Field::getType).orElse(null));
+                        Pair<String, ?> convert = typeConverterProcessor.convert(null, target, Optional.ofNullable(field).map(Field::getType).orElse(null), ProxyUtil.getCollGenericType(field).orElse(null));
                         boolean setRes = PropertyUtil.setProperty(t, fieldName, convert.getValue());
                         InvokeMethodThreadLocal.getServiceTask().filter(s -> setRes).ifPresent(element ->
                                 monitorTracking.trackingNodeNotice(element, () ->

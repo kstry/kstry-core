@@ -2,6 +2,7 @@ package cn.kstry.flux.demo.service.http;
 
 import cn.kstry.flux.demo.facade.http.ResultProperty;
 import cn.kstry.framework.core.annotation.TaskComponent;
+import cn.kstry.framework.core.annotation.TaskInstruct;
 import cn.kstry.framework.core.annotation.TaskParam;
 import cn.kstry.framework.core.annotation.TaskService;
 import cn.kstry.framework.core.bus.ScopeDataOperator;
@@ -137,6 +138,7 @@ public class HttpActionService {
         dataOperator.setData(resultProperty.getTarget(), jsonObject);
     }
 
+    @TaskInstruct(name = "async-http-post")
     @TaskService(name = "async-http-post")
     public Mono<Void> asyncHttpPostAction(ScopeDataOperator dataOperator,
                                           @TaskParam("url") String url,

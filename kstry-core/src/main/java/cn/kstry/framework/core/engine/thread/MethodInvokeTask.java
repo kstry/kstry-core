@@ -121,6 +121,8 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
             }
             adminFuture.errorNotice(e, flowRegister.getStartEventId());
             throw e;
+        } finally {
+            engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
         }
     }
 

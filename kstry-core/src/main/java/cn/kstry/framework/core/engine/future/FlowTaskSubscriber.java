@@ -65,10 +65,13 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
 
     private final Runnable threadSwitchHook;
 
+    private final Runnable threadSwitchClear;
+
     private final AtomicBoolean alreadyInvoke;
 
-    public FlowTaskSubscriber(Runnable threadSwitchHook, boolean strictMode, Integer timeout, FlowRegister flowRegister, String taskName) {
+    public FlowTaskSubscriber(Runnable threadSwitchHook, Runnable threadSwitchClear, boolean strictMode, Integer timeout, FlowRegister flowRegister, String taskName) {
         this.threadSwitchHook = threadSwitchHook;
+        this.threadSwitchClear = threadSwitchClear;
         this.flowRegister = flowRegister;
         this.taskName = taskName;
         this.timeout = timeout;
@@ -95,6 +98,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
+            threadSwitchClear.run();
             dispose();
         }
     }
@@ -113,6 +117,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
         } finally {
+            threadSwitchClear.run();
             dispose();
         }
     }
@@ -125,6 +130,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
         } catch (Throwable ex) {
             LOGGER.warn(ex.getMessage(), ex);
         } finally {
+            threadSwitchClear.run();
             dispose();
         }
     }
@@ -137,6 +143,8 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
             adminFuture.errorNotice(ex, flowRegister.getStartEventId());
+        } finally {
+            threadSwitchClear.run();
         }
     }
 
@@ -151,6 +159,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             LOGGER.warn(ex.getMessage(), ex);
             return AsyncTaskState.TIMEOUT;
         } finally {
+            threadSwitchClear.run();
             dispose();
         }
     }

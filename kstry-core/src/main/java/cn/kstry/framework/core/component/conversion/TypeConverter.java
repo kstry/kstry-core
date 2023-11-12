@@ -50,8 +50,10 @@ public interface TypeConverter<S, T> extends Ordered {
     /**
      * 默认的类型转换器匹配规则
      * 使用类型转换器时，如果指定了转换器名字，直接使用指定的转换器不会进行转换器匹配操作，只有未指定转换器名字时才会使用match匹配合适的类型转换器
+     *
+     * @param collGeneric needType为List、Set时，collGeneric是集合上的泛型
      */
-    default boolean match(Object source, Class<?> needType) {
+    default boolean match(Object source, Class<?> needType, @Nullable Class<?> collGeneric) {
         if (source == null || needType == null) {
             return false;
         }
@@ -61,9 +63,11 @@ public interface TypeConverter<S, T> extends Ordered {
     /**
      * 对外暴露使用的转换方法。
      * 默认不支持同类型转换（同类型转换会返回原值），需要同类型转换时可以覆写该方法实现
+     *
+     * @param collGeneric needType为List、Set时，collGeneric是集合上的泛型
      */
     @SuppressWarnings("unchecked")
-    default T convert(S source, Class<?> needType) {
+    default T convert(S source, Class<?> needType, Class<?> collGeneric) {
         AssertUtil.notNull(source);
         if (ElementParserUtil.isAssignable(getTargetType(), source.getClass()) && (needType == null || ElementParserUtil.isAssignable(needType, source.getClass()))) {
             return (T) source;

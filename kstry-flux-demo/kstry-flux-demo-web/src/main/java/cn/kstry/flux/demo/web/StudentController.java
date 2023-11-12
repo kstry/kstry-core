@@ -28,12 +28,17 @@ import cn.kstry.framework.core.engine.facade.ReqBuilder;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.facade.TaskResponse;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
+import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -96,6 +101,33 @@ public class StudentController {
         StoryRequest<QueryScoreResponse> fireRequest = ReqBuilder.returnType(QueryScoreResponse.class).recallStoryHook(WebUtil::recallStoryHook)
                 .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).varScopeData(varScopeData).startProcess(DefProcess::studentScoreQueryProcess).build();
         Mono<QueryScoreResponse> fireAsync = storyEngine.fireAsync(fireRequest);
+        return WebUtil.dataDecorate(request, fireAsync);
+    }
+
+    @PostMapping("/scoreQuery4")
+    public Mono<R<QueryScoreResponse>> scoreQuery4() {
+        QueryScoreRequest request = new QueryScoreRequest();
+        request.setStudentId(66L);
+        request.setNeedScore(true);
+        StoryRequest<QueryScoreResponse> fireRequest = ReqBuilder.returnType(QueryScoreResponse.class).recallStoryHook(WebUtil::recallStoryHook)
+                .trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).startId("http-student-score-query-process").build();
+        Mono<QueryScoreResponse> fireAsync = storyEngine.fireAsync(fireRequest);
+        return WebUtil.dataDecorate(request, fireAsync);
+    }
+
+    @PostMapping("/scoreQuery5")
+    public Mono<R<Map<String, Object>>> scoreQuery5(@RequestBody List<String> keys) {
+        QueryScoreRequest request = new QueryScoreRequest();
+        request.setStudentId(77L);
+        request.setNeedScore(true);
+        StoryRequest<Map<String, Object>> fireRequest = ReqBuilder.<Map<String, Object>>resultType(Map.class)
+                .recallStoryHook(WebUtil::recallStoryHook).trackingType(TrackingTypeEnum.SERVICE_DETAIL).request(request).startId("http-student-score-query-process")
+                .resultBuilder((res, query) -> {
+                    Map<String, Object> map = Maps.newHashMap();
+                    keys.forEach(key -> map.put(key, query.getData(key)));
+                    return map;
+                }).build();
+        Mono<Map<String, Object>> fireAsync = storyEngine.fireAsync(fireRequest);
         return WebUtil.dataDecorate(request, fireAsync);
     }
 }

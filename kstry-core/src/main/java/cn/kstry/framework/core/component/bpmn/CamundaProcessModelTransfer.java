@@ -195,13 +195,14 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
 
                         ServiceTaskImpl serviceTask = getServiceTask(node, config, true);
                         InclusiveJoinPoint beforeMockLink = processLink.inclusive(targetNode.getId() + "-Inclusive-" + GlobalUtil.uuid()).build();
-                        ProcessLink nextMockLink = instructWrapper(true, targetNode, serviceTask, null, beforeMockLink);
+                        ProcessLink nextMockLink = instructWrapper(config, true, targetNode, serviceTask, null, beforeMockLink);
 
                         InclusiveJoinPointBuilder inclusiveJoinPointBuilder = processLink.inclusive(targetNode.getId());
                         ElementPropertyUtil.getNodeProperty(targetNode,
                                 BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC).map(BooleanUtils::toBoolean).filter(b -> b).ifPresent(b -> inclusiveJoinPointBuilder.openAsync());
                         ElementPropertyUtil.getNodeProperty(targetNode,
                                 BpmnElementProperties.INCLUSIVE_GATEWAY_COMPLETED_COUNT).map(NumberUtils::toInt).ifPresent(inclusiveJoinPointBuilder::completedCount);
+                        ElementPropertyUtil.getNodeProperty(targetNode, BpmnElementProperties.INCLUSIVE_GATEWAY_MIDWAY_START_ID).ifPresent(inclusiveJoinPointBuilder::midwayStartId);
                         InclusiveJoinPoint actualInclusive = inclusiveJoinPointBuilder.build();
                         if (beforeMockLink == nextMockLink) {
                             return actualInclusive;
@@ -216,7 +217,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.ExclusiveGateway) {
                     SequenceFlow sf = sequenceFlowMapping(config, seq);
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, true);
-                    ProcessLink nextProcessLink = instructWrapper(true, targetNode, serviceTask, sf, beforeProcessLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, serviceTask, sf, beforeProcessLink);
                     if (nextProcessLink != beforeProcessLink) {
                         sf = buildSequenceFlow(targetNode.getId());
                     }
@@ -225,7 +226,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                     basicInStack.push(targetNode);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.Task && CAMUNDA_TASK_TYPE_LIST.contains(targetNode.getElementType().getTypeName())) {
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, false);
-                    ProcessLink nextProcessLink = instructWrapper(false, targetNode, serviceTask, sequenceFlowMapping(config, seq), beforeProcessLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, sequenceFlowMapping(config, seq), beforeProcessLink);
                     nextBpmnLinkMap.put(targetNode, nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.SubProcess || targetNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
@@ -283,10 +284,9 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
         return serviceTaskImpl;
     }
 
-    private ProcessLink instructWrapper(boolean allowEmpty, FlowNode targetNode, ServiceTaskImpl serviceTask, SequenceFlow firstSequenceFlow, ProcessLink nextProcessLink) {
+    private ProcessLink instructWrapper(ConfigResource config, boolean allowEmpty, FlowNode targetNode, ServiceTaskImpl serviceTask, SequenceFlow firstSequenceFlow, ProcessLink nextProcessLink) {
         ProcessLink before = nextProcessLink;
-        String nodeProperty = ElementPropertyUtil.getNodeProperty(targetNode, BpmnElementProperties.SERVICE_TASK_TASK_PROPERTY).orElse(null);
-
+        ServiceTaskImpl sTask = getServiceTask(targetNode, config, true);
         List<InstructContent> beforeInstructContentList = getInstructContentList(targetNode, true);
         if (CollectionUtils.isNotEmpty(beforeInstructContentList)) {
             for (InstructContent instructContent : beforeInstructContentList) {
@@ -298,8 +298,8 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                     sf = buildSequenceFlow(targetNode.getId());
                 }
                 String instruct = instructContent.getInstruct().substring(1);
-                nextProcessLink = nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent())
-                        .name(instruct + "@" + serviceTask.getName()).property(nodeProperty).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent()), sTask)
+                        .name(instruct + "@" + serviceTask.getName()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
             }
         }
 
@@ -324,8 +324,8 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                 } else {
                     sf = buildSequenceFlow(targetNode.getId());
                 }
-                nextProcessLink = nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent())
-                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).property(nodeProperty).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent()), sTask)
+                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
             }
         }
         AssertUtil.isTrue(allowEmpty || before != nextProcessLink,

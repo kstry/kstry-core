@@ -116,7 +116,8 @@ public class BusTestService {
     }
 
     @TaskService
-    public void testConverterMapping(Map<String, Object> params, String reqDescList) {
+    @SuppressWarnings("all")
+    public void testConverterMapping(Map<String, Object> params, String reqDescList, List<BusTestRequest> requests) {
         Assert.assertNotNull(params.get("busTest"));
         Assert.assertTrue(params.get("busTest") instanceof BusTestRequest);
         Assert.assertNotNull(((BusTestRequest) params.get("busTest")).getLocalNow());
@@ -125,6 +126,7 @@ public class BusTestService {
         Assert.assertNotNull(((Map<?, ?>) ((List<?>) params.get("requests")).get(1)).get("now"));
         Assert.assertEquals(54, ((List<?>) params.get("requests")).stream().mapToInt(m -> (Integer) ((Map<?, ?>) m).get("id")).sum());
         Assert.assertNotNull(reqDescList);
+        Assert.assertTrue(requests != null && requests.get(0) != null && (requests.get(0) instanceof BusTestRequest));
         Assert.assertEquals(2, ((List<?>) params.get("reqDescList2")).size());
         Assert.assertEquals(4, ((List<?>) ((List<?>) params.get("reqDescList2")).get(0)).size());
         Assert.assertEquals(2, ((List<?>) ((List<?>) params.get("reqDescList2")).get(1)).size());

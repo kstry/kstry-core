@@ -25,18 +25,26 @@ import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.exception.ResourceException;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 
@@ -124,5 +132,44 @@ public class ProxyUtil {
         } catch (Throwable e) {
             throw new ResourceException(ExceptionEnum.LAMBDA_PROCESS_PARSE_FAILURE, e);
         }
+    }
+
+    public static Optional<Class<?>> getCollGenericType(Object obj) {
+        if (obj == null) {
+            return Optional.empty();
+        }
+        ResolvableType resolvableType = null;
+        if (obj instanceof Parameter) {
+            Parameter parameter = (Parameter) obj;
+            if (notCollGeneric(parameter.getType())) {
+                return Optional.empty();
+            }
+            Type type = ((Parameter) obj).getParameterizedType();
+            if (type == null) {
+                return Optional.empty();
+            }
+            resolvableType = ResolvableType.forType(type);
+        } else if (obj instanceof Field) {
+            Field field = (Field) obj;
+            if (notCollGeneric(field.getType())) {
+                return Optional.empty();
+            }
+            resolvableType = ResolvableType.forField(field);
+        }
+        if (resolvableType == null) {
+            return Optional.empty();
+        }
+        Class<?>[] generics = resolvableType.resolveGenerics();
+        if (ArrayUtils.isEmpty(generics)) {
+            return Optional.empty();
+        }
+        return Optional.of(generics[0]);
+    }
+
+    private static boolean notCollGeneric(Class<?> clazz) {
+        if (clazz == null) {
+            return true;
+        }
+        return !Set.class.isAssignableFrom(clazz) && !List.class.isAssignableFrom(clazz);
     }
 }

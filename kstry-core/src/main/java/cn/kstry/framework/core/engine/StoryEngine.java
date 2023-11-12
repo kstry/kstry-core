@@ -176,7 +176,9 @@ public class StoryEngine {
         BasicStoryBus storyBus = getStoryBus(storyRequest, flowRegister, role);
         ThreadSwitchHookProcessor threadSwitchHookProcessor = storyEngineModule.getThreadSwitchHookProcessor();
         Map<ThreadSwitchHook<Object>, Object> hookData = threadSwitchHookProcessor.getPreviousData(scopeDataQuery);
-        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(() -> threadSwitchHookProcessor.usePreviousData(hookData, storyBus.getScopeDataOperator()),
+        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
+                () -> threadSwitchHookProcessor.usePreviousData(hookData, storyBus.getScopeDataOperator()),
+                () -> threadSwitchHookProcessor.clear(hookData, storyBus.getScopeDataOperator()),
                 true, storyRequest.getTimeout(), flowRegister, GlobalUtil.getTaskName(flowRegister.getStartElement(), flowRegister.getRequestId())) {
             @Override
             protected void doErrorHook(Throwable throwable) {

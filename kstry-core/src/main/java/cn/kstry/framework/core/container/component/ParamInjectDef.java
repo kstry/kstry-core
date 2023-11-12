@@ -22,6 +22,7 @@ import cn.kstry.framework.core.util.AssertUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -31,6 +32,8 @@ public class ParamInjectDef {
 
     private final boolean needInject;
     private final Class<?> paramType;
+
+    private final Class<?> collGenericType;
 
     private final String fieldName;
 
@@ -46,10 +49,11 @@ public class ParamInjectDef {
 
     private boolean injectSelf;
 
-    public ParamInjectDef(boolean needInject, Class<?> paramType, String fieldName, MethodWrapper.TaskFieldProperty taskFieldProperty) {
+    public ParamInjectDef(boolean needInject, Class<?> paramType, Class<?> collGenericType, String fieldName, MethodWrapper.TaskFieldProperty taskFieldProperty) {
         AssertUtil.notNull(paramType);
         this.needInject = needInject;
         this.paramType = paramType;
+        this.collGenericType = collGenericType;
         this.fieldName = fieldName;
         if (taskFieldProperty != null) {
             this.targetName = taskFieldProperty.getName();
@@ -65,6 +69,10 @@ public class ParamInjectDef {
 
     public Class<?> getParamType() {
         return paramType;
+    }
+
+    public Optional<Class<?>> getCollGenericType() {
+        return Optional.ofNullable(collGenericType);
     }
 
     public String getFieldName() {

@@ -74,6 +74,8 @@ public class FragmentTask extends FlowTaskCore<AsyncTaskState> implements Task<A
                 LOGGER.warn("[{}] Task execution fails and exits because an exception is thrown! AdminFuture is null! taskName: {}", errorCode, getTaskName(), e);
             }
             return AsyncTaskState.ERROR;
+        } finally {
+            engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
         }
     }
 }

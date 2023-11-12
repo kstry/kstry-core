@@ -31,4 +31,12 @@ public class HttpActionController {
         Mono<Student> fireAsync = storyEngine.fireAsync(fireRequest);
         return WebUtil.dataDecorate(null, fireAsync);
     }
+
+    @PostMapping("/askGotoSchool")
+    public Mono<R<Boolean>> askGotoSchool() {
+        StoryRequest<Boolean> fireRequest = ReqBuilder.returnType(Boolean.class).recallStoryHook(WebUtil::recallStoryHook)
+                .trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("intelligent-sop-flow-demo").build();
+        Mono<Boolean> fireAsync = storyEngine.fireAsync(fireRequest);
+        return WebUtil.dataDecorate(null, fireAsync);
+    }
 }

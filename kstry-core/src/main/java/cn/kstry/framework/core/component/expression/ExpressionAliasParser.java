@@ -79,11 +79,11 @@ public class ExpressionAliasParser {
         while (matcher.find()) {
             String group = matcher.group();
             int endIndex = matcher.end();
-            for (; endIndex < expFinal.length(); endIndex++) {
-                if (expFinal.charAt(endIndex) == ' ') {
+            for (; endIndex <= expFinal.length(); endIndex++) {
+                if (endIndex < expFinal.length() && expFinal.charAt(endIndex) == ' ') {
                     continue;
                 }
-                if (!Objects.equals(expFinal.charAt(endIndex), '(')) {
+                if (endIndex == expFinal.length() || !Objects.equals(expFinal.charAt(endIndex), '(')) {
                     expression = StringUtils.replaceOnce(expression, group, GlobalUtil.format("['{}']", group.substring(1)));
                 }
                 break;

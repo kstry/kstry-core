@@ -53,7 +53,7 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
     private boolean needOriginalId = false;
 
     public JsonSerializeIterator(boolean recursiveSubProcess, StartEvent startEvent, JsonProcess jsonProcess) {
-        super(Maps::newHashMap, recursiveSubProcess);
+        super(start -> Maps.newHashMap(), recursiveSubProcess);
         this.startEvent = startEvent;
         this.jsonProcesses = Lists.newArrayList(jsonProcess);
     }
@@ -126,6 +126,7 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
             fillPropertiesByServiceTask(properties, inclusiveGateway.getServiceTask().orElse(null));
             properties.put(BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC, inclusiveGateway.openAsync());
             properties.put(BpmnElementProperties.INCLUSIVE_GATEWAY_COMPLETED_COUNT, inclusiveGateway.getCompletedCount());
+            properties.put(BpmnElementProperties.INCLUSIVE_GATEWAY_MIDWAY_START_ID, inclusiveGateway.getMidwayStartId());
         } else if (node instanceof ExclusiveGateway) {
             ExclusiveGateway exclusiveGateway = GlobalUtil.transferNotEmpty(node, ExclusiveGateway.class);
             fillPropertiesByServiceTask(properties, exclusiveGateway.getServiceTask().orElse(null));

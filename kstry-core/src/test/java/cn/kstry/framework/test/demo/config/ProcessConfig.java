@@ -123,4 +123,26 @@ public class ProcessConfig {
                 .end();
         return processLink;
     }
+
+    @Bean
+    public ProcessLink testAsyncFlowProcess() {
+        StartProcessLink processLink = StartProcessLink.build(ProcessConfig::testAsyncFlowProcess);
+        InclusiveJoinPoint inclusive01 = processLink
+                .nextService(CalculateService::atomicInc).name("Task01").build()
+                .nextInclusive(processLink.inclusive().openAsync().build());
+        InclusiveJoinPoint inclusive04 = processLink
+                .nextService(CalculateService::atomicInc).name("Task04").build()
+                .nextInclusive(processLink.inclusive().openAsync().build());
+
+        processLink.inclusive().build().joinLinks(
+                        inclusive01.nextService(CalculateService::atomicInc).name("Task02").build(),
+                        processLink.inclusive().build().joinLinks(
+                                inclusive01.nextService(CalculateService::atomicInc).name("Task03").build(),
+                                inclusive04.nextService(CalculateService::atomicInc).name("Task05").build()
+                        ).nextService(CalculateService::atomicInc).name("Task07").build(),
+                        inclusive04.nextService(CalculateService::atomicInc).name("Task06").build()
+                ).nextService(CalculateService::atomicInc).name("Task08").build()
+                .end();
+        return processLink;
+    }
 }
