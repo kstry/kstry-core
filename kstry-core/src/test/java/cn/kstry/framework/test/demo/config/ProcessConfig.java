@@ -145,4 +145,14 @@ public class ProcessConfig {
                 .end();
         return processLink;
     }
+
+    @Bean
+    public ProcessLink testSimpleFlowDemoProcess() {
+        StartProcessLink processLink = StartProcessLink.build(ProcessConfig::testSimpleFlowDemoProcess);
+        processLink
+                .nextService(CalculateService::setNumber).build()
+                .nextService(CalculateService::plusCalculate).build()
+                .end();
+        return processLink;
+    }
 }

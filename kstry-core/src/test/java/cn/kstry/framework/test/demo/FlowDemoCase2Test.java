@@ -413,4 +413,26 @@ public class FlowDemoCase2Test {
         Assert.assertTrue(result.isSuccess());
         Assert.assertEquals(25, (int) result.getResult());
     }
+
+    @Test
+    public void testSimpleFlowDemo() {
+        RuleJudgeRequest ruleJudgeRequest = new RuleJudgeRequest();
+        ruleJudgeRequest.setA(5);
+
+        // 流程配置执行
+        StoryRequest<Integer> fireRequest = ReqBuilder.returnType(Integer.class)
+                .trackingType(TrackingTypeEnum.SERVICE_DETAIL).varScopeData(ruleJudgeRequest).startId("test-simple-flow-demo")
+                .build();
+        TaskResponse<Integer> result = storyEngine.fire(fireRequest);
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(15, (int) result.getResult());
+
+        // 代码定义执行
+        fireRequest = ReqBuilder.returnType(Integer.class)
+                .trackingType(TrackingTypeEnum.SERVICE_DETAIL).varScopeData(ruleJudgeRequest).startProcess(ProcessConfig::testSimpleFlowDemoProcess)
+                .build();
+        result = storyEngine.fire(fireRequest);
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(15, (int) result.getResult());
+    }
 }
