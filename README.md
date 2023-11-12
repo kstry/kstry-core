@@ -102,6 +102,7 @@ public void testAsyncFlowDemo() {
 }
 ```
 
+[testAsyncFlowProcess](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 如上所示的流程执行顺序如下：
 
@@ -149,11 +150,15 @@ public void testRuleAndFlowDemo() {
 }
 ```
 
+[testRuleAndFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
+
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 判断多个条件都满足时候执行目标动作，否则结束流程
 
 **OR逻辑：**
 
 ![OR逻辑](doc/img/4a307fbca5c72f84e9fb044558432b5d.png)
+
+[testRuleElseIfFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 排他网关有多个出度表达式被解析成true时，会选择第一个为true的分支继续向下执行，其他的将会被忽略，所以后面出度只要加上判断表达式便可以实现OR的逻辑
 
@@ -164,6 +169,8 @@ public void testRuleAndFlowDemo() {
 **满足N个条件时继续：**
 
 ![满足N个条件](doc/img/6e987e71c8ba092da1535c84fb805b2c.png)
+
+[testRuleCompletedCountFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 可以使用包含网关来配置当网关入度任务执行完成几个时流程便可以继续向下执行。指定的数量应该大于0且小于等于网关入度任务数
 
@@ -245,6 +252,8 @@ public class ResultProperty {
     private String type; // 指定结果类型
 }
 ```
+
+[HttpActionService](https://gitee.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/service/http/HttpActionService.java)
 
 **编排微服务流程：**
 
@@ -411,6 +420,8 @@ public boolean gotoSchool(int askWeek, boolean askRain, boolean askHungry) {
 // gotoSchool. askWeek: 5, askRain: false, askHungry: false
 ```
 
+[askGotoSchool](https://gitee.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/web/HttpActionController.java)
+
 ## 六、数据字典
 
 **任何系统中，前端界面无可避免都有展示数据的诉求，在权限允许的情况下，Kstry可以做到通过零编码纯配置的方式查询并返回给前端整个微服务架构中任意服务的指定结果字段**
@@ -482,6 +493,8 @@ public Mono<R<Map<String, Object>>> scoreQuery5(@RequestBody List<String> keys) 
     return WebUtil.dataDecorate(request, fireAsync);
 }
 ```
+
+[scoreQuery5](https://gitee.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/web/StudentController.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 `resultBuilder`是流程执行完成之后，允许对结果进行加工处理的回调函数。其中有两个参数：
 
@@ -555,6 +568,8 @@ public void testRbacFlowDemo() {
 // InnerOrderService lockStock...
 // InnerOrderService geneOrderId...
 ```
+
+[testRbacFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 **定义扩展能力点**
 
