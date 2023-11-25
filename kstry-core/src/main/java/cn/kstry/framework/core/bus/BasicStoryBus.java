@@ -32,7 +32,6 @@ import cn.kstry.framework.core.util.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -348,7 +347,7 @@ public abstract class BasicStoryBus implements StoryBus {
                 convertPair = typeConverterProcessor.convert(def.getConverter(), r);
                 r = convertPair.getValue();
             } else {
-                Field field = FieldUtils.getField(t.getClass(), fieldName, true);
+                Field field = ProxyUtil.getField(t.getClass(), fieldName).orElse(null);
                 convertPair = typeConverterProcessor.convert(def.getConverter(), r, Optional.ofNullable(field).map(Field::getType).orElse(null), ProxyUtil.getCollGenericType(field).orElse(null));
                 r = convertPair.getValue();
                 Object rFinal = r;

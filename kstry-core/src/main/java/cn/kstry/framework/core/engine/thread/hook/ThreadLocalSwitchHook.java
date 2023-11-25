@@ -20,12 +20,12 @@ package cn.kstry.framework.core.engine.thread.hook;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
 import cn.kstry.framework.core.engine.thread.ThreadLocalSwitch;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.ProxyUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,11 +71,11 @@ public class ThreadLocalSwitchHook implements ThreadSwitchHook<Map<ThreadLocalSw
     private List<ThreadLocalSwitch<Object>> getThreadLocalSwitchList() {
         List<ThreadLocalSwitch<Object>> threadLocalSwitchList = Lists.newArrayList();
         try {
-            Object threadLocals = FieldUtils.readDeclaredField(Thread.currentThread(), "threadLocals", true);
+            Object threadLocals = ProxyUtil.getFieldValue(Thread.currentThread(), "threadLocals").orElse(null);
             if (threadLocals == null) {
                 return threadLocalSwitchList;
             }
-            Object[] table = (Object[]) FieldUtils.readDeclaredField(threadLocals, "table", true);
+            Object[] table = (Object[]) ProxyUtil.getFieldValue(threadLocals, "table").orElse(new Object[0]);
             if (ArrayUtils.isEmpty(table)) {
                 return threadLocalSwitchList;
             }

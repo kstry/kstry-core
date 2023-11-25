@@ -25,8 +25,11 @@ import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
 import cn.kstry.framework.core.exception.ResourceException;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -45,6 +48,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 
@@ -54,6 +58,11 @@ import java.util.function.Supplier;
 public class ProxyUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyUtil.class);
+
+    private static final Cache<String, Field> classFieldCache = CacheBuilder.newBuilder()
+            .concurrencyLevel(8).initialCapacity(1024).maximumSize(20_000).expireAfterAccess(1, TimeUnit.HOURS)
+            .removalListener(notification -> LOGGER.info("Class field cache lose efficacy. key: {}, value: {}, cause: {}",
+                    notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     public static boolean isProxyObject(Object o) {
         if (o == null) {
@@ -164,6 +173,37 @@ public class ProxyUtil {
             return Optional.empty();
         }
         return Optional.of(generics[0]);
+    }
+
+    public static Optional<Field> getField(Class<?> clazz, String fieldName) {
+        if (clazz == null || StringUtils.isBlank(fieldName)) {
+            return Optional.empty();
+        }
+        String cacheKey = clazz.getName() + "@" + clazz.hashCode() + "@" + fieldName;
+        Field fieldCache = classFieldCache.getIfPresent(cacheKey);
+        if (fieldCache != null) {
+            return Optional.of(fieldCache);
+        }
+        Field field = FieldUtils.getField(clazz, fieldName, true);
+        if (field != null) {
+            classFieldCache.put(cacheKey, field);
+        }
+        return Optional.ofNullable(field);
+    }
+
+    public static Optional<Object> getFieldValue(Object obj, String fieldName) {
+        if (obj == null || StringUtils.isBlank(fieldName)) {
+            return Optional.empty();
+        }
+        Optional<Field> fieldOptional = getField(obj.getClass(), fieldName);
+        if (!fieldOptional.isPresent()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(FieldUtils.readField(fieldOptional.get(), obj));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static boolean notCollGeneric(Class<?> clazz) {
