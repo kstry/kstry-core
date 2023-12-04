@@ -1,0 +1,57 @@
+@import "bpmn-js-properties-panel/dist/assets/element-templates.css";
+@import "bpmn-js-properties-panel/dist/assets/properties-panel.css";
+
+@import "bpmn-js-connectors-extension/dist/connectors-extension.css";
+@import "@bpmn-io/element-template-chooser/dist/element-template-chooser.css";
+
+@import "bpmn-js-bpmnlint/dist/assets/css/bpmn-js-bpmnlint.css";
+
+@import "bpmn-js-token-simulation/assets/css/bpmn-js-token-simulation.css";
+
+@import "toolbar";
+@import "designer";
+@import "palette";
+@import "context-pad";
+@import "panel";
+@import "camunda-panel";
+@import "settings";
+@import "contextmenu";
+
+body,
+html {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .main-content {
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+
+    .designer {
+      flex: 1;
+    }
+  }
+}
+
+* {
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+}
+
+a.bjs-powered-by {
+  display: none
+}

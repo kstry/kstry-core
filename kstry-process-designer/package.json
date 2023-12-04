@@ -1,0 +1,57 @@
+{
+  "name": "kstry-process-designer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "demo": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@bpmn-io/add-exporter": "^0.2.0",
+    "@bpmn-io/element-template-chooser": "^0.0.5",
+    "@bpmn-io/properties-panel": "^0.20.3",
+    "bpmn-js": "^9.4.1",
+    "bpmn-js-bpmnlint": "^0.19.0",
+    "bpmn-js-connectors-extension": "^0.4.1",
+    "bpmn-js-properties-panel": "^1.6.1",
+    "bpmn-js-token-simulation": "^0.27.0",
+    "bpmnlint": "^7.8.0",
+    "camunda-bpmn-moddle": "^7.0.1",
+    "clipboard": "^2.0.11",
+    "core-js": "^3.8.1",
+    "diagram-js-minimap": "^2.1.1",
+    "element-ui": "^2.15.10",
+    "highlight.js": "^10.5.0",
+    "lodash.debounce": "^4.0.8",
+    "lucide-vue": "^0.263.0",
+    "min-dash": "^3.5.2",
+    "vue": "^2.6.11",
+    "vue-router": "^3.4.9",
+    "vuex": "^3.6.2",
+    "vuex-persistedstate": "^4.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "html-webpack-plugin": "^5.5.3",
+    "lint-staged": "^11.1.2",
+    "prettier": "^2.4.1",
+    "sass": "^1.32.7",
+    "sass-loader": "^12.0.0",
+    "svg-sprite-loader": "^6.0.11",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "gitHooks": {
+    "pre-commit": "lint-staged"
+  }
+}
