@@ -34,19 +34,12 @@ import cn.kstry.framework.core.engine.thread.hook.ThreadLocalSwitchHook;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchLogHook;
-import cn.kstry.framework.core.util.GlobalUtil;
-import cn.kstry.framework.core.util.PropertyUtil;
 import com.google.common.collect.Lists;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.OrderComparator;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
@@ -58,9 +51,7 @@ import java.util.Map;
  * @author lyakn
  */
 @Import({ConfigResourceResolver.class, KstryContextResolver.class, TypeConverterRegister.class})
-public class ComponentImportSelector implements ApplicationContextAware, InitializingBean {
-
-    private ConfigurableApplicationContext applicationContext;
+public class ComponentImportSelector extends BasicLauncher {
 
     @Bean
     public StartEventPostProcessor getImmutablePostProcessor() {
@@ -171,15 +162,5 @@ public class ComponentImportSelector implements ApplicationContextAware, Initial
     @Bean
     public TriggerProcessPreheat triggerProcessPreheat(StoryEngine storyEngine) {
         return new TriggerProcessPreheat(storyEngine);
-    }
-
-    @Override
-    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = GlobalUtil.transferNotEmpty(applicationContext, ConfigurableApplicationContext.class);
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        PropertyUtil.initGlobalProperties(applicationContext.getEnvironment());
     }
 }

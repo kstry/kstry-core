@@ -56,10 +56,6 @@ import cn.kstry.framework.core.util.KValueUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -78,9 +74,7 @@ import java.util.stream.Collectors;
  *
  * @author lykan
  */
-public class KstryContextResolver implements ApplicationContextAware {
-
-    private ConfigurableApplicationContext applicationContext;
+public class KstryContextResolver extends BasicLauncher {
 
     @Bean
     public StartEventContainer getStartEventRepository(StartEventFactory startEventFactory, StartEventProcessor startEventProcessor) {
@@ -162,11 +156,6 @@ public class KstryContextResolver implements ApplicationContextAware {
     @Conditional(MissingSerializeProcessParser.class)
     public SerializeProcessParser<?> serializeProcessParser() {
         return new JsonSerializeProcessParser();
-    }
-
-    @Override
-    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = GlobalUtil.transferNotEmpty(applicationContext, ConfigurableApplicationContext.class);
     }
 
     private void initKValue(KValueFactory kValueFactory) {

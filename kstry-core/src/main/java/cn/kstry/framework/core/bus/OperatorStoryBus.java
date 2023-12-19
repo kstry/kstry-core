@@ -389,11 +389,14 @@ public class OperatorStoryBus extends BasicStoryBus {
                     wLock.lock();
                     try {
                         Object t = scopeData;
+                        String childFieldName = null;
                         String[] fieldNameSplit = name.split("\\.");
                         for (int i = 0; i < fieldNameSplit.length - 1 && t != null; i++) {
                             t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
+                            childFieldName = fieldNameSplit[i];
                         }
                         if (t == null) {
+                            LOGGER.info("ScopeDataOperator set {} fail. invalid field name: {}", name, childFieldName);
                             return false;
                         }
                         if (scopeData.getScopeDataEnum() == ScopeTypeEnum.STABLE) {

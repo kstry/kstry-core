@@ -311,12 +311,15 @@ public abstract class BasicStoryBus implements StoryBus {
 
         noticeStaDefSet.forEach(def -> {
             Object t = data;
+            String childFieldName = null;
             String[] fieldNameSplit = def.getTargetName().split("\\.");
             for (int i = 0; i < fieldNameSplit.length - 1 && t != null; i++) {
                 t = PropertyUtil.getProperty(t, fieldNameSplit[i]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN).orElse(null);
+                childFieldName = fieldNameSplit[i];
             }
             if (t == null) {
                 monitorTracking.trackingNodeNotice(flowElement, () -> NoticeTracking.build(def.getFieldName(), def.getTargetName(), dataEnum, BAD_TARGET, data.getClass(), null));
+                LOGGER.info("notice field {} fail. invalid field name: {}", def.getTargetName(), childFieldName);
                 return;
             }
 

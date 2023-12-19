@@ -20,22 +20,17 @@ package cn.kstry.framework.core.component.launcher;
 import cn.kstry.framework.core.annotation.EnableKstry;
 import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.resource.config.ConfigSource;
 import cn.kstry.framework.core.resource.config.ProcessClassPathConfigSource;
 import cn.kstry.framework.core.resource.config.ProcessDiagramConfigSource;
-import cn.kstry.framework.core.resource.config.ConfigSource;
 import cn.kstry.framework.core.resource.config.PropertiesClassPathConfigSource;
 import cn.kstry.framework.core.resource.factory.KValueFactory;
 import cn.kstry.framework.core.resource.factory.StartEventFactory;
 import cn.kstry.framework.core.util.AssertUtil;
-import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -52,9 +47,7 @@ import java.util.Map;
  *
  * @author lykan
  */
-public class ConfigResourceResolver implements ApplicationContextAware {
-
-    private ConfigurableApplicationContext applicationContext;
+public class ConfigResourceResolver extends BasicLauncher {
 
     @Bean
     @Conditional(ConfigResourceResolver.ClassPathSourceCondition.class)
@@ -87,11 +80,6 @@ public class ConfigResourceResolver implements ApplicationContextAware {
     @Conditional(ConfigResourceResolver.MissingPropertySourcesPlaceholderConfigurer.class)
     public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
-    }
-
-    @Override
-    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = GlobalUtil.transferNotEmpty(applicationContext, ConfigurableApplicationContext.class);
     }
 
     private static String getBpmnPath(ListableBeanFactory beanFactory) {
