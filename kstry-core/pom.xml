@@ -51,6 +51,7 @@
         <dependency.camunda.version>7.17.0</dependency.camunda.version>
         <dependency.reactor.version>3.4.24</dependency.reactor.version>
         <dependency.junit.version>4.13.2</dependency.junit.version>
+        <dependency.mockito.version>3.12.4</dependency.mockito.version>
         <jakarta.el.version>3.0.3</jakarta.el.version>
     </properties>
 
@@ -163,6 +164,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
             <version>${dependency.spring.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${dependency.mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
