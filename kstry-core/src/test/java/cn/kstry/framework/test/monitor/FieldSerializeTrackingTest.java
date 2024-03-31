@@ -1,5 +1,5 @@
 /*
- *  * Copyright (c) 2020-2023, xiongzhongwei (xiongzhongwei@gmail.com).
+ *  * Copyright (c) 2020-2024, xiongzhongwei (xiongzhongwei@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class FieldSerializeTrackingTest {
         FieldSerializeTracking fieldSerializeTracking2 = new FieldSerializeTracking();
         String serializedValue2 = fieldSerializeTracking2.valueSerialize(paramTracking2);
         Assert.assertEquals(
-                "This is a very long string that exceeds the length limit for serialization",
+                "This is a very long string that exceeds the length",
                 serializedValue2
         );
     }

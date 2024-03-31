@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 支持Spring上下文的服务组件仓库
@@ -86,7 +86,7 @@ public class SpringTaskComponentRepository extends TaskComponentRepository imple
         if (StringUtils.isNotBlank(invokeProperties.getCustomExecutorName())) {
             AssertUtil.isTrue(applicationContext.containsBean(invokeProperties.getCustomExecutorName()), ExceptionEnum.ANNOTATION_USAGE_ERROR,
                     "Invalid method executor is specified. method: {}, executor: {}", methodWrapper.getMethod().getName(), invokeProperties.getCustomExecutorName());
-            AssertUtil.isTrue(applicationContext.getBean(invokeProperties.getCustomExecutorName()) instanceof ThreadPoolExecutor, ExceptionEnum.ANNOTATION_USAGE_ERROR,
+            AssertUtil.isTrue(applicationContext.getBean(invokeProperties.getCustomExecutorName()) instanceof ExecutorService, ExceptionEnum.ANNOTATION_USAGE_ERROR,
                     "Invalid method executor type is specified. method: {}, executor: {}", methodWrapper.getMethod().getName(), invokeProperties.getCustomExecutorName());
         }
 

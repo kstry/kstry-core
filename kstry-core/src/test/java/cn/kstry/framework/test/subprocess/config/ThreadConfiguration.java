@@ -2,7 +2,7 @@ package cn.kstry.framework.test.subprocess.config;
 
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.thread.Task;
-import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
+import cn.kstry.framework.core.engine.thread.TaskServiceExecutor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit;
 public class ThreadConfiguration {
 
     @Bean
-    public TaskThreadPoolExecutor taskThreadPoolMethodExecutor() {
-        return TaskThreadPoolExecutor.buildTaskExecutor(
+    public TaskServiceExecutor taskThreadPoolMethodExecutor() {
+        return TaskServiceExecutor.buildTaskExecutor(
                 ExecutorType.METHOD,
                 "custom-thread-method-invoke",
                 32,

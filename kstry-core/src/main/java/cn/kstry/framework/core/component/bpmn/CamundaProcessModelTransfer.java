@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -157,6 +157,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
         }
 
         Map<ProcessLink, ProcessLink> inclusiveProcessLinkMap = Maps.newHashMap();
+        Map<org.camunda.bpm.model.bpmn.instance.FlowNode, InclusiveJoinPoint> joinAssistMap = Maps.newHashMap();
 
         Set<org.camunda.bpm.model.bpmn.instance.FlowNode> circularDependencyCheck = Sets.newHashSet();
         Map<org.camunda.bpm.model.bpmn.instance.FlowNode, ProcessLink> nextBpmnLinkMap = Maps.newHashMap();
@@ -215,26 +216,38 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                     beforeProcessLink.nextInclusive(sequenceFlowMapping(config, seq), (InclusiveJoinPoint) inclusiveProcessLink);
                     nextBpmnLinkMap.put(targetNode, inclusiveProcessLink);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.ExclusiveGateway) {
-                    SequenceFlow sf = sequenceFlowMapping(config, seq);
+                    MergeIncomingRes mergeRes = tryMergeIncoming(processLink, config, seq, targetNode, joinAssistMap, beforeProcessLink);
+                    if (mergeRes.isSkip) {
+                        continue;
+                    }
+                    SequenceFlow sf = mergeRes.sf;
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, true);
-                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, serviceTask, sf, beforeProcessLink);
-                    if (nextProcessLink != beforeProcessLink) {
+                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, serviceTask, sf, mergeRes.processLink);
+                    if (nextProcessLink != mergeRes.processLink) {
                         sf = buildSequenceFlow(targetNode.getId());
                     }
                     nextProcessLink = nextProcessLink.nextExclusive(targetNode.getId(), sf).build();
                     nextBpmnLinkMap.put(targetNode, nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.Task && CAMUNDA_TASK_TYPE_LIST.contains(targetNode.getElementType().getTypeName())) {
+                    MergeIncomingRes mergeRes = tryMergeIncoming(processLink, config, seq, targetNode, joinAssistMap, beforeProcessLink);
+                    if (mergeRes.isSkip) {
+                        continue;
+                    }
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, false);
-                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, sequenceFlowMapping(config, seq), beforeProcessLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, mergeRes.sf, mergeRes.processLink);
                     nextBpmnLinkMap.put(targetNode, nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.SubProcess || targetNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
+                    MergeIncomingRes mergeRes = tryMergeIncoming(processLink, config, seq, targetNode, joinAssistMap, beforeProcessLink);
+                    if (mergeRes.isSkip) {
+                        continue;
+                    }
                     String subProcessId = targetNode.getId();
                     if (targetNode instanceof org.camunda.bpm.model.bpmn.instance.CallActivity) {
                         subProcessId = ((org.camunda.bpm.model.bpmn.instance.CallActivity) targetNode).getCalledElement();
                     }
-                    SubProcessBuilder subProcessBuilder = beforeProcessLink.nextSubProcess(sequenceFlowMapping(config, seq), subProcessId);
+                    SubProcessBuilder subProcessBuilder = mergeRes.processLink.nextSubProcess(mergeRes.sf, subProcessId);
                     fillIterableProperty(config, targetNode, subProcessBuilder::iterable);
 
                     ElementPropertyUtil.getNodeProperty(targetNode,
@@ -258,6 +271,22 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                 }
             }
         }
+    }
+
+    private MergeIncomingRes tryMergeIncoming(StartProcessLink processLink, ConfigResource config,
+                                              org.camunda.bpm.model.bpmn.instance.SequenceFlow seq, FlowNode targetNode, Map<FlowNode, InclusiveJoinPoint> joinAssistMap, ProcessLink beforeProcessLink) {
+        MergeIncomingRes res = new MergeIncomingRes();
+        if (targetNode.getIncoming().size() <= 1) {
+            res.isSkip = false;
+            res.sf = sequenceFlowMapping(config, seq);
+            res.processLink = beforeProcessLink;
+            return res;
+        }
+        InclusiveJoinPoint mockInclusive = joinAssistMap.computeIfAbsent(targetNode, n -> processLink.inclusive().build());
+        res.processLink = beforeProcessLink.nextInclusive(sequenceFlowMapping(config, seq), mockInclusive);
+        res.isSkip = mockInclusive.getElement().comingList().size() < targetNode.getIncoming().size();
+        res.sf = buildSequenceFlow(targetNode.getId());
+        return res;
     }
 
     private boolean isBpmnSupportAggregation(org.camunda.bpm.model.bpmn.instance.FlowElement element) {
@@ -381,5 +410,11 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
         sequenceFlow.setId(String.format("%s-Sequence-%s", id, GlobalUtil.uuid()));
         sequenceFlow.setName(sequenceFlow.getId());
         return sequenceFlow;
+    }
+
+    private static class MergeIncomingRes {
+        private SequenceFlow sf;
+        private boolean isSkip;
+        private ProcessLink processLink;
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static cn.kstry.framework.core.monitor.MonitorTracking.BAD_TARGET;
@@ -118,7 +118,7 @@ public abstract class BasicStoryBus implements StoryBus {
     /**
      * 指定当前任务使用的任务执行器
      */
-    final ThreadPoolExecutor storyExecutor;
+    final ExecutorService storyExecutor;
 
     /**
      * 类型转换处理器
@@ -132,7 +132,7 @@ public abstract class BasicStoryBus implements StoryBus {
 
     final boolean setReqScope;
 
-    public BasicStoryBus(TypeConverterProcessor typeConverterProcessor, Class<?> returnType, int timeout, ThreadPoolExecutor storyExecutor, String requestId,
+    public BasicStoryBus(TypeConverterProcessor typeConverterProcessor, Class<?> returnType, int timeout, ExecutorService storyExecutor, String requestId,
                          String startEventId, String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         this.role = role;
         this.requestId = requestId;
@@ -284,7 +284,7 @@ public abstract class BasicStoryBus implements StoryBus {
     }
 
     @Override
-    public ThreadPoolExecutor getStoryExecutor() {
+    public ExecutorService getStoryExecutor() {
         return storyExecutor;
     }
 

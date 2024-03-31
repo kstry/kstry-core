@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 /**
@@ -203,11 +203,11 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         InvokeProperties invokeProperties = methodWrapper.getInvokeProperties();
         Integer timeout = getTaskTimeout(pedometer.isDemotion(), serviceTask, invokeProperties);
-        ThreadPoolExecutor executor = null;
+        ExecutorService executor = null;
         if (StringUtils.isNotBlank(invokeProperties.getCustomExecutorName())) {
             boolean notNeedIterate = !isIterable || !elementIterable.iterable() || taskServiceDef.isDemotionNode();
             if (notNeedIterate || notNeedAsyncIterate(methodWrapper, elementIterable)) {
-                executor = engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ThreadPoolExecutor.class);
+                executor = engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ExecutorService.class);
             }
         }
         if (executor == null && (timeout == null || methodWrapper.isMonoResult())) {

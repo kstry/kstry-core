@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -137,6 +137,10 @@ public class PropertyUtil {
             GlobalProperties.SERVICE_NODE_DEFINE_PARAMS = BooleanUtils.toBoolean(kstryStoryDefineNodeParams);
         }
 
+        String kstryThreadOpenVirtual = environment.getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_OPEN_VIRTUAL);
+        if (StringUtils.isNotBlank(kstryThreadOpenVirtual)) {
+            GlobalProperties.KSTRY_OPEN_VIRTUAL_THREAD = BooleanUtils.toBoolean(kstryThreadOpenVirtual);
+        }
         String kstryStoryTrackingLog = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_LOG);
         if (StringUtils.isNotBlank(kstryStoryTrackingLog)) {
             GlobalProperties.KSTRY_STORY_TRACKING_LOG = BooleanUtils.toBoolean(kstryStoryTrackingLog);

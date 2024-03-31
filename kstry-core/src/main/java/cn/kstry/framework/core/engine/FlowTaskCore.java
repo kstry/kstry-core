@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import java.lang.reflect.Array;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -469,8 +469,8 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                                 TaskServiceDef taskServiceDef, MethodWrapper methodWrapper, MonitorTracking monitorTracking, List<Object> iteratorList, int stride, boolean isOneStride) {
         List<Object> resultList = Lists.newArrayList();
         InvokeProperties invokeProperties = methodWrapper.getInvokeProperties();
-        ThreadPoolExecutor executor = StringUtils.isBlank(invokeProperties.getCustomExecutorName())
-                ? engineModule.getIteratorThreadPool().getThreadPoolExecutor() : engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ThreadPoolExecutor.class);
+        ExecutorService executor = StringUtils.isBlank(invokeProperties.getCustomExecutorName())
+                ? engineModule.getIteratorThreadPool().getExecutorService() : engineModule.getApplicationContext().getBean(invokeProperties.getCustomExecutorName(), ExecutorService.class);
         Map<CompletableFuture<Object>, Integer> batchParamSizeMap = Maps.newHashMap();
         List<CompletableFuture<Object>> futureList = Lists.newArrayList();
         if (isOneStride) {

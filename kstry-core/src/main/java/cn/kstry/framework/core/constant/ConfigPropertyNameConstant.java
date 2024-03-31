@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -97,6 +97,11 @@ public interface ConfigPropertyNameConstant {
      *  shutdown失败之后，Thread Pool shutdownNow 之后的等待时间，单位：ms，默认：5000
      */
     String KSTRY_THREAD_SHUTDOWN_NOW_AWAIT = "kstry.thread.pool.shutdown-now-await";
+
+    /**
+     * 使用JDK21+时，可以使用该参数开启虚拟线程
+     */
+    String KSTRY_THREAD_OPEN_VIRTUAL = "kstry.thread.open-virtual";
 
     /**
      * 类型转换中日期格式，默认：yyyy-MM-dd HH:mm:ss

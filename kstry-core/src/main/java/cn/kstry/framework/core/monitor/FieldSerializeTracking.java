@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class FieldSerializeTracking implements SerializeTracking {
         if (passValue instanceof String) {
             v = (String) passValue;
         } else {
-            v = JSON.toJSONString(passValue);
+            v = JSON.toJSONString(passValue, SerializerFeature.DisableCircularReferenceDetect);
         }
         if (GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT == -1 || (v.length() <= GlobalProperties.KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT)) {
             return v;

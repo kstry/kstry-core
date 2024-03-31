@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -111,7 +111,7 @@ public class StoryRequest<T> {
     /**
      * 指定当前任务使用的任务执行器
      */
-    private ThreadPoolExecutor storyExecutor;
+    private ExecutorService storyExecutor;
 
     /**
      * 中途执行流程的开始Id
@@ -228,11 +228,11 @@ public class StoryRequest<T> {
         this.businessId = businessId;
     }
 
-    public ThreadPoolExecutor getStoryExecutor() {
+    public ExecutorService getStoryExecutor() {
         return storyExecutor;
     }
 
-    public void setStoryExecutor(ThreadPoolExecutor storyExecutor) {
+    public void setStoryExecutor(ExecutorService storyExecutor) {
         this.storyExecutor = storyExecutor;
     }
 

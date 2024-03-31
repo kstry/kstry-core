@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
@@ -53,7 +53,7 @@ public class OperatorStoryBus extends BasicStoryBus {
      */
     private EnhancedDataOperator enhancedDataOperator;
 
-    public OperatorStoryBus(TypeConverterProcessor typeConverterProcessor, Class<?> returnType, int timeout, ThreadPoolExecutor storyExecutor, String requestId,
+    public OperatorStoryBus(TypeConverterProcessor typeConverterProcessor, Class<?> returnType, int timeout, ExecutorService storyExecutor, String requestId,
                             String startEventId, String businessId, Role role, MonitorTracking monitorTracking, Object reqScopeData, ScopeData varScopeData, ScopeData staScopeData) {
         super(typeConverterProcessor, returnType, timeout, storyExecutor, requestId, startEventId, businessId, role, monitorTracking, reqScopeData, varScopeData, staScopeData);
     }

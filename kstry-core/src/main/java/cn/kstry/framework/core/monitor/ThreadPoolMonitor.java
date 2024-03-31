@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
 package cn.kstry.framework.core.monitor;
 
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
-import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
+import cn.kstry.framework.core.engine.thread.TaskServiceExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -35,47 +36,51 @@ public class ThreadPoolMonitor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolMonitor.class);
 
-    private final List<TaskThreadPoolExecutor> taskThreadPoolExecutor;
+    private final List<TaskServiceExecutor> taskServiceExecutor;
 
-    public ThreadPoolMonitor(List<TaskThreadPoolExecutor> taskThreadPoolExecutor) {
-        this.taskThreadPoolExecutor = taskThreadPoolExecutor;
+    public ThreadPoolMonitor(List<TaskServiceExecutor> taskServiceExecutor) {
+        this.taskServiceExecutor = taskServiceExecutor;
     }
 
     @Scheduled(fixedDelayString = "${" + ConfigPropertyNameConstant.KSTRY_THREAD_POOL_MONITOR_DELAY + ":10000}")
     public void monitor() {
-        taskThreadPoolExecutor.forEach(ThreadPoolMonitor::handleExecutor);
+        taskServiceExecutor.forEach(ThreadPoolMonitor::handleExecutor);
     }
 
-    public static void handleExecutor(TaskThreadPoolExecutor taskThreadPoolExecutor) {
-        ThreadPoolExecutor threadPoolExecutor = taskThreadPoolExecutor.getThreadPoolExecutor();
+    public static void handleExecutor(TaskServiceExecutor taskServiceExecutor) {
+        ExecutorService executorService = taskServiceExecutor.getExecutorService();
+        if (!(executorService instanceof ThreadPoolExecutor)) {
+            return;
+        }
+        ThreadPoolExecutor tpe = (ThreadPoolExecutor) executorService;
 
         // 线程池需要执行的任务数
-        long taskCount = threadPoolExecutor.getTaskCount();
+        long taskCount = tpe.getTaskCount();
 
         // 线程池在运行过程中已完成的任务数
-        long completedTaskCount = threadPoolExecutor.getCompletedTaskCount();
+        long completedTaskCount = tpe.getCompletedTaskCount();
 
         // 曾经创建过的最大线程数
-        long largestPoolSize = threadPoolExecutor.getLargestPoolSize();
+        long largestPoolSize = tpe.getLargestPoolSize();
 
         // 线程池里的线程数量
-        long poolSize = threadPoolExecutor.getPoolSize();
+        long poolSize = tpe.getPoolSize();
 
         // 线程池里活跃的线程数量
-        long activeCount = threadPoolExecutor.getActiveCount();
+        long activeCount = tpe.getActiveCount();
 
         // 配置的核心线程数
-        int corePoolSize = threadPoolExecutor.getCorePoolSize();
+        int corePoolSize = tpe.getCorePoolSize();
 
         // 配置的最大线程数
-        int maximumPoolSize = threadPoolExecutor.getMaximumPoolSize();
+        int maximumPoolSize = tpe.getMaximumPoolSize();
 
         // 当前线程池队列的个数
-        int queueSize = threadPoolExecutor.getQueue().size();
+        int queueSize = tpe.getQueue().size();
 
         if (taskCount > 0) {
             LOGGER.info("Thread pool {} monitor. task-count: {}, completed-task-count: {}, largest-pool-size: {}, pool-size: {}, " +
-                            "active-count: {}, core-pool-size: {}, maximum-pool-size: {}, queue-size: {}", taskThreadPoolExecutor.getPrefix(),
+                            "active-count: {}, core-pool-size: {}, maximum-pool-size: {}, queue-size: {}", taskServiceExecutor.getPrefix(),
                     taskCount, completedTaskCount, largestPoolSize, poolSize, activeCount, corePoolSize, maximumPoolSize, queueSize);
         }
     }

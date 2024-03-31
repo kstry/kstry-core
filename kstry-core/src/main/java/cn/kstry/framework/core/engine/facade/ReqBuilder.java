@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.LambdaUtil;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -136,7 +136,7 @@ public class ReqBuilder<T> {
         return this;
     }
 
-    public ReqBuilder<T> storyExecutor(ThreadPoolExecutor storyExecutor) {
+    public ReqBuilder<T> storyExecutor(ExecutorService storyExecutor) {
         AssertUtil.notNull(storyExecutor);
         this.storyRequest.setStoryExecutor(storyExecutor);
         return this;

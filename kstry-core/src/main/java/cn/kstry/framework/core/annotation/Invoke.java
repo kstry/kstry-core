@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public @interface Invoke {
     Class<? extends Throwable>[] retryExcludeExp() default {};
 
     /**
-     * 指定服务节点执行器，不为空时从Spring容器中使用名称获取 ThreadPoolExecutor 实例来作为执行器执行当前服务节点，默认不指定自定义执行器
+     * 指定服务节点执行器，不为空时从Spring容器中使用名称获取 ExecutorService 实例来作为执行器执行当前服务节点，默认不指定自定义执行器
      */
     String executor() default StringUtils.EMPTY;
 }

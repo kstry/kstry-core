@@ -16,10 +16,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.annotation.Resource;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -35,7 +35,8 @@ public class BusCaseTest {
     @Autowired
     private StoryEngine storyEngine;
 
-    @Resource(name = "custom-mmm")
+    @Qualifier("custom-mmm")
+    @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
 
     @Test

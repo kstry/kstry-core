@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.element.StartEventContainer;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptorRepository;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
-import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
+import cn.kstry.framework.core.engine.thread.TaskServiceExecutor;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -71,17 +71,17 @@ public class StoryEngineModule {
     /**
      * 任务执行线程池
      */
-    private final TaskThreadPoolExecutor taskThreadPool;
+    private final TaskServiceExecutor taskThreadPool;
 
     /**
      * 方法执行线程池
      */
-    private final TaskThreadPoolExecutor methodThreadPool;
+    private final TaskServiceExecutor methodThreadPool;
 
     /**
      * 迭代器执行线程池
      */
-    private final TaskThreadPoolExecutor iteratorThreadPool;
+    private final TaskServiceExecutor iteratorThreadPool;
 
     /**
      * 线程切换钩子处理器
@@ -105,15 +105,15 @@ public class StoryEngineModule {
      */
     private final TypeConverterProcessor typeConverterProcessor;
 
-    public StoryEngineModule(List<TaskThreadPoolExecutor> threadPoolExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
+    public StoryEngineModule(List<TaskServiceExecutor> taskServiceExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
                              Function<ParamInjectDef, Object> paramInitStrategy, SubProcessInterceptorRepository subInterceptorRepository,
                              TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor, ApplicationContext applicationContext,
                              SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor) {
-        AssertUtil.anyNotNull(threadPoolExecutors, taskContainer, paramInitStrategy, startEventContainer);
+        AssertUtil.anyNotNull(taskServiceExecutors, taskContainer, paramInitStrategy, startEventContainer);
 
-        List<TaskThreadPoolExecutor> methodThreadPoolList = threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
-        List<TaskThreadPoolExecutor> taskThreadPoolList = threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.TASK).collect(Collectors.toList());
-        List<TaskThreadPoolExecutor> iteratorThreadPoolList = threadPoolExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.ITERATOR).collect(Collectors.toList());
+        List<TaskServiceExecutor> methodThreadPoolList = taskServiceExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
+        List<TaskServiceExecutor> taskThreadPoolList = taskServiceExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.TASK).collect(Collectors.toList());
+        List<TaskServiceExecutor> iteratorThreadPoolList = taskServiceExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.ITERATOR).collect(Collectors.toList());
         AssertUtil.oneSize(methodThreadPoolList, ExceptionEnum.COMPONENT_DUPLICATION_ERROR);
         AssertUtil.oneSize(taskThreadPoolList, ExceptionEnum.COMPONENT_DUPLICATION_ERROR);
         AssertUtil.oneSize(iteratorThreadPoolList, ExceptionEnum.COMPONENT_DUPLICATION_ERROR);
@@ -132,7 +132,7 @@ public class StoryEngineModule {
         this.typeConverterProcessor = typeConverterProcessor;
     }
 
-    public TaskThreadPoolExecutor getTaskThreadPool() {
+    public TaskServiceExecutor getTaskThreadPool() {
         return taskThreadPool;
     }
 
@@ -152,11 +152,11 @@ public class StoryEngineModule {
         return subInterceptorRepository;
     }
 
-    public TaskThreadPoolExecutor getMethodThreadPool() {
+    public TaskServiceExecutor getMethodThreadPool() {
         return methodThreadPool;
     }
 
-    public TaskThreadPoolExecutor getIteratorThreadPool() {
+    public TaskServiceExecutor getIteratorThreadPool() {
         return iteratorThreadPool;
     }
 

@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import cn.kstry.framework.core.engine.future.AdminFuture;
 import cn.kstry.framework.core.engine.future.InvokeFuture;
 import cn.kstry.framework.core.enums.ExecutorType;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 任务执行器
@@ -36,12 +36,12 @@ public interface TaskExecutor {
      * @param mainFlowTask 流程任务
      * @return AdminFuture
      */
-    AdminFuture submitAdminTask(ThreadPoolExecutor threadPool, MainFlowTask mainFlowTask);
+    AdminFuture submitAdminTask(ExecutorService threadPool, MainFlowTask mainFlowTask);
 
     /**
      * 提交片段任务
      */
-    void submitFragmentTask(ThreadPoolExecutor threadPool, FragmentTask fragmentTask);
+    void submitFragmentTask(ExecutorService threadPool, FragmentTask fragmentTask);
 
     /**
      * 提交异步流程任务
@@ -49,7 +49,7 @@ public interface TaskExecutor {
      * @param parentStartEventId 开始事件id
      * @param flowTask 流程任务
      */
-    void submitMonoFlowTask(ThreadPoolExecutor threadPool, String parentStartEventId, MonoFlowTask flowTask);
+    void submitMonoFlowTask(ExecutorService threadPool, String parentStartEventId, MonoFlowTask flowTask);
 
     /**
      * 提交方法执行任务
@@ -57,7 +57,7 @@ public interface TaskExecutor {
      * @param methodInvokeTask 方法执行任务
      * @return 方法执行任务Future
      */
-    InvokeFuture submitMethodInvokeTask(ThreadPoolExecutor threadPool, MethodInvokeTask methodInvokeTask);
+    InvokeFuture submitMethodInvokeTask(ExecutorService threadPool, MethodInvokeTask methodInvokeTask);
 
     /**
      * 获取线程池类型

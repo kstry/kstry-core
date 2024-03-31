@@ -10,15 +10,15 @@ import cn.kstry.framework.core.component.jsprocess.transfer.JsonSerializeProcess
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.test.diagram.constants.SCS;
 import com.google.common.collect.Lists;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 @Component
 public class DynamicBpmnSubDiagram implements DynamicSubProcess {
 
-    @Resource
+    @Autowired
     private SerializeProcessParser<String> jsonSerializeProcessParser;
 
     @Override

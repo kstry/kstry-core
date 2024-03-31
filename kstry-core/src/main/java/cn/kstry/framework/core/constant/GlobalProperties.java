@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -77,6 +77,11 @@ public class GlobalProperties {
      * 是否打印链路追踪日志
      */
     public static boolean KSTRY_STORY_TRACKING_LOG = false;
+
+    /**
+     * 使用JDK21+时，是否开启虚拟线程
+     */
+    public static boolean KSTRY_OPEN_VIRTUAL_THREAD = false;
 
     /**
      * 监控中节点出入参快照最大长度，默认为 -1 代表不限制， 0 时不记录入参， >0 时会对节点出入参快照截取到该字段长度。仅在 TrackingTypeEnum == SERVICE_DETAIL 时生效

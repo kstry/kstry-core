@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import cn.kstry.framework.test.bus.service.BusTestService;
 import lombok.Data;
 import org.apache.commons.collections.MapUtils;
 import org.junit.Assert;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
-import javax.annotation.Resource;
 import java.util.Map;
 
 /**
@@ -67,7 +67,7 @@ public class BusStep2Request implements SpringParamLifecycle {
     @ReqTaskField("localNow")
     private String localNow;
 
-    @Resource
+    @Autowired
     private BusTestService busTestService;
 
     @Override

@@ -1,579 +1,507 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_0001" targetNamespace="http://bpmn.io/schema/bpmn">
-    <bpmn:process id="Process_1693841776073" name="业务流程_1693841776073" isExecutable="true">
-        <bpmn:startEvent id="student-score-query-process" name="student-score-query-process">
-            <bpmn:outgoing>Flow_0b2krzf</bpmn:outgoing>
-        </bpmn:startEvent>
-        <bpmn:sequenceFlow id="Flow_0b2krzf" sourceRef="student-score-query-process" targetRef="Gateway_0moclik" />
-        <bpmn:inclusiveGateway id="Gateway_0moclik" name="open-async">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="open-async" value="true" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0b2krzf</bpmn:incoming>
-            <bpmn:outgoing>Flow_0qqnx0y</bpmn:outgoing>
-            <bpmn:outgoing>Flow_01w9r1f</bpmn:outgoing>
-            <bpmn:outgoing>Flow_1jmfkgr</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:serviceTask id="Activity_1tuuink" name="查询学生&#10;基本信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getStudentBasic" />
-                    <camunda:property name="task-component" value="studentScoreService" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0qqnx0y</bpmn:incoming>
-            <bpmn:outgoing>Flow_0e0zkc5</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_0qqnx0y" sourceRef="Gateway_0moclik" targetRef="Activity_1tuuink" />
-        <bpmn:serviceTask id="Activity_1lzcrrr" name="查询学生&#10;敏感信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-component" value="studentScoreService" />
-                    <camunda:property name="task-service" value="getStudentPrivacy" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_01w9r1f</bpmn:incoming>
-            <bpmn:outgoing>Flow_0dhxv11</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_01w9r1f" sourceRef="Gateway_0moclik" targetRef="Activity_1lzcrrr" />
-        <bpmn:serviceTask id="Activity_0q5ad88" name="获取学生&#10;学年列表">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getStudyExperienceList" />
-                    <camunda:property name="task-property" value="{&#10;    &#34;result-converter&#34;: &#34;object_to_long_list&#34;,&#10;    &#34;return-target&#34;: &#34;var.classIds&#34;&#10;}&#10;" />
-                    <camunda:property name="c-jscript" value="var classIds = [];&#10;for (var i = 0; i&#60; kvar.studyExperienceList.length; i++)&#10;{&#10;    classIds.push(kvar.studyExperienceList[i].classId);&#10;}&#10;return JSON.stringify(classIds)" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1jmfkgr</bpmn:incoming>
-            <bpmn:outgoing>Flow_1ue4j5n</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_1jmfkgr" name="if（need-score-list）" sourceRef="Gateway_0moclik" targetRef="Activity_0q5ad88">
-            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">req.needScore</bpmn:conditionExpression>
-        </bpmn:sequenceFlow>
-        <bpmn:sequenceFlow id="Flow_1ue4j5n" sourceRef="Activity_0q5ad88" targetRef="Gateway_0qmo5am" />
-        <bpmn:inclusiveGateway id="Gateway_0qmo5am" name="open-async">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="open-async" value="true" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1ue4j5n</bpmn:incoming>
-            <bpmn:outgoing>Flow_0lrpg9h</bpmn:outgoing>
-            <bpmn:outgoing>Flow_0s1dydq</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:serviceTask id="Activity_1h1otxv" name="查询班级信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getClasInfoById" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0lrpg9h</bpmn:incoming>
-            <bpmn:outgoing>Flow_1wzho6a</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_0lrpg9h" sourceRef="Gateway_0qmo5am" targetRef="Activity_1h1otxv" />
-        <bpmn:sequenceFlow id="Flow_0e0zkc5" sourceRef="Activity_1tuuink" targetRef="Gateway_0avnapl" />
-        <bpmn:inclusiveGateway id="Gateway_0avnapl">
-            <bpmn:incoming>Flow_0e0zkc5</bpmn:incoming>
-            <bpmn:incoming>Flow_0dhxv11</bpmn:incoming>
-            <bpmn:outgoing>Flow_1bkkokn</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:sequenceFlow id="Flow_0dhxv11" sourceRef="Activity_1lzcrrr" targetRef="Gateway_0avnapl" />
-        <bpmn:serviceTask id="Activity_1x55mgq" name="装配学生信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="assembleStudentInfo" />
-                    <camunda:property name="task-component" value="studentScoreService" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1bkkokn</bpmn:incoming>
-            <bpmn:outgoing>Flow_1enc1ri</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_1bkkokn" sourceRef="Gateway_0avnapl" targetRef="Activity_1x55mgq" />
-        <bpmn:serviceTask id="Activity_1v1y60m" name="查询学生&#10;分数列表">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getStudentScoreList" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0s1dydq</bpmn:incoming>
-            <bpmn:outgoing>Flow_12qm9rx</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_0s1dydq" sourceRef="Gateway_0qmo5am" targetRef="Activity_1v1y60m" />
-        <bpmn:sequenceFlow id="Flow_1wzho6a" sourceRef="Activity_1h1otxv" targetRef="Gateway_0t2t6ox" />
-        <bpmn:sequenceFlow id="Flow_12qm9rx" sourceRef="Activity_1v1y60m" targetRef="Gateway_0t2t6ox" />
-        <bpmn:serviceTask id="Activity_0itm6m7" name="组装历年成绩列表">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="assembleScoreClassInfo" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_13bf61p</bpmn:incoming>
-            <bpmn:outgoing>Flow_1wjd274</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_13bf61p" sourceRef="Gateway_0t2t6ox" targetRef="Activity_0itm6m7" />
-        <bpmn:sequenceFlow id="Flow_1enc1ri" sourceRef="Activity_1x55mgq" targetRef="Gateway_02qlo7f" />
-        <bpmn:inclusiveGateway id="Gateway_02qlo7f">
-            <bpmn:incoming>Flow_1enc1ri</bpmn:incoming>
-            <bpmn:incoming>Flow_1wjd274</bpmn:incoming>
-            <bpmn:outgoing>Flow_0j570r1</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:sequenceFlow id="Flow_1wjd274" sourceRef="Activity_0itm6m7" targetRef="Gateway_02qlo7f" />
-        <bpmn:serviceTask id="Activity_0n1ystm" name="各维度信息聚合">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getQueryScoreResponse" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0j570r1</bpmn:incoming>
-            <bpmn:outgoing>Flow_0xqzpb6</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:sequenceFlow id="Flow_0j570r1" sourceRef="Gateway_02qlo7f" targetRef="Activity_0n1ystm" />
-        <bpmn:endEvent id="Event_10baq89">
-            <bpmn:incoming>Flow_0xqzpb6</bpmn:incoming>
-        </bpmn:endEvent>
-        <bpmn:sequenceFlow id="Flow_0xqzpb6" sourceRef="Activity_0n1ystm" targetRef="Event_10baq89" />
-        <bpmn:parallelGateway id="Gateway_0t2t6ox">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="strict-mode" value="false" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1wzho6a</bpmn:incoming>
-            <bpmn:incoming>Flow_12qm9rx</bpmn:incoming>
-            <bpmn:outgoing>Flow_13bf61p</bpmn:outgoing>
-        </bpmn:parallelGateway>
-        <bpmn:startEvent id="http-student-score-query-process" name="http-student-score-query-process">
-            <bpmn:outgoing>Flow_0vunaje</bpmn:outgoing>
-        </bpmn:startEvent>
-        <bpmn:inclusiveGateway id="Gateway_1uo2slm" name="open-async">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="open-async" value="true" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0vunaje</bpmn:incoming>
-            <bpmn:outgoing>Flow_0yvlxyw</bpmn:outgoing>
-            <bpmn:outgoing>Flow_0jmtvth</bpmn:outgoing>
-            <bpmn:outgoing>Flow_0cmdo26</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:serviceTask id="Activity_0ejxw7j" name="查询学生&#10;基本信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="async-http-post" />
-                    <camunda:property name="task-params" value="{&#10;	&#34;url&#34;: &#34;http://127.0.0.1:8787/getStudentBasic&#34;,&#10;	&#34;result&#34;: {&#10;		&#34;target&#34;: &#34;var.stuBasic&#34;&#10;	},&#10;	&#34;data&#34;: {&#10;		&#34;studentId&#34;: &#34;@req.studentId&#34;&#10;	}&#10;}" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0yvlxyw</bpmn:incoming>
-            <bpmn:outgoing>Flow_1rb0hs6</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:serviceTask id="Activity_1rqsni3" name="查询学生&#10;敏感信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="async-http-post" />
-                    <camunda:property name="task-params" value="{&#10;	&#34;url&#34;: &#34;http://127.0.0.1:8787/getStudentPrivacy&#34;,&#10;	&#34;result&#34;: {&#10;		&#34;target&#34;: &#34;var.stuPrivacy&#34;&#10;	},&#10;	&#34;data&#34;: {&#10;		&#34;studentId&#34;: &#34;@req.studentId&#34;&#10;	}&#10;}" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0jmtvth</bpmn:incoming>
-            <bpmn:outgoing>Flow_0zqxhlt</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:serviceTask id="Activity_162iu9f" name="获取学生&#10;学年列表">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-params" value="{&#10;    &#34;url&#34;: &#34;http://127.0.0.1:8787/getStudyExperienceList&#34;,&#10;    &#34;result&#34;: {&#10;        &#34;target&#34;: &#34;var.stuExperienceList&#34;&#10;    },&#10;    &#34;data&#34;: {&#10;        &#34;studentId&#34;: &#34;@req.studentId&#34;&#10;    }&#10;}" />
-                    <camunda:property name="task-service" value="async-http-post" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0cmdo26</bpmn:incoming>
-            <bpmn:outgoing>Flow_1cy00dz</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:inclusiveGateway id="Gateway_0pdew5s" name="open-async">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="open-async" value="true" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1cy00dz</bpmn:incoming>
-            <bpmn:outgoing>Flow_19t2e53</bpmn:outgoing>
-            <bpmn:outgoing>Flow_1xnb7ij</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:serviceTask id="Activity_0y6walj" name="查询班级信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getClasInfoById" />
-                    <camunda:property name="ite-source" value="$.var.stuExperienceList.data[*].classId" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_19t2e53</bpmn:incoming>
-            <bpmn:outgoing>Flow_1sllern</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:inclusiveGateway id="Gateway_1q868cw">
-            <bpmn:incoming>Flow_1rb0hs6</bpmn:incoming>
-            <bpmn:incoming>Flow_0zqxhlt</bpmn:incoming>
-            <bpmn:outgoing>Flow_0vnsu6x</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:serviceTask id="Activity_1oafiv6" name="装配学生信息">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="assembleStudentInfo" />
-                    <camunda:property name="task-params" value="{&#10;	&#34;studentBasic&#34;: &#34;@var.stuBasic.data&#34;,&#10;	&#34;studentPrivacy&#34;: &#34;@var.stuPrivacy.data&#34;,&#10;}" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0vnsu6x</bpmn:incoming>
-            <bpmn:outgoing>Flow_0ugcdao</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:serviceTask id="Activity_11a82rj" name="查询学生&#10;分数列表">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="async-http-post" />
-                    <camunda:property name="task-params" value="{&#10;    &#34;url&#34;: &#34;http://127.0.0.1:8787/getStudentScoreList&#34;,&#10;    &#34;result&#34;: {&#10;        &#34;target&#34;: &#34;var.scoInfos&#34;&#10;    },&#10;    &#34;data&#34;: {&#10;        &#34;studyExperienceList&#34;: &#34;@var.stuExperienceList.data&#34;&#10;    }&#10;}" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1xnb7ij</bpmn:incoming>
-            <bpmn:outgoing>Flow_0n5pe4w</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:serviceTask id="Activity_1muyefu" name="组装历年成绩列表">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="assembleScoreClassInfo" />
-                    <camunda:property name="task-params" value="{&#10;    &#34;scoreInfos&#34;:&#34;@var.scoInfos.data&#34;&#10;}" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0mrpdcn</bpmn:incoming>
-            <bpmn:outgoing>Flow_18j7yfr</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:inclusiveGateway id="Gateway_1d8x7x1">
-            <bpmn:incoming>Flow_0ugcdao</bpmn:incoming>
-            <bpmn:incoming>Flow_18j7yfr</bpmn:incoming>
-            <bpmn:outgoing>Flow_0xf9ndl</bpmn:outgoing>
-        </bpmn:inclusiveGateway>
-        <bpmn:serviceTask id="Activity_0d0lfx2" name="各维度信息聚合">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="task-service" value="getQueryScoreResponse" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_0xf9ndl</bpmn:incoming>
-            <bpmn:outgoing>Flow_09wr9ua</bpmn:outgoing>
-        </bpmn:serviceTask>
-        <bpmn:endEvent id="Event_1oqrgz1">
-            <bpmn:incoming>Flow_09wr9ua</bpmn:incoming>
-        </bpmn:endEvent>
-        <bpmn:parallelGateway id="Gateway_0poxe23">
-            <bpmn:extensionElements>
-                <camunda:properties>
-                    <camunda:property name="strict-mode" value="false" />
-                </camunda:properties>
-            </bpmn:extensionElements>
-            <bpmn:incoming>Flow_1sllern</bpmn:incoming>
-            <bpmn:incoming>Flow_0n5pe4w</bpmn:incoming>
-            <bpmn:outgoing>Flow_0mrpdcn</bpmn:outgoing>
-        </bpmn:parallelGateway>
-        <bpmn:sequenceFlow id="Flow_0vunaje" sourceRef="http-student-score-query-process" targetRef="Gateway_1uo2slm" />
-        <bpmn:sequenceFlow id="Flow_0yvlxyw" sourceRef="Gateway_1uo2slm" targetRef="Activity_0ejxw7j" />
-        <bpmn:sequenceFlow id="Flow_0jmtvth" sourceRef="Gateway_1uo2slm" targetRef="Activity_1rqsni3" />
-        <bpmn:sequenceFlow id="Flow_0cmdo26" name="if（need-score-list）" sourceRef="Gateway_1uo2slm" targetRef="Activity_162iu9f">
-            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">req.needScore</bpmn:conditionExpression>
-        </bpmn:sequenceFlow>
-        <bpmn:sequenceFlow id="Flow_1rb0hs6" sourceRef="Activity_0ejxw7j" targetRef="Gateway_1q868cw" />
-        <bpmn:sequenceFlow id="Flow_0zqxhlt" sourceRef="Activity_1rqsni3" targetRef="Gateway_1q868cw" />
-        <bpmn:sequenceFlow id="Flow_1cy00dz" sourceRef="Activity_162iu9f" targetRef="Gateway_0pdew5s" />
-        <bpmn:sequenceFlow id="Flow_19t2e53" sourceRef="Gateway_0pdew5s" targetRef="Activity_0y6walj" />
-        <bpmn:sequenceFlow id="Flow_1xnb7ij" sourceRef="Gateway_0pdew5s" targetRef="Activity_11a82rj" />
-        <bpmn:sequenceFlow id="Flow_1sllern" sourceRef="Activity_0y6walj" targetRef="Gateway_0poxe23" />
-        <bpmn:sequenceFlow id="Flow_0vnsu6x" sourceRef="Gateway_1q868cw" targetRef="Activity_1oafiv6" />
-        <bpmn:sequenceFlow id="Flow_0ugcdao" sourceRef="Activity_1oafiv6" targetRef="Gateway_1d8x7x1" />
-        <bpmn:sequenceFlow id="Flow_0n5pe4w" sourceRef="Activity_11a82rj" targetRef="Gateway_0poxe23" />
-        <bpmn:sequenceFlow id="Flow_0mrpdcn" sourceRef="Gateway_0poxe23" targetRef="Activity_1muyefu" />
-        <bpmn:sequenceFlow id="Flow_18j7yfr" sourceRef="Activity_1muyefu" targetRef="Gateway_1d8x7x1" />
-        <bpmn:sequenceFlow id="Flow_0xf9ndl" sourceRef="Gateway_1d8x7x1" targetRef="Activity_0d0lfx2" />
-        <bpmn:sequenceFlow id="Flow_09wr9ua" sourceRef="Activity_0d0lfx2" targetRef="Event_1oqrgz1" />
-    </bpmn:process>
-    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1693841776073">
-            <bpmndi:BPMNShape id="Event_1hogd19_di" bpmnElement="student-score-query-process">
-                <dc:Bounds x="472" y="352" width="36" height="36" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="455" y="395" width="71" height="27" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Gateway_14n8u9x_di" bpmnElement="Gateway_0moclik">
-                <dc:Bounds x="565" y="345" width="50" height="50" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="531" y="323" width="57" height="14" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_1tuuink_di" bpmnElement="Activity_1tuuink">
-                <dc:Bounds x="700" y="210" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_1lzcrrr_di" bpmnElement="Activity_1lzcrrr">
-                <dc:Bounds x="700" y="330" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_0q5ad88_di" bpmnElement="Activity_0q5ad88">
-                <dc:Bounds x="700" y="450" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Gateway_0zrnaip_di" bpmnElement="Gateway_0qmo5am">
-                <dc:Bounds x="885" y="465" width="50" height="50" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="841" y="503" width="58" height="14" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_1h1otxv_di" bpmnElement="Activity_1h1otxv">
-                <dc:Bounds x="1020" y="380" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Gateway_0czbbir_di" bpmnElement="Gateway_0avnapl">
-                <dc:Bounds x="885" y="285" width="50" height="50" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_1x55mgq_di" bpmnElement="Activity_1x55mgq">
-                <dc:Bounds x="1020" y="270" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_1v1y60m_di" bpmnElement="Activity_1v1y60m">
-                <dc:Bounds x="1020" y="520" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_0itm6m7_di" bpmnElement="Activity_0itm6m7">
-                <dc:Bounds x="1300" y="450" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Gateway_1idihhs_di" bpmnElement="Gateway_02qlo7f">
-                <dc:Bounds x="1325" y="285" width="50" height="50" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_0n1ystm_di" bpmnElement="Activity_0n1ystm">
-                <dc:Bounds x="1420" y="270" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Event_10baq89_di" bpmnElement="Event_10baq89">
-                <dc:Bounds x="1562" y="292" width="36" height="36" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Gateway_15pnn6p_di" bpmnElement="Gateway_0t2t6ox">
-                <dc:Bounds x="1205" y="465" width="50" height="50" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_1cbmd4f" bpmnElement="http-student-score-query-process">
-                <dc:Bounds x="462" y="782" width="36" height="36" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="450" y="825" width="62" height="40" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_01jb7jt" bpmnElement="Gateway_1uo2slm">
-                <dc:Bounds x="555" y="775" width="50" height="50" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="521" y="753" width="57" height="14" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_11u63te" bpmnElement="Activity_0ejxw7j">
-                <dc:Bounds x="690" y="640" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_0k3qemz" bpmnElement="Activity_1rqsni3">
-                <dc:Bounds x="690" y="760" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_1f2jzbj" bpmnElement="Activity_162iu9f">
-                <dc:Bounds x="690" y="880" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_0w854d0" bpmnElement="Gateway_0pdew5s">
-                <dc:Bounds x="875" y="895" width="50" height="50" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="832" y="933" width="57" height="14" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_078h2vv" bpmnElement="Activity_0y6walj">
-                <dc:Bounds x="1010" y="810" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_0i9hlmy" bpmnElement="Gateway_1q868cw">
-                <dc:Bounds x="875" y="715" width="50" height="50" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_1du9ccq" bpmnElement="Activity_1oafiv6">
-                <dc:Bounds x="1010" y="700" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_1mtnmgt" bpmnElement="Activity_11a82rj">
-                <dc:Bounds x="1010" y="950" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_1bnl2xz" bpmnElement="Activity_1muyefu">
-                <dc:Bounds x="1290" y="880" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_05g2651" bpmnElement="Gateway_1d8x7x1">
-                <dc:Bounds x="1315" y="715" width="50" height="50" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_0p97evn" bpmnElement="Activity_0d0lfx2">
-                <dc:Bounds x="1410" y="700" width="100" height="80" />
-                <bpmndi:BPMNLabel />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_1rtnxp4" bpmnElement="Event_1oqrgz1">
-                <dc:Bounds x="1552" y="722" width="36" height="36" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="BPMNShape_0bwrfwo" bpmnElement="Gateway_0poxe23">
-                <dc:Bounds x="1195" y="895" width="50" height="50" />
-            </bpmndi:BPMNShape>
-            <bpmndi:BPMNEdge id="Flow_0b2krzf_di" bpmnElement="Flow_0b2krzf">
-                <di:waypoint x="508" y="370" />
-                <di:waypoint x="565" y="370" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0qqnx0y_di" bpmnElement="Flow_0qqnx0y">
-                <di:waypoint x="590" y="345" />
-                <di:waypoint x="590" y="250" />
-                <di:waypoint x="700" y="250" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_01w9r1f_di" bpmnElement="Flow_01w9r1f">
-                <di:waypoint x="615" y="370" />
-                <di:waypoint x="700" y="370" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_1jmfkgr_di" bpmnElement="Flow_1jmfkgr">
-                <di:waypoint x="590" y="395" />
-                <di:waypoint x="590" y="490" />
-                <di:waypoint x="700" y="490" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="582" y="496" width="76" height="27" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_1ue4j5n_di" bpmnElement="Flow_1ue4j5n">
-                <di:waypoint x="800" y="490" />
-                <di:waypoint x="885" y="490" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0lrpg9h_di" bpmnElement="Flow_0lrpg9h">
-                <di:waypoint x="910" y="465" />
-                <di:waypoint x="910" y="420" />
-                <di:waypoint x="1020" y="420" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0e0zkc5_di" bpmnElement="Flow_0e0zkc5">
-                <di:waypoint x="800" y="250" />
-                <di:waypoint x="910" y="250" />
-                <di:waypoint x="910" y="285" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0dhxv11_di" bpmnElement="Flow_0dhxv11">
-                <di:waypoint x="800" y="370" />
-                <di:waypoint x="910" y="370" />
-                <di:waypoint x="910" y="335" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_1bkkokn_di" bpmnElement="Flow_1bkkokn">
-                <di:waypoint x="935" y="310" />
-                <di:waypoint x="1020" y="310" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0s1dydq_di" bpmnElement="Flow_0s1dydq">
-                <di:waypoint x="910" y="515" />
-                <di:waypoint x="910" y="560" />
-                <di:waypoint x="1020" y="560" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_1wzho6a_di" bpmnElement="Flow_1wzho6a">
-                <di:waypoint x="1120" y="420" />
-                <di:waypoint x="1230" y="420" />
-                <di:waypoint x="1230" y="465" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_12qm9rx_di" bpmnElement="Flow_12qm9rx">
-                <di:waypoint x="1120" y="560" />
-                <di:waypoint x="1230" y="560" />
-                <di:waypoint x="1230" y="515" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_13bf61p_di" bpmnElement="Flow_13bf61p">
-                <di:waypoint x="1255" y="490" />
-                <di:waypoint x="1300" y="490" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_1enc1ri_di" bpmnElement="Flow_1enc1ri">
-                <di:waypoint x="1120" y="310" />
-                <di:waypoint x="1325" y="310" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_1wjd274_di" bpmnElement="Flow_1wjd274">
-                <di:waypoint x="1350" y="450" />
-                <di:waypoint x="1350" y="335" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0j570r1_di" bpmnElement="Flow_0j570r1">
-                <di:waypoint x="1375" y="310" />
-                <di:waypoint x="1420" y="310" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="Flow_0xqzpb6_di" bpmnElement="Flow_0xqzpb6">
-                <di:waypoint x="1520" y="310" />
-                <di:waypoint x="1562" y="310" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_19spi52" bpmnElement="Flow_0vunaje">
-                <di:waypoint x="498" y="800" />
-                <di:waypoint x="555" y="800" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_1el6aqn" bpmnElement="Flow_0yvlxyw">
-                <di:waypoint x="580" y="775" />
-                <di:waypoint x="580" y="680" />
-                <di:waypoint x="690" y="680" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0f0fcfa" bpmnElement="Flow_0jmtvth">
-                <di:waypoint x="605" y="800" />
-                <di:waypoint x="690" y="800" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0rpwqbd" bpmnElement="Flow_0cmdo26">
-                <di:waypoint x="580" y="825" />
-                <di:waypoint x="580" y="920" />
-                <di:waypoint x="690" y="920" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="572" y="926" width="76" height="27" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_13gy7d7" bpmnElement="Flow_1rb0hs6">
-                <di:waypoint x="790" y="680" />
-                <di:waypoint x="900" y="680" />
-                <di:waypoint x="900" y="715" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_09aaq6v" bpmnElement="Flow_0zqxhlt">
-                <di:waypoint x="790" y="800" />
-                <di:waypoint x="900" y="800" />
-                <di:waypoint x="900" y="765" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_1kiaqx9" bpmnElement="Flow_1cy00dz">
-                <di:waypoint x="790" y="920" />
-                <di:waypoint x="875" y="920" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_1gg9blz" bpmnElement="Flow_19t2e53">
-                <di:waypoint x="900" y="895" />
-                <di:waypoint x="900" y="850" />
-                <di:waypoint x="1010" y="850" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_06t1xyx" bpmnElement="Flow_1xnb7ij">
-                <di:waypoint x="900" y="945" />
-                <di:waypoint x="900" y="990" />
-                <di:waypoint x="1010" y="990" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_1ggv490" bpmnElement="Flow_1sllern">
-                <di:waypoint x="1110" y="850" />
-                <di:waypoint x="1220" y="850" />
-                <di:waypoint x="1220" y="895" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0u9a97z" bpmnElement="Flow_0vnsu6x">
-                <di:waypoint x="925" y="740" />
-                <di:waypoint x="1010" y="740" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0ab4qhw" bpmnElement="Flow_0ugcdao">
-                <di:waypoint x="1110" y="740" />
-                <di:waypoint x="1315" y="740" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0i2y8ft" bpmnElement="Flow_0n5pe4w">
-                <di:waypoint x="1110" y="990" />
-                <di:waypoint x="1220" y="990" />
-                <di:waypoint x="1220" y="945" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_1v7zr0b" bpmnElement="Flow_0mrpdcn">
-                <di:waypoint x="1245" y="920" />
-                <di:waypoint x="1290" y="920" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_10cjljr" bpmnElement="Flow_18j7yfr">
-                <di:waypoint x="1340" y="880" />
-                <di:waypoint x="1340" y="765" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0h3cyr0" bpmnElement="Flow_0xf9ndl">
-                <di:waypoint x="1365" y="740" />
-                <di:waypoint x="1410" y="740" />
-            </bpmndi:BPMNEdge>
-            <bpmndi:BPMNEdge id="BPMNEdge_0pa26op" bpmnElement="Flow_09wr9ua">
-                <di:waypoint x="1510" y="740" />
-                <di:waypoint x="1552" y="740" />
-            </bpmndi:BPMNEdge>
-        </bpmndi:BPMNPlane>
-    </bpmndi:BPMNDiagram>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_0001" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0">
+  <bpmn:process id="Process_1693841776073" name="业务流程_1693841776073" isExecutable="true">
+    <bpmn:startEvent id="student-score-query-process" name="student-score-query-process">
+      <bpmn:outgoing>Flow_0b2krzf</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0b2krzf" sourceRef="student-score-query-process" targetRef="Gateway_0moclik" />
+    <bpmn:inclusiveGateway id="Gateway_0moclik" name="open-async">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="open-async" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0b2krzf</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qqnx0y</bpmn:outgoing>
+      <bpmn:outgoing>Flow_01w9r1f</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1jmfkgr</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:serviceTask id="Activity_1tuuink" name="查询学生&#10;基本信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getStudentBasic" />
+          <camunda:property name="task-component" value="studentScoreService" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0qqnx0y</bpmn:incoming>
+      <bpmn:outgoing>Flow_13qdq4v</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0qqnx0y" sourceRef="Gateway_0moclik" targetRef="Activity_1tuuink" />
+    <bpmn:serviceTask id="Activity_1lzcrrr" name="查询学生&#10;敏感信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-component" value="studentScoreService" />
+          <camunda:property name="task-service" value="getStudentPrivacy" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01w9r1f</bpmn:incoming>
+      <bpmn:outgoing>Flow_1c370mu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_01w9r1f" sourceRef="Gateway_0moclik" targetRef="Activity_1lzcrrr" />
+    <bpmn:serviceTask id="Activity_0q5ad88" name="获取学生&#10;学年列表">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getStudyExperienceList" />
+          <camunda:property name="task-property" value="{&#10;    &#34;result-converter&#34;: &#34;object_to_long_list&#34;,&#10;    &#34;return-target&#34;: &#34;var.classIds&#34;&#10;}&#10;" />
+          <camunda:property name="c-jscript" value="var classIds = [];&#10;for (var i = 0; i&#60; kvar.studyExperienceList.length; i++)&#10;{&#10;    classIds.push(kvar.studyExperienceList[i].classId);&#10;}&#10;return JSON.stringify(classIds)" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1jmfkgr</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ue4j5n</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1jmfkgr" name="if（need-score-list）" sourceRef="Gateway_0moclik" targetRef="Activity_0q5ad88">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">req.needScore</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1ue4j5n" sourceRef="Activity_0q5ad88" targetRef="Gateway_0qmo5am" />
+    <bpmn:inclusiveGateway id="Gateway_0qmo5am" name="open-async">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="open-async" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ue4j5n</bpmn:incoming>
+      <bpmn:outgoing>Flow_0lrpg9h</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0s1dydq</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:serviceTask id="Activity_1h1otxv" name="查询班级信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getClasInfoById" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0lrpg9h</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ag23ef</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0lrpg9h" sourceRef="Gateway_0qmo5am" targetRef="Activity_1h1otxv" />
+    <bpmn:serviceTask id="Activity_1x55mgq" name="装配学生信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="assembleStudentInfo" />
+          <camunda:property name="task-component" value="studentScoreService" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_13qdq4v</bpmn:incoming>
+      <bpmn:incoming>Flow_1c370mu</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ki887a</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1v1y60m" name="查询学生&#10;分数列表">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getStudentScoreList" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0s1dydq</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ef0dtj</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0s1dydq" sourceRef="Gateway_0qmo5am" targetRef="Activity_1v1y60m" />
+    <bpmn:serviceTask id="Activity_0itm6m7" name="组装历年成绩列表">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="assembleScoreClassInfo" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ag23ef</bpmn:incoming>
+      <bpmn:incoming>Flow_0ef0dtj</bpmn:incoming>
+      <bpmn:outgoing>Flow_1wjd274</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1wjd274" sourceRef="Activity_0itm6m7" targetRef="Activity_0n1ystm" />
+    <bpmn:serviceTask id="Activity_0n1ystm" name="各维度信息聚合">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getQueryScoreResponse" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1wjd274</bpmn:incoming>
+      <bpmn:incoming>Flow_1ki887a</bpmn:incoming>
+      <bpmn:outgoing>Flow_0xqzpb6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_10baq89">
+      <bpmn:incoming>Flow_0xqzpb6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0xqzpb6" sourceRef="Activity_0n1ystm" targetRef="Event_10baq89" />
+    <bpmn:startEvent id="http-student-score-query-process" name="http-student-score-query-process">
+      <bpmn:outgoing>Flow_0vunaje</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:inclusiveGateway id="Gateway_1uo2slm" name="open-async">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="open-async" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0vunaje</bpmn:incoming>
+      <bpmn:outgoing>Flow_0yvlxyw</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0jmtvth</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0cmdo26</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:serviceTask id="Activity_0ejxw7j" name="查询学生&#10;基本信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="async-http-post" />
+          <camunda:property name="task-params" value="{&#10;	&#34;url&#34;: &#34;http://127.0.0.1:8787/getStudentBasic&#34;,&#10;	&#34;result&#34;: {&#10;		&#34;target&#34;: &#34;var.stuBasic&#34;&#10;	},&#10;	&#34;data&#34;: {&#10;		&#34;studentId&#34;: &#34;@req.studentId&#34;&#10;	}&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0yvlxyw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0s481tz</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1rqsni3" name="查询学生&#10;敏感信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="async-http-post" />
+          <camunda:property name="task-params" value="{&#10;	&#34;url&#34;: &#34;http://127.0.0.1:8787/getStudentPrivacy&#34;,&#10;	&#34;result&#34;: {&#10;		&#34;target&#34;: &#34;var.stuPrivacy&#34;&#10;	},&#10;	&#34;data&#34;: {&#10;		&#34;studentId&#34;: &#34;@req.studentId&#34;&#10;	}&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0jmtvth</bpmn:incoming>
+      <bpmn:outgoing>Flow_0m5pkr1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_162iu9f" name="获取学生&#10;学年列表">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-params" value="{&#10;    &#34;url&#34;: &#34;http://127.0.0.1:8787/getStudyExperienceList&#34;,&#10;    &#34;result&#34;: {&#10;        &#34;target&#34;: &#34;var.stuExperienceList&#34;&#10;    },&#10;    &#34;data&#34;: {&#10;        &#34;studentId&#34;: &#34;@req.studentId&#34;&#10;    }&#10;}" />
+          <camunda:property name="task-service" value="async-http-post" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0cmdo26</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cy00dz</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:inclusiveGateway id="Gateway_0pdew5s" name="open-async">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="open-async" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1cy00dz</bpmn:incoming>
+      <bpmn:outgoing>Flow_19t2e53</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1xnb7ij</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:serviceTask id="Activity_0y6walj" name="查询班级信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getClasInfoById" />
+          <camunda:property name="ite-source" value="$.var.stuExperienceList.data[*].classId" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_19t2e53</bpmn:incoming>
+      <bpmn:outgoing>Flow_131bhhq</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1oafiv6" name="装配学生信息">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="assembleStudentInfo" />
+          <camunda:property name="task-params" value="{&#10;	&#34;studentBasic&#34;: &#34;@var.stuBasic.data&#34;,&#10;	&#34;studentPrivacy&#34;: &#34;@var.stuPrivacy.data&#34;,&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0s481tz</bpmn:incoming>
+      <bpmn:incoming>Flow_0m5pkr1</bpmn:incoming>
+      <bpmn:outgoing>Flow_1s9q9ps</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_11a82rj" name="查询学生&#10;分数列表">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="async-http-post" />
+          <camunda:property name="task-params" value="{&#10;    &#34;url&#34;: &#34;http://127.0.0.1:8787/getStudentScoreList&#34;,&#10;    &#34;result&#34;: {&#10;        &#34;target&#34;: &#34;var.scoInfos&#34;&#10;    },&#10;    &#34;data&#34;: {&#10;        &#34;studyExperienceList&#34;: &#34;@var.stuExperienceList.data&#34;&#10;    }&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1xnb7ij</bpmn:incoming>
+      <bpmn:outgoing>Flow_18532tm</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1muyefu" name="组装历年成绩列表">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="assembleScoreClassInfo" />
+          <camunda:property name="task-params" value="{&#10;    &#34;scoreInfos&#34;:&#34;@var.scoInfos.data&#34;&#10;}" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_131bhhq</bpmn:incoming>
+      <bpmn:incoming>Flow_18532tm</bpmn:incoming>
+      <bpmn:outgoing>Flow_0zdst2w</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0d0lfx2" name="各维度信息聚合">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="task-service" value="getQueryScoreResponse" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1s9q9ps</bpmn:incoming>
+      <bpmn:incoming>Flow_0zdst2w</bpmn:incoming>
+      <bpmn:outgoing>Flow_09wr9ua</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_1oqrgz1">
+      <bpmn:incoming>Flow_09wr9ua</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0vunaje" sourceRef="http-student-score-query-process" targetRef="Gateway_1uo2slm" />
+    <bpmn:sequenceFlow id="Flow_0yvlxyw" sourceRef="Gateway_1uo2slm" targetRef="Activity_0ejxw7j" />
+    <bpmn:sequenceFlow id="Flow_0jmtvth" sourceRef="Gateway_1uo2slm" targetRef="Activity_1rqsni3" />
+    <bpmn:sequenceFlow id="Flow_0cmdo26" name="if（need-score-list）" sourceRef="Gateway_1uo2slm" targetRef="Activity_162iu9f">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">req.needScore</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1cy00dz" sourceRef="Activity_162iu9f" targetRef="Gateway_0pdew5s" />
+    <bpmn:sequenceFlow id="Flow_19t2e53" sourceRef="Gateway_0pdew5s" targetRef="Activity_0y6walj" />
+    <bpmn:sequenceFlow id="Flow_1xnb7ij" sourceRef="Gateway_0pdew5s" targetRef="Activity_11a82rj" />
+    <bpmn:sequenceFlow id="Flow_09wr9ua" sourceRef="Activity_0d0lfx2" targetRef="Event_1oqrgz1" />
+    <bpmn:sequenceFlow id="Flow_1ki887a" sourceRef="Activity_1x55mgq" targetRef="Activity_0n1ystm" />
+    <bpmn:sequenceFlow id="Flow_13qdq4v" sourceRef="Activity_1tuuink" targetRef="Activity_1x55mgq" />
+    <bpmn:sequenceFlow id="Flow_1c370mu" sourceRef="Activity_1lzcrrr" targetRef="Activity_1x55mgq" />
+    <bpmn:sequenceFlow id="Flow_1ag23ef" sourceRef="Activity_1h1otxv" targetRef="Activity_0itm6m7" />
+    <bpmn:sequenceFlow id="Flow_0ef0dtj" sourceRef="Activity_1v1y60m" targetRef="Activity_0itm6m7" />
+    <bpmn:sequenceFlow id="Flow_1s9q9ps" sourceRef="Activity_1oafiv6" targetRef="Activity_0d0lfx2" />
+    <bpmn:sequenceFlow id="Flow_0zdst2w" sourceRef="Activity_1muyefu" targetRef="Activity_0d0lfx2" />
+    <bpmn:sequenceFlow id="Flow_131bhhq" sourceRef="Activity_0y6walj" targetRef="Activity_1muyefu" />
+    <bpmn:sequenceFlow id="Flow_18532tm" sourceRef="Activity_11a82rj" targetRef="Activity_1muyefu" />
+    <bpmn:sequenceFlow id="Flow_0s481tz" sourceRef="Activity_0ejxw7j" targetRef="Activity_1oafiv6" />
+    <bpmn:sequenceFlow id="Flow_0m5pkr1" sourceRef="Activity_1rqsni3" targetRef="Activity_1oafiv6" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1693841776073">
+      <bpmndi:BPMNEdge id="BPMNEdge_0pa26op" bpmnElement="Flow_09wr9ua">
+        <di:waypoint x="1220" y="610" />
+        <di:waypoint x="1262" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_06t1xyx" bpmnElement="Flow_1xnb7ij">
+        <di:waypoint x="610" y="815" />
+        <di:waypoint x="610" y="860" />
+        <di:waypoint x="720" y="860" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1gg9blz" bpmnElement="Flow_19t2e53">
+        <di:waypoint x="610" y="765" />
+        <di:waypoint x="610" y="720" />
+        <di:waypoint x="720" y="720" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1kiaqx9" bpmnElement="Flow_1cy00dz">
+        <di:waypoint x="500" y="790" />
+        <di:waypoint x="585" y="790" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0rpwqbd" bpmnElement="Flow_0cmdo26">
+        <di:waypoint x="290" y="695" />
+        <di:waypoint x="290" y="790" />
+        <di:waypoint x="400" y="790" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="282" y="796" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0f0fcfa" bpmnElement="Flow_0jmtvth">
+        <di:waypoint x="315" y="670" />
+        <di:waypoint x="400" y="670" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1el6aqn" bpmnElement="Flow_0yvlxyw">
+        <di:waypoint x="290" y="645" />
+        <di:waypoint x="290" y="550" />
+        <di:waypoint x="400" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_19spi52" bpmnElement="Flow_0vunaje">
+        <di:waypoint x="208" y="670" />
+        <di:waypoint x="265" y="670" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xqzpb6_di" bpmnElement="Flow_0xqzpb6">
+        <di:waypoint x="1230" y="180" />
+        <di:waypoint x="1272" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wjd274_di" bpmnElement="Flow_1wjd274">
+        <di:waypoint x="1060" y="320" />
+        <di:waypoint x="1060" y="180" />
+        <di:waypoint x="1130" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0s1dydq_di" bpmnElement="Flow_0s1dydq">
+        <di:waypoint x="620" y="385" />
+        <di:waypoint x="620" y="430" />
+        <di:waypoint x="730" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0lrpg9h_di" bpmnElement="Flow_0lrpg9h">
+        <di:waypoint x="620" y="335" />
+        <di:waypoint x="620" y="290" />
+        <di:waypoint x="730" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ue4j5n_di" bpmnElement="Flow_1ue4j5n">
+        <di:waypoint x="510" y="360" />
+        <di:waypoint x="595" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jmfkgr_di" bpmnElement="Flow_1jmfkgr">
+        <di:waypoint x="300" y="265" />
+        <di:waypoint x="300" y="360" />
+        <di:waypoint x="410" y="360" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="292" y="366" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01w9r1f_di" bpmnElement="Flow_01w9r1f">
+        <di:waypoint x="325" y="240" />
+        <di:waypoint x="410" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qqnx0y_di" bpmnElement="Flow_0qqnx0y">
+        <di:waypoint x="300" y="215" />
+        <di:waypoint x="300" y="120" />
+        <di:waypoint x="410" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0b2krzf_di" bpmnElement="Flow_0b2krzf">
+        <di:waypoint x="218" y="240" />
+        <di:waypoint x="275" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ki887a_di" bpmnElement="Flow_1ki887a">
+        <di:waypoint x="830" y="180" />
+        <di:waypoint x="1130" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13qdq4v_di" bpmnElement="Flow_13qdq4v">
+        <di:waypoint x="510" y="120" />
+        <di:waypoint x="620" y="120" />
+        <di:waypoint x="620" y="180" />
+        <di:waypoint x="730" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c370mu_di" bpmnElement="Flow_1c370mu">
+        <di:waypoint x="510" y="240" />
+        <di:waypoint x="620" y="240" />
+        <di:waypoint x="620" y="180" />
+        <di:waypoint x="730" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ag23ef_di" bpmnElement="Flow_1ag23ef">
+        <di:waypoint x="830" y="290" />
+        <di:waypoint x="920" y="290" />
+        <di:waypoint x="920" y="360" />
+        <di:waypoint x="1010" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ef0dtj_di" bpmnElement="Flow_0ef0dtj">
+        <di:waypoint x="830" y="430" />
+        <di:waypoint x="920" y="430" />
+        <di:waypoint x="920" y="360" />
+        <di:waypoint x="1010" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1s9q9ps_di" bpmnElement="Flow_1s9q9ps">
+        <di:waypoint x="820" y="610" />
+        <di:waypoint x="1120" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zdst2w_di" bpmnElement="Flow_0zdst2w">
+        <di:waypoint x="1050" y="750" />
+        <di:waypoint x="1050" y="610" />
+        <di:waypoint x="1120" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_131bhhq_di" bpmnElement="Flow_131bhhq">
+        <di:waypoint x="820" y="720" />
+        <di:waypoint x="910" y="720" />
+        <di:waypoint x="910" y="790" />
+        <di:waypoint x="1000" y="790" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18532tm_di" bpmnElement="Flow_18532tm">
+        <di:waypoint x="820" y="860" />
+        <di:waypoint x="910" y="860" />
+        <di:waypoint x="910" y="790" />
+        <di:waypoint x="1000" y="790" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0s481tz_di" bpmnElement="Flow_0s481tz">
+        <di:waypoint x="500" y="550" />
+        <di:waypoint x="610" y="550" />
+        <di:waypoint x="610" y="610" />
+        <di:waypoint x="720" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m5pkr1_di" bpmnElement="Flow_0m5pkr1">
+        <di:waypoint x="500" y="670" />
+        <di:waypoint x="610" y="670" />
+        <di:waypoint x="610" y="610" />
+        <di:waypoint x="720" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1hogd19_di" bpmnElement="student-score-query-process">
+        <dc:Bounds x="182" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="165" y="265" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_14n8u9x_di" bpmnElement="Gateway_0moclik">
+        <dc:Bounds x="275" y="215" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="241" y="193" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1tuuink_di" bpmnElement="Activity_1tuuink">
+        <dc:Bounds x="410" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lzcrrr_di" bpmnElement="Activity_1lzcrrr">
+        <dc:Bounds x="410" y="200" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0q5ad88_di" bpmnElement="Activity_0q5ad88">
+        <dc:Bounds x="410" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0zrnaip_di" bpmnElement="Gateway_0qmo5am">
+        <dc:Bounds x="595" y="335" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="551" y="373" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1h1otxv_di" bpmnElement="Activity_1h1otxv">
+        <dc:Bounds x="730" y="250" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1x55mgq_di" bpmnElement="Activity_1x55mgq">
+        <dc:Bounds x="730" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1v1y60m_di" bpmnElement="Activity_1v1y60m">
+        <dc:Bounds x="730" y="390" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0itm6m7_di" bpmnElement="Activity_0itm6m7">
+        <dc:Bounds x="1010" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0n1ystm_di" bpmnElement="Activity_0n1ystm">
+        <dc:Bounds x="1130" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_10baq89_di" bpmnElement="Event_10baq89">
+        <dc:Bounds x="1272" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1cbmd4f" bpmnElement="http-student-score-query-process">
+        <dc:Bounds x="172" y="652" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="160" y="695" width="63" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_01jb7jt" bpmnElement="Gateway_1uo2slm">
+        <dc:Bounds x="265" y="645" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="231" y="623" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_11u63te" bpmnElement="Activity_0ejxw7j">
+        <dc:Bounds x="400" y="510" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0k3qemz" bpmnElement="Activity_1rqsni3">
+        <dc:Bounds x="400" y="630" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1f2jzbj" bpmnElement="Activity_162iu9f">
+        <dc:Bounds x="400" y="750" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0w854d0" bpmnElement="Gateway_0pdew5s">
+        <dc:Bounds x="585" y="765" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="542" y="803" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_078h2vv" bpmnElement="Activity_0y6walj">
+        <dc:Bounds x="720" y="680" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1du9ccq" bpmnElement="Activity_1oafiv6">
+        <dc:Bounds x="720" y="570" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1mtnmgt" bpmnElement="Activity_11a82rj">
+        <dc:Bounds x="720" y="820" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1bnl2xz" bpmnElement="Activity_1muyefu">
+        <dc:Bounds x="1000" y="750" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0p97evn" bpmnElement="Activity_0d0lfx2">
+        <dc:Bounds x="1120" y="570" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1rtnxp4" bpmnElement="Event_1oqrgz1">
+        <dc:Bounds x="1262" y="592" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>

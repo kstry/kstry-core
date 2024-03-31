@@ -16,6 +16,7 @@ kstry:
       monitor:
         enable: true
         delay: 60000
+    open-virtual: true
   story:
     request-id: traceId
     tracking:

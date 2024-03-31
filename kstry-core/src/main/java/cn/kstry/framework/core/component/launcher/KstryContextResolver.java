@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptor;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptorRepository;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptor;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
-import cn.kstry.framework.core.engine.thread.TaskThreadPoolExecutor;
+import cn.kstry.framework.core.engine.thread.TaskServiceExecutor;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHookProcessor;
 import cn.kstry.framework.core.enums.ExecutorType;
 import cn.kstry.framework.core.kv.*;
@@ -103,21 +103,21 @@ public class KstryContextResolver extends BasicLauncher {
     }
 
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
-    @Conditional(MissingTaskThreadPoolExecutor.class)
-    public TaskThreadPoolExecutor getTaskThreadPoolExecutor() {
-        return TaskThreadPoolExecutor.buildDefaultExecutor(ExecutorType.TASK, "kstry-task-thread-pool");
+    @Conditional(MissingTaskServiceExecutor.class)
+    public TaskServiceExecutor getTaskServiceExecutor() {
+        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.TASK, "kstry-task-thread-pool");
     }
 
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
-    @Conditional(MissingMethodThreadPoolExecutor.class)
-    public TaskThreadPoolExecutor getMethodThreadPoolExecutor() {
-        return TaskThreadPoolExecutor.buildDefaultExecutor(ExecutorType.METHOD, "kstry-method-thread-pool");
+    @Conditional(MissingMethodServiceExecutor.class)
+    public TaskServiceExecutor getMethodServiceExecutor() {
+        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.METHOD, "kstry-method-thread-pool");
     }
 
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
-    @Conditional(MissingIteratorThreadPoolExecutor.class)
-    public TaskThreadPoolExecutor getIteratorThreadPoolExecutor() {
-        return TaskThreadPoolExecutor.buildDefaultExecutor(ExecutorType.ITERATOR, "kstry-iterator-thread-pool");
+    @Conditional(MissingIteratorServiceExecutor.class)
+    public TaskServiceExecutor getIteratorServiceExecutor() {
+        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.ITERATOR, "kstry-iterator-thread-pool");
     }
 
     @Bean
@@ -133,9 +133,9 @@ public class KstryContextResolver extends BasicLauncher {
 
     @Bean
     public StoryEngine getFlowEngine(StartEventContainer startEventContainer, RoleDynamicComponent roleDynamicComponent, TaskContainer taskContainer,
-                                     List<TaskThreadPoolExecutor> taskThreadPoolExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor,
+                                     List<TaskServiceExecutor> taskServiceExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor,
                                      SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor) {
-        StoryEngineModule storyEngineModule = new StoryEngineModule(taskThreadPoolExecutor, startEventContainer, taskContainer, def -> {
+        StoryEngineModule storyEngineModule = new StoryEngineModule(taskServiceExecutor, startEventContainer, taskContainer, def -> {
             AssertUtil.notNull(def);
             if (def.isSpringInitialization()) {
                 return applicationContext.getBean(def.getParamType());
@@ -148,8 +148,8 @@ public class KstryContextResolver extends BasicLauncher {
 
     @Bean
     @Conditional(ThreadPoolMonitorCondition.class)
-    public ThreadPoolMonitor getThreadPoolMonitor(List<TaskThreadPoolExecutor> taskThreadPoolExecutor) {
-        return new ThreadPoolMonitor(taskThreadPoolExecutor);
+    public ThreadPoolMonitor getThreadPoolMonitor(List<TaskServiceExecutor> taskServiceExecutor) {
+        return new ThreadPoolMonitor(taskServiceExecutor);
     }
 
     @Bean
@@ -184,37 +184,37 @@ public class KstryContextResolver extends BasicLauncher {
         return new TaskInterceptorRepository(taskInterceptorMap.values());
     }
 
-    private static class MissingTaskThreadPoolExecutor implements Condition {
+    private static class MissingTaskServiceExecutor implements Condition {
 
         @Override
         public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             if (context.getBeanFactory() == null) {
                 return false;
             }
-            Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
+            Map<String, TaskServiceExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskServiceExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.TASK).collect(Collectors.toList()));
         }
     }
 
-    private static class MissingMethodThreadPoolExecutor implements Condition {
+    private static class MissingMethodServiceExecutor implements Condition {
 
         @Override
         public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             if (context.getBeanFactory() == null) {
                 return false;
             }
-            Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
+            Map<String, TaskServiceExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskServiceExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList()));
         }
     }
 
-    private static class MissingIteratorThreadPoolExecutor implements Condition {
+    private static class MissingIteratorServiceExecutor implements Condition {
         @Override
         public boolean matches(ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             if (context.getBeanFactory() == null) {
                 return false;
             }
-            Map<String, TaskThreadPoolExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskThreadPoolExecutor.class);
+            Map<String, TaskServiceExecutor> beansOfType = context.getBeanFactory().getBeansOfType(TaskServiceExecutor.class);
             return CollectionUtils.isEmpty(beansOfType.values().stream().filter(b -> b.getExecutorType() == ExecutorType.ITERATOR).collect(Collectors.toList()));
         }
     }

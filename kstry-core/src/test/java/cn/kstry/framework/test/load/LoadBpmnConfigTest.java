@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.ResourceException;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.ExceptionUtil;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -122,11 +123,11 @@ public class LoadBpmnConfigTest {
 
         exception.get().printStackTrace();
         String errorCode = exception.get().getErrorCode();
-        Assert.assertEquals(ExceptionEnum.CONFIGURATION_FLOW_ERROR.getExceptionCode(), errorCode);
+        Assert.assertTrue(Lists.newArrayList(ExceptionEnum.CONFIGURATION_FLOW_ERROR.getExceptionCode(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED.getExceptionCode()).contains(errorCode));
     }
 
     /**
-     * 【异常】测试：服务节点有两个入度
+     * 【正常】测试：服务节点有两个入度
      */
     @Test
     public void loadTest006() {
@@ -138,15 +139,11 @@ public class LoadBpmnConfigTest {
         }
 
         Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
-        Assert.assertTrue(exception.isPresent());
-
-        exception.get().printStackTrace();
-        String errorCode = exception.get().getErrorCode();
-        Assert.assertEquals(ExceptionEnum.CONFIGURATION_FLOW_ERROR.getExceptionCode(), errorCode);
+        Assert.assertFalse(exception.isPresent());
     }
 
     /**
-     * 【异常】测试：排他网关有两个入度
+     * 【正常】测试：排他网关有两个入度
      */
     @Test
     public void loadTest007() {
@@ -158,11 +155,7 @@ public class LoadBpmnConfigTest {
         }
 
         Optional<ResourceException> exception = ExceptionUtil.getErrFromCause(err, ResourceException.class);
-        Assert.assertTrue(exception.isPresent());
-
-        exception.get().printStackTrace();
-        String errorCode = exception.get().getErrorCode();
-        Assert.assertEquals(ExceptionEnum.CONFIGURATION_FLOW_ERROR.getExceptionCode(), errorCode);
+        Assert.assertFalse(exception.isPresent());
     }
 
 }

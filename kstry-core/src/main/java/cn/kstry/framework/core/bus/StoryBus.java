@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.role.Role;
 
 import java.util.Optional;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * StoryBus
@@ -122,7 +122,7 @@ public interface StoryBus {
     /**
      * 获取当前任务使用的自定义任务执行器
      */
-    ThreadPoolExecutor getStoryExecutor();
+    ExecutorService getStoryExecutor();
 
     /**
      * 距离最后期限的剩余时间

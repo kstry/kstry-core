@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2020-2023, Lykan (jiashuomeng@gmail.com).
+ *  * Copyright (c) 2020-2024, Lykan (jiashuomeng@gmail.com).
  *  * <p>
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -127,6 +127,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         Set<String> circularDependencyCheck = Sets.newHashSet();
         Map<String, Integer> comingCountMap = Maps.newHashMap();
         Map<ProcessLink, ProcessLink> inclusiveProcessLinkMap = Maps.newHashMap();
+        Map<String, InclusiveJoinPoint> joinAssistMap = Maps.newHashMap();
         Map<String, ProcessLink> nextBpmnLinkMap = Maps.newHashMap();
         nextBpmnLinkMap.put(jsonStartEvent.getId(), processLink);
         InStack<JsonNode> basicInStack = new BasicInStack<>();
@@ -185,22 +186,33 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     beforeProcessLink.nextInclusive(sequenceFlowMapping(config, nextNode), (InclusiveJoinPoint) inclusiveProcessLink);
                     nextBpmnLinkMap.put(targetNode.getId(), inclusiveProcessLink);
                 } else if (BpmnTypeEnum.EXCLUSIVE_GATEWAY.is(targetNode.getType())) {
-                    ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, true);
-                    SequenceFlow sf = sequenceFlowMapping(config, nextNode);
-                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, serviceTask, sf, beforeProcessLink);
-                    if (nextProcessLink != beforeProcessLink) {
+                    MergeIncomingRes mergeRes = tryMergeIncoming(jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
+                    if (mergeRes.isSkip) {
+                        continue;
+                    }
+                    SequenceFlow sf = mergeRes.sf;
+                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, getServiceTask(targetNode, config, true), sf, mergeRes.processLink);
+                    if (nextProcessLink != mergeRes.processLink) {
                         sf = buildSequenceFlow(targetNode.getId());
                     }
                     nextProcessLink = nextProcessLink.nextExclusive(targetNode.getId(), sf).build();
                     nextBpmnLinkMap.put(targetNode.getId(), nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (BpmnTypeEnum.SERVICE_TASK.is(targetNode.getType())) {
+                    MergeIncomingRes mergeRes = tryMergeIncoming(jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
+                    if (mergeRes.isSkip) {
+                        continue;
+                    }
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, false);
-                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, sequenceFlowMapping(config, nextNode), beforeProcessLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, mergeRes.sf, mergeRes.processLink);
                     nextBpmnLinkMap.put(targetNode.getId(), nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (BpmnTypeEnum.SUB_PROCESS.is(targetNode.getType())) {
-                    SubProcessBuilder subProcessBuilder = beforeProcessLink.nextSubProcess(sequenceFlowMapping(config, nextNode), targetNode.getCallSubProcessId());
+                    MergeIncomingRes mergeRes = tryMergeIncoming(jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
+                    if (mergeRes.isSkip) {
+                        continue;
+                    }
+                    SubProcessBuilder subProcessBuilder = mergeRes.processLink.nextSubProcess(mergeRes.sf, targetNode.getCallSubProcessId());
                     fillIterableProperty(config, targetNode, subProcessBuilder::iterable);
                     ElementPropertyUtil.getJsonNodeProperty(targetNode,
                             BpmnElementProperties.TASK_STRICT_MODE).map(BooleanUtils::toBooleanObject).filter(b -> !b).ifPresent(b -> subProcessBuilder.notStrictMode());
@@ -227,6 +239,23 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 }
             }
         }
+    }
+
+    private MergeIncomingRes tryMergeIncoming(JsonProcess jsonProcess, StartProcessLink processLink, ConfigResource config,
+                                              JsonNode nextNode, JsonNode targetNode, Map<String, InclusiveJoinPoint> joinAssistMap, ProcessLink beforeProcessLink) {
+        MergeIncomingRes res = new MergeIncomingRes();
+        long incomingCount = jsonProcess.getJsonNodes().stream().filter(n -> CollectionUtils.isNotEmpty(n.getNextNodes()) && n.getNextNodes().contains(targetNode.getId())).count();
+        if (incomingCount <= 1) {
+            res.isSkip = false;
+            res.sf = sequenceFlowMapping(config, nextNode);
+            res.processLink = beforeProcessLink;
+            return res;
+        }
+        InclusiveJoinPoint mockInclusive = joinAssistMap.computeIfAbsent(targetNode.getId(), n -> processLink.inclusive().build());
+        res.processLink = beforeProcessLink.nextInclusive(sequenceFlowMapping(config, nextNode), mockInclusive);
+        res.isSkip = mockInclusive.getElement().comingList().size() < incomingCount;
+        res.sf = buildSequenceFlow(targetNode.getId());
+        return res;
     }
 
     private boolean isBpmnSupportAggregation(JsonNode targetNode) {
@@ -420,5 +449,11 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         List<String> duplicateIdList = jsonNodes.stream().map(JsonNode::getId).collect(Collectors.toMap(e -> e, e -> 1, Integer::sum))
                 .entrySet().stream().filter(e -> e.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toList());
         AssertUtil.isEmpty(duplicateIdList, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "Node ids in the same process are not allowed to be repeated. ids: {}, fileName: {}", duplicateIdList, config.getConfigName());
+    }
+
+    private static class MergeIncomingRes {
+        private SequenceFlow sf;
+        private boolean isSkip;
+        private ProcessLink processLink;
     }
 }

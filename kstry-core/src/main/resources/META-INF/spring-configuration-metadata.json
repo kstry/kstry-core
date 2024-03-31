@@ -75,6 +75,11 @@
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
     "description": "Thread Pool shutdown 失败之后，再 shutdownNow 之后的等待时间，单位：ms，默认：5000"
   }, {
+    "name": "kstry.thread.open-virtual",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "使用JDK21+时，可以使用该参数开启虚拟线程"
+  }, {
     "name": "kstry.converter.date-format",
     "type": "java.lang.String",
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",

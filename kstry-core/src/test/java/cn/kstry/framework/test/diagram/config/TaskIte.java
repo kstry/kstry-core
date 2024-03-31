@@ -7,6 +7,7 @@ import cn.kstry.framework.core.engine.interceptor.IterData;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptor;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import com.alibaba.fastjson.JSON;
 import org.junit.Assert;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,8 @@ public class TaskIte {
             public Object invoke(Iter iter) {
                 ScopeDataOperator scopeDataOperator = iter.getDataOperator();
                 scopeDataOperator.setStaData("ci", 7);
+                ServiceNodeResource serviceNode = iter.getServiceNode();
+                System.out.println(JSON.toJSONString(serviceNode));
                 return iter.next();
             }
         };
