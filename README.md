@@ -10,9 +10,9 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry 流程配置台](http://kstry.cn/modeler)
 
-&nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry 使用demo](https://gitee.com/kstry/kstry-core/tree/master/kstry-flux-demo)
+&nbsp;&nbsp;&nbsp;&nbsp;🟢 [Kstry 使用demo](https://gitcode.com/kstry/kstry-core/tree/master/kstry-flux-demo)
 
-&nbsp;&nbsp;&nbsp;&nbsp;🟢 [功能测试](https://gitee.com/kstry/kstry-core/tree/master/kstry-core/src/test/java/cn/kstry/framework/test)
+&nbsp;&nbsp;&nbsp;&nbsp;🟢 [功能测试](https://gitcode.com/kstry/kstry-core/tree/master/kstry-core/src/test/java/cn/kstry/framework/test)
 
 # 为什么说Kstry是业务架构首选框架？
 
@@ -24,7 +24,7 @@
 
 [流程编排演示](http://kstry.cn/doc/specification/quick_start.html)
 
-[流程编排演示代码地址](https://gitee.com/kstry/kstry-core/tree/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo)
+[流程编排演示代码地址](https://gitcode.com/kstry/kstry-core/tree/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo)
 
 [支持动态化流程编排](http://kstry.cn/doc/specification/process_choreography.html#_2-12-%E5%8A%A8%E6%80%81%E6%B5%81%E7%A8%8B%E9%85%8D%E7%BD%AE)
 
@@ -102,7 +102,7 @@ public void testAsyncFlowDemo() {
 }
 ```
 
-[testAsyncFlowProcess](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
+[testAsyncFlowProcess](https://gitcode.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 如上所示的流程执行顺序如下：
 
@@ -150,7 +150,7 @@ public void testRuleAndFlowDemo() {
 }
 ```
 
-[testRuleAndFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
+[testRuleAndFlowDemo](https://gitcode.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 判断多个条件都满足时候执行目标动作，否则结束流程
 
@@ -158,7 +158,7 @@ public void testRuleAndFlowDemo() {
 
 ![OR逻辑](doc/img/4a307fbca5c72f84e9fb044558432b5d.png)
 
-[testRuleElseIfFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
+[testRuleElseIfFlowDemo](https://gitcode.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 排他网关有多个出度表达式被解析成true时，会选择第一个为true的分支继续向下执行，其他的将会被忽略，所以后面出度只要加上判断表达式便可以实现OR的逻辑
 
@@ -170,7 +170,7 @@ public void testRuleAndFlowDemo() {
 
 ![满足N个条件](doc/img/6e987e71c8ba092da1535c84fb805b2c.png)
 
-[testRuleCompletedCountFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
+[testRuleCompletedCountFlowDemo](https://gitcode.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 可以使用包含网关来配置当网关入度任务执行完成几个时流程便可以继续向下执行。指定的数量应该大于0且小于等于网关入度任务数
 
@@ -253,7 +253,7 @@ public class ResultProperty {
 }
 ```
 
-[HttpActionService](https://gitee.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/service/http/HttpActionService.java)
+[HttpActionService](https://gitcode.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/service/http/HttpActionService.java)
 
 **编排微服务流程：**
 
@@ -420,7 +420,7 @@ public boolean gotoSchool(int askWeek, boolean askRain, boolean askHungry) {
 // gotoSchool. askWeek: 5, askRain: false, askHungry: false
 ```
 
-[askGotoSchool](https://gitee.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/web/HttpActionController.java)
+[askGotoSchool](https://gitcode.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/web/HttpActionController.java)
 
 ## 六、数据字典
 
@@ -494,7 +494,7 @@ public Mono<R<Map<String, Object>>> scoreQuery5(@RequestBody List<String> keys) 
 }
 ```
 
-[scoreQuery5](https://gitee.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/web/StudentController.java)
+[scoreQuery5](https://gitcode.com/kstry/kstry-core/blob/master/kstry-flux-demo/kstry-flux-demo-web/src/main/java/cn/kstry/flux/demo/web/StudentController.java)
 
 &nbsp;&nbsp;&nbsp;&nbsp;🟢 `resultBuilder`是流程执行完成之后，允许对结果进行加工处理的回调函数。其中有两个参数：
 
@@ -569,7 +569,7 @@ public void testRbacFlowDemo() {
 // InnerOrderService geneOrderId...
 ```
 
-[testRbacFlowDemo](https://gitee.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
+[testRbacFlowDemo](https://gitcode.com/kstry/kstry-core/blob/master/kstry-core/src/test/java/cn/kstry/framework/test/demo/FlowDemoCase2Test.java)
 
 **定义扩展能力点**
 
@@ -645,7 +645,4 @@ public void testRbacFlowDemo() {
 ```
 
 执行服务节点时，如果根据角色匹配到了扩展业务会跳过默认业务点直接执行扩展业务，如果未匹配到时可以默认节点兜底
-
-## 我想为Kstry提交代码
-[代码提交步骤](https://gitee.com/kstry/kstry-core/blob/master/doc/join-and-coding.md)
 
