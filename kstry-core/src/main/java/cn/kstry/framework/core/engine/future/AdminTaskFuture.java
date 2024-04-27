@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * TaskFuture 管理类
@@ -66,6 +67,11 @@ public class AdminTaskFuture implements AdminFuture {
      */
     private final Map<String, EndTaskPedometer> endTaskPedometerMap = Maps.newConcurrentMap();
 
+    /**
+     * 锁
+     */
+    private final ReentrantLock reentrantLock = new ReentrantLock();
+
     public AdminTaskFuture(MainTaskFuture mainTaskFuture) {
         AssertUtil.notNull(mainTaskFuture);
         doAddManagedFuture(null, mainTaskFuture, mainTaskFuture.getEndTaskPedometer().getStartEventId());
@@ -73,17 +79,27 @@ public class AdminTaskFuture implements AdminFuture {
     }
 
     @Override
-    public synchronized void addManagedFuture(String parentStartEventId, FragmentFuture future, String startEventId) {
-        if (groupManagedFutureMap.get(startEventId) != null && isCancelled(startEventId)) {
-            future.cancel(startEventId);
-            return;
+    public void addManagedFuture(String parentStartEventId, FragmentFuture future, String startEventId) {
+        reentrantLock.lock();
+        try {
+            if (groupManagedFutureMap.get(startEventId) != null && isCancelled(startEventId)) {
+                future.cancel(startEventId);
+                return;
+            }
+            doAddManagedFuture(parentStartEventId, future, startEventId);
+        } finally {
+            reentrantLock.unlock();
         }
-        doAddManagedFuture(parentStartEventId, future, startEventId);
     }
 
     @Override
-    public synchronized void addManagedFuture(FragmentFuture future, String startEventId) {
-        addManagedFuture(null, future, startEventId);
+    public void addManagedFuture(FragmentFuture future, String startEventId) {
+        reentrantLock.lock();
+        try {
+            addManagedFuture(null, future, startEventId);
+        } finally {
+            reentrantLock.unlock();
+        }
     }
 
     @Override
@@ -98,68 +114,83 @@ public class AdminTaskFuture implements AdminFuture {
     }
 
     @Override
-    public synchronized boolean cancel(String startEventId) {
-        AssertUtil.notBlank(startEventId);
-        InFutureList inFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(startEventId));
-        if (inFutureList.isCancelled) {
-            return false;
-        }
-        if (inFutureList.strictMode) {
-            groupManagedFutureMap.values().forEach(inF -> {
-                inF.futureList.forEach(fs -> {
-                    if (!fs.isCancelled(startEventId)) {
-                        fs.cancel(startEventId);
-                    }
+    public boolean cancel(String startEventId) {
+        reentrantLock.lock();
+        try {
+            AssertUtil.notBlank(startEventId);
+            InFutureList inFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(startEventId));
+            if (inFutureList.isCancelled) {
+                return false;
+            }
+            if (inFutureList.strictMode) {
+                groupManagedFutureMap.values().forEach(inF -> {
+                    inF.futureList.forEach(fs -> {
+                        if (!fs.isCancelled(startEventId)) {
+                            fs.cancel(startEventId);
+                        }
+                    });
+                    inF.isCancelled = true;
                 });
-                inF.isCancelled = true;
+                return true;
+            }
+            inFutureList.isCancelled = true;
+            inFutureList.futureList.forEach(fs -> {
+                if (fs instanceof MainTaskFuture) {
+                    EndTaskPedometer endTaskPedometer = ((MainTaskFuture) fs).getEndTaskPedometer();
+                    endTaskPedometer.forceOpenLatch();
+                    cancel(endTaskPedometer.getStartEventId());
+                }
+                if (!fs.isCancelled(startEventId)) {
+                    fs.cancel(startEventId);
+                }
             });
             return true;
+        } finally {
+            reentrantLock.unlock();
         }
-        inFutureList.isCancelled = true;
-        inFutureList.futureList.forEach(fs -> {
-            if (fs instanceof MainTaskFuture) {
-                EndTaskPedometer endTaskPedometer = ((MainTaskFuture) fs).getEndTaskPedometer();
-                endTaskPedometer.forceOpenLatch();
-                cancel(endTaskPedometer.getStartEventId());
-            }
-            if (!fs.isCancelled(startEventId)) {
-                fs.cancel(startEventId);
-            }
-        });
-        return true;
     }
 
     @Override
-    public synchronized boolean isCancelled(String startEventId) {
-        AssertUtil.notBlank(startEventId);
-        InFutureList inFutureList = groupManagedFutureMap.get(startEventId);
-        return inFutureList.isCancelled;
+    public boolean isCancelled(String startEventId) {
+        reentrantLock.lock();
+        try {
+            AssertUtil.notBlank(startEventId);
+            InFutureList inFutureList = groupManagedFutureMap.get(startEventId);
+            return inFutureList.isCancelled;
+        } finally {
+            reentrantLock.unlock();
+        }
     }
 
     @Override
-    public synchronized void errorNotice(Throwable exception, String startEventId) {
-        KstryException ke = ExceptionUtil.buildException(exception, ExceptionEnum.ASYNC_TASK_ERROR, null);
-        if (Objects.equals(mainTaskFuture.getEndTaskPedometer().getStartEventId(), startEventId)) {
-            errorNotice(ke);
-            return;
-        }
-        InFutureList inFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(startEventId));
-        if (inFutureList.strictMode) {
-            errorNotice(ke);
-            return;
-        }
-        if (inFutureList.isCancelled) {
-            return;
-        }
-        ke.log(e -> LOGGER.warn("[{}] Task execution fails and exits because an exception is thrown! startEventId: {}", e.getErrorCode(), startEventId, e));
-        Optional<FragmentFuture> subProcessFutureOptional = inFutureList.futureList.stream().filter(f -> f instanceof MonoFlowFuture)
-                .filter(f -> Objects.equals(GlobalUtil.transferNotEmpty(f, MonoFlowFuture.class).getEndTaskPedometer().getStartEventId(), startEventId)).findFirst();
-        subProcessFutureOptional.map(f -> GlobalUtil.transferNotEmpty(f, MonoFlowFuture.class)).ifPresent(mf -> {
-            if (!mf.isCancelled(startEventId)) {
-                mf.taskExceptionally(exception);
+    public void errorNotice(Throwable exception, String startEventId) {
+        reentrantLock.lock();
+        try {
+            KstryException ke = ExceptionUtil.buildException(exception, ExceptionEnum.ASYNC_TASK_ERROR, null);
+            if (Objects.equals(mainTaskFuture.getEndTaskPedometer().getStartEventId(), startEventId)) {
+                errorNotice(ke);
+                return;
             }
-        });
-        cancel(startEventId);
+            InFutureList inFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(startEventId));
+            if (inFutureList.strictMode) {
+                errorNotice(ke);
+                return;
+            }
+            if (inFutureList.isCancelled) {
+                return;
+            }
+            ke.log(e -> LOGGER.warn("[{}] Task execution fails and exits because an exception is thrown! startEventId: {}", e.getErrorCode(), startEventId, e));
+            Optional<FragmentFuture> subProcessFutureOptional = inFutureList.futureList.stream().filter(f -> f instanceof MonoFlowFuture)
+                    .filter(f -> Objects.equals(GlobalUtil.transferNotEmpty(f, MonoFlowFuture.class).getEndTaskPedometer().getStartEventId(), startEventId)).findFirst();
+            subProcessFutureOptional.map(f -> GlobalUtil.transferNotEmpty(f, MonoFlowFuture.class)).ifPresent(mf -> {
+                if (!mf.isCancelled(startEventId)) {
+                    mf.taskExceptionally(exception);
+                }
+            });
+            cancel(startEventId);
+        } finally {
+            reentrantLock.unlock();
+        }
     }
 
     private void errorNotice(KstryException exception) {
@@ -186,47 +217,57 @@ public class AdminTaskFuture implements AdminFuture {
         return Optional.ofNullable(exception);
     }
 
-    private synchronized void doAddManagedFuture(String parentStartEventId, FragmentFuture future, String startEventId) {
-        AssertUtil.notTrue(future.isCancelled(startEventId));
-        AssertUtil.notBlank(startEventId);
-        if (future instanceof MonoFlowFuture) {
-            MonoFlowFuture monoFlowFuture = GlobalUtil.transferNotEmpty(future, MonoFlowFuture.class);
-            SimpleHook<MonoFlowFuture> completableFlowTaskHook = new SimpleHook<>(monoFlowFuture);
-            completableFlowTaskHook.hook(this::taskCompleted);
-            monoFlowFuture.getEndTaskPedometer().setCompletedHook(completableFlowTaskHook);
-        }
-        if (future instanceof MainTaskFuture) {
-            // EndTaskPedometer 分组保存
-            MainTaskFuture mTaskF = GlobalUtil.transferNotEmpty(future, MainTaskFuture.class);
-            EndTaskPedometer endTaskPedometer = mTaskF.getEndTaskPedometer();
-            AssertUtil.notTrue(endTaskPedometerMap.containsKey(endTaskPedometer.getStartEventId()));
-            endTaskPedometerMap.put(endTaskPedometer.getStartEventId(), endTaskPedometer);
-
-            // 子 Future 关联父 Future
-            boolean parentStrictMode = true;
-            if (StringUtils.isNotBlank(parentStartEventId)) {
-                InFutureList parentInFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(parentStartEventId));
-                parentInFutureList.futureList.add(future);
-                parentStrictMode = parentInFutureList.strictMode;
+    private void doAddManagedFuture(String parentStartEventId, FragmentFuture future, String startEventId) {
+        reentrantLock.lock();
+        try {
+            AssertUtil.notTrue(future.isCancelled(startEventId));
+            AssertUtil.notBlank(startEventId);
+            if (future instanceof MonoFlowFuture) {
+                MonoFlowFuture monoFlowFuture = GlobalUtil.transferNotEmpty(future, MonoFlowFuture.class);
+                SimpleHook<MonoFlowFuture> completableFlowTaskHook = new SimpleHook<>(monoFlowFuture);
+                completableFlowTaskHook.hook(this::taskCompleted);
+                monoFlowFuture.getEndTaskPedometer().setCompletedHook(completableFlowTaskHook);
             }
+            if (future instanceof MainTaskFuture) {
+                // EndTaskPedometer 分组保存
+                MainTaskFuture mTaskF = GlobalUtil.transferNotEmpty(future, MainTaskFuture.class);
+                EndTaskPedometer endTaskPedometer = mTaskF.getEndTaskPedometer();
+                AssertUtil.notTrue(endTaskPedometerMap.containsKey(endTaskPedometer.getStartEventId()));
+                endTaskPedometerMap.put(endTaskPedometer.getStartEventId(), endTaskPedometer);
 
-            // Future 分组保存
-            boolean parentStrictModeFinal = parentStrictMode;
-            InFutureList inFutureList = groupManagedFutureMap.computeIfAbsent(startEventId,
-                    k -> new InFutureList(parentStrictModeFinal && mTaskF.strictMode()));
-            inFutureList.futureList.add(future);
-        } else {
-            InFutureList inFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(startEventId));
-            inFutureList.futureList.add(future);
+                // 子 Future 关联父 Future
+                boolean parentStrictMode = true;
+                if (StringUtils.isNotBlank(parentStartEventId)) {
+                    InFutureList parentInFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(parentStartEventId));
+                    parentInFutureList.futureList.add(future);
+                    parentStrictMode = parentInFutureList.strictMode;
+                }
+
+                // Future 分组保存
+                boolean parentStrictModeFinal = parentStrictMode;
+                InFutureList inFutureList = groupManagedFutureMap.computeIfAbsent(startEventId,
+                        k -> new InFutureList(parentStrictModeFinal && mTaskF.strictMode()));
+                inFutureList.futureList.add(future);
+            } else {
+                InFutureList inFutureList = GlobalUtil.notNull(groupManagedFutureMap.get(startEventId));
+                inFutureList.futureList.add(future);
+            }
+            LOGGER.debug("Successfully create a task and submit it to the manager. taskName: {}", future.getTaskName());
+        } finally {
+            reentrantLock.unlock();
         }
-        LOGGER.debug("Successfully create a task and submit it to the manager. taskName: {}", future.getTaskName());
     }
 
-    private synchronized void taskCompleted(MonoFlowFuture f) {
-        if (f.isCancelled(null)) {
-            return;
+    private void taskCompleted(MonoFlowFuture f) {
+        reentrantLock.lock();
+        try {
+            if (f.isCancelled(null)) {
+                return;
+            }
+            f.taskCompleted();
+        } finally {
+            reentrantLock.unlock();
         }
-        f.taskCompleted();
     }
 
     private static class InFutureList {

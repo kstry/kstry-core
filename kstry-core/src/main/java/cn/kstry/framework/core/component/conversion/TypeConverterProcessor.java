@@ -80,10 +80,12 @@ public class TypeConverterProcessor {
 
     @SuppressWarnings("unchecked")
     public <S, T> Pair<String, T> convert(String convertName, S source, Class<T> targetType, Class<?> collGeneric) {
+        if (source instanceof Optional) {
+            source = (S) ((Optional<?>) source).orElse(null);
+        }
         if (source == null) {
             return ImmutablePair.nullPair();
         }
-
         if (StringUtils.isBlank(convertName)) {
             if (targetType == null || Objects.equals(GlobalConstant.VOID, targetType.getName())) {
                 return ImmutablePair.of(null, (T) source);

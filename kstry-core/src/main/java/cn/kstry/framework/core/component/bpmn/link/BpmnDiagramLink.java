@@ -20,6 +20,7 @@ package cn.kstry.framework.core.component.bpmn.link;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.bpmn.impl.*;
 import cn.kstry.framework.core.component.bpmn.builder.ExclusiveGatewayBuilder;
@@ -72,7 +73,7 @@ public abstract class BpmnDiagramLink {
         AssertUtil.notNull(serviceTask);
         AssertUtil.isTrue(getProcessLink() instanceof StartDiagramProcessLink, ExceptionEnum.BPMN_DIAGRAM_LINK_ERROR);
         if (StringUtils.isBlank(serviceTask.getId())) {
-            serviceTask.setId(GlobalUtil.uuid());
+            serviceTask.setId(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK));
         }
         AssertUtil.isTrue(serviceTask.validTask(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED);
         sequenceFlow.outing(serviceTask);
@@ -137,7 +138,7 @@ public abstract class BpmnDiagramLink {
 
     public ExclusiveGatewayBuilder nextExclusive(String id, SequenceFlow sequenceFlow) {
         if (StringUtils.isBlank(id)) {
-            id = GlobalUtil.uuid();
+            id = GlobalUtil.uuid(BpmnTypeEnum.EXCLUSIVE_GATEWAY);
         }
         ExclusiveGatewayImpl exclusiveGateway = new ExclusiveGatewayImpl();
         exclusiveGateway.setId(id);
@@ -211,7 +212,7 @@ public abstract class BpmnDiagramLink {
     private ServiceTaskBuilder nextTask(ProcessLink processLink, SequenceFlow sequenceFlow) {
         AssertUtil.isTrue(processLink instanceof StartDiagramProcessLink, ExceptionEnum.BPMN_DIAGRAM_LINK_ERROR);
         ServiceTaskImpl serviceTask = new ServiceTaskImpl();
-        serviceTask.setId(GlobalUtil.uuid());
+        serviceTask.setId(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK));
         sequenceFlow.outing(serviceTask);
         beforeElement().outing(sequenceFlow);
         return new ServiceTaskBuilder(serviceTask, processLink);
@@ -219,7 +220,7 @@ public abstract class BpmnDiagramLink {
 
     private SequenceFlowImpl simpleSequenceFlow() {
         SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
-        sequenceFlow.setId(GlobalUtil.uuid());
+        sequenceFlow.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW));
         sequenceFlow.setName(StringUtils.EMPTY);
         return sequenceFlow;
     }
@@ -230,7 +231,7 @@ public abstract class BpmnDiagramLink {
             return sequenceFlow;
         }
         SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(expression);
-        sequenceFlowExpression.setId(GlobalUtil.uuid());
+        sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
         sequenceFlowExpression.setName(StringUtils.EMPTY);
         sequenceFlow.setExpression(sequenceFlowExpression);
         return sequenceFlow;

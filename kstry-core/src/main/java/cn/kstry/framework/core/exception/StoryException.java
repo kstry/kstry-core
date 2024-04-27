@@ -18,7 +18,6 @@
 package cn.kstry.framework.core.exception;
 
 /**
- *
  * @author lykan
  */
 public class StoryException extends KstryException {

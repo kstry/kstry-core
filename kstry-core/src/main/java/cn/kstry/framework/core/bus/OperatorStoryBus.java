@@ -26,14 +26,17 @@ import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.PropertyUtil;
 import cn.kstry.framework.core.util.ProxyUtil;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,7 +81,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return getResult();
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, getResult()).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, getResult()).getValue()).map(t -> (T) t);
                 }
 
                 @Override
@@ -86,7 +89,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return getReqData(name);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, getReqData(name)).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, getReqData(name)).getValue()).map(t -> (T) t);
                 }
 
                 @Override
@@ -94,7 +97,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return getStaData(name);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, getStaData(name)).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, getStaData(name)).getValue()).map(t -> (T) t);
                 }
 
                 @Override
@@ -102,7 +105,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return getVarData(name);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, getVarData(name)).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, getVarData(name)).getValue()).map(t -> (T) t);
                 }
 
                 @Override
@@ -110,7 +113,20 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return getData(expression);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, getData(expression)).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, getData(expression)).getValue()).map(t -> (T) t);
+                }
+
+                @Override
+                public <T> Optional<T> getData(String expression, List<String> typeConverterList) {
+                    Optional<T> dataOptional = getData(expression);
+                    if (CollectionUtils.isEmpty(typeConverterList)) {
+                        return dataOptional;
+                    }
+                    Object r = dataOptional;
+                    for (String typeConverter : typeConverterList) {
+                        r = typeConverterProcessor.convert(typeConverter, r).getValue();
+                    }
+                    return GlobalUtil.getResOptional(r).map(t -> (T) t);
                 }
 
                 @Override
@@ -118,7 +134,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return getTaskProperty().map(t -> (T) t);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, getTaskProperty()).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, getTaskProperty()).getValue()).map(t -> (T) t);
                 }
 
                 @Override
@@ -126,7 +142,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (StringUtils.isBlank(typeConverter)) {
                         return iterDataItem();
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(typeConverter, iterDataItem()).getValue()).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(typeConverter, iterDataItem()).getValue()).map(t -> (T) t);
                 }
 
                 @Override
@@ -134,7 +150,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return getResult();
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(getResult(), targetClass).getValue());
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(getResult(), targetClass).getValue());
                 }
 
                 @Override
@@ -142,7 +158,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return getReqData(name);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(getReqData(name), targetClass).getValue());
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(getReqData(name), targetClass).getValue());
                 }
 
                 @Override
@@ -150,7 +166,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return getStaData(name);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(getStaData(name), targetClass)).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(getStaData(name), targetClass)).map(t -> (T) t);
                 }
 
                 @Override
@@ -158,7 +174,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return getVarData(name);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(getVarData(name), targetClass)).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(getVarData(name), targetClass)).map(t -> (T) t);
                 }
 
                 @Override
@@ -166,7 +182,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return getData(expression);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(getData(expression), targetClass)).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(getData(expression), targetClass)).map(t -> (T) t);
                 }
 
                 @Override
@@ -174,7 +190,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return getTaskProperty().map(t -> (T) t);
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(getTaskProperty(), targetClass)).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(getTaskProperty(), targetClass)).map(t -> (T) t);
                 }
 
                 @Override
@@ -182,7 +198,7 @@ public class OperatorStoryBus extends BasicStoryBus {
                     if (targetClass == null) {
                         return iterDataItem();
                     }
-                    return Optional.ofNullable(typeConverterProcessor.convert(iterDataItem(), targetClass)).map(t -> (T) t);
+                    return GlobalUtil.getResOptional(typeConverterProcessor.convert(iterDataItem(), targetClass)).map(t -> (T) t);
                 }
 
                 @Override

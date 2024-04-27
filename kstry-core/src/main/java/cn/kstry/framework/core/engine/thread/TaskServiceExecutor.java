@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ClassUtils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.*;
 
 /**
@@ -67,14 +66,17 @@ public class TaskServiceExecutor implements TaskExecutor, ComponentLifecycle {
         this(executorType, new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler), prefix);
     }
 
-    public static TaskServiceExecutor buildDefaultExecutor(ExecutorType executorType, String prefix) {
+    public static TaskServiceExecutor buildDefaultExecutor(ExecutorType executorType) {
+        AssertUtil.notNull(executorType);
         if (GlobalProperties.KSTRY_OPEN_VIRTUAL_THREAD && SUPPORT_VIRTUAL_THREAD) {
+            String prefix = GlobalUtil.format("kstry-{}-virtual-thread", executorType.name().toLowerCase());
             try {
                 return getVirtualTaskServiceExecutor(executorType, prefix);
             } catch (Throwable e) {
                 LOGGER.warn("TaskServiceExecutor getVirtualTaskServiceExecutor error. use ThreadPoolExecutor. name: {}", prefix, e);
             }
         }
+        String prefix = GlobalUtil.format("kstry-{}-thread-pool", executorType.name().toLowerCase());
         return buildTaskExecutor(
                 executorType,
                 prefix,
@@ -235,7 +237,7 @@ public class TaskServiceExecutor implements TaskExecutor, ComponentLifecycle {
         return es == null ? executorService : es;
     }
 
-    private static TaskServiceExecutor getVirtualTaskServiceExecutor(ExecutorType executorType, String prefix) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static TaskServiceExecutor getVirtualTaskServiceExecutor(ExecutorType executorType, String prefix) throws Exception {
         Object virtual1 = MethodUtils.invokeStaticMethod(Thread.class, "ofVirtual");
         Object virtual2 = MethodUtils.invokeMethod(virtual1, "name", prefix + "-", 0);
         Object virtual3 = MethodUtils.invokeMethod(virtual2, "uncaughtExceptionHandler", (Thread.UncaughtExceptionHandler) (t, e) ->

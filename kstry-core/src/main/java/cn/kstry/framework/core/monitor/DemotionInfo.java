@@ -17,6 +17,9 @@
  */
 package cn.kstry.framework.core.monitor;
 
+import cn.kstry.framework.core.util.GlobalUtil;
+import com.alibaba.fastjson.annotation.JSONField;
+
 /**
  * 降级信息
  *
@@ -38,6 +41,12 @@ public class DemotionInfo {
      * 重试次数
      */
     private int retryTimes;
+
+    /**
+     * 降级失败异常
+     */
+    @JSONField(serialize = false)
+    private Throwable demotionException;
 
     public String getDemotionNodeId() {
         return demotionNodeId;
@@ -61,5 +70,20 @@ public class DemotionInfo {
 
     public void setDemotionSuccess(Boolean demotionSuccess) {
         this.demotionSuccess = demotionSuccess;
+    }
+
+    public Throwable getDemotionException() {
+        return demotionException;
+    }
+
+    public void setDemotionException(Throwable demotionException) {
+        this.demotionException = demotionException;
+    }
+
+    public String getDemotionExceptionCause() {
+        if (demotionException == null) {
+            return null;
+        }
+        return GlobalUtil.expToString(demotionException);
     }
 }

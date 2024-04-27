@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.bus;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -64,6 +65,15 @@ public interface EnhancedDataOperator extends ScopeDataOperator {
      * @return 数据结果
      */
     <T> Optional<T> getData(String expression, String typeConverter);
+
+    /**
+     * 使用取值表达式获取数据
+     *
+     * @param expression 取值表达式
+     * @param typeConverterList 类型转换器列表，依次使用列表中的转换器加工结果进行最终输出
+     * @return 数据结果
+     */
+    <T> Optional<T> getData(String expression, List<String> typeConverterList);
 
     /**
      * 获取服务节点属性，服务节点属性在节点定义时指定

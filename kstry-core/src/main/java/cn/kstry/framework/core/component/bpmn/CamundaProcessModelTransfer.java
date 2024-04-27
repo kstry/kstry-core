@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.bpmn;
 
 import cn.kstry.framework.core.bpmn.SequenceFlow;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bpmn.impl.*;
 import cn.kstry.framework.core.bus.InstructContent;
@@ -195,7 +196,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                     ProcessLink inclusiveProcessLink = nextBpmnLinkMap.computeIfAbsent(targetNode, node -> {
 
                         ServiceTaskImpl serviceTask = getServiceTask(node, config, true);
-                        InclusiveJoinPoint beforeMockLink = processLink.inclusive(targetNode.getId() + "-Inclusive-" + GlobalUtil.uuid()).build();
+                        InclusiveJoinPoint beforeMockLink = processLink.inclusive(GlobalUtil.uuid(BpmnTypeEnum.INCLUSIVE_GATEWAY, targetNode.getId())).build();
                         ProcessLink nextMockLink = instructWrapper(config, true, targetNode, serviceTask, null, beforeMockLink);
 
                         InclusiveJoinPointBuilder inclusiveJoinPointBuilder = processLink.inclusive(targetNode.getId());
@@ -297,7 +298,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
 
     private ServiceTaskImpl getServiceTask(FlowNode flowNode, ConfigResource config, boolean decorate) {
         ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
-        serviceTaskImpl.setId(flowNode.getId() + (decorate ? ("-" + GlobalUtil.uuid()) : StringUtils.EMPTY));
+        serviceTaskImpl.setId(decorate ? GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, flowNode.getId()) : flowNode.getId());
         serviceTaskImpl.setName(flowNode.getName());
         AssertUtil.notBlank(serviceTaskImpl.getId(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The bpmn element id attribute cannot be empty! fileName: {}", config.getConfigName());
         ElementPropertyUtil.getNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
@@ -328,7 +329,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                 }
                 String instruct = instructContent.getInstruct().substring(1);
                 nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent()), sTask)
-                        .name(instruct + "@" + serviceTask.getName()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                        .name(instruct + "@" + serviceTask.getName()).id(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())).build();
             }
         }
 
@@ -354,7 +355,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
                     sf = buildSequenceFlow(targetNode.getId());
                 }
                 nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent()), sTask)
-                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())).build();
             }
         }
         AssertUtil.isTrue(allowEmpty || before != nextProcessLink,
@@ -407,7 +408,7 @@ public class CamundaProcessModelTransfer implements ProcessModelTransfer<BpmnMod
 
     private SequenceFlow buildSequenceFlow(String id) {
         SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
-        sequenceFlow.setId(String.format("%s-Sequence-%s", id, GlobalUtil.uuid()));
+        sequenceFlow.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW, id));
         sequenceFlow.setName(sequenceFlow.getId());
         return sequenceFlow;
     }

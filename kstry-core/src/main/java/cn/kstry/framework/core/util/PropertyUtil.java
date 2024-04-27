@@ -53,9 +53,9 @@ public class PropertyUtil {
         }
         try {
             if (propertyName.startsWith("$")) {
-                return Optional.ofNullable(JSONPath.eval(bean, propertyName));
+                return GlobalUtil.getResOptional(JSONPath.eval(bean, propertyName));
             }
-            return Optional.ofNullable(PropertyUtils.getProperty(bean, propertyName));
+            return GlobalUtil.getResOptional(PropertyUtils.getProperty(bean, propertyName));
         } catch (NoSuchMethodException e) {
             LOGGER.warn("[{}] Error accessing a non-existent variable! propertyName: {}, class: {}",
                     ExceptionEnum.FAILED_GET_PROPERTY.getExceptionCode(), propertyName, bean.getClass());

@@ -167,7 +167,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 } else if (BpmnTypeEnum.INCLUSIVE_GATEWAY.is(targetNode.getType())) {
                     ProcessLink inclusiveProcessLink = nextBpmnLinkMap.computeIfAbsent(targetNode.getId(), node -> {
                         ServiceTaskImpl serviceTask = getServiceTask(jsonNodeMap.get(node), config, true);
-                        InclusiveJoinPoint beforeMockLink = processLink.inclusive(targetNode.getId() + "-Inclusive-" + GlobalUtil.uuid()).build();
+                        InclusiveJoinPoint beforeMockLink = processLink.inclusive(GlobalUtil.uuid(BpmnTypeEnum.INCLUSIVE_GATEWAY, targetNode.getId())).build();
                         ProcessLink nextMockLink = instructWrapper(config, true, targetNode, serviceTask, null, beforeMockLink);
                         InclusiveJoinPointBuilder inclusiveJoinPointBuilder = processLink.inclusive(targetNode.getId());
                         ElementPropertyUtil.getJsonNodeProperty(targetNode,
@@ -283,7 +283,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
 
     private SequenceFlow buildSequenceFlow(String id) {
         SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
-        sequenceFlow.setId(String.format("%s-Sequence-%s", id, GlobalUtil.uuid()));
+        sequenceFlow.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW, id));
         sequenceFlow.setName(sequenceFlow.getId());
         return sequenceFlow;
     }
@@ -304,7 +304,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 }
                 String instruct = instructContent.getInstruct().substring(1);
                 nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent()), sTask)
-                        .name(instruct + "@" + serviceTask.getName()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                        .name(instruct + "@" + serviceTask.getName()).id(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())).build();
             }
         }
 
@@ -331,7 +331,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     firstSequenceFlow = null;
                 }
                 nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent()), sTask)
-                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(targetNode.getId() + "-Instruct-" + GlobalUtil.uuid()).build();
+                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())).build();
             }
         }
         AssertUtil.isTrue(allowEmpty || before != nextProcessLink,
@@ -353,7 +353,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
 
     private ServiceTaskImpl getServiceTask(JsonNode flowNode, ConfigResource config, boolean decorate) {
         ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
-        serviceTaskImpl.setId(flowNode.getId() + (decorate ? ("-" + GlobalUtil.uuid()) : StringUtils.EMPTY));
+        serviceTaskImpl.setId(decorate ? GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, flowNode.getId()) : flowNode.getId());
         serviceTaskImpl.setName(flowNode.getName());
         AssertUtil.notBlank(serviceTaskImpl.getId(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
                 "The json element id attribute cannot be empty! fileName: {}", config.getConfigName());
@@ -377,7 +377,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         AssertUtil.notBlank(sequenceFlow.getId(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The element id attribute cannot be empty! fileName: {}", config.getConfigName());
         if (StringUtils.isNotBlank(sf.getFlowExpression())) {
             SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(sf.getFlowExpression());
-            sequenceFlowExpression.setId(GlobalUtil.uuid());
+            sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
             sequenceFlowExpression.setName(sf.getFlowExpression());
             sequenceFlow.setExpression(sequenceFlowExpression);
         }
@@ -401,7 +401,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     newNextNodeIds.add(nextNodeId);
                     return;
                 }
-                String sequenceFlowId = GlobalUtil.uuid();
+                String sequenceFlowId = GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW);
                 JsonNode jn = new JsonNode();
                 jn.setId(sequenceFlowId);
                 jn.setName("complementSequenceFlow-" + sequenceFlowId);

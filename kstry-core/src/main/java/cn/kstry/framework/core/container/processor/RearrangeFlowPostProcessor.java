@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.container.processor;
 
 import cn.kstry.framework.core.bpmn.*;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.impl.FlowElementImpl;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
@@ -81,7 +82,7 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
                 node.clearOutingChain();
 
                 SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
-                sequenceFlow.setId(GlobalUtil.uuid());
+                sequenceFlow.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW));
                 ServiceTask serviceTask = ServiceTask.builder().service(customRoleInfo.getServiceName()).component(customRoleInfo.getComponentName()).ins();
                 ElementParserUtil.tryFillTaskName(GlobalUtil.transferNotEmpty(serviceTask, ServiceTaskImpl.class), serviceNodeResourceMap.get(serviceTask.getTaskService()));
                 node.outing(sequenceFlow);
@@ -95,7 +96,7 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
         AssertUtil.isTrue(node instanceof ServiceTaskSupport);
 
         FlowElementImpl serviceTaskImpl = GlobalUtil.transferNotEmpty(serviceTask, FlowElementImpl.class);
-        serviceTaskImpl.setId("Service-Task-" + node.getId());
+        serviceTaskImpl.setId(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, node.getId()));
         serviceTaskImpl.setName(node.getName());
 
         if (node instanceof InclusiveGateway) {
@@ -103,7 +104,7 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
             AssertUtil.isTrue(nodeComingList.size() > 0);
 
             InclusiveGatewayImpl mockInclusiveGateway = new InclusiveGatewayImpl();
-            mockInclusiveGateway.setId("Inclusive-Gateway-" + node.getId());
+            mockInclusiveGateway.setId(GlobalUtil.uuid(BpmnTypeEnum.INCLUSIVE_GATEWAY, node.getId()));
             Lists.newArrayList(nodeComingList).forEach(flowElement -> {
                 FlowElementImpl beforeSequenceFlow = GlobalUtil.transferNotEmpty(flowElement, FlowElementImpl.class);
                 beforeSequenceFlow.clearOutingChain();
@@ -111,12 +112,12 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
             });
 
             SequenceFlowImpl sequenceFlow1 = new SequenceFlowImpl();
-            sequenceFlow1.setId(GlobalUtil.uuid());
+            sequenceFlow1.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW));
             mockInclusiveGateway.outing(sequenceFlow1);
             sequenceFlow1.outing(serviceTaskImpl);
 
             SequenceFlowImpl sequenceFlow2 = new SequenceFlowImpl();
-            sequenceFlow2.setId(GlobalUtil.uuid());
+            sequenceFlow2.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW));
             serviceTaskImpl.outing(sequenceFlow2);
             sequenceFlow2.outing(node);
 
@@ -125,7 +126,7 @@ public class RearrangeFlowPostProcessor extends DiagramTraverseSupport<Object> i
             AssertUtil.oneSize(nodeComingList);
 
             SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
-            sequenceFlow.setId(GlobalUtil.uuid());
+            sequenceFlow.setId(GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW));
 
             FlowElementImpl beforeSequenceFlow = GlobalUtil.transferNotEmpty(nodeComingList.get(0), FlowElementImpl.class);
             beforeSequenceFlow.clearOutingChain();

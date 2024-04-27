@@ -39,7 +39,7 @@ public class MonoSuccessService {
         System.out.println(a);
         System.out.println(b);
         System.out.println(c);
-        Assert.assertEquals(345, a);
+        Assert.assertTrue(a >= 345);
         Assert.assertEquals(true, b);
         Assert.assertEquals("Mono测试", c);
         request.setA(request.getA() + 1);

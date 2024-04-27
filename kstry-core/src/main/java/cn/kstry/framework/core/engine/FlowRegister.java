@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -77,6 +78,11 @@ public class FlowRegister {
      * 执行栈
      */
     private TrackingStack flowElementStack;
+
+    /**
+     * 锁
+     */
+    private ReentrantLock reentrantLock = new ReentrantLock();
 
     /**
      * 用来保存 并行网关或者包含网关 与 入度的对应关系。
@@ -148,6 +154,7 @@ public class FlowRegister {
         asyncFlowRegister.startEventId = this.startEventId;
         asyncFlowRegister.storyId = this.storyId;
         asyncFlowRegister.monitorTracking = this.monitorTracking;
+        asyncFlowRegister.reentrantLock = this.reentrantLock;
         asyncFlowRegister.joinGatewayComingMap = this.joinGatewayComingMap;
         asyncFlowRegister.requestId = this.requestId;
         asyncFlowRegister.adminFuture = this.adminFuture;
@@ -226,6 +233,7 @@ public class FlowRegister {
 
         // 填充 ContextStoryBus
         contextStoryBus.setPrevElement(prevElement);
+        contextStoryBus.setReentrantLock(reentrantLock);
         contextStoryBus.setJoinGatewayComingMap(joinGatewayComingMap);
         contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
 
@@ -242,6 +250,7 @@ public class FlowRegister {
         Optional<FlowElement> elementOptional = Optional.of(currentFlowElement);
         if (contextStoryBus.getEndTaskPedometer() == null) {
             contextStoryBus.setPrevElement(prevElement);
+            contextStoryBus.setReentrantLock(reentrantLock);
             contextStoryBus.setJoinGatewayComingMap(joinGatewayComingMap);
             contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
         }

@@ -30,7 +30,7 @@
         <dependency>
             <groupId>cn.kstry.framework</groupId>
             <artifactId>kstry-core</artifactId>
-            <version>1.1.13</version>
+            <version>1.1.14</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>

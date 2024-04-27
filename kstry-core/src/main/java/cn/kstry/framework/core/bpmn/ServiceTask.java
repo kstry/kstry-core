@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.bpmn;
 
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.impl.TaskParamWrapper;
 import cn.kstry.framework.core.component.bpmn.builder.ServiceTaskBuilder;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
@@ -121,7 +122,7 @@ public interface ServiceTask extends Task {
     static ServiceTaskBuilder builder(String id) {
         ServiceTaskBuilder serviceTaskBuilder = new ServiceTaskBuilder();
         if (StringUtils.isBlank(id)) {
-            id = GlobalUtil.uuid();
+            id = GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK);
         }
         return serviceTaskBuilder.id(id);
     }

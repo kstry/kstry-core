@@ -170,7 +170,7 @@ public abstract class BasicStoryBus implements StoryBus {
 
     @Override
     public Optional<Object> getResult() {
-        return Optional.ofNullable(returnResult);
+        return GlobalUtil.getResOptional(returnResult);
     }
 
     @Override

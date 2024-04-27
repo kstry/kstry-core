@@ -184,7 +184,7 @@ public class MonoFlowTest {
             TaskResponse<SayInfoRequest> result = storyEngine.fire(fireRequest);
             Assert.assertTrue(result.isSuccess());
             Assert.assertNotNull(result.getResult());
-            Assert.assertEquals(346, result.getResult().getA());
+            Assert.assertEquals(348, result.getResult().getA());
             Assert.assertEquals(100, result.getResult().getD());
         });
     }

@@ -39,6 +39,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public abstract class SpringDynamicComponent<Component> implements DynamicComponent<Component> {
@@ -57,6 +58,8 @@ public abstract class SpringDynamicComponent<Component> implements DynamicCompon
     private final Cache<String, Component> componentCache;
 
     private final List<DynamicComponentCreator<Component>> componentCreatorList;
+
+    private final ReentrantLock reentrantLock = new ReentrantLock();
 
     @SuppressWarnings("all")
     public SpringDynamicComponent(long maxCacheSize, ApplicationContext applicationContext) {
@@ -106,7 +109,8 @@ public abstract class SpringDynamicComponent<Component> implements DynamicCompon
                 keySet.add(cacheKey);
                 return compCache;
             }
-            synchronized (SpringDynamicComponent.this) {
+            reentrantLock.lock();
+            try {
                 compCache = componentCache.getIfPresent(cacheKey);
                 if (compCache != null) {
                     keySet.add(cacheKey);
@@ -119,6 +123,8 @@ public abstract class SpringDynamicComponent<Component> implements DynamicCompon
                     componentCache.put(cacheKey, component);
                 });
                 return componentOptional.orElse(null);
+            } finally {
+                reentrantLock.unlock();
             }
         }).filter(Objects::nonNull).collect(Collectors.toList());
 

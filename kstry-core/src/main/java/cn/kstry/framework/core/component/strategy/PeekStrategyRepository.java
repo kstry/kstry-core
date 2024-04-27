@@ -32,6 +32,7 @@ import org.apache.commons.collections.CollectionUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -177,7 +178,9 @@ public class PeekStrategyRepository {
                 expectedComingElement = flowElementList;
             }
         }
-        synchronized (expectedComingElement) {
+        ReentrantLock reentrantLock = contextStoryBus.getReentrantLock();
+        reentrantLock.lock();
+        try {
             AssertUtil.notNull(prevElement);
             boolean arrive = expectedComingElement.stream().anyMatch(e -> e.elementArrive(prevElement, actualArrive));
             if (arrive && flowElement instanceof EndEvent) {
@@ -198,6 +201,8 @@ public class PeekStrategyRepository {
                 return ElementAllowNextEnum.ALLOW_NEX;
             }
             return ElementAllowNextEnum.NOT_ALLOW_NEX_NEED_COMPENSATE;
+        } finally {
+            reentrantLock.unlock();
         }
     }
 

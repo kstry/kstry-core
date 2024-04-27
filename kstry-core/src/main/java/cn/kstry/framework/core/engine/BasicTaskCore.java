@@ -176,6 +176,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                         return doRetryInvokeMethod(tracking, elementIterable, iterDataItem, pedometer, serviceTask, serviceDefOptional.get(), storyBus, role);
                     } catch (Throwable ex) {
                         demotionInfo.setDemotionSuccess(false);
+                        demotionInfo.setDemotionException(ex);
                         KstryException kex = ExceptionUtil.buildException(ex, ExceptionEnum.DEMOTION_DEFINITION_ERROR, null);
                         kex.log(e -> LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
                                 e.getErrorCode(), serviceTask.identity(), taskName, ex.getMessage(), e));

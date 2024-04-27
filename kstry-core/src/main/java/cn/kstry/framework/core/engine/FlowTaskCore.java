@@ -31,6 +31,7 @@ import cn.kstry.framework.core.container.component.InvokeProperties;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.engine.future.FlowTaskSubscriber;
+import cn.kstry.framework.core.engine.future.RetryFlowTaskSubscriber;
 import cn.kstry.framework.core.engine.interceptor.SubProcessInterceptorRepository;
 import cn.kstry.framework.core.engine.interceptor.TaskInterceptorRepository;
 import cn.kstry.framework.core.engine.thread.FragmentTask;
@@ -47,6 +48,7 @@ import cn.kstry.framework.core.util.ExceptionUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -62,6 +64,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -144,7 +147,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             InvokeMethodThreadLocal.clearServiceTask();
         }
         if (result instanceof Mono) {
-            monoResultHandler(role, storyBus, flowRegister, serviceTask, taskServiceDef, result);
+            monoResultHandler(0, role, storyBus, flowRegister, serviceTask, taskServiceDef, result);
             return false;
         }
         storyBus.noticeResult(serviceTask, result, taskServiceDef);
@@ -152,13 +155,28 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
-    private void monoResultHandler(Role role, StoryBus storyBus,
+    private void monoResultHandler(int alreadyRetry, Role role, StoryBus storyBus,
                                    FlowRegister flowRegister, ServiceTask serviceTask, TaskServiceDef taskServiceDef, Object result) {
         InvokeProperties invokeProperties = taskServiceDef.getMethodWrapper().getInvokeProperties();
-        boolean strictMode = serviceTask.strictMode() && invokeProperties.isStrictMode();
         Integer timeout = Optional.ofNullable(serviceTask.getTimeout()).filter(t -> t >= 0).orElse(invokeProperties.getTimeout());
-        FlowTaskSubscriber flowTaskSubscriber = new FlowTaskSubscriber(
+        FlowTaskSubscriber flowTaskSubscriber = getFlowTaskSubscriber(alreadyRetry, role, storyBus, flowRegister, serviceTask, taskServiceDef, invokeProperties, timeout);
+        Mono<?> mono = GlobalUtil.transferNotEmpty(result, Mono.class);
+        if (timeout != null) {
+            mono = mono.timeout(Duration.ofMillis(timeout), Mono.fromRunnable(() -> {
+                KstryException e = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
+                        GlobalUtil.format("Target method execution timeout! maximum time limit: {}ms, identity: {}, taskName: {}",
+                                timeout, serviceTask.identity(), GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
+                flowTaskSubscriber.onError(e);
+                flowTaskSubscriber.dispose();
+            }));
+        }
+        mono.subscribe(flowTaskSubscriber);
+    }
+
+    private FlowTaskSubscriber getFlowTaskSubscriber(int alreadyRetry, Role role, StoryBus storyBus, FlowRegister flowRegister,
+                                                     ServiceTask serviceTask, TaskServiceDef taskServiceDef, InvokeProperties invokeProperties, Integer timeout) {
+        boolean strictMode = serviceTask.strictMode() && invokeProperties.isStrictMode();
+        return new RetryFlowTaskSubscriber(alreadyRetry,
                 () -> engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()),
                 () -> engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator()), strictMode, timeout, flowRegister, getTaskName()) {
 
@@ -169,12 +187,23 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
 
             @Override
             protected void doErrorHook(Throwable throwable) {
-                flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, throwable);
+                int retry = Optional.ofNullable(serviceTask.getRetryTimes()).filter(t -> t > 0).orElse(invokeProperties.getRetry());
+                if (retry > getAlreadyRetry() && !flowRegister.getAdminFuture().isCancelled(flowRegister.getStartEventId())) {
+                    DemotionInfo demotionInfo = new DemotionInfo();
+                    demotionInfo.setRetryTimes(getAlreadyRetry() + 1);
+                    flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
+                    Object res = doInvokeMethod(true, null, taskServiceDef, serviceTask, storyBus, role);
+                    if (!(res instanceof Mono)) {
+                        flowRegister.getAdminFuture().errorNotice(ExceptionUtil.buildException(throwable, ExceptionEnum.SYSTEM_ERROR, null), flowRegister.getStartEventId());
+                    }
+                    monoResultHandler(getAlreadyRetry() + 1, role, storyBus, flowRegister, serviceTask, taskServiceDef, res);
+                    return;
+                }
                 Supplier<Optional<TaskServiceDef>> needDemotionSupplier = getNeedDemotionSupplier(role, invokeProperties);
                 Optional<TaskServiceDef> demotionServiceDefOptional = needDemotionSupplier.get();
-                BusinessException kstryException;
-                if (throwable instanceof BusinessException) {
-                    kstryException = GlobalUtil.transferNotEmpty(throwable, BusinessException.class);
+                KstryException kstryException;
+                if (throwable instanceof KstryException) {
+                    kstryException = GlobalUtil.transferNotEmpty(throwable, KstryException.class);
                 } else {
                     kstryException = new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), throwable.getMessage(), throwable);
                 }
@@ -184,55 +213,35 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     );
                     TaskServiceDef demotionTaskServiceDef = demotionServiceDefOptional.get();
                     DemotionInfo demotionInfo = new DemotionInfo();
-                    demotionInfo.setRetryTimes(0);
+                    demotionInfo.setRetryTimes(getAlreadyRetry());
                     demotionInfo.setDemotionNodeId(demotionTaskServiceDef.getGetServiceNodeResource().getIdentityId());
                     demotionInfo.setDemotionSuccess(true);
                     try {
                         Object o = iterateInvokeMethod(serviceTask, demotionTaskServiceDef, storyBus, role);
                         if (o instanceof Mono) {
-                            GlobalUtil.transferNotEmpty(o, Mono.class).subscribe(new BaseSubscriber<Object>() {
-                                @Override
-                                protected void hookOnNext(@Nonnull Object value) {
-                                    try {
-                                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                        doNextHook(value);
-                                    } finally {
-                                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    }
-                                    dispose();
-                                }
-
-                                @Override
-                                protected void hookOnError(@Nonnull Throwable e) {
-                                    try {
-                                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                        LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
-                                                ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
-                                    } finally {
-                                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    }
-                                    dispose();
-                                }
-
-                                @Override
-                                protected void hookOnComplete() {
-                                    try {
-                                        engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                        doNextHook(null);
-                                    } finally {
-                                        engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
-                                    }
-                                    dispose();
-                                }
-                            });
+                            Mono<?> demotionResultMono = GlobalUtil.transferNotEmpty(o, Mono.class);
+                            BaseSubscriber<Object> demotionResultSubscriber = getDemotionResultSubscriber(demotionInfo);
+                            if (timeout != null) {
+                                demotionResultMono = demotionResultMono.timeout(Duration.ofMillis(timeout), Mono.fromRunnable(() -> {
+                                    KstryException e = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
+                                            GlobalUtil.format("Target method demotion policy execution timeout! maximum time limit: {}ms, identity: {}, taskName: {}",
+                                                    timeout, serviceTask.identity(), GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
+                                    demotionResultSubscriber.onError(e);
+                                    demotionResultSubscriber.dispose();
+                                }));
+                            }
+                            demotionResultMono.subscribe(demotionResultSubscriber);
                             return;
                         }
                         doNextHook(o);
+                        flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                         return;
                     } catch (Throwable e) {
                         LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
                                 ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
-                    } finally {
+                        flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, e);
+                        demotionInfo.setDemotionSuccess(false);
+                        demotionInfo.setDemotionException(e);
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                     }
                 }
@@ -244,6 +253,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     doNextElement(flowRegister, serviceTask, storyBus, role);
                     return;
                 }
+                flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, throwable);
                 flowRegister.getAdminFuture().errorNotice(kstryException, flowRegister.getStartEventId());
             }
 
@@ -256,18 +266,57 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                 scopeData.noticeResult(serviceTask, value, taskServiceDef);
                 doNextElement(flowRegister, serviceTask, storyBus, role);
             }
+
+            private BaseSubscriber<Object> getDemotionResultSubscriber(DemotionInfo demotionInfo) {
+                return new BaseSubscriber<Object>() {
+
+                    @Override
+                    protected void hookOnNext(@Nonnull Object value) {
+                        try {
+                            engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                            doNextHook(value);
+                            flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
+                        } finally {
+                            engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                            dispose();
+                        }
+                    }
+
+                    @Override
+                    protected void hookOnError(@Nonnull Throwable e) {
+                        try {
+                            engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                            LOGGER.warn("[{}] Target method execution failed, demotion policy execution failed. identity: {}, taskName: {}, exception: {}",
+                                    ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), serviceTask.identity(), getTaskName(), e.getMessage(), e);
+                            demotionInfo.setDemotionSuccess(false);
+                            demotionInfo.setDemotionException(e);
+                            flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
+                            if (!isStrictMode()) {
+                                doNextElement(flowRegister, serviceTask, storyBus, role);
+                            } else {
+                                flowRegister.getMonitorTracking().finishTaskTracking(serviceTask, e);
+                                flowRegister.getAdminFuture().errorNotice(e, flowRegister.getStartEventId());
+                            }
+                        } finally {
+                            engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                            dispose();
+                        }
+                    }
+
+                    @Override
+                    protected void hookOnComplete() {
+                        try {
+                            engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                            doCompleteHook();
+                            flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
+                        } finally {
+                            engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
+                            dispose();
+                        }
+                    }
+                };
+            }
         };
-        Mono<?> mono = GlobalUtil.transferNotEmpty(result, Mono.class);
-        if (timeout != null) {
-            mono = mono.timeout(Duration.ofMillis(timeout), Mono.fromRunnable(() -> {
-                KstryException e = ExceptionUtil.buildException(null, ExceptionEnum.ASYNC_TASK_TIMEOUT,
-                        GlobalUtil.format("Target method execution timeout! maximum time limit: {}ms, identity: {}, taskName: {}",
-                                timeout, serviceTask.identity(), GlobalUtil.getTaskName(serviceTask, flowRegister.getRequestId())));
-                flowTaskSubscriber.onError(e);
-                flowTaskSubscriber.dispose();
-            }));
-        }
-        mono.subscribe(flowTaskSubscriber);
     }
 
     private void subProcessTaskHandler(Role role, StoryBus storyBus, FlowRegister parentFlowRegister, SubProcess subProcess) {
@@ -341,39 +390,12 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         if (!elementIterable.iterable() || taskServiceDef.isDemotionNode()) {
             return super.retryInvokeMethod(true, null, null, taskServiceDef, serviceTask, storyBus, role);
         }
-
-        MonitorTracking monitorTracking = storyBus.getMonitorTracking();
-        Optional<Object> iteData = storyBus.getScopeDataOperator().getData(elementIterable.getIteSource()).map(d -> {
-            if (!d.getClass().isArray()) {
-                return d;
-            }
-            int arrLength = Array.getLength(d);
-            if (arrLength == 0) {
-                return null;
-            }
-            Object[] dArray = new Object[arrLength];
-            for (int i = 0; i < arrLength; i++) {
-                dArray[i] = Array.get(d, i);
-            }
-            return Stream.of(dArray).collect(Collectors.toList());
-        }).filter(d -> d instanceof Iterable);
-        if (!iteData.isPresent()) {
-            monitorTracking.iterateCountTracking(serviceTask, 0, 0);
-            LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
-                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), elementIterable.getIteSource());
+        List<Object> iteratorList = getIteratorList(serviceTask, storyBus, elementIterable);
+        if (CollectionUtils.isEmpty(iteratorList)) {
             return null;
         }
-        Iterator<?> iterator = GlobalUtil.transferNotEmpty(iteData.get(), Iterable.class).iterator();
-        if (!iterator.hasNext()) {
-            monitorTracking.iterateCountTracking(serviceTask, 0, 0);
-            LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
-                    "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), elementIterable.getIteSource());
-            return null;
-        }
-
-        List<Object> iteratorList = Lists.newArrayList();
-        iterator.forEachRemaining(iteratorList::add);
         List<Object> resultList = Lists.newArrayList();
+        MonitorTracking monitorTracking = storyBus.getMonitorTracking();
         List<ImmutablePair<Mono<?>, Integer>> monoResultList = Lists.newArrayList();
         int stride = Optional.ofNullable(elementIterable.getStride()).filter(i -> i > 0).orElse(1);
         boolean isOneStride = stride == 1;
@@ -529,6 +551,46 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             addSuccessResult(serviceTask, isOneStride, resultList, elementIterable, ro, batchParamSize);
         });
         return resultList;
+    }
+
+    private List<Object> getIteratorList(ServiceTask serviceTask, StoryBus storyBus, ElementIterable elementIterable) {
+        MonitorTracking monitorTracking = storyBus.getMonitorTracking();
+        ReentrantReadWriteLock.ReadLock readLock = storyBus.getScopeDataOperator().readLock();
+        readLock.lock();
+        try {
+            Optional<Object> iteData = storyBus.getScopeDataOperator().getData(elementIterable.getIteSource()).map(d -> {
+                if (!d.getClass().isArray()) {
+                    return d;
+                }
+                int arrLength = Array.getLength(d);
+                if (arrLength == 0) {
+                    return null;
+                }
+                Object[] dArray = new Object[arrLength];
+                for (int i = 0; i < arrLength; i++) {
+                    dArray[i] = Array.get(d, i);
+                }
+                return Stream.of(dArray).collect(Collectors.toList());
+            }).filter(d -> d instanceof Iterable);
+            if (!iteData.isPresent()) {
+                monitorTracking.iterateCountTracking(serviceTask, 0, 0);
+                LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
+                        "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), elementIterable.getIteSource());
+                return null;
+            }
+            Iterator<?> iterator = GlobalUtil.transferNotEmpty(iteData.get(), Iterable.class).iterator();
+            if (!iterator.hasNext()) {
+                monitorTracking.iterateCountTracking(serviceTask, 0, 0);
+                LOGGER.info("[{}] {} identity: {}, source: {}", ExceptionEnum.ITERATE_ITEM_ERROR.getExceptionCode(),
+                        "Get the target collection is empty, the component will not perform traversal execution!", serviceTask.identity(), elementIterable.getIteSource());
+                return null;
+            }
+            List<Object> iteratorList = Lists.newArrayList();
+            iterator.forEachRemaining(iteratorList::add);
+            return iteratorList;
+        } finally {
+            readLock.unlock();
+        }
     }
 
     private void addSuccessResult(ServiceTask serviceTask, boolean isOneStride, List<Object> resultList, ElementIterable elementIterable, Object ro, Integer batchParamSize) {

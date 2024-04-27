@@ -105,19 +105,19 @@ public class KstryContextResolver extends BasicLauncher {
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
     @Conditional(MissingTaskServiceExecutor.class)
     public TaskServiceExecutor getTaskServiceExecutor() {
-        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.TASK, "kstry-task-thread-pool");
+        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.TASK);
     }
 
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
     @Conditional(MissingMethodServiceExecutor.class)
     public TaskServiceExecutor getMethodServiceExecutor() {
-        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.METHOD, "kstry-method-thread-pool");
+        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.METHOD);
     }
 
     @Bean(destroyMethod = ComponentLifecycle.DESTROY)
     @Conditional(MissingIteratorServiceExecutor.class)
     public TaskServiceExecutor getIteratorServiceExecutor() {
-        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.ITERATOR, "kstry-iterator-thread-pool");
+        return TaskServiceExecutor.buildDefaultExecutor(ExecutorType.ITERATOR);
     }
 
     @Bean

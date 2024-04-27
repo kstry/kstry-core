@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.exception.ExceptionEnum;
@@ -161,6 +162,25 @@ public class GlobalUtil {
 
     public static String uuid() {
         return UUID.randomUUID().toString().replace("-", StringUtils.EMPTY);
+    }
+
+    public static String uuid(BpmnTypeEnum typeEnum) {
+        if (typeEnum == null) {
+            return uuid();
+        }
+        return typeEnum.name() + "-" + uuid();
+    }
+
+    public static String uuid(BpmnTypeEnum typeEnum, String baseId) {
+        if (typeEnum == null || StringUtils.isBlank(baseId)) {
+            return uuid();
+        }
+        return typeEnum.name() + "-" + baseId + "-" + uuid();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getResOptional(T res) {
+        return (res instanceof Optional) ? (Optional<T>) res : Optional.ofNullable(res);
     }
 
     public static String getOriginalId(boolean needOriginalId, String elementId) {

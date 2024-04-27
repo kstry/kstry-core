@@ -45,7 +45,7 @@ public class MonoSuccessServiceDemotion extends MonoSuccessService {
         Assert.assertEquals("Mono测试", c);
         return Mono.fromFuture(CompletableFuture.runAsync(() -> {
             try {
-                TimeUnit.MILLISECONDS.sleep(500);
+                TimeUnit.MILLISECONDS.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

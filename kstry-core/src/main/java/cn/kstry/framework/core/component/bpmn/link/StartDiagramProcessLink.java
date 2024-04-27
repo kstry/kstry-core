@@ -20,6 +20,7 @@ package cn.kstry.framework.core.component.bpmn.link;
 import cn.kstry.framework.core.bpmn.EndEvent;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.impl.EndEventImpl;
 import cn.kstry.framework.core.bpmn.impl.InclusiveGatewayImpl;
 import cn.kstry.framework.core.bpmn.impl.ParallelGatewayImpl;
@@ -58,7 +59,7 @@ public class StartDiagramProcessLink extends BpmnDiagramLink implements StartPro
         this.startEvent = se;
 
         EndEventImpl endEvent = new EndEventImpl();
-        endEvent.setId(GlobalUtil.uuid());
+        endEvent.setId(GlobalUtil.uuid(BpmnTypeEnum.END_EVENT));
         this.endEvent = endEvent;
     }
 
@@ -86,7 +87,7 @@ public class StartDiagramProcessLink extends BpmnDiagramLink implements StartPro
     @Override
     public InclusiveJoinPointBuilder inclusive(String id) {
         if (StringUtils.isBlank(id)) {
-            id = GlobalUtil.uuid();
+            id = GlobalUtil.uuid(BpmnTypeEnum.INCLUSIVE_GATEWAY);
         }
         InclusiveGatewayImpl gateway = new InclusiveGatewayImpl();
         gateway.setId(id);
@@ -96,7 +97,7 @@ public class StartDiagramProcessLink extends BpmnDiagramLink implements StartPro
     @Override
     public ParallelJoinPointBuilder parallel(String id) {
         if (StringUtils.isBlank(id)) {
-            id = GlobalUtil.uuid();
+            id = GlobalUtil.uuid(BpmnTypeEnum.PARALLEL_GATEWAY);
         }
         ParallelGatewayImpl gateway = new ParallelGatewayImpl();
         gateway.setId(id);

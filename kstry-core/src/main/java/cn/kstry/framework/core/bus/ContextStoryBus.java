@@ -23,6 +23,7 @@ import cn.kstry.framework.core.util.AssertUtil;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -44,6 +45,11 @@ public class ContextStoryBus {
      * 保存将要到达执行的入度
      */
     private ConcurrentHashMap<FlowElement, List<ElementArriveRecord>> joinGatewayComingMap;
+
+    /**
+     * 锁
+     */
+    private ReentrantLock reentrantLock;
 
     /**
      * 上一个执行的节点
@@ -73,6 +79,14 @@ public class ContextStoryBus {
      */
     public void incrPeekCount() {
         this.context.peekCount++;
+    }
+
+    public ReentrantLock getReentrantLock() {
+        return reentrantLock;
+    }
+
+    public void setReentrantLock(ReentrantLock reentrantLock) {
+        this.reentrantLock = reentrantLock;
     }
 
     public void setJoinGatewayComingMap(ConcurrentHashMap<FlowElement, List<ElementArriveRecord>> joinGatewayComingMap) {
