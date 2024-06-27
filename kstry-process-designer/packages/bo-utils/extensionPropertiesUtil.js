@@ -154,6 +154,15 @@ export function getExecutionProperties(element, currentUseType) {
       useType: "runProperty"
     },
     {
+      name: "not-skip-task",
+      desc: "条件表达式",
+      explain:
+        "控制子流程是否不执行直接跳过的条件表达式，默认为空，代表不跳过",
+      contentType: "text",
+      allowElements: ["bpmn:SubProcess", "bpmn:CallActivity"],
+      useType: "runProperty"
+    },
+    {
       name: "timeout",
       desc: "超时时间",
       explain: "子流程执行时被给予的超时时间，默认：-1 意指不设置超时时间。时间单位：ms",
