@@ -94,6 +94,40 @@ export function getExecutionProperties(element, currentUseType) {
       useType: "nodeProperty"
     },
     {
+      name: "task-demotion",
+      desc: "节点降级",
+      explain: "指定服务节点执行失败（包含重试）或超时后的降级处理表达式。异常发生后会根据表达式从容器中找到对应的服务节点执行降级。表达式举例： 1> pr:risk-control@check-img  服务组件名是 risk-control 且 服务名是 init-base-info 的服务节点   2> pr:risk-control@check-img@triple  服务组件名是 risk-control 且 服务名是 init-base-info 且 能力点名是 triple 的服务节点",
+      contentType: "text",
+      allowElements:  ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "nodeProperty"
+    },
+    {
+      name: "task-demotion",
+      desc: "节点降级",
+      explain: "指定指令执行失败（包含重试）或超时后的降级处理表达式。异常发生后会根据表达式从容器中找到对应的服务节点执行降级。表达式举例： 1> pr:risk-control@check-img  服务组件名是 risk-control 且 服务名是 init-base-info 的服务节点   2> pr:risk-control@check-img@triple  服务组件名是 risk-control 且 服务名是 init-base-info 且 能力点名是 triple 的服务节点",
+      contentType: "text",
+      allowElements:  ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "nodeProperty"
+    },
+    {
+      name: "not-skip-task",
+      desc: "条件表达式",
+      explain:
+        "控制当前服务节点及指令是否不执行直接跳过的条件表达式，默认为空，代表不跳过",
+      contentType: "text",
+      allowElements: ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "runProperty"
+    },
+    {
+      name: "not-skip-task",
+      desc: "条件表达式",
+      explain:
+        "控制指令是否不执行直接跳过的条件表达式，默认为空，代表不跳过",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "runProperty"
+    },
+    {
       name: "retry-times",
       desc: "重试次数",
       explain:
@@ -127,14 +161,14 @@ export function getExecutionProperties(element, currentUseType) {
       allowElements: ["bpmn:SubProcess", "bpmn:CallActivity"],
       useType: "runProperty"
     },
-    // {
-    //   name: "strict-mode",
-    //   desc: "严格模式",
-    //   explain: "子流程执行失败之后是否跳过当前子流程继续执行，默认true，意指不会跳过错误子流程，直接抛出异常结束",
-    //   contentType: "boolean",
-    //   allowElements: ["bpmn:SubProcess", "bpmn:CallActivity"],
-    //   useType: "runProperty"
-    // },
+    {
+      name: "strict-mode",
+      desc: "严格模式",
+      explain: "子流程执行失败之后是否跳过当前子流程继续执行，默认true，意指不会跳过错误子流程，直接抛出异常结束",
+      contentType: "boolean",
+      allowElements: ["bpmn:SubProcess", "bpmn:CallActivity"],
+      useType: "runProperty"
+    },
     {
       name: "open-async",
       desc: "开启并发",
@@ -170,6 +204,114 @@ export function getExecutionProperties(element, currentUseType) {
       contentType: "boolean",
       allowElements: ["bpmn:ParallelGateway"],
       useType: "runProperty"
+    },
+    {
+      name: "limit-name",
+      desc: "限流器名称",
+      explain:
+        "当前服务节点及指令使用的限流器名称，默认值：local_single_node_rate_limiter 代表使用框架默认的本地单实例限流器，支持定制化",
+      contentType: "text",
+      allowElements: ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-permits",
+      desc: "令牌数量",
+      explain:
+        "当前服务节点及指令运行过程中每秒可获得的令牌数量，支持小数，默认值：-1 代表不限流，设置为 0 时代表熔断当前服务节点",
+      contentType: "text",
+      allowElements: ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-warmup-period",
+      desc: "预热时间",
+      explain:
+        "当前服务节点及指令限流器生效前的预热时间，单位ms，默认值：0 代表无预热",
+      contentType: "text",
+      allowElements: ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-acquire-timeout",
+      desc: "等待时长",
+      explain:
+        "当前服务节点及指令运行过程中获取令牌的最大等待时长，单位ms，默认值：0 代表不等待",
+      contentType: "text",
+      allowElements: ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-fail-strategy",
+      desc: "失败策略",
+      explain:
+        "当前服务节点及指令运行过程中获取令牌失败后所执行的策略，默认值：exception 代表抛出异常。框架另外提供了两种策略：【demotion】执行服务节点降级方法（如果配置了）、【ignore】跳过当前节点继续向下执行。支持定制化",
+      contentType: "text",
+      allowElements:["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-expression",
+      desc: "条件表达式",
+      explain:
+        "当前服务节点及指令限流器是否生效的条件表达式，默认为空，代表直接生效",
+      contentType: "text",
+      allowElements: ["bpmn:ServiceTask", "bpmn:Task"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-name",
+      desc: "限流器名称",
+      explain:
+        "指令使用的限流器名称，默认值：local_single_node_rate_limiter 代表使用框架默认的本地单实例限流器，支持定制化",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-permits",
+      desc: "令牌数量",
+      explain:
+        "指令运行过程中每秒可获得的令牌数量，支持小数，默认值：-1 代表不限流，设置为 0 时代表熔断当前服务节点",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-warmup-period",
+      desc: "预热时间",
+      explain:
+        "指令限流器生效前的预热时间，单位ms，默认值：0 代表无预热",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-acquire-timeout",
+      desc: "等待时长",
+      explain:
+        "指令运行过程中获取令牌的最大等待时长，单位ms，默认值：0 代表不等待",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-fail-strategy",
+      desc: "失败策略",
+      explain:
+        "指令运行过程中获取令牌失败后所执行的策略，默认值：exception 代表抛出异常。框架另外提供了两种策略：【demotion】执行服务节点降级方法（如果配置了）、【ignore】跳过当前节点继续向下执行。支持定制化",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "rateLimitProperty"
+    },
+    {
+      name: "limit-expression",
+      desc: "条件表达式",
+      explain:
+        "指令限流器是否生效的条件表达式，默认为空，代表直接生效",
+      contentType: "text",
+      allowElements: ["bpmn:InclusiveGateway", "bpmn:ExclusiveGateway"],
+      useType: "rateLimitProperty"
     },
     {
       name: "ite-source",

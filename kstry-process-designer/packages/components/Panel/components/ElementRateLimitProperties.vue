@@ -1,22 +1,26 @@
 <template>
-  <extension-instructions :file-icon="fileIcon" :prefix="prefix" :title-name="titleName" :use-type="useType" />
+  <extension-properties
+    :collapseTitle="collapseTitle"
+    :fileIcon="fileIcon"
+    :tableHeight="tableHeight"
+    :useType="useType"
+  />
 </template>
 
 <script>
-import ExtensionInstructions from "@packages/components/Panel/components/SubChild/ExtensionInstructions";
+import ExtensionProperties from "@packages/components/Panel/components/SubChild/ExtensionProperties";
 
 export default {
-  name: "ElementPrevInstructions",
+  name: "ElementRateLimitProperties",
   data() {
     return {
-      useType: "prevInstruct",
-      fileIcon: "ArrowRightToLine",
-      titleName: "前置指令",
-      prefix: "^c-"
+      collapseTitle: "限流配置",
+      useType: "rateLimitProperty",
+      fileIcon: "FilterX"
     };
   },
   components: {
-    ExtensionInstructions
+    ExtensionProperties
   }
 };
 </script>
