@@ -25,6 +25,7 @@ import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
 import cn.kstry.framework.core.bus.InstructContent;
 import cn.kstry.framework.core.bus.IterDataItem;
 import cn.kstry.framework.core.bus.ScopeDataQuery;
+import cn.kstry.framework.core.component.limiter.RateLimiterConfig;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.engine.ParamLifecycle;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
@@ -79,6 +80,8 @@ public class MethodWrapper {
 
     private final InvokeProperties invokeProperties;
 
+    private final RateLimiterConfig rateLimiterConfig;
+
     private final ElementIterable elementIterable;
 
     private final boolean isCustomRole;
@@ -98,7 +101,7 @@ public class MethodWrapper {
         this.taskInstructWrapper = taskInstructWrapper;
         this.invokeProperties = new InvokeProperties(annotation.invoke());
         this.elementIterable = getElementIterable(annotation.iterator());
-
+        this.rateLimiterConfig = new RateLimiterConfig(annotation.limiter());
         methodParser(method);
     }
 
@@ -116,6 +119,10 @@ public class MethodWrapper {
 
     public String getKvScope() {
         return kvScope;
+    }
+
+    public RateLimiterConfig getRateLimiterConfig() {
+        return rateLimiterConfig;
     }
 
     public String getAbility() {
@@ -207,13 +214,13 @@ public class MethodWrapper {
     }
 
     private void returnTypeParser(Type genericReturnType, Class<?> returnType) {
-        if (Mono.class.isAssignableFrom(returnType)) {
+        monoResult = Mono.class.isAssignableFrom(returnType);
+        if (monoResult || Optional.class.isAssignableFrom(returnType)) {
             returnType = Object.class;
             if (genericReturnType != null) {
                 Class<?>[] resolveArray = ResolvableType.forType(genericReturnType).resolveGenerics();
                 returnType = (resolveArray.length > 0 && resolveArray[0] != null && !Objects.equals(GlobalConstant.VOID, resolveArray[0].getName())) ? resolveArray[0] : returnType;
             }
-            monoResult = true;
         }
 
         String className = StringUtils.uncapitalize(returnType.getSimpleName());

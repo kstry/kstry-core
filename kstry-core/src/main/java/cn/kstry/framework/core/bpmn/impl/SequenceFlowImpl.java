@@ -48,9 +48,9 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
     private List<FlowElement> endElementList = Lists.newArrayList();
 
     /**
-     * 不可变标识
+     * 下一次循环的开始节点
      */
-    private boolean immutable = false;
+    private FlowElement cycleBeginElement;
 
     @Override
     public BpmnTypeEnum getElementType() {
@@ -99,6 +99,14 @@ public class SequenceFlowImpl extends FlowElementImpl implements SequenceFlow {
     @Override
     public void immutableEndElement() {
         this.endElementList = Collections.unmodifiableList(this.endElementList);
-        immutable = true;
+    }
+
+    @Override
+    public FlowElement getCycleBeginElement() {
+        return cycleBeginElement;
+    }
+
+    public void setCycleBeginElement(FlowElement cycleBeginElement) {
+        this.cycleBeginElement = cycleBeginElement;
     }
 }

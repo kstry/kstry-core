@@ -18,13 +18,14 @@
 package cn.kstry.framework.core.bpmn;
 
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.component.expression.Expression;
 
 import java.util.Optional;
 
 /**
  * Task
  */
-public interface Task extends FlowElement {
+public interface Task extends FlowElement, Expression {
 
     /**
      * 获取超时时间

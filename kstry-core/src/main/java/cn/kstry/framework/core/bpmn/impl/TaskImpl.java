@@ -20,6 +20,10 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.Task;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.component.expression.ConditionExpression;
+import cn.kstry.framework.core.component.expression.Expression;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.BooleanUtils;
 
@@ -46,6 +50,11 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
      */
     protected BasicElementIterable elementIterable;
 
+    /**
+     * Boolean 表达式
+     */
+    private Expression expression;
+
     @Override
     public BpmnTypeEnum getElementType() {
         return BpmnTypeEnum.TASK;
@@ -57,6 +66,7 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
     }
 
     public void setStrictMode(Boolean strictMode) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.strictMode = strictMode;
     }
 
@@ -66,12 +76,23 @@ public abstract class TaskImpl extends FlowElementImpl implements Task {
     }
 
     public void setTimeout(Integer timeout) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.timeout = timeout;
     }
 
     @Override
     public Optional<ElementIterable> getElementIterable() {
         return Optional.ofNullable(elementIterable);
+    }
+
+    @Override
+    public Optional<ConditionExpression> getConditionExpression() {
+        return Optional.ofNullable(this.expression).flatMap(Expression::getConditionExpression);
+    }
+
+    public void setExpression(Expression expression) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
+        this.expression = expression;
     }
 
     public void mergeElementIterable(ElementIterable elementIterable) {

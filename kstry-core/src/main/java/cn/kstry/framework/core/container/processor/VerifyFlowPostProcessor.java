@@ -21,6 +21,8 @@ import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
+import cn.kstry.framework.core.component.expression.ConditionExpression;
+import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
@@ -39,10 +41,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -96,6 +95,7 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
     @Override
     public void doPlainElement(Set<EndEvent> endEventSet, FlowElement node, SubProcess subProcess) {
         if (node instanceof EndEvent) {
+            checkCycleCross((EndEvent) node);
             endEventSet.add((EndEvent) node);
         } else {
             AssertUtil.isTrue(CollectionUtils.isNotEmpty(node.outingList()), ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Intermediate break in node flow! identity: {}", node.identity());
@@ -185,5 +185,76 @@ public class VerifyFlowPostProcessor extends DiagramTraverseSupport<Set<EndEvent
         Optional<TaskServiceDef> taskDefOptional = taskContainer.getTaskServiceDef(serviceTask.getTaskComponent(), serviceTask.getTaskService(), new ServiceTaskRole());
         AssertUtil.isTrue(taskDefOptional.isPresent(), ExceptionEnum.TASK_SERVICE_MATCH_ERROR,
                 ExceptionEnum.TASK_SERVICE_MATCH_ERROR.getDesc() + GlobalUtil.format(" service task identity: {}", serviceTask.identity()));
+    }
+
+    private void checkCycleCross(EndEvent endEvent) {
+        List<SequenceFlow> comingList = endEvent.comingList().stream().map(e -> (SequenceFlow) e).collect(Collectors.toList());
+        List<SequenceFlow> needCycleList = comingList.stream().filter(s -> s.getCycleBeginElement() != null).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(needCycleList)) {
+            return;
+        }
+
+        List<SequenceFlow> comingListCopy = Lists.newArrayList(comingList);
+        comingListCopy.removeAll(needCycleList);
+        AssertUtil.isTrue(needCycleList.size() == 1, ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                "Only one link loopback is allowed in a process! elementIds: {}", needCycleList.stream().map(SequenceFlow::getId).collect(Collectors.toList()));
+        AssertUtil.isTrue(comingListCopy.size() == 1, ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                "In processes where a loopback exists, the end node allows only one incoming line! elementIds: {}", comingListCopy.stream().map(SequenceFlow::getId).collect(Collectors.toList()));
+        SequenceFlow endFlow = comingListCopy.get(0);
+        List<FlowElement> gatewayList = endFlow.comingList();
+        AssertUtil.isTrue(CollectionUtils.size(gatewayList) == 1 && gatewayList.get(0) instanceof ExclusiveGateway, ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                "In processes where a loopback exists, the previous node of the end node must be ExclusiveGateway! error node identity: {}", gatewayList.get(0).identity());
+        AssertUtil.isTrue(CollectionUtils.size(gatewayList.get(0).outingList()) == 2, ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                "In processes where a loopback exists, the outflow of ExclusiveGateway after end node must be two! error node identity: {}", gatewayList.get(0).identity());
+        List<SequenceFlow> outingList = gatewayList.get(0).outingList().stream().map(e -> (SequenceFlow) e).collect(Collectors.toList());
+        String expression1 = outingList.get(0).getConditionExpression().map(ConditionExpression::getPlainExpression).orElse(null);
+        String expression2 = outingList.get(1).getConditionExpression().map(ConditionExpression::getPlainExpression).orElse(null);
+        AssertUtil.isTrue(!Objects.equals(expression1, expression2), ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                "Loopback expression are not allowed to be the same as end expression in the process! same expression: {}, elementIds: {}",
+                expression1, outingList.stream().map(SequenceFlow::getId).collect(Collectors.toList()));
+
+        int num = 50000;
+        List<FlowElement> flowElements = Lists.newArrayList(gatewayList.get(0).outingList());
+        flowElements.remove(endFlow);
+        Set<FlowElement> outingSet = Sets.newHashSet();
+        Set<FlowElement> comingSet = Sets.newHashSet();
+        InStack<FlowElement> outingStack = new BasicInStack<>();
+        InStack<FlowElement> comingStack = new BasicInStack<>();
+        outingStack.push(flowElements.get(0));
+        comingStack.push(gatewayList.get(0).comingList().get(0));
+        while (num-- > 0) {
+            FlowElement outing = outingStack.pop().orElse(null);
+            FlowElement coming = comingStack.pop().orElse(null);
+            if (outing == null && coming == null) {
+                break;
+            }
+            if (outing != null) {
+                AssertUtil.notTrue(comingSet.contains(outing),
+                        ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Only one link loopback is allowed in a process! elementIds: {}", outing.getId());
+                outingSet.add(outing);
+                outingStack.pushList(outing.outingList());
+            }
+            if (coming != null) {
+                AssertUtil.notTrue(outingSet.contains(coming),
+                        ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Only one link loopback is allowed in a process! elementIds: {}", coming.getId());
+                comingSet.add(coming);
+                comingStack.pushList(coming.comingList());
+            }
+        }
+        for (FlowElement coming : comingSet) {
+            for (FlowElement flowElement : coming.outingList()) {
+                AssertUtil.isTrue(comingSet.contains(flowElement) || Objects.equals(gatewayList.get(0), flowElement), ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                        "Processes before and after the circular judgment ExclusiveGateway are not allowed to intersect! elementIds: {}", flowElement.getId());
+            }
+        }
+        for (FlowElement outing : outingSet) {
+            if (outing instanceof EndEvent) {
+                continue;
+            }
+            for (FlowElement flowElement : outing.comingList()) {
+                AssertUtil.isTrue(outingSet.contains(flowElement) || Objects.equals(gatewayList.get(0), flowElement), ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                        "Processes before and after the circular judgment ExclusiveGateway are not allowed to intersect! elementIds: {}", flowElement.getId());
+            }
+        }
     }
 }

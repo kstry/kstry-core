@@ -34,7 +34,6 @@ import cn.kstry.framework.core.engine.thread.Task;
 import cn.kstry.framework.core.engine.thread.hook.ThreadSwitchHook;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
-import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.monitor.DemotionInfo;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
@@ -141,7 +140,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
             return doInvokeMethod(tracking, null, taskServiceDef, serviceTask, storyBus, role);
         }
 
-        Supplier<Optional<TaskServiceDef>> needDemotionSupplier = getNeedDemotionSupplier(role, invokeProperties);
+        Supplier<Optional<TaskServiceDef>> needDemotionSupplier = getNeedDemotionSupplier(serviceTask, role, invokeProperties);
         int retry = Optional.ofNullable(serviceTask.getRetryTimes()).filter(t -> t > 0).orElse(invokeProperties.getRetry());
         for (int i = 0; i <= retry; i++) {
             try {
@@ -169,7 +168,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                     MethodInvokeTask.MethodInvokePedometer pedometer = new MethodInvokeTask.MethodInvokePedometer(0, needDemotionSupplier, true, invokeProperties.isStrictMode());
                     DemotionInfo demotionInfo = new DemotionInfo();
                     demotionInfo.setRetryTimes(i);
-                    demotionInfo.setDemotionNodeId(serviceDefOptional.get().getGetServiceNodeResource().getIdentityId());
+                    demotionInfo.setDemotionNodeId(serviceDefOptional.get().getServiceNodeResource().getIdentityId());
                     demotionInfo.setDemotionSuccess(true);
                     try {
                         flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
@@ -226,11 +225,10 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         MethodWrapper methodWrapper = taskServiceDef.getMethodWrapper();
         TaskComponentProxy targetProxy = taskServiceDef.getTaskComponentTarget();
         List<ParamInjectDef> paramInjectDefs = methodWrapper.getParamInjectDefs();
+        InvokeMethodThreadLocal.setDataItem(iterDataItem);
+        InvokeMethodThreadLocal.whenServiceInvoke(taskServiceDef, serviceTask, storyBus.getBusinessId());
+        flowRegister.getMonitorTracking().getServiceNodeTracking(serviceTask).ifPresent(nodeTracking -> nodeTracking.setThreadId(Thread.currentThread().getName()));
         try {
-            InvokeMethodThreadLocal.setDataItem(iterDataItem);
-            InvokeMethodThreadLocal.setTaskProperty(serviceTask.getTaskProperty());
-            InvokeMethodThreadLocal.setKvScope(new KvScope(methodWrapper.getKvScope(), storyBus.getBusinessId()));
-            InvokeMethodThreadLocal.setServiceTask(serviceTask);
             if (CollectionUtils.isEmpty(paramInjectDefs)) {
                 return ProxyUtil.invokeMethod(methodWrapper, serviceTask, targetProxy.getTarget());
             }
@@ -238,7 +236,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
                     taskParamParser.parseParams(tracking, iterDataItem, serviceTask, storyBus, role, methodWrapper, paramInjectDefs)
             );
         } finally {
-            InvokeMethodThreadLocal.clear();
+            InvokeMethodThreadLocal.clearDataItem();
         }
     }
 
@@ -249,7 +247,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         return BooleanUtils.isNotTrue(elementIterable.openAsync()) || elementIterable.getIteStrategy() == IterateStrategyEnum.ANY_SUCCESS || methodWrapper.isMonoResult();
     }
 
-    private boolean notAllowRetry(Throwable exception, InvokeProperties invokeProperties) {
+    boolean notAllowRetry(Throwable exception, InvokeProperties invokeProperties) {
         if (CollectionUtils.isEmpty(invokeProperties.getRetryIncludeExceptionList()) && CollectionUtils.isEmpty(invokeProperties.getRetryExcludeExceptionList())) {
             return false;
         }
@@ -263,17 +261,17 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         return invokeProperties.getRetryExcludeExceptionList().stream().anyMatch(c -> c.isAssignableFrom(exception.getClass()));
     }
 
-    Supplier<Optional<TaskServiceDef>> getNeedDemotionSupplier(Role role, InvokeProperties invokeProperties) {
+    Supplier<Optional<TaskServiceDef>> getNeedDemotionSupplier(ServiceTask serviceTask, Role role, InvokeProperties invokeProperties) {
         return () -> {
             try {
-                ServiceNodeResource demotionResource = invokeProperties.getDemotionResource();
+                ServiceNodeResource demotionResource = Optional.ofNullable(serviceTask).map(ServiceTask::getTaskDemotion).orElse(invokeProperties.getDemotionResource());
                 if (demotionResource == null) {
                     return Optional.empty();
                 }
                 Optional<TaskServiceDef> resultOptional = engineModule.getTaskContainer()
                         .getTaskServiceDef(demotionResource.getComponentName(), demotionResource.getServiceName(), role)
                         .filter(def -> {
-                            String an1 = def.getGetServiceNodeResource().getAbilityName();
+                            String an1 = def.getServiceNodeResource().getAbilityName();
                             String an2 = demotionResource.getAbilityName();
                             return StringUtils.isAllBlank(an1, an2) || Objects.equals(an1, an2);
                         }).map(def -> {

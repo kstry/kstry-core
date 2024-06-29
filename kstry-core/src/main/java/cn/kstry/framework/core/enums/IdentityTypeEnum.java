@@ -60,5 +60,10 @@ public enum IdentityTypeEnum {
     /**
      * 权限
      */
-    PERMISSION
+    PERMISSION,
+
+    /**
+     * 限流器
+     */
+    RATE_LIMITER
 }

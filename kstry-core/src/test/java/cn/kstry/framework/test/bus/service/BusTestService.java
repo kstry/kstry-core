@@ -36,7 +36,7 @@ import java.util.Map;
 public class BusTestService {
 
     @NoticeScope
-    @TaskService(name = "bus-step-1")
+    @TaskService(name = "bus-step-1", limiter = @Limiter(permits = 0, expression = "@isBlank(ability)"))
     public BusStep1Bo busStep1(long a, int b, short c, byte d, char e, double f, float g, boolean h, String i,
                                @ReqTaskParam(reqSelf = true) BusTestRequest request) {
 

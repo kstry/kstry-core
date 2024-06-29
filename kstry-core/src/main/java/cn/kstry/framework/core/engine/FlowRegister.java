@@ -17,11 +17,9 @@
  */
 package cn.kstry.framework.core.engine;
 
-import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.ParallelGateway;
-import cn.kstry.framework.core.bpmn.SequenceFlow;
-import cn.kstry.framework.core.bpmn.StartEvent;
+import cn.kstry.framework.core.bpmn.*;
 import cn.kstry.framework.core.bus.ContextStoryBus;
+import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.component.hook.AsyncFlowHook;
 import cn.kstry.framework.core.component.strategy.PeekStrategy;
 import cn.kstry.framework.core.component.strategy.PeekStrategyRepository;
@@ -41,6 +39,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.OrderComparator;
 
 import java.util.List;
@@ -112,6 +111,11 @@ public class FlowRegister {
     private String storyId;
 
     /**
+     * 业务ID
+     */
+    private String businessId;
+
+    /**
      * 中途执行流程的开始元素
      */
     private FlowElement midwayStartElement;
@@ -120,17 +124,18 @@ public class FlowRegister {
 
     }
 
-    public FlowRegister(StartEvent startEvent, StoryRequest<?> storyRequest, SerializeTracking serializeTracking) {
+    public FlowRegister(ApplicationContext applicationContext, StartEvent startEvent, StoryRequest<?> storyRequest, SerializeTracking serializeTracking) {
         // init start event
         startElement = startEvent;
         startEventId = startEvent.getId();
         storyId = startEvent.getId();
+        businessId = storyRequest.getBusinessId();
 
         // init requestId
         requestId = GlobalUtil.getOrSetRequestId(storyRequest);
 
         // init monitor tracking
-        monitorTracking = new MonitorTracking(startEvent, storyRequest.getTrackingType(), serializeTracking);
+        monitorTracking = new MonitorTracking(applicationContext, startEvent, storyRequest.getTrackingType(), serializeTracking);
 
         // init stack
         flowElementStack = monitorTracking.newTrackingStack();
@@ -157,6 +162,7 @@ public class FlowRegister {
         asyncFlowRegister.reentrantLock = this.reentrantLock;
         asyncFlowRegister.joinGatewayComingMap = this.joinGatewayComingMap;
         asyncFlowRegister.requestId = this.requestId;
+        asyncFlowRegister.businessId = this.businessId;
         asyncFlowRegister.adminFuture = this.adminFuture;
 
         // init stack
@@ -175,6 +181,7 @@ public class FlowRegister {
         subFlowRegister.storyId = storyId;
         subFlowRegister.monitorTracking = this.monitorTracking;
         subFlowRegister.requestId = this.requestId;
+        subFlowRegister.businessId = this.businessId;
         subFlowRegister.adminFuture = this.adminFuture;
         subFlowRegister.flowElementStack = this.monitorTracking.newTrackingStack();
         subFlowRegister.flowElementStack.push(null, startEvent);
@@ -187,8 +194,11 @@ public class FlowRegister {
     }
 
     public String getRequestId() {
-        AssertUtil.notBlank(requestId);
         return requestId;
+    }
+
+    public String getBusinessId() {
+        return businessId;
     }
 
     public AdminFuture getAdminFuture() {
@@ -213,7 +223,8 @@ public class FlowRegister {
     }
 
     public Optional<FlowElement> nextElement(ContextStoryBus contextStoryBus) {
-        return monitorTracking.trackingNextElement(doNextElement(contextStoryBus).orElse(null));
+        StoryBus storyBus = contextStoryBus.getStoryBus();
+        return monitorTracking.trackingNextElement(storyBus.getScopeDataOperator(), doNextElement(contextStoryBus).orElse(null));
     }
 
     private Optional<FlowElement> doNextElement(ContextStoryBus contextStoryBus) {
@@ -221,14 +232,30 @@ public class FlowRegister {
         if (!elementOptional.isPresent()) {
             return Optional.empty();
         }
+
         // 获取当前执行节点
         FlowElement currentFlowElement = elementOptional.get();
-        monitorTracking.buildNodeTracking(currentFlowElement);
-
         AssertUtil.notTrue(adminFuture.isCancelled(startEventId), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
                 "Task interrupted. Story task was interrupted! taskName: {}, identity: {}", GlobalUtil.getTaskName(getStartElement(), getRequestId()), currentFlowElement.identity());
 
+        // 处理回环流程
+        if (currentFlowElement instanceof SequenceFlow) {
+            FlowElement cycleBeginElement = ((SequenceFlow) currentFlowElement).getCycleBeginElement();
+            if (cycleBeginElement != null) {
+                joinGatewayComingMap.keySet().forEach(k -> {
+                    if (k instanceof EndEvent) {
+                        return;
+                    }
+                    joinGatewayComingMap.remove(k);
+                });
+                flowElementStack.clear();
+                monitorTracking.buildFirstNodeTracking(cycleBeginElement);
+                return Optional.of(cycleBeginElement);
+            }
+        }
+
         // 获取执行决策
+        monitorTracking.buildFirstNodeTracking(currentFlowElement);
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
 
         // 填充 ContextStoryBus
@@ -240,14 +267,12 @@ public class FlowRegister {
         // 是否跳过当前节点继续执行下一个
         if (midwayStartElement != currentFlowElement && peekStrategy.skip(currentFlowElement, contextStoryBus)) {
             prevElement = currentFlowElement;
-            return nextElement(new ContextStoryBus(contextStoryBus.getStoryBus()));
+            return doNextElement(new ContextStoryBus(contextStoryBus.getStoryBus()));
         }
         return elementOptional;
     }
 
     public Optional<AsyncFlowHook<List<FlowElement>>> predictNextElement(ContextStoryBus contextStoryBus, FlowElement currentFlowElement) {
-        AssertUtil.notNull(currentFlowElement);
-        Optional<FlowElement> elementOptional = Optional.of(currentFlowElement);
         if (contextStoryBus.getEndTaskPedometer() == null) {
             contextStoryBus.setPrevElement(prevElement);
             contextStoryBus.setReentrantLock(reentrantLock);
@@ -258,18 +283,19 @@ public class FlowRegister {
         // 匹配可参与执行的子分支
         List<FlowElement> flowList;
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
-        if (elementOptional.get() instanceof SequenceFlow) {
-            flowList = elementOptional.get().outingList();
+        if (currentFlowElement instanceof SequenceFlow) {
+            flowList = currentFlowElement.outingList();
         } else {
-            List<SequenceFlow> sequenceFlowList = elementOptional.get().outingList().stream().map(f -> (SequenceFlow) f).collect(Collectors.toList());
-            OrderComparator.sort(sequenceFlowList);
-            flowList = sequenceFlowList.stream().filter(flow -> peekStrategy.needPeek(flow, contextStoryBus)).collect(Collectors.toList());
+            flowList = contextStoryBus.getStoryBus().getScopeDataOperator().serialRead(opt -> {
+                List<SequenceFlow> sequenceFlowList = currentFlowElement.outingList().stream().map(f -> (SequenceFlow) f).collect(Collectors.toList());
+                OrderComparator.sort(sequenceFlowList);
+                return sequenceFlowList.stream().filter(flow -> peekStrategy.needPeek(monitorTracking, flow, contextStoryBus)).map(f -> (FlowElement) f).collect(Collectors.toList());
+            }).orElse(Lists.newArrayList());
         }
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {
             AssertUtil.isTrue(CollectionUtils.isNotEmpty(flowList), ExceptionEnum.STORY_FLOW_ERROR,
                     "Match to the next process node as empty! current node identity: {}, desired list of possible nodes for later execution: {}", () -> {
-                        List<String> identityList = elementOptional.get().outingList().stream()
-                                .map(flow -> flow.outingList().get(0)).map(FlowElement::identity).collect(Collectors.toList());
+                        List<String> identityList = currentFlowElement.outingList().stream().map(flow -> flow.outingList().get(0)).map(FlowElement::identity).collect(Collectors.toList());
                         return Lists.newArrayList(currentFlowElement.identity(), String.join(", ", identityList));
                     });
         }
@@ -280,19 +306,19 @@ public class FlowRegister {
             AsyncFlowHook<List<FlowElement>> asyncElementHook = new AsyncFlowHook<>(flowList);
             asyncElementHook.hook(list -> {
                 prevElement = currentFlowElement;
-                if (!Objects.equals(flowList.size(), elementOptional.get().outingList().size())) {
-                    processNotMatchElement(contextStoryBus, flowList, elementOptional.get());
+                if (!Objects.equals(flowList.size(), currentFlowElement.outingList().size())) {
+                    processNotMatchElement(contextStoryBus, flowList, currentFlowElement);
                 }
             });
             return Optional.of(asyncElementHook);
         }
 
         prevElement = currentFlowElement;
-        flowElementStack.pushList(elementOptional.get(), flowList);
+        flowElementStack.pushList(currentFlowElement, flowList);
 
         // 无需执行的子流程，可能会参与驱动之后的流程
-        if (!Objects.equals(flowList.size(), elementOptional.get().outingList().size())) {
-            processNotMatchElement(contextStoryBus, flowList, elementOptional.get());
+        if (!Objects.equals(flowList.size(), currentFlowElement.outingList().size())) {
+            processNotMatchElement(contextStoryBus, flowList, currentFlowElement);
         }
         return Optional.empty();
     }

@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.engine.future;
 
 import cn.kstry.framework.core.engine.FlowRegister;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.enums.AsyncTaskState;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -96,7 +97,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             doNextHook(value);
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
-            adminFuture.errorNotice(ex, flowRegister.getStartEventId());
+            adminFuture.errorNotice(ex, flowRegister);
         } finally {
             threadSwitchClear.run();
             dispose();
@@ -115,7 +116,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             doCompleteHook();
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
-            adminFuture.errorNotice(ex, flowRegister.getStartEventId());
+            adminFuture.errorNotice(ex, flowRegister);
         } finally {
             threadSwitchClear.run();
             dispose();
@@ -142,7 +143,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
             doFinallyHook();
         } catch (Throwable ex) {
             AdminFuture adminFuture = flowRegister.getAdminFuture();
-            adminFuture.errorNotice(ex, flowRegister.getStartEventId());
+            adminFuture.errorNotice(ex, flowRegister);
         } finally {
             threadSwitchClear.run();
         }
@@ -193,7 +194,7 @@ public abstract class FlowTaskSubscriber extends BaseSubscriber<Object> {
         try {
             onError(timeoutException);
         } finally {
-            flowRegister.getAdminFuture().errorNotice(timeoutException, flowRegister.getStartEventId());
+            flowRegister.getAdminFuture().errorNotice(timeoutException, flowRegister);
         }
         return AsyncTaskState.TIMEOUT;
     }

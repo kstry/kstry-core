@@ -18,10 +18,14 @@
 package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.SubProcess;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.bpmn.impl.SequenceFlowExpression;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * SubProcessBuilder 构建类
@@ -51,6 +55,17 @@ public class SubProcessBuilder {
 
     public SubProcessBuilder timeout(int timeout) {
         this.subProcess.setTimeout(Math.max(timeout, 0));
+        return this;
+    }
+
+    public SubProcessBuilder notSkipExp(String exp) {
+        if (StringUtils.isBlank(exp)) {
+            return this;
+        }
+        SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(exp);
+        sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
+        sequenceFlowExpression.setName(exp);
+        this.subProcess.setExpression(sequenceFlowExpression);
         return this;
     }
 

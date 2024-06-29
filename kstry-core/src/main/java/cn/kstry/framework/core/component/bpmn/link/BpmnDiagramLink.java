@@ -124,7 +124,7 @@ public abstract class BpmnDiagramLink {
         SubProcessImpl subProcess = new SubProcessImpl();
         subProcess.setId(processId);
         sequenceFlow.outing(subProcess);
-        getElement().outing(sequenceFlow);
+        beforeElement().outing(sequenceFlow);
         return new SubProcessBuilder(subProcess, getProcessLink());
     }
 

@@ -134,7 +134,7 @@ public abstract class TaskComponentRepository implements TaskContainer {
         List<Method> methodList = Lists.newArrayList();
         taskServiceMethodList.stream().collect(Collectors.groupingBy(m -> {
             TaskService annotation = m.getAnnotation(TaskService.class);
-            String name = StringUtils.isBlank(annotation.name()) ? StringUtils.uncapitalize(m.getName()) : annotation.name();
+            String name = StringUtils.isBlank(annotation.name()) ? m.getName() : annotation.name();
             return TaskServiceUtil.joinName(name, annotation.ability());
         })).forEach((ts, list) -> {
             if (list.size() <= 1) {

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- *
  * @author lykan
  */
 public class BasicInStack<T> implements InStack<T> {
@@ -63,7 +62,7 @@ public class BasicInStack<T> implements InStack<T> {
 
     @Override
     public Optional<T> pop() {
-        if (stack.size() == 0) {
+        if (stack.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(stack.pop());
@@ -71,7 +70,7 @@ public class BasicInStack<T> implements InStack<T> {
 
     @Override
     public Optional<T> peek() {
-        if (stack.size() == 0) {
+        if (stack.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(stack.peekFirst());
@@ -80,5 +79,10 @@ public class BasicInStack<T> implements InStack<T> {
     @Override
     public boolean isEmpty() {
         return stack.isEmpty();
+    }
+
+    @Override
+    public void clear() {
+        stack.clear();
     }
 }

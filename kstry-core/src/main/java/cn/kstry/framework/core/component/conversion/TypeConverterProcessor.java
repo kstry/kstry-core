@@ -84,6 +84,9 @@ public class TypeConverterProcessor {
             source = (S) ((Optional<?>) source).orElse(null);
         }
         if (source == null) {
+            if (targetType != null && targetType.isPrimitive()) {
+                return ImmutablePair.of(null, (T) ElementParserUtil.initPrimitive(targetType));
+            }
             return ImmutablePair.nullPair();
         }
         if (StringUtils.isBlank(convertName)) {

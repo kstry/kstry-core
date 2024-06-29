@@ -20,6 +20,10 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.InclusiveGateway;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.component.expression.ConditionExpression;
+import cn.kstry.framework.core.component.expression.Expression;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
@@ -49,6 +53,11 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
      */
     private String midwayStartId;
 
+    /**
+     * Boolean 表达式
+     */
+    private Expression expression;
+
     public InclusiveGatewayImpl() {
         this.asyncFlowElement = new BasicAsyncFlowElement();
         this.serviceTask = null;
@@ -65,10 +74,12 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
     }
 
     public void setOpenAsync(boolean openAsync) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.asyncFlowElement.setOpenAsync(openAsync);
     }
 
     public void setServiceTask(ServiceTask serviceTask) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         if (serviceTask != null && serviceTask.validTask()) {
             this.serviceTask = serviceTask;
         }
@@ -80,10 +91,12 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
     }
 
     public void setCompletedCount(Integer completedCount) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.completedCount = completedCount;
     }
 
     public void setMidwayStartId(String midwayStartId) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         if (StringUtils.isBlank(midwayStartId)) {
             return;
         }
@@ -98,5 +111,15 @@ public class InclusiveGatewayImpl extends GatewayImpl implements InclusiveGatewa
     @Override
     public Optional<ServiceTask> getServiceTask() {
         return Optional.ofNullable(serviceTask);
+    }
+
+    @Override
+    public Optional<ConditionExpression> getConditionExpression() {
+        return Optional.ofNullable(this.expression).flatMap(Expression::getConditionExpression);
+    }
+
+    public void setExpression(Expression expression) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
+        this.expression = expression;
     }
 }

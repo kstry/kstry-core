@@ -72,4 +72,11 @@ public @interface TaskService {
      * 服务节点迭代器
      */
     Iterator iterator() default @Iterator();
+
+    /**
+     * 服务节点限流器
+     *
+     * @since 1.1.15
+     */
+    Limiter limiter() default @Limiter();
 }

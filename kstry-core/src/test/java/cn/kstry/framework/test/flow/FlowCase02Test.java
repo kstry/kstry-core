@@ -7,6 +7,7 @@ import cn.kstry.framework.core.engine.facade.TaskResponse;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.test.flow.bo.Goods;
 import cn.kstry.framework.test.flow.bo.Te4Request;
+import com.alibaba.fastjson.JSON;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +48,10 @@ public class FlowCase02Test {
         StoryRequest<Goods> fireRequest = ReqBuilder.returnType(Goods.class).timeout(3000)
                 .storyExecutor(executor).startId("story-def-complex-flow-001").request(request).build();
         fireRequest.setTrackingType(TrackingTypeEnum.SERVICE_DETAIL);
+        fireRequest.setRecallStoryHook(r -> {
+            System.out.println(JSON.toJSONString(r.getMonitorTracking().getFlowExpressionTracking()));
+            System.out.println(JSON.toJSONString(r.getMonitorTracking().getRawStoryTracking()));
+        });
         TaskResponse<Goods> fire = storyEngine.fire(fireRequest);
         Assert.assertTrue(fire.isSuccess());
         Assert.assertEquals(26, request.getCount());

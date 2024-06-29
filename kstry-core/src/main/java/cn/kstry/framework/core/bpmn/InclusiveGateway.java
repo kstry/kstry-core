@@ -20,11 +20,12 @@ package cn.kstry.framework.core.bpmn;
 import cn.kstry.framework.core.bpmn.extend.AggregationFlowElement;
 import cn.kstry.framework.core.bpmn.extend.AsyncFlowElement;
 import cn.kstry.framework.core.bpmn.extend.ServiceTaskSupport;
+import cn.kstry.framework.core.component.expression.Expression;
 
 /**
  * InclusiveGateway
  */
-public interface InclusiveGateway extends Gateway, AggregationFlowElement, AsyncFlowElement, ServiceTaskSupport {
+public interface InclusiveGateway extends Gateway, AggregationFlowElement, AsyncFlowElement, ServiceTaskSupport, Expression {
 
     Integer getCompletedCount();
 

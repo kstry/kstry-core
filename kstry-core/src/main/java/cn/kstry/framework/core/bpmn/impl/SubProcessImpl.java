@@ -20,8 +20,11 @@ package cn.kstry.framework.core.bpmn.impl;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.component.expression.ConditionExpression;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
@@ -62,6 +65,7 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
     }
 
     public void setStartEvent(StartEvent startEvent) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.startEvent = startEvent;
     }
 
@@ -79,6 +83,14 @@ public class SubProcessImpl extends TaskImpl implements SubProcess {
         }
         if (targetSubProcess.strictMode == null) {
             targetSubProcess.strictMode = this.strictMode;
+        }
+        if (!targetSubProcess.getConditionExpression().isPresent() && this.getConditionExpression().isPresent()) {
+            this.getConditionExpression().map(ConditionExpression::getPlainExpression).ifPresent(exp -> {
+                SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(exp);
+                sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
+                sequenceFlowExpression.setName(exp);
+                targetSubProcess.setExpression(sequenceFlowExpression);
+            });
         }
         if (targetSubProcess.timeout == null) {
             targetSubProcess.timeout = this.timeout;

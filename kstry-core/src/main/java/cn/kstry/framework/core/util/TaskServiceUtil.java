@@ -19,6 +19,7 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.builder.ServiceTaskBuilder;
+import cn.kstry.framework.core.component.limiter.RateLimiterBuilder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.apache.commons.lang3.StringUtils;
@@ -96,6 +97,11 @@ public class TaskServiceUtil {
         if (sTask.getTimeout() != null && sTask.getTimeout() > 0) {
             taskBuilder.timeout(sTask.getTimeout());
         }
+        if (sTask.getTaskDemotion() != null) {
+            taskBuilder.taskDemotion(sTask.getTaskDemotion().getIdentityId());
+        }
+        sTask.getConditionExpression().ifPresent(c -> taskBuilder.notSkipExp(c.getPlainExpression()));
+        sTask.getRateLimiterConfig().ifPresent(rateLimiterConfig -> taskBuilder.rateLimiter(RateLimiterBuilder.of(rateLimiterConfig).build()));
         return taskBuilder;
     }
 }

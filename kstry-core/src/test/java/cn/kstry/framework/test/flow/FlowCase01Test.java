@@ -8,6 +8,7 @@ import cn.kstry.framework.core.engine.facade.TaskResponse;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.test.flow.bo.CycleRequest;
 import cn.kstry.framework.test.flow.bo.MethodInvokeBo;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
@@ -348,5 +349,15 @@ public class FlowCase01Test {
                 .varScopeData(var).trackingType(TrackingTypeEnum.SERVICE_DETAIL).startId("expressionAliasProcessTest").build();
         TaskResponse<Integer> fire = storyEngine.fire(fireRequest);
         Assert.assertTrue(fire.isSuccess());
+    }
+
+    @Test
+    public void testFlow17() {
+        CycleRequest request = new CycleRequest();
+        StoryRequest<Void> fireRequest = ReqBuilder.returnType(Void.class)
+                .request(request).trackingType(TrackingTypeEnum.SERVICE).startId("def-flow-test-017").businessId("limit-test").build();
+        TaskResponse<Void> fire = storyEngine.fire(fireRequest);
+        Assert.assertTrue(fire.isSuccess());
+        Assert.assertEquals(0, request.getCount());
     }
 }

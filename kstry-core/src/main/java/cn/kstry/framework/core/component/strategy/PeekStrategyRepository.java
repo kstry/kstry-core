@@ -24,6 +24,7 @@ import cn.kstry.framework.core.component.expression.Expression;
 import cn.kstry.framework.core.engine.thread.EndTaskPedometer;
 import cn.kstry.framework.core.enums.ElementAllowNextEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
@@ -36,7 +37,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author lykan
  */
 public class PeekStrategyRepository {
@@ -58,11 +58,11 @@ public class PeekStrategyRepository {
          *  3> 没有条件表达式的分支，代表 true
          */
         @Override
-        public boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus) {
+        public boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus) {
             if (contextStoryBus.getPeekCount() >= 1) {
                 return false;
             }
-            boolean needPeek = PeekStrategyRepository.needPeek((SequenceFlow) flowElement, contextStoryBus.getStoryBus());
+            boolean needPeek = PeekStrategyRepository.needPeek(monitorTracking, (SequenceFlow) flowElement, contextStoryBus.getStoryBus());
             if (needPeek) {
                 contextStoryBus.incrPeekCount();
             }
@@ -87,7 +87,7 @@ public class PeekStrategyRepository {
         }
 
         @Override
-        public boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus) {
+        public boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus) {
             return true;
         }
     }, new PeekStrategy() {
@@ -106,8 +106,8 @@ public class PeekStrategyRepository {
         }
 
         @Override
-        public boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus) {
-            return PeekStrategyRepository.needPeek((SequenceFlow) flowElement, contextStoryBus.getStoryBus());
+        public boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus) {
+            return PeekStrategyRepository.needPeek(monitorTracking, (SequenceFlow) flowElement, contextStoryBus.getStoryBus());
         }
     }, new PeekStrategy() {
 
@@ -120,7 +120,7 @@ public class PeekStrategyRepository {
         }
 
         @Override
-        public boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus) {
+        public boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus) {
             return true;
         }
     }, new PeekStrategy() {
@@ -134,8 +134,8 @@ public class PeekStrategyRepository {
         }
 
         @Override
-        public boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus) {
-            return PeekStrategyRepository.needPeek((SequenceFlow) flowElement, contextStoryBus.getStoryBus());
+        public boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus) {
+            return PeekStrategyRepository.needPeek(monitorTracking, (SequenceFlow) flowElement, contextStoryBus.getStoryBus());
         }
     }, new PeekStrategy() {
 
@@ -156,8 +156,8 @@ public class PeekStrategyRepository {
         }
 
         @Override
-        public boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus) {
-            return PeekStrategyRepository.needPeek((SequenceFlow) flowElement, contextStoryBus.getStoryBus());
+        public boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus) {
+            return PeekStrategyRepository.needPeek(monitorTracking, (SequenceFlow) flowElement, contextStoryBus.getStoryBus());
         }
 
         @Override
@@ -207,7 +207,7 @@ public class PeekStrategyRepository {
     }
 
     private static ElementAllowNextEnum getInclusiveGatewayAllowNextEnum(FlowElement flowElement, boolean actualArrive,
-                                                                     List<ContextStoryBus.ElementArriveRecord> expectedComingElement, Integer completedCount) {
+                                                                         List<ContextStoryBus.ElementArriveRecord> expectedComingElement, Integer completedCount) {
         int actualArriveCount = (int) expectedComingElement.stream().filter(ContextStoryBus.ElementArriveRecord::isActualArrive).count();
         if (actualArrive && actualArriveCount == completedCount) {
             return ElementAllowNextEnum.ALLOW_NEX;
@@ -223,8 +223,12 @@ public class PeekStrategyRepository {
         return ElementAllowNextEnum.NOT_ALLOW_NEX;
     }
 
-    private static boolean needPeek(SequenceFlow sequenceFlow, StoryBus storyBus) {
-        return Optional.of(sequenceFlow).flatMap(Expression::getConditionExpression).map(e -> e.condition(storyBus)).orElse(true);
+    private static boolean needPeek(MonitorTracking monitorTracking, SequenceFlow sequenceFlow, StoryBus storyBus) {
+        return Optional.of(sequenceFlow).flatMap(Expression::getConditionExpression).map(e -> {
+            boolean res = e.condition(storyBus);
+            monitorTracking.expressionTracking(storyBus.getScopeDataOperator(), sequenceFlow, res);
+            return res;
+        }).orElse(true);
     }
 
     public static List<PeekStrategy> getPeekStrategy() {

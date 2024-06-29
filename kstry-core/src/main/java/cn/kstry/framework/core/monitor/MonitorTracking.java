@@ -19,10 +19,18 @@ package cn.kstry.framework.core.monitor;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
+import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
+import cn.kstry.framework.core.component.event.TrackingBeginEvent;
+import cn.kstry.framework.core.component.event.TrackingFinishEvent;
+import cn.kstry.framework.core.component.expression.Expression;
+import cn.kstry.framework.core.component.limiter.RateLimiterConfig;
+import cn.kstry.framework.core.component.limiter.strategy.FailAcquireStrategy;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.constant.GlobalProperties;
+import cn.kstry.framework.core.engine.FlowRegister;
 import cn.kstry.framework.core.enums.TrackingTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.util.AssertUtil;
@@ -33,8 +41,10 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -77,10 +87,14 @@ public class MonitorTracking {
 
     private final SerializeTracking serializeTracking;
 
-    public MonitorTracking(FlowElement startEvent, TrackingTypeEnum trackingTypeEnum, SerializeTracking serializeTracking) {
+    private final ApplicationContext applicationContext;
+
+    public MonitorTracking(ApplicationContext applicationContext, FlowElement startEvent, TrackingTypeEnum trackingTypeEnum, SerializeTracking serializeTracking) {
+        AssertUtil.notNull(applicationContext);
         this.startTime = LocalDateTime.now();
         this.startEvent = startEvent;
         this.serializeTracking = serializeTracking;
+        this.applicationContext = applicationContext;
         this.trackingTypeEnum = Optional.ofNullable(trackingTypeEnum).orElse(TrackingTypeEnum.of(GlobalProperties.STORY_MONITOR_TRACKING_TYPE));
     }
 
@@ -106,10 +120,27 @@ public class MonitorTracking {
         return Optional.of(nodeTrackingMap.computeIfAbsent(prevElement.getId(), key -> {
             NodeTracking nt = new NodeTracking();
             nt.setNodeId(prevElement.getId());
+            nt.setStartTime(LocalDateTime.now());
             nt.setNodeName(prevElement.getName());
             nt.setNodeType(prevElement.getElementType());
             return nt;
         }));
+    }
+
+    public void buildFirstNodeTracking(FlowElement prevElement) {
+        NodeTracking oldTracking = nodeTrackingMap.remove(prevElement.getId());
+        if (!(prevElement instanceof ServiceTask)) {
+            buildNodeTracking(prevElement);
+            return;
+        }
+        buildNodeTracking(prevElement).ifPresent(nodeTracking -> {
+            if (oldTracking == null) {
+                return;
+            }
+            CycleTracking ct = oldTracking.getCycleTracking() == null ? new CycleTracking(1L, oldTracking.getSpendTime()) : oldTracking.getCycleTracking();
+            ct.setTimes(ct.getTimes() + 1);
+            nodeTracking.setCycleTracking(ct);
+        });
     }
 
     /**
@@ -118,10 +149,10 @@ public class MonitorTracking {
      * @param flowElement NextElement
      * @return NextElement
      */
-    public Optional<FlowElement> trackingNextElement(FlowElement flowElement) {
+    public Optional<FlowElement> trackingNextElement(ScopeDataOperator scopeDataOperator, FlowElement flowElement) {
         buildNodeTracking(flowElement).ifPresent(nodeTracking -> {
             nodeTracking.setIndex(invokePedometer.incrementAndGet());
-            getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setStartTime(LocalDateTime.now()));
+            applicationContext.publishEvent(buildTrackingBeginEvent(scopeDataOperator, nodeTracking));
         });
         return Optional.ofNullable(flowElement);
     }
@@ -178,17 +209,71 @@ public class MonitorTracking {
         });
     }
 
+    public void trackingResult(FlowElement flowElement, Object result) {
+        if (result == null) {
+            return;
+        }
+        getServiceNodeTracking(flowElement).ifPresent(tracking -> tracking.setTaskResult(result));
+    }
+
     /**
      * TaskService 执行完成后监控记录数据
      *
      * @param flowElement flowElement
      * @param exception   exception
      */
-    public void finishTaskTracking(FlowElement flowElement, Throwable exception) {
+    public void finishTaskTracking(ScopeDataOperator scopeDataOperator, FlowElement flowElement, Throwable exception) {
         getServiceNodeTracking(flowElement).ifPresent(tracking -> {
             tracking.setEndTime(LocalDateTime.now());
             tracking.setTaskException(exception);
             tracking.setSpendTime(Duration.between(tracking.getStartTime(), tracking.getEndTime()).toMillis());
+            applicationContext.publishEvent(buildTrackingFinishEvent(scopeDataOperator, tracking, exception));
+        });
+    }
+
+    public void confirmFinishTaskTracking(FlowRegister register, FlowElement flowElement, Throwable exception) {
+        getServiceNodeTracking(flowElement).ifPresent(tracking -> {
+            if (tracking.finishService()) {
+                return;
+            }
+            tracking.setEndTime(LocalDateTime.now());
+            tracking.setTaskException(exception);
+            tracking.setSpendTime(Duration.between(tracking.getStartTime(), tracking.getEndTime()).toMillis());
+
+            String startId = register.getStoryId();
+            String businessId = register.getBusinessId();
+            String requestId = register.getRequestId();
+            applicationContext.publishEvent(new TrackingFinishEvent(startId, businessId, requestId, tracking, exception));
+        });
+    }
+
+    public void expressionTracking(ScopeDataOperator scopeDataOperator, FlowElement flowElement, boolean res) {
+        if (!(flowElement instanceof Expression)) {
+            return;
+        }
+        buildNodeTracking(flowElement).ifPresent(tracking -> {
+            ((Expression) flowElement).getConditionExpression().ifPresent(c -> tracking.setExpression(new ExpressionTracking(c.getPlainExpression(), String.valueOf(res))));
+            if (flowElement instanceof SequenceFlow) {
+                applicationContext.publishEvent(buildTrackingFinishEvent(scopeDataOperator, tracking, null));
+            }
+        });
+    }
+
+    public void limiterTracking(ServiceTask serviceTask, RateLimiterConfig rateLimiterConfig, FailAcquireStrategy failAcquireStrategy) {
+        getServiceNodeTracking(serviceTask).ifPresent(tracking -> {
+            LimiterTracking limiterTracking = new LimiterTracking();
+            limiterTracking.setLimited(true);
+            tracking.setLimiter(limiterTracking);
+            if (rateLimiterConfig == null) {
+                return;
+            }
+            limiterTracking.setLimiterName(rateLimiterConfig.getName());
+            limiterTracking.setAcquireTimeout(rateLimiterConfig.getAcquireTimeout());
+            limiterTracking.setFailStrategy(Optional.ofNullable(failAcquireStrategy).map(FailAcquireStrategy::name).orElse(rateLimiterConfig.getFailStrategy()));
+            limiterTracking.setMaxPermits(rateLimiterConfig.getPermits());
+            if (StringUtils.isNotBlank(rateLimiterConfig.getExpression())) {
+                limiterTracking.setExpression(new ExpressionTracking(rateLimiterConfig.getExpression(), "true"));
+            }
         });
     }
 
@@ -213,12 +298,11 @@ public class MonitorTracking {
     }
 
     public Optional<NodeTracking> getServiceNodeTracking(FlowElement flowElement) {
-        if (trackingTypeEnum.notNeedServiceTracking()) {
+        if (flowElement == null || trackingTypeEnum.notNeedServiceTracking()) {
             return Optional.empty();
         }
         NodeTracking nodeTracking = nodeTrackingMap.get(flowElement.getId());
-        AssertUtil.notNull(nodeTracking);
-        return Optional.of(nodeTracking);
+        return Optional.ofNullable(nodeTracking);
     }
 
     public List<NodeTracking> getStoryTracking() {
@@ -263,6 +347,16 @@ public class MonitorTracking {
                 .collect(Collectors.toList());
     }
 
+    public Map<String, NodeTracking> getRawStoryTracking() {
+        return nodeTrackingMap;
+    }
+
+    public List<NodeTracking> getFlowExpressionTracking() {
+        return nodeTrackingMap.values().stream()
+                .filter(n -> n.getNodeType() == BpmnTypeEnum.SEQUENCE_FLOW && n.getExpression() != null)
+                .sorted(Comparator.comparing(NodeTracking::getIndex)).collect(Collectors.toList());
+    }
+
     public long getSpendTime() {
         return Duration.between(startTime, LocalDateTime.now()).toMillis();
     }
@@ -276,5 +370,19 @@ public class MonitorTracking {
             LOGGER.info("[{}] startId: {}, spend {}ms: {}",
                     ExceptionEnum.STORY_TRACKING_CODE.getExceptionCode(), startEvent.getId(), getSpendTime(), JSON.toJSONString(storyTracking, SerializerFeature.DisableCircularReferenceDetect));
         }
+    }
+
+    private TrackingBeginEvent buildTrackingBeginEvent(ScopeDataOperator scopeDataOperator, NodeTracking nodeTracking) {
+        String startId = scopeDataOperator.getStartId();
+        String businessId = scopeDataOperator.getBusinessId().orElse(null);
+        String requestId = scopeDataOperator.getRequestId();
+        return new TrackingBeginEvent(startId, businessId, requestId, nodeTracking);
+    }
+
+    private TrackingFinishEvent buildTrackingFinishEvent(ScopeDataOperator scopeDataOperator, NodeTracking nodeTracking, Throwable exception) {
+        String startId = scopeDataOperator.getStartId();
+        String businessId = scopeDataOperator.getBusinessId().orElse(null);
+        String requestId = scopeDataOperator.getRequestId();
+        return new TrackingFinishEvent(startId, businessId, requestId, nodeTracking, exception);
     }
 }

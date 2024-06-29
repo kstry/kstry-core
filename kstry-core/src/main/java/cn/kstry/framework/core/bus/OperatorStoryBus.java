@@ -22,8 +22,10 @@ import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
 import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.NoticeTracking;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.util.ElementParserUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
@@ -42,6 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -341,8 +344,23 @@ public class OperatorStoryBus extends BasicStoryBus {
                 }
 
                 @Override
+                public boolean removeData(String expression) {
+                    return setData(expression, null);
+                }
+
+                @Override
                 public <T> Optional<T> iterDataItem() {
                     return InvokeMethodThreadLocal.getDataItem().map(t -> (T) (t.isBatch() ? t.getDataList() : t.getData().orElse(null)));
+                }
+
+                @Override
+                public Optional<ServiceNodeResource> getServiceNodeResource() {
+                    return InvokeMethodThreadLocal.getServiceNodeResource();
+                }
+
+                @Override
+                public Optional<KvScope> getKvScope() {
+                    return InvokeMethodThreadLocal.getKvScope();
                 }
 
                 @Override
@@ -376,11 +394,12 @@ public class OperatorStoryBus extends BasicStoryBus {
                         }
                         Pair<String, ?> convert = typeConverterProcessor.convert(target, returnType);
                         OperatorStoryBus.this.returnResult = convert.getValue();
-                        InvokeMethodThreadLocal.getServiceTask().ifPresent(element ->
-                                monitorTracking.trackingNodeNotice(element, () ->
-                                        NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, convert.getValue(), target.getClass(), convert.getKey())
-                                )
-                        );
+                        InvokeMethodThreadLocal.getServiceTask().ifPresent(element -> {
+                            monitorTracking.trackingResult(element, convert.getValue());
+                            monitorTracking.trackingNodeNotice(element, () ->
+                                    NoticeTracking.build(null, null, ScopeTypeEnum.RESULT, convert.getValue(), target.getClass(), convert.getKey())
+                            );
+                        });
                         return true;
                     } finally {
                         wLock.unlock();
@@ -393,8 +412,36 @@ public class OperatorStoryBus extends BasicStoryBus {
                 }
 
                 @Override
+                public <T> Optional<T> serialRead(Function<ScopeDataQuery, T> readFun) {
+                    if (readFun == null) {
+                        return Optional.empty();
+                    }
+                    ReentrantReadWriteLock.ReadLock readLock = readLock();
+                    readLock.lock();
+                    try {
+                        return Optional.ofNullable(readFun.apply(this));
+                    } finally {
+                        readLock.unlock();
+                    }
+                }
+
+                @Override
                 public ReentrantReadWriteLock.WriteLock writeLock() {
                     return OperatorStoryBus.this.readWriteLock.writeLock();
+                }
+
+                @Override
+                public <T> Optional<T> serialWrite(Function<ScopeDataQuery, T> writeFun) {
+                    if (writeFun == null) {
+                        return Optional.empty();
+                    }
+                    ReentrantReadWriteLock.WriteLock writeLock = writeLock();
+                    writeLock.lock();
+                    try {
+                        return Optional.ofNullable(writeFun.apply(this));
+                    } finally {
+                        writeLock.unlock();
+                    }
                 }
 
                 private boolean doSetData(String name, ScopeData scopeData, Object target) {

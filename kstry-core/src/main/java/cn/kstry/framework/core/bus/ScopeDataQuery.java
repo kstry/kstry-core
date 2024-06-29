@@ -17,8 +17,12 @@
  */
 package cn.kstry.framework.core.bus;
 
+import cn.kstry.framework.core.kv.KvScope;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 /**
  * 用于暴露给使用方，作为查询 StoryBus 中数据的入口
@@ -123,9 +127,28 @@ public interface ScopeDataQuery {
     <T> Optional<T> iterDataItem();
 
     /**
+     * 获取服务节点资源标识
+     *
+     * @return 服务节点属性
+     */
+    Optional<ServiceNodeResource> getServiceNodeResource();
+
+    /**
+     * 获取KvScope
+     *
+     * @return 服务节点属性
+     */
+    Optional<KvScope> getKvScope();
+
+    /**
      * 拿到 StoryBus 中的读锁
      *
      * @return 读锁
      */
     ReentrantReadWriteLock.ReadLock readLock();
+
+    /**
+     * 串行化读
+     */
+    <T> Optional<T> serialRead(Function<ScopeDataQuery, T> readFun);
 }

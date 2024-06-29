@@ -68,4 +68,9 @@ public interface InStack<T> {
      * @return 是否为空
      */
     boolean isEmpty();
+
+    /**
+     * 清空全部元素
+     */
+    void clear();
 }

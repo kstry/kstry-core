@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.engine.future;
 
 import cn.kstry.framework.core.component.hook.SimpleHook;
+import cn.kstry.framework.core.engine.FlowRegister;
 import cn.kstry.framework.core.engine.thread.EndTaskPedometer;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
@@ -163,9 +164,11 @@ public class AdminTaskFuture implements AdminFuture {
     }
 
     @Override
-    public void errorNotice(Throwable exception, String startEventId) {
+    public void errorNotice(Throwable exception, FlowRegister flowRegister) {
         reentrantLock.lock();
         try {
+            ExceptionUtil.confirmFinishTaskTracking(flowRegister, exception);
+            String startEventId = flowRegister.getStartEventId();
             KstryException ke = ExceptionUtil.buildException(exception, ExceptionEnum.ASYNC_TASK_ERROR, null);
             if (Objects.equals(mainTaskFuture.getEndTaskPedometer().getStartEventId(), startEventId)) {
                 errorNotice(ke);
@@ -232,7 +235,6 @@ public class AdminTaskFuture implements AdminFuture {
                 // EndTaskPedometer 分组保存
                 MainTaskFuture mTaskF = GlobalUtil.transferNotEmpty(future, MainTaskFuture.class);
                 EndTaskPedometer endTaskPedometer = mTaskF.getEndTaskPedometer();
-                AssertUtil.notTrue(endTaskPedometerMap.containsKey(endTaskPedometer.getStartEventId()));
                 endTaskPedometerMap.put(endTaskPedometer.getStartEventId(), endTaskPedometer);
 
                 // 子 Future 关联父 Future

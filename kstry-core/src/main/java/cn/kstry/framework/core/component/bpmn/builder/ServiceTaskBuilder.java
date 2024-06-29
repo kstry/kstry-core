@@ -18,11 +18,16 @@
 package cn.kstry.framework.core.component.bpmn.builder;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.extend.ElementIterable;
+import cn.kstry.framework.core.bpmn.impl.SequenceFlowExpression;
 import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
 import cn.kstry.framework.core.component.bpmn.link.BpmnElementDiagramLink;
 import cn.kstry.framework.core.component.bpmn.link.ProcessLink;
+import cn.kstry.framework.core.component.limiter.RateLimiterConfig;
 import cn.kstry.framework.core.util.CustomRoleInfo;
+import cn.kstry.framework.core.util.GlobalUtil;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * ServiceTask 构建类
@@ -115,6 +120,30 @@ public class ServiceTaskBuilder {
 
     public ServiceTaskBuilder timeout(int timeout) {
         this.serviceTask.setTimeout(Math.max(timeout, 0));
+        return this;
+    }
+
+    public ServiceTaskBuilder notSkipExp(String exp) {
+        if (StringUtils.isBlank(exp)) {
+            return this;
+        }
+        SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(exp);
+        sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
+        sequenceFlowExpression.setName(exp);
+        this.serviceTask.setExpression(sequenceFlowExpression);
+        return this;
+    }
+
+    public ServiceTaskBuilder rateLimiter(RateLimiterConfig rateLimiterConfig) {
+        this.serviceTask.setRateLimiterConfig(rateLimiterConfig);
+        return this;
+    }
+
+    public ServiceTaskBuilder taskDemotion(String taskDemotion) {
+        if (StringUtils.isBlank(taskDemotion)) {
+            return this;
+        }
+        this.serviceTask.setTaskDemotion(taskDemotion);
         return this;
     }
 

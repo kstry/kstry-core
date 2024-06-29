@@ -20,10 +20,7 @@ package cn.kstry.framework.core.component.jsprocess.transfer;
 import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
-import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
-import cn.kstry.framework.core.bpmn.impl.SequenceFlowExpression;
-import cn.kstry.framework.core.bpmn.impl.SequenceFlowImpl;
-import cn.kstry.framework.core.bpmn.impl.ServiceTaskImpl;
+import cn.kstry.framework.core.bpmn.impl.*;
 import cn.kstry.framework.core.bus.InstructContent;
 import cn.kstry.framework.core.component.bpmn.ProcessModelTransfer;
 import cn.kstry.framework.core.component.bpmn.builder.InclusiveJoinPointBuilder;
@@ -37,6 +34,7 @@ import cn.kstry.framework.core.component.bpmn.link.StartProcessLink;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonNode;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonProcess;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonPropertySupport;
+import cn.kstry.framework.core.component.limiter.RateLimiterBuilder;
 import cn.kstry.framework.core.component.utils.BasicInStack;
 import cn.kstry.framework.core.component.utils.InStack;
 import cn.kstry.framework.core.constant.BpmnElementProperties;
@@ -113,17 +111,24 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         SubProcessLink subProcessLink = SubProcessLink.build(sp.getProcessId(), sp.getProcessName(), sp.getStartId(), sp.getStartName(), subBpmnLink -> doGetStartProcessLink(config, sp, subBpmnLink));
         ElementPropertyUtil.getJsonNodeProperty(sp, BpmnElementProperties.TASK_STRICT_MODE).map(BooleanUtils::toBooleanObject).filter(b -> !b).ifPresent(b -> subProcessLink.setStrictMode(false));
         ElementPropertyUtil.getJsonNodeProperty(sp, BpmnElementProperties.TASK_TIMEOUT).map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(subProcessLink::setTimeout);
+        ElementPropertyUtil.getJsonNodeProperty(sp, BpmnElementProperties.EXPRESSION_NOT_SKIP_EXPRESSION).ifPresent(subProcessLink::setNotSkipExp);
         fillIterableProperty(config, sp, subProcessLink::setElementIterable);
         subProcessLink.buildSubDiagramBpmnLink(config);
         return Optional.of(subProcessLink);
     }
 
     private void doGetStartProcessLink(ConfigResource config, JsonProcess jsonProcess, StartProcessLink processLink) {
-
         Map<String, JsonNode> jsonNodeMap = jsonProcess.getJsonNodes().stream().collect(Collectors.toMap(JsonNode::getId, Function.identity(), (x, y) -> x));
         JsonNode jsonStartEvent = jsonNodeMap.get(jsonProcess.getStartId());
         AssertUtil.notNull(jsonStartEvent, ExceptionEnum.CONFIGURATION_PARSE_FAILURE, "No StartEvent node defined in the process. startId: {}, fileName: {}", jsonProcess.getStartId(), config.getConfigName());
 
+        Set<String> cycleCrossFlows = getCycleCrossFlows(jsonProcess);
+        if (CollectionUtils.isNotEmpty(cycleCrossFlows)) {
+            LOGGER.info("Automatic identification of cross points in loopback links. fileName: {}, processId: {}, points: {}", config.getConfigName(), jsonProcess.getProcessId(), cycleCrossFlows);
+            AssertUtil.isTrue(cycleCrossFlows.size() == 1, ExceptionEnum.CONFIGURATION_FLOW_ERROR,
+                    "Only one link loopback and one cross point is allowed in a process! fileName: {}, processId: {}, points: {}", config.getConfigName(), jsonProcess.getProcessId(), cycleCrossFlows);
+        }
+        Map<String, CycleCrossPointLink> cycleCrossPointMap = Maps.newHashMap();
         Set<String> circularDependencyCheck = Sets.newHashSet();
         Map<String, Integer> comingCountMap = Maps.newHashMap();
         Map<ProcessLink, ProcessLink> inclusiveProcessLinkMap = Maps.newHashMap();
@@ -148,6 +153,22 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 AssertUtil.isTrue(nextNode != null && BpmnTypeEnum.SEQUENCE_FLOW.is(nextNode.getType()) && CollectionUtils.size(nextNode.getNextNodes()) == 1,
                         ExceptionEnum.CONFIGURATION_FLOW_ERROR, "Wrong branch in the path of an element! nearby nodeId: {}, fileName: {}", jsonNode.getId(), config.getConfigName());
                 assert nextNode != null;
+                if (isCycleCrossPoint(cycleCrossFlows, nextNode)) {
+                    AssertUtil.isTrue(cycleCrossFlows.contains(nextNode.getId()));
+                    SequenceFlowImpl sequenceFlow = sequenceFlowMapping(config, nextNode);
+                    beforeProcessLink.getElement().outing(sequenceFlow);
+                    CycleCrossPointLink cycleCrossPointLink = cycleCrossPointMap.get(nextNode.getId());
+                    if (cycleCrossPointLink == null || cycleCrossPointLink.processLink == null) {
+                        cycleCrossPointLink = new CycleCrossPointLink();
+                        cycleCrossPointLink.sequenceFlow = sequenceFlow;
+                        cycleCrossPointMap.put(nextNode.getId(), cycleCrossPointLink);
+                    } else {
+                        cycleCrossPointLink.sequenceFlow = sequenceFlow;
+                        cycleCrossPointLink.processLink.byLinkCycle(sequenceFlow);
+                    }
+                    continue;
+                }
+
                 JsonNode targetNode = jsonNodeMap.get(nextNode.getNextNodes().get(0));
                 AssertUtil.notNull(targetNode, ExceptionEnum.CONFIGURATION_FLOW_ERROR,
                         "Wrong branch in the path of an element! nodeId: {}, fileName: {}", jsonNode.getId(), config.getConfigName());
@@ -162,23 +183,27 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                                 BpmnElementProperties.TASK_STRICT_MODE).map(BooleanUtils::toBooleanObject).filter(b -> !b).ifPresent(b -> parallelJoinPointBuilder.notStrictMode());
                         return parallelJoinPointBuilder.build();
                     });
+                    linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, parallelProcessLink);
                     ProcessLink nextProcessLink = beforeProcessLink.nextParallel(sequenceFlowMapping(config, nextNode), (ParallelJoinPoint) parallelProcessLink);
                     nextBpmnLinkMap.put(targetNode.getId(), nextProcessLink);
                 } else if (BpmnTypeEnum.INCLUSIVE_GATEWAY.is(targetNode.getType())) {
                     ProcessLink inclusiveProcessLink = nextBpmnLinkMap.computeIfAbsent(targetNode.getId(), node -> {
                         ServiceTaskImpl serviceTask = getServiceTask(jsonNodeMap.get(node), config, true);
                         InclusiveJoinPoint beforeMockLink = processLink.inclusive(GlobalUtil.uuid(BpmnTypeEnum.INCLUSIVE_GATEWAY, targetNode.getId())).build();
-                        ProcessLink nextMockLink = instructWrapper(config, true, targetNode, serviceTask, null, beforeMockLink);
+                        ProcessLink nextMockLink = instructWrapper(config, jsonProcess, true, targetNode, serviceTask, null, beforeMockLink, null, cycleCrossFlows);
                         InclusiveJoinPointBuilder inclusiveJoinPointBuilder = processLink.inclusive(targetNode.getId());
                         ElementPropertyUtil.getJsonNodeProperty(targetNode,
                                 BpmnElementProperties.ASYNC_ELEMENT_OPEN_ASYNC).map(BooleanUtils::toBoolean).filter(b -> b).ifPresent(b -> inclusiveJoinPointBuilder.openAsync());
                         ElementPropertyUtil.getJsonNodeProperty(targetNode,
                                 BpmnElementProperties.INCLUSIVE_GATEWAY_COMPLETED_COUNT).map(NumberUtils::toInt).ifPresent(inclusiveJoinPointBuilder::completedCount);
-                        ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.INCLUSIVE_GATEWAY_MIDWAY_START_ID).ifPresent(inclusiveJoinPointBuilder::midwayStartId);
                         InclusiveJoinPoint actualInclusive = inclusiveJoinPointBuilder.build();
                         if (beforeMockLink == nextMockLink) {
+                            linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, actualInclusive);
+                            ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.INCLUSIVE_GATEWAY_MIDWAY_START_ID).ifPresent(inclusiveJoinPointBuilder::midwayStartId);
                             return actualInclusive;
                         }
+                        linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, beforeMockLink);
+                        ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.INCLUSIVE_GATEWAY_MIDWAY_START_ID).ifPresent(m -> ((InclusiveGatewayImpl) beforeMockLink.getElement()).setMidwayStartId(m));
                         nextMockLink.nextInclusive(buildSequenceFlow(targetNode.getId()), actualInclusive);
                         inclusiveProcessLinkMap.put(beforeMockLink, actualInclusive);
                         return beforeMockLink;
@@ -186,12 +211,12 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     beforeProcessLink.nextInclusive(sequenceFlowMapping(config, nextNode), (InclusiveJoinPoint) inclusiveProcessLink);
                     nextBpmnLinkMap.put(targetNode.getId(), inclusiveProcessLink);
                 } else if (BpmnTypeEnum.EXCLUSIVE_GATEWAY.is(targetNode.getType())) {
-                    MergeIncomingRes mergeRes = tryMergeIncoming(jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
+                    MergeIncomingRes mergeRes = tryMergeIncoming(cycleCrossFlows, jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
                     if (mergeRes.isSkip) {
                         continue;
                     }
                     SequenceFlow sf = mergeRes.sf;
-                    ProcessLink nextProcessLink = instructWrapper(config, true, targetNode, getServiceTask(targetNode, config, true), sf, mergeRes.processLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, jsonProcess, true, targetNode, getServiceTask(targetNode, config, true), sf, mergeRes.processLink, cycleCrossPointMap, cycleCrossFlows);
                     if (nextProcessLink != mergeRes.processLink) {
                         sf = buildSequenceFlow(targetNode.getId());
                     }
@@ -199,16 +224,16 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                     nextBpmnLinkMap.put(targetNode.getId(), nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (BpmnTypeEnum.SERVICE_TASK.is(targetNode.getType())) {
-                    MergeIncomingRes mergeRes = tryMergeIncoming(jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
+                    MergeIncomingRes mergeRes = tryMergeIncoming(cycleCrossFlows, jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
                     if (mergeRes.isSkip) {
                         continue;
                     }
                     ServiceTaskImpl serviceTask = getServiceTask(targetNode, config, false);
-                    ProcessLink nextProcessLink = instructWrapper(config, false, targetNode, serviceTask, mergeRes.sf, mergeRes.processLink);
+                    ProcessLink nextProcessLink = instructWrapper(config, jsonProcess, false, targetNode, serviceTask, mergeRes.sf, mergeRes.processLink, cycleCrossPointMap, cycleCrossFlows);
                     nextBpmnLinkMap.put(targetNode.getId(), nextProcessLink);
                     basicInStack.push(targetNode);
                 } else if (BpmnTypeEnum.SUB_PROCESS.is(targetNode.getType())) {
-                    MergeIncomingRes mergeRes = tryMergeIncoming(jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
+                    MergeIncomingRes mergeRes = tryMergeIncoming(cycleCrossFlows, jsonProcess, processLink, config, nextNode, targetNode, joinAssistMap, beforeProcessLink);
                     if (mergeRes.isSkip) {
                         continue;
                     }
@@ -218,16 +243,20 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                             BpmnElementProperties.TASK_STRICT_MODE).map(BooleanUtils::toBooleanObject).filter(b -> !b).ifPresent(b -> subProcessBuilder.notStrictMode());
                     ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.TASK_TIMEOUT).map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent
                             (subProcessBuilder::timeout);
-                    nextBpmnLinkMap.put(targetNode.getId(), subProcessBuilder.build());
+                    ElementPropertyUtil.getJsonNodeProperty(targetNode, BpmnElementProperties.EXPRESSION_NOT_SKIP_EXPRESSION).ifPresent(subProcessBuilder::notSkipExp);
+
+                    ProcessLink subProcessLink = subProcessBuilder.build();
+                    linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, subProcessLink);
+                    nextBpmnLinkMap.put(targetNode.getId(), subProcessLink);
                     basicInStack.push(targetNode);
                 } else {
-                    throw ExceptionUtil.buildException(null,
-                            ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT, GlobalUtil.format("There is an error in the json file! fileName: {}", config.getConfigName()));
+                    throw ExceptionUtil.buildException(null, ExceptionEnum.CONFIGURATION_UNSUPPORTED_ELEMENT,
+                            GlobalUtil.format("There is an error in the json file! fileName: {}, processId: {}", config.getConfigName(), jsonProcess.getProcessId()));
                 }
 
                 if (isBpmnSupportAggregation(targetNode)) {
                     comingCountMap.merge(targetNode.getId(), 1, Integer::sum);
-                    long incomingCount = jsonProcess.getJsonNodes().stream().filter(n -> CollectionUtils.isNotEmpty(n.getNextNodes()) && n.getNextNodes().contains(targetNode.getId())).count();
+                    long incomingCount = getIncoming(jsonProcess, targetNode, cycleCrossFlows).size();
                     if (Objects.equals(comingCountMap.get(targetNode.getId()), Long.valueOf(incomingCount).intValue())) {
                         basicInStack.push(targetNode);
                     }
@@ -241,10 +270,71 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         }
     }
 
-    private MergeIncomingRes tryMergeIncoming(JsonProcess jsonProcess, StartProcessLink processLink, ConfigResource config,
+    private void linkCycleCrossPoint(JsonProcess jsonProcess, Set<String> cycleCrossFlows,
+                                     Map<String, CycleCrossPointLink> cycleCrossPointMap, JsonNode targetNode, ProcessLink processLink) {
+        if (targetNode == null || processLink == null) {
+            return;
+        }
+        List<JsonNode> incoming = getIncoming(jsonProcess, targetNode, null);
+        if (CollectionUtils.isEmpty(incoming)) {
+            return;
+        }
+        incoming.stream().filter(f -> isCycleCrossPoint(cycleCrossFlows, f)).forEach(seq -> {
+            CycleCrossPointLink cycleCrossPointLink = cycleCrossPointMap.get(seq.getId());
+            if (cycleCrossPointLink == null || cycleCrossPointLink.sequenceFlow == null) {
+                cycleCrossPointLink = new CycleCrossPointLink();
+                cycleCrossPointLink.processLink = processLink;
+                cycleCrossPointMap.put(seq.getId(), cycleCrossPointLink);
+            } else {
+                processLink.byLinkCycle(cycleCrossPointLink.sequenceFlow);
+                cycleCrossPointLink.processLink = processLink;
+            }
+        });
+    }
+
+    private boolean isCycleCrossPoint(Set<String> cycleCrossFlows, JsonNode nextNode) {
+        return cycleCrossFlows.contains(nextNode.getId());
+    }
+
+    private Set<String> getCycleCrossFlows(JsonProcess jsonProcess) {
+        if (jsonProcess == null) {
+            return Sets.newHashSet();
+        }
+        Map<String, JsonNode> jsonNodeMap = jsonProcess.getJsonNodes().stream().collect(Collectors.toMap(JsonNode::getId, Function.identity(), (x, y) -> x));
+        JsonNode jsonStartEvent = jsonNodeMap.get(jsonProcess.getStartId());
+        if (jsonStartEvent == null) {
+            return Sets.newHashSet();
+        }
+        Set<String> oldFlowIds = Sets.newHashSet();
+        List<JsonNode> flowNodeList = Lists.newArrayList();
+        flowNodeList.add(jsonStartEvent);
+        while (true) {
+            List<JsonNode> needRemoveList = flowNodeList.stream()
+                    .filter(n -> {
+                        List<String> incomingIds = getIncoming(jsonProcess, n, null).stream().map(JsonNode::getId).collect(Collectors.toList());
+                        return CollectionUtils.isEmpty(incomingIds) || oldFlowIds.containsAll(incomingIds);
+                    })
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(needRemoveList)) {
+                needRemoveList.forEach(n -> {
+                    flowNodeList.remove(n);
+                    List<String> outgoing = n.getNextNodes();
+                    if (CollectionUtils.isNotEmpty(outgoing)) {
+                        oldFlowIds.addAll(outgoing);
+                    }
+                    outgoing.stream().filter(jsonNodeMap::containsKey).map(jsonNodeMap::get).map(JsonNode::getNextNodes)
+                            .filter(CollectionUtils::isNotEmpty).map(list -> list.get(0)).filter(jsonNodeMap::containsKey).map(jsonNodeMap::get).forEach(flowNodeList::add);
+                });
+                continue;
+            }
+            return flowNodeList.stream().flatMap(r -> getIncoming(jsonProcess, r, null).stream()).map(JsonNode::getId).filter(id -> !oldFlowIds.contains(id)).collect(Collectors.toSet());
+        }
+    }
+
+    private MergeIncomingRes tryMergeIncoming(Set<String> cycleCrossFlows, JsonProcess jsonProcess, StartProcessLink processLink, ConfigResource config,
                                               JsonNode nextNode, JsonNode targetNode, Map<String, InclusiveJoinPoint> joinAssistMap, ProcessLink beforeProcessLink) {
         MergeIncomingRes res = new MergeIncomingRes();
-        long incomingCount = jsonProcess.getJsonNodes().stream().filter(n -> CollectionUtils.isNotEmpty(n.getNextNodes()) && n.getNextNodes().contains(targetNode.getId())).count();
+        long incomingCount = getIncoming(jsonProcess, targetNode, cycleCrossFlows).size();
         if (incomingCount <= 1) {
             res.isSkip = false;
             res.sf = sequenceFlowMapping(config, nextNode);
@@ -260,6 +350,17 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
 
     private boolean isBpmnSupportAggregation(JsonNode targetNode) {
         return BpmnTypeEnum.END_EVENT.is(targetNode.getType()) || BpmnTypeEnum.PARALLEL_GATEWAY.is(targetNode.getType()) || BpmnTypeEnum.INCLUSIVE_GATEWAY.is(targetNode.getType());
+    }
+
+    private void fillRateLimiterProperty(JsonPropertySupport flowNode, ServiceTaskImpl serviceTaskImpl) {
+        RateLimiterBuilder builder = new RateLimiterBuilder();
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_LIMIT_NAME).ifPresent(builder::name);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_LIMIT_PERMITS).map(NumberUtils::toDouble).ifPresent(builder::permits);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_LIMIT_WARMUP_PERIOD).map(NumberUtils::toInt).ifPresent(builder::warmupPeriod);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_LIMIT_ACQUIRE_TIMEOUT).map(NumberUtils::toInt).ifPresent(builder::acquireTimeout);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_LIMIT_FAIL_STRATEGY).ifPresent(builder::failStrategy);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_LIMIT_EXPRESSION).ifPresent(builder::expression);
+        serviceTaskImpl.setRateLimiterConfig(builder.build());
     }
 
     private void fillIterableProperty(ConfigResource config, JsonPropertySupport flowNode, Consumer<BasicElementIterable> setConsumer) {
@@ -288,8 +389,10 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         return sequenceFlow;
     }
 
-    private ProcessLink instructWrapper(ConfigResource config, boolean allowEmpty, JsonNode targetNode, ServiceTaskImpl serviceTask, SequenceFlow firstSequenceFlow, ProcessLink nextProcessLink) {
+    private ProcessLink instructWrapper(ConfigResource config, JsonProcess jsonProcess, boolean allowEmpty, JsonNode targetNode, ServiceTaskImpl serviceTask,
+                                        SequenceFlow firstSequenceFlow, ProcessLink nextProcessLink, Map<String, CycleCrossPointLink> cycleCrossPointMap, Set<String> cycleCrossFlows) {
         ProcessLink before = nextProcessLink;
+        boolean isLink = cycleCrossPointMap != null;
         ServiceTaskImpl sTask = getServiceTask(targetNode, config, true);
 
         List<InstructContent> beforeInstructContentList = getInstructContentList(targetNode, true);
@@ -305,6 +408,10 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 String instruct = instructContent.getInstruct().substring(1);
                 nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instruct, instructContent.getContent()), sTask)
                         .name(instruct + "@" + serviceTask.getName()).id(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())).build();
+                if (isLink) {
+                    linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, nextProcessLink);
+                    isLink = false;
+                }
             }
         }
 
@@ -317,6 +424,10 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 firstSequenceFlow = null;
             }
             nextProcessLink = nextProcessLink.nextTask(sf, serviceTask);
+            if (isLink) {
+                linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, nextProcessLink);
+                isLink = false;
+            }
         }
 
         List<InstructContent> afterInstructContentList = getInstructContentList(targetNode, false);
@@ -325,20 +436,25 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 SequenceFlow sf;
                 if (firstSequenceFlow == null) {
                     sf = buildSequenceFlow(targetNode.getId());
-
                 } else {
                     sf = firstSequenceFlow;
                     firstSequenceFlow = null;
                 }
+                boolean isSerialize = targetNode.getId().startsWith("SERVICE_TASK-Instruct-") && CollectionUtils.size(afterInstructContentList) == 1;
                 nextProcessLink = TaskServiceUtil.instructTaskBuilder(nextProcessLink.nextInstruct(sf, instructContent.getInstruct(), instructContent.getContent()), sTask)
-                        .name(serviceTask.getName() + "@" + instructContent.getInstruct()).id(GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())).build();
+                        .name(isSerialize ? serviceTask.getName() : (serviceTask.getName() + "@" + instructContent.getInstruct()))
+                        .id(isSerialize ? targetNode.getId() : (GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, "Instruct-" + targetNode.getId())))
+                        .build();
+                if (isLink) {
+                    linkCycleCrossPoint(jsonProcess, cycleCrossFlows, cycleCrossPointMap, targetNode, nextProcessLink);
+                    isLink = false;
+                }
             }
         }
         AssertUtil.isTrue(allowEmpty || before != nextProcessLink,
                 ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "Invalid serviceNode definition, please add the necessary attributes! elementId: {}", targetNode.getId());
         return nextProcessLink;
     }
-
 
 
     private List<InstructContent> getInstructContentList(JsonNode flowNode, boolean isBefore) {
@@ -355,22 +471,45 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         ServiceTaskImpl serviceTaskImpl = new ServiceTaskImpl();
         serviceTaskImpl.setId(decorate ? GlobalUtil.uuid(BpmnTypeEnum.SERVICE_TASK, flowNode.getId()) : flowNode.getId());
         serviceTaskImpl.setName(flowNode.getName());
-        AssertUtil.notBlank(serviceTaskImpl.getId(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED,
-                "The json element id attribute cannot be empty! fileName: {}", config.getConfigName());
+        AssertUtil.notBlank(serviceTaskImpl.getId(), ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "The json element id attribute cannot be empty! fileName: {}", config.getConfigName());
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_COMPONENT).ifPresent(serviceTaskImpl::setTaskComponent);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_SERVICE).ifPresent(serviceTaskImpl::setTaskService);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_PROPERTY).ifPresent(serviceTaskImpl::setTaskProperty);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_DEMOTION).ifPresent(serviceTaskImpl::setTaskDemotion);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_TASK_PARAMS).ifPresent(serviceTaskImpl::setTaskParams);
+        ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.EXPRESSION_NOT_SKIP_EXPRESSION).ifPresent(exp -> {
+            SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(exp);
+            sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
+            sequenceFlowExpression.setName(exp);
+            serviceTaskImpl.setExpression(sequenceFlowExpression);
+        });
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_RETRY_TIMES).map(NumberUtils::toInt).filter(i -> i > 0).ifPresent(serviceTaskImpl::setRetryTimes);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.SERVICE_TASK_CUSTOM_ROLE).flatMap(CustomRoleInfo::buildCustomRole).ifPresent(serviceTaskImpl::setCustomRoleInfo);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.TASK_ALLOW_ABSENT).map(BooleanUtils::toBooleanObject).ifPresent(serviceTaskImpl::setAllowAbsent);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.TASK_STRICT_MODE).map(BooleanUtils::toBooleanObject).ifPresent(serviceTaskImpl::setStrictMode);
         ElementPropertyUtil.getJsonNodeProperty(flowNode, BpmnElementProperties.TASK_TIMEOUT).map(s -> NumberUtils.toInt(s, -1)).filter(i -> i >= 0).ifPresent(serviceTaskImpl::setTimeout);
+        fillRateLimiterProperty(flowNode, serviceTaskImpl);
         fillIterableProperty(config, flowNode, serviceTaskImpl::mergeElementIterable);
         return serviceTaskImpl;
     }
 
-    private SequenceFlow sequenceFlowMapping(ConfigResource config, JsonNode sf) {
+    private List<JsonNode> getIncoming(JsonProcess jsonProcess, JsonNode targetNode, Set<String> cycleCrossFlows) {
+        if (jsonProcess == null || CollectionUtils.isEmpty(jsonProcess.getJsonNodes()) || targetNode == null) {
+            return Lists.newArrayList();
+        }
+        List<JsonNode> incoming = jsonProcess.getJsonNodes().stream()
+                .filter(in -> CollectionUtils.isNotEmpty(in.getNextNodes()) && in.getNextNodes().contains(targetNode.getId()))
+                .collect(Collectors.toList());
+        if (cycleCrossFlows == null) {
+            return incoming;
+        }
+        if (CollectionUtils.isEmpty(incoming)) {
+            return Lists.newArrayList();
+        }
+        return incoming.stream().filter(f -> !isCycleCrossPoint(cycleCrossFlows, f)).collect(Collectors.toList());
+    }
+
+    private SequenceFlowImpl sequenceFlowMapping(ConfigResource config, JsonNode sf) {
         SequenceFlowImpl sequenceFlow = new SequenceFlowImpl();
         sequenceFlow.setId(sf.getId());
         sequenceFlow.setName(sf.getName());
@@ -404,7 +543,7 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
                 String sequenceFlowId = GlobalUtil.uuid(BpmnTypeEnum.SEQUENCE_FLOW);
                 JsonNode jn = new JsonNode();
                 jn.setId(sequenceFlowId);
-                jn.setName("complementSequenceFlow-" + sequenceFlowId);
+                jn.setName("ComplementSequenceFlow-" + sequenceFlowId);
                 jn.setType(BpmnTypeEnum.SEQUENCE_FLOW.getType());
                 jn.setNextNodes(Lists.newArrayList(nextNodeId));
                 jsonNodes.add(jn);
@@ -455,5 +594,12 @@ public class JsonProcessModelTransfer implements ProcessModelTransfer<List<JsonP
         private SequenceFlow sf;
         private boolean isSkip;
         private ProcessLink processLink;
+    }
+
+    private static class CycleCrossPointLink {
+
+        private ProcessLink processLink;
+
+        private SequenceFlowImpl sequenceFlow;
     }
 }

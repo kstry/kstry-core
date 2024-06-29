@@ -46,21 +46,21 @@ public class TaskServiceDef {
     /**
      * 获取服务节点资源
      */
-    private final ServiceNodeResource getServiceNodeResource;
+    private final ServiceNodeResource serviceNodeResource;
 
     /**
      * 降级节点
      */
     private boolean demotionNode;
 
-    public TaskServiceDef(@Nonnull ServiceNodeResource getServiceNodeResource, @Nonnull String name,
+    public TaskServiceDef(@Nonnull ServiceNodeResource serviceNodeResource, @Nonnull String name,
                           @Nonnull MethodWrapper methodWrapper, @Nonnull TaskComponentProxy taskComponentTarget) {
         AssertUtil.notBlank(name);
-        AssertUtil.anyNotNull(getServiceNodeResource, methodWrapper, taskComponentTarget);
+        AssertUtil.anyNotNull(serviceNodeResource, methodWrapper, taskComponentTarget);
         this.name = name;
         this.methodWrapper = methodWrapper;
         this.taskComponentTarget = taskComponentTarget;
-        this.getServiceNodeResource = getServiceNodeResource;
+        this.serviceNodeResource = serviceNodeResource;
         this.demotionNode = false;
     }
 
@@ -76,8 +76,8 @@ public class TaskServiceDef {
         return taskComponentTarget;
     }
 
-    public ServiceNodeResource getGetServiceNodeResource() {
-        return getServiceNodeResource;
+    public ServiceNodeResource getServiceNodeResource() {
+        return serviceNodeResource;
     }
 
     public boolean isDemotionNode() {

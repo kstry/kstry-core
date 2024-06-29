@@ -17,6 +17,9 @@
  */
 package cn.kstry.framework.core.util;
 
+import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.engine.FlowRegister;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.enums.ExceptionTypeEnum;
 import cn.kstry.framework.core.exception.*;
 import org.apache.commons.lang3.StringUtils;
@@ -78,6 +81,14 @@ public class ExceptionUtil {
             return Optional.ofNullable(GlobalUtil.transferNotEmpty(throwable, KstryException.class).getErrorCode());
         }
         return Optional.empty();
+    }
+
+    public static void confirmFinishTaskTracking(FlowRegister register, Throwable e) {
+        ServiceTask serviceTask = InvokeMethodThreadLocal.getServiceTask().orElse(null);
+        if (serviceTask == null) {
+            return;
+        }
+        register.getMonitorTracking().confirmFinishTaskTracking(register, serviceTask, e);
     }
 
     @SuppressWarnings("unchecked")

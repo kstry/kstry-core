@@ -22,7 +22,12 @@ import cn.kstry.framework.core.component.conversion.TypeConverter;
 import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
 import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
+import cn.kstry.framework.core.component.expression.ExpressionAliasParser;
 import cn.kstry.framework.core.component.jsprocess.transfer.JsonSerializeProcessParser;
+import cn.kstry.framework.core.component.limiter.LocalSingleNodeRateLimiter;
+import cn.kstry.framework.core.component.limiter.NodeRateLimiter;
+import cn.kstry.framework.core.component.limiter.RateLimiterComponent;
+import cn.kstry.framework.core.component.limiter.strategy.FailAcquireStrategy;
 import cn.kstry.framework.core.constant.ConfigPropertyNameConstant;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.container.ComponentLifecycle;
@@ -132,9 +137,20 @@ public class KstryContextResolver extends BasicLauncher {
     }
 
     @Bean
+    public LocalSingleNodeRateLimiter getLocalSingleNodeRateLimiter(List<FailAcquireStrategy> failAcquireStrategyList, ExpressionAliasParser expressionAliasParser) {
+        return new LocalSingleNodeRateLimiter(failAcquireStrategyList, expressionAliasParser);
+    }
+
+    @Bean
+    public RateLimiterComponent getRateLimiterComponent(List<NodeRateLimiter> nodeRateLimiters) {
+        return new RateLimiterComponent(nodeRateLimiters);
+    }
+
+    @Bean
     public StoryEngine getFlowEngine(StartEventContainer startEventContainer, RoleDynamicComponent roleDynamicComponent, TaskContainer taskContainer,
                                      List<TaskServiceExecutor> taskServiceExecutor, ThreadSwitchHookProcessor threadSwitchHookProcessor,
-                                     SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor) {
+                                     SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor,
+                                     RateLimiterComponent rateLimiterComponent) {
         StoryEngineModule storyEngineModule = new StoryEngineModule(taskServiceExecutor, startEventContainer, taskContainer, def -> {
             AssertUtil.notNull(def);
             if (def.isSpringInitialization()) {
@@ -142,7 +158,7 @@ public class KstryContextResolver extends BasicLauncher {
             }
             return ElementParserUtil.newInstance(def.getParamType()).orElse(null);
         }, getSubProcessInterceptorRepository(), getTaskInterceptorRepository(),
-                threadSwitchHookProcessor, applicationContext, serializeProcessParser, serializeTracking, typeConverterProcessor);
+                threadSwitchHookProcessor, applicationContext, serializeProcessParser, serializeTracking, typeConverterProcessor, rateLimiterComponent);
         return new StoryEngine(storyEngineModule, getBusinessRoleRepository(roleDynamicComponent));
     }
 

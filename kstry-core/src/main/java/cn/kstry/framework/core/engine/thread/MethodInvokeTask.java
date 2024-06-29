@@ -92,13 +92,12 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
         try {
             engineModule.getThreadSwitchHookProcessor().usePreviousData(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
             asyncTaskSwitch.await();
-            flowRegister.getMonitorTracking().getServiceNodeTracking(serviceTask).ifPresent(nodeTracking -> nodeTracking.setThreadId(Thread.currentThread().getName()));
             AssertUtil.notTrue(adminFuture.isCancelled(flowRegister.getStartEventId()), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
                     "Task interrupted. Method invoke task was interrupted! identity: {}, taskName: {}", serviceTask.identity(), getTaskName());
             return doInvokeMethod(tracking, iterDataItem, taskServiceDef, serviceTask, storyBus, role);
         } catch (Throwable e) {
             if (adminFuture.isCancelled(flowRegister.getStartEventId())) {
-                adminFuture.errorNotice(e, flowRegister.getStartEventId());
+                adminFuture.errorNotice(e, flowRegister);
                 throw e;
             }
             // 可重试
@@ -119,9 +118,10 @@ public class MethodInvokeTask extends BasicTaskCore<Object> implements Task<Obje
                         ExceptionEnum.SERVICE_INVOKE_ERROR.getExceptionCode(), serviceTask.identity(), e.getMessage(), e);
                 throw e;
             }
-            adminFuture.errorNotice(e, flowRegister.getStartEventId());
+            adminFuture.errorNotice(e, flowRegister);
             throw e;
         } finally {
+            InvokeMethodThreadLocal.clear();
             engineModule.getThreadSwitchHookProcessor().clear(threadSwitchHookObjectMap, storyBus.getScopeDataOperator());
         }
     }

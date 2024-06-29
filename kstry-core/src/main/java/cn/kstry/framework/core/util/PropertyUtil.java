@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * PropertyUtil
@@ -71,6 +72,10 @@ public class PropertyUtil {
             return false;
         }
         try {
+            if (target instanceof ConcurrentHashMap && value == null) {
+                ((ConcurrentHashMap<?, ?>) target).remove(propertyName);
+                return true;
+            }
             PropertyUtils.setProperty(target, propertyName, value);
             return true;
         } catch (NoSuchMethodException e) {

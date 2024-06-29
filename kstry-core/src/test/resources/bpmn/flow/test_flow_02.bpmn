@@ -53,6 +53,7 @@
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
           <camunda:property name="task-property" value="18" />
+          <camunda:property name="not-skip-task" value="@notEquals(req.count, -1)" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0b63v1e</bpmn:incoming>
@@ -190,12 +191,18 @@
         <camunda:properties>
           <camunda:property name="task-component" value="goods_service" />
           <camunda:property name="task-service" value="say_request" />
+          <camunda:property name="not-skip-task" value="@notNull(req.count)" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_06ins8i</bpmn:incoming>
       <bpmn:outgoing>Flow_0qxkvcw</bpmn:outgoing>
     </bpmn:callActivity>
     <bpmn:subProcess id="Activity_0629uiz">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="not-skip-task" value="req.count&#62;0" />
+        </camunda:properties>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_106pf3a</bpmn:incoming>
       <bpmn:outgoing>Flow_0tgw9o0</bpmn:outgoing>
       <bpmn:serviceTask id="Activity_1m62top" name="打印参数13">

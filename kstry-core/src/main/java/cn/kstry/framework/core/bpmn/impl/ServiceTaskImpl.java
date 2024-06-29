@@ -19,21 +19,29 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.component.limiter.RateLimiterConfig;
 import cn.kstry.framework.core.constant.BpmnElementProperties;
+import cn.kstry.framework.core.enums.PermissionType;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.PermissionUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ServiceTaskImpl
  */
 public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceTaskImpl.class);
 
     /**
      * 读取配置文件，获取 taskComponent
@@ -86,6 +94,19 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      */
     private Integer retryTimes;
 
+    /**
+     * 限速器相关配置
+     */
+    private RateLimiterConfig rateLimiterConfig;
+
+    /**
+     * 指定服务节点执行失败（包含重试）或超时后的降级处理表达式。异常发生后会根据表达式从容器中找到对应的服务节点执行
+     * 降级表达式举例：
+     *  1> pr:risk-control@check-img  服务组件名是 risk-control 且 服务名是 init-base-info 的服务节点
+     *  2> pr:risk-control@check-img@triple  服务组件名是 risk-control 且 服务名是 init-base-info 且 能力点名是 triple 的服务节点
+     */
+    private ServiceNodeResource taskDemotion;
+
     @Override
     public String getTaskComponent() {
         return taskComponent;
@@ -97,6 +118,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      * @param taskComponent taskComponent
      */
     public void setTaskComponent(String taskComponent) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.taskComponent = taskComponent;
     }
 
@@ -121,6 +143,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      * @param customRoleInfo 角色自定义组件
      */
     public void setCustomRoleInfo(ServiceNodeResource customRoleInfo) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.customRoleInfo = customRoleInfo;
     }
 
@@ -130,10 +153,12 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      * @param taskService taskService
      */
     public void setTaskService(String taskService) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.taskService = taskService;
     }
 
     public void setTaskProperty(String taskProperty) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.taskProperty = taskProperty;
     }
 
@@ -156,10 +181,12 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     }
 
     public void setTaskInstructContent(String taskInstructContent) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.taskInstructContent = taskInstructContent;
     }
 
     public void setTaskInstruct(String taskInstruct) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         AssertUtil.notBlank(taskInstruct, ExceptionEnum.CONFIGURATION_ATTRIBUTES_REQUIRED, "TaskInstruct cannot be blank!");
         this.taskInstruct = StringUtils.replaceOnceIgnoreCase(taskInstruct, BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT, StringUtils.EMPTY);
     }
@@ -170,6 +197,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     }
 
     public void setTaskParams(String taskParams) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         if (StringUtils.isBlank(taskParams)) {
             return;
         }
@@ -188,6 +216,7 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
      * @param allowAbsent allowAbsent
      */
     public void setAllowAbsent(Boolean allowAbsent) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.allowAbsent = allowAbsent;
     }
 
@@ -197,7 +226,32 @@ public class ServiceTaskImpl extends TaskImpl implements ServiceTask {
     }
 
     public void setRetryTimes(Integer retryTimes) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.retryTimes = retryTimes;
+    }
+
+    @Override
+    public Optional<RateLimiterConfig> getRateLimiterConfig() {
+        return Optional.ofNullable(rateLimiterConfig);
+    }
+
+    public void setRateLimiterConfig(RateLimiterConfig rateLimiterConfig) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
+        this.rateLimiterConfig = rateLimiterConfig;
+    }
+
+    @Override
+    public ServiceNodeResource getTaskDemotion() {
+        return taskDemotion;
+    }
+
+    public void setTaskDemotion(String taskDemotion) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
+        this.taskDemotion = PermissionUtil.parseResource(taskDemotion)
+                .filter(p -> p.getPermissionType() == PermissionType.COMPONENT_SERVICE || p.getPermissionType() == PermissionType.COMPONENT_SERVICE_ABILITY).orElse(null);
+        if (StringUtils.isNotBlank(taskDemotion) && this.taskDemotion == null) {
+            LOGGER.warn("[{}] Not effective when setting the taskDemotion attribute to ServiceTask! identity: {}, demotion: {}", ExceptionEnum.DEMOTION_DEFINITION_ERROR.getExceptionCode(), identity(), taskDemotion);
+        }
     }
 
     @Override

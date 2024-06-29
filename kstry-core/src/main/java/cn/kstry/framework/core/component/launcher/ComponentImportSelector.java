@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.launcher;
 
 import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
+import cn.kstry.framework.core.component.demotion.GlobalServiceDemotion;
 import cn.kstry.framework.core.component.dynamic.KValueDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.ProcessDynamicComponent;
 import cn.kstry.framework.core.component.dynamic.RoleDynamicComponent;
@@ -26,6 +27,9 @@ import cn.kstry.framework.core.component.expression.BasicExpressionAliasRegister
 import cn.kstry.framework.core.component.expression.ExpressionAliasParser;
 import cn.kstry.framework.core.component.expression.ExpressionAliasRegister;
 import cn.kstry.framework.core.component.instruct.JsScriptInstruct;
+import cn.kstry.framework.core.component.limiter.strategy.DemotionFailAcquireStrategy;
+import cn.kstry.framework.core.component.limiter.strategy.ExceptionFailAcquireStrategy;
+import cn.kstry.framework.core.component.limiter.strategy.IgnoreFailAcquireStrategy;
 import cn.kstry.framework.core.component.preheat.StoryEnginePreheatService;
 import cn.kstry.framework.core.component.preheat.TriggerProcessPreheat;
 import cn.kstry.framework.core.container.processor.*;
@@ -162,5 +166,25 @@ public class ComponentImportSelector extends BasicLauncher {
     @Bean
     public TriggerProcessPreheat triggerProcessPreheat(StoryEngine storyEngine) {
         return new TriggerProcessPreheat(storyEngine);
+    }
+
+    @Bean
+    public DemotionFailAcquireStrategy demotionFailAcquireStrategy() {
+        return new DemotionFailAcquireStrategy();
+    }
+
+    @Bean
+    public ExceptionFailAcquireStrategy exceptionFailAcquireStrategy() {
+        return new ExceptionFailAcquireStrategy();
+    }
+
+    @Bean
+    public IgnoreFailAcquireStrategy ignoreFailAcquireStrategy() {
+        return new IgnoreFailAcquireStrategy();
+    }
+
+    @Bean
+    public GlobalServiceDemotion globalServiceDemotion() {
+        return new GlobalServiceDemotion();
     }
 }

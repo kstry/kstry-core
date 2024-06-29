@@ -23,6 +23,7 @@ import cn.kstry.framework.core.component.bpmn.BpmnProcessParser;
 import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonProcess;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 
@@ -67,7 +68,7 @@ public class JsonSerializeProcessParser implements SerializeProcessParser<String
             jsonProcess.setProperties(jsonSerializeIterator.getElementProperties(subProcess));
             jsonProcesses.addAll(jsonSerializeIterator.getJsonProcesses());
         });
-        return Optional.of(jsonProcesses).map(JSON::toJSONString);
+        return Optional.of(jsonProcesses).map(p -> JSON.toJSONString(p, SerializerFeature.DisableCircularReferenceDetect));
     }
 
     private JsonProcess getJsonProcess(boolean isSubProcess, StartEvent startEvent) {

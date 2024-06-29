@@ -19,6 +19,7 @@ package cn.kstry.framework.core.component.strategy;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bus.ContextStoryBus;
+import cn.kstry.framework.core.monitor.MonitorTracking;
 
 /**
  * 节点执行策略
@@ -48,11 +49,11 @@ public interface PeekStrategy {
     /**
      * 判断每一个出度子项是否需要被探出
      *
-     * @param flowElement flowElement
+     * @param flowElement     flowElement
      * @param contextStoryBus contextStoryBus
      * @return true：需要
      */
-    boolean needPeek(FlowElement flowElement, ContextStoryBus contextStoryBus);
+    boolean needPeek(MonitorTracking monitorTracking, FlowElement flowElement, ContextStoryBus contextStoryBus);
 
     /**
      * 允许出度为空

@@ -26,7 +26,9 @@ import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonNode;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonNodeProperties;
 import cn.kstry.framework.core.component.jsprocess.metadata.JsonProcess;
+import cn.kstry.framework.core.component.limiter.RateLimiterConfig;
 import cn.kstry.framework.core.constant.BpmnElementProperties;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -108,7 +110,15 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
                 jn.setId(getSingleId(jn.getId(), node.comingList().get(0).getId()));
             }
             if (node instanceof SequenceFlow) {
-                ((SequenceFlow) node).getConditionExpression().ifPresent(c -> jn.setFlowExpression(c.getPlainExpression()));
+                SequenceFlow sf = (SequenceFlow) node;
+                sf.getConditionExpression().ifPresent(c -> jn.setFlowExpression(c.getPlainExpression()));
+                if (sf.getCycleBeginElement() != null) {
+                    String nextId = GlobalUtil.getOriginalId(needOriginalId, sf.getCycleBeginElement().getId());
+                    if (sf.getCycleBeginElement() instanceof SubProcess) {
+                        nextId = getSingleId(nextId, sf.getCycleBeginElement().comingList().get(0).getId());
+                    }
+                    jn.setNextNodes(Lists.newArrayList(nextId));
+                }
             }
             jsonProcess.getJsonNodes().add(jn);
             return jn;
@@ -143,6 +153,7 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
                 if (BooleanUtils.isTrue(elementIterable.getIteAlignIndex())) {
                     properties.put(BpmnElementProperties.ITERATE_ALIGN_INDEX, elementIterable.getIteAlignIndex());
                 }
+                subProcess.getConditionExpression().ifPresent(c -> properties.put(BpmnElementProperties.EXPRESSION_NOT_SKIP_EXPRESSION, c.getPlainExpression()));
                 properties.put(BpmnElementProperties.ITERATE_SOURCE, elementIterable.getIteSource());
                 properties.put(BpmnElementProperties.ITERATE_STRATEGY, Optional.ofNullable(elementIterable.getIteStrategy()).map(IterateStrategyEnum::getKey).orElse(null));
                 properties.put(BpmnElementProperties.ITERATE_STRIDE, elementIterable.getStride());
@@ -159,16 +170,23 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
         if (properties == null || serviceTask == null) {
             return;
         }
-        properties.put(BpmnElementProperties.SERVICE_TASK_TASK_COMPONENT, serviceTask.getTaskComponent());
-        properties.put(BpmnElementProperties.SERVICE_TASK_TASK_SERVICE, serviceTask.getTaskService());
+
         properties.put(BpmnElementProperties.SERVICE_TASK_TASK_PROPERTY, serviceTask.getTaskProperty());
         properties.put(BpmnElementProperties.SERVICE_TASK_TASK_PARAMS, serviceTask.getTaskParams());
         properties.put(BpmnElementProperties.SERVICE_TASK_RETRY_TIMES, serviceTask.getRetryTimes());
         properties.put(BpmnElementProperties.TASK_ALLOW_ABSENT, serviceTask.allowAbsent());
         properties.put(BpmnElementProperties.TASK_STRICT_MODE, serviceTask.strictMode());
         properties.put(BpmnElementProperties.TASK_TIMEOUT, serviceTask.getTimeout());
-        if (StringUtils.isNotBlank(serviceTask.getTaskInstruct())) {
-            properties.put(BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT + serviceTask.getTaskInstruct(), serviceTask.getTaskInstructContent() == null ? StringUtils.EMPTY : serviceTask.getTaskInstructContent());
+        if (StringUtils.isBlank(serviceTask.getTaskInstruct())) {
+            properties.put(BpmnElementProperties.SERVICE_TASK_TASK_COMPONENT, serviceTask.getTaskComponent());
+            properties.put(BpmnElementProperties.SERVICE_TASK_TASK_SERVICE, serviceTask.getTaskService());
+        } else {
+            properties.put(BpmnElementProperties.SERVICE_TASK_TASK_INSTRUCT + serviceTask.getTaskInstruct(),
+                    serviceTask.getTaskInstructContent() == null ? StringUtils.EMPTY : serviceTask.getTaskInstructContent());
+        }
+        ServiceNodeResource taskDemotion = serviceTask.getTaskDemotion();
+        if (taskDemotion != null) {
+            properties.put(BpmnElementProperties.SERVICE_TASK_DEMOTION, taskDemotion.getIdentityId());
         }
         ElementIterable elementIterable = serviceTask.getElementIterable().orElse(null);
         if (elementIterable != null) {
@@ -182,6 +200,16 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
                 properties.put(BpmnElementProperties.ITERATE_ALIGN_INDEX, elementIterable.getIteAlignIndex());
             }
         }
+        RateLimiterConfig rateLimiterConfig = serviceTask.getRateLimiterConfig().orElse(null);
+        if (rateLimiterConfig != null) {
+            properties.put(BpmnElementProperties.SERVICE_TASK_LIMIT_NAME, rateLimiterConfig.getName());
+            properties.put(BpmnElementProperties.SERVICE_TASK_LIMIT_PERMITS, rateLimiterConfig.getPermits());
+            properties.put(BpmnElementProperties.SERVICE_TASK_LIMIT_WARMUP_PERIOD, rateLimiterConfig.getWarmupPeriod());
+            properties.put(BpmnElementProperties.SERVICE_TASK_LIMIT_ACQUIRE_TIMEOUT, rateLimiterConfig.getAcquireTimeout());
+            properties.put(BpmnElementProperties.SERVICE_TASK_LIMIT_FAIL_STRATEGY, rateLimiterConfig.getFailStrategy());
+            properties.put(BpmnElementProperties.SERVICE_TASK_LIMIT_EXPRESSION, rateLimiterConfig.getExpression());
+        }
+        serviceTask.getConditionExpression().ifPresent(c -> properties.put(BpmnElementProperties.EXPRESSION_NOT_SKIP_EXPRESSION, c.getPlainExpression()));
     }
 
     public void setNeedOriginalId(boolean needOriginalId) {
@@ -199,6 +227,7 @@ public class JsonSerializeIterator extends DiagramTraverseSupport<Map<String, Js
     }
 
     private Optional<JsonProcess> getSubJsonProcess(SubProcess subProcess) {
-        return jsonProcesses.stream().filter(p -> p.isSubProcess() && Objects.equals(p.getStartId(), GlobalUtil.getOriginalId(needOriginalId, subProcess.getStartEvent().getId()))).findFirst();
+        return jsonProcesses.stream().filter(p -> p.isSubProcess() && Objects.equals(p.getStartId(),
+                GlobalUtil.getOriginalId(needOriginalId, subProcess.getStartEvent().getId()))).findFirst();
     }
 }

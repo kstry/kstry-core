@@ -45,4 +45,9 @@ public interface SequenceFlow extends FlowElement, Expression, Ordered {
      * 将 EndElementList 变为不可变对象
      */
     void immutableEndElement();
+
+    /**
+     * 获取下一次循环的开始节点
+     */
+    FlowElement getCycleBeginElement();
 }

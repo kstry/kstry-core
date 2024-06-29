@@ -65,7 +65,7 @@ public class FragmentTask extends FlowTaskCore<AsyncTaskState> implements Task<A
             return AsyncTaskState.SUCCESS;
         } catch (Throwable e) {
             if (adminFuture != null) {
-                adminFuture.errorNotice(e, flowRegister.getStartEventId());
+                adminFuture.errorNotice(e, flowRegister);
             } else {
                 String errorCode = ExceptionEnum.STORY_ERROR.getExceptionCode();
                 if (e instanceof KstryException) {

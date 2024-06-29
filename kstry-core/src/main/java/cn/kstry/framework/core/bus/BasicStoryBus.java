@@ -208,6 +208,9 @@ public abstract class BasicStoryBus implements StoryBus {
         if (result == null) {
             return;
         }
+        if (result instanceof Optional) {
+            result = ((Optional<?>) result).orElse(null);
+        }
         if (result instanceof ScopeDataNotice) {
             InvokeMethodThreadLocal.setServiceTask(serviceTask);
             try {
@@ -255,6 +258,7 @@ public abstract class BasicStoryBus implements StoryBus {
                 Pair<String, ?> convertPair = typeConverterProcessor.convert(srDef.getConverter(), r, returnType);
                 r = convertPair.getValue();
                 this.returnResult = r;
+                monitorTracking.trackingResult(serviceTask, this.returnResult);
                 monitorTracking.trackingNodeNotice(serviceTask, () -> NoticeTracking.build(
                         null, null, ScopeTypeEnum.RESULT, this.returnResult, Optional.ofNullable(this.returnResult).map(Object::getClass).orElse(null), convertPair.getKey())
                 );

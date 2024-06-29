@@ -232,6 +232,7 @@
           <camunda:property name="task-component" value="mono-service" />
           <camunda:property name="task-service" value="say_info2" />
           <camunda:property name="timeout" value="1000" />
+          <camunda:property name="task-demotion" value="pr:mono-service@say_info2_demotion" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0hgj8y6</bpmn:incoming>

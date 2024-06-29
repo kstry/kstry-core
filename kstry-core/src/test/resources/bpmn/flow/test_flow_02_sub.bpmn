@@ -5,6 +5,7 @@
       <bpmn:extensionElements>
         <camunda:properties>
           <camunda:property name="timeout" value="1000" />
+          <camunda:property name="not-skip-task" value="req.count&#62;0" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:startEvent id="Event_1ql4cvh">
@@ -122,6 +123,11 @@
         <bpmn:outgoing>Flow_0dkxnxj</bpmn:outgoing>
       </bpmn:inclusiveGateway>
       <bpmn:callActivity id="Activity_0614oh3" name="AAC" calledElement="Activity_1oj99nc">
+        <bpmn:extensionElements>
+          <camunda:properties>
+            <camunda:property name="not-skip-task" value="req.count&#62;0" />
+          </camunda:properties>
+        </bpmn:extensionElements>
         <bpmn:incoming>Flow_1eix87z</bpmn:incoming>
         <bpmn:outgoing>Flow_1cwft0q</bpmn:outgoing>
       </bpmn:callActivity>
@@ -273,6 +279,7 @@
       <bpmn:sequenceFlow id="Flow_07hxi4r" sourceRef="Activity_0y4meow" targetRef="Gateway_0goky4r" />
       <bpmn:sequenceFlow id="Flow_0i1nuj4" sourceRef="Activity_0xpgxk1" targetRef="Activity_0y4meow" />
       <bpmn:callActivity id="Activity_0xpgxk1" name="ssException" calledElement="Activity_0yw791j">
+        <bpmn:extensionElements />
         <bpmn:incoming>Flow_0750yin</bpmn:incoming>
         <bpmn:outgoing>Flow_0i1nuj4</bpmn:outgoing>
       </bpmn:callActivity>
@@ -479,11 +486,12 @@
         <di:waypoint x="912" y="790" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0750yin_di" bpmnElement="Flow_0750yin">
-        <di:waypoint x="385" y="1170" />
-        <di:waypoint x="730" y="1170" />
+        <di:waypoint x="360" y="1195" />
+        <di:waypoint x="360" y="1210" />
+        <di:waypoint x="730" y="1210" />
         <di:waypoint x="730" y="1110" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="549" y="1152" width="19" height="14" />
+          <dc:Bounds x="537" y="1192" width="19" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0nmzba9_di" bpmnElement="Flow_0nmzba9">
@@ -517,8 +525,8 @@
       <bpmndi:BPMNShape id="Activity_05ti5q2_di" bpmnElement="Activity_05ti5q2">
         <dc:Bounds x="310" y="1030" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_15lptwl_di" bpmnElement="Activity_0xpgxk1">
-        <dc:Bounds x="680" y="1030" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_1tqeki7_di" bpmnElement="Activity_1tqeki7">
+        <dc:Bounds x="780" y="750" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0y4meow_di" bpmnElement="Activity_0y4meow">
         <dc:Bounds x="680" y="930" width="100" height="80" />
@@ -526,8 +534,8 @@
       <bpmndi:BPMNShape id="Gateway_0goky4r_di" bpmnElement="Gateway_0goky4r">
         <dc:Bounds x="705" y="765" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1tqeki7_di" bpmnElement="Activity_1tqeki7">
-        <dc:Bounds x="780" y="750" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_15lptwl_di" bpmnElement="Activity_0xpgxk1">
+        <dc:Bounds x="680" y="1030" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0yw791j_di" bpmnElement="Activity_0yw791j" isExpanded="true">
         <dc:Bounds x="405" y="1420" width="350" height="200" />

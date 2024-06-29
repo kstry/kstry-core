@@ -40,6 +40,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -327,7 +328,7 @@ public class TaskParamParser {
                     iDef.getFieldInjectDefList().forEach(def -> defMap.put(def.getFieldName(), def));
                 }
 
-                for (Field field : params[i].getClass().getDeclaredFields()) {
+                for (Field field : FieldUtils.getAllFieldsList(params[i].getClass())) {
                     String targetName = Optional.ofNullable(defMap.get(field.getName()))
                             .filter(def -> field.getType() == def.getParamType()).map(ParamInjectDef::getTargetName).orElse(field.getName());
                     if (!valMap.containsKey(targetName)) {

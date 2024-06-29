@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0sptq4g" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.8.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0sptq4g" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
   <bpmn:process id="Process_1cuoxk1" isExecutable="true">
     <bpmn:extensionElements>
       <camunda:properties>
@@ -31,6 +31,7 @@
           <camunda:property name="task-component" value="mono-service" />
           <camunda:property name="task-service" value="say_info2" />
           <camunda:property name="timeout" value="1000" />
+          <camunda:property name="task-demotion" value="pr:mono-service@say_info2_demotion" />
         </camunda:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_09b7mih</bpmn:incoming>
@@ -59,15 +60,6 @@
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1cuoxk1">
-      <bpmndi:BPMNShape id="TextAnnotation_1tqbjcj_di" bpmnElement="TextAnnotation_1tqbjcj">
-        <dc:Bounds x="160" y="320" width="100" height="54" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="TextAnnotation_1x9geg1_di" bpmnElement="TextAnnotation_1x9geg1">
-        <dc:Bounds x="160" y="190" width="100" height="40" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="TextAnnotation_0dg7gec_di" bpmnElement="TextAnnotation_0dg7gec">
-        <dc:Bounds x="160" y="80" width="100" height="54" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0phedv4_di" bpmnElement="Flow_0phedv4">
         <di:waypoint x="490" y="410" />
         <di:waypoint x="542" y="410" />
@@ -108,17 +100,26 @@
           <dc:Bounds x="282" y="435" width="78" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1tqbjcj_di" bpmnElement="TextAnnotation_1tqbjcj">
+        <dc:Bounds x="160" y="320" width="100" height="54" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0dg7gec_di" bpmnElement="TextAnnotation_0dg7gec">
+        <dc:Bounds x="160" y="80" width="100" height="54" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1x9geg1_di" bpmnElement="TextAnnotation_1x9geg1">
+        <dc:Bounds x="160" y="190" width="100" height="40" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Association_02je9lw_di" bpmnElement="Association_02je9lw">
         <di:waypoint x="305" y="400" />
         <di:waypoint x="260" y="369" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Association_0roxplv_di" bpmnElement="Association_0roxplv">
-        <di:waypoint x="302" y="226" />
-        <di:waypoint x="260" y="216" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Association_13schgh_di" bpmnElement="Association_13schgh">
         <di:waypoint x="309" y="216" />
         <di:waypoint x="242" y="134" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0roxplv_di" bpmnElement="Association_0roxplv">
+        <di:waypoint x="302" y="226" />
+        <di:waypoint x="260" y="216" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

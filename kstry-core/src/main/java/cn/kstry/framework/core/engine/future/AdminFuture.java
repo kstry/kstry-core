@@ -17,6 +17,7 @@
  */
 package cn.kstry.framework.core.engine.future;
 
+import cn.kstry.framework.core.engine.FlowRegister;
 import cn.kstry.framework.core.engine.thread.EndTaskPedometer;
 import cn.kstry.framework.core.exception.KstryException;
 
@@ -57,9 +58,9 @@ public interface AdminFuture extends CancelableFuture {
      * 通知异常
      *
      * @param exception 异常信息
-     * @param startEventId 开始事件id
+     * @param flowRegister flowRegister
      */
-    void errorNotice(Throwable exception, String startEventId);
+    void errorNotice(Throwable exception, FlowRegister flowRegister);
 
     /**
      * 获取异常信息

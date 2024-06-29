@@ -33,8 +33,8 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
-import org.camunda.bpm.model.bpmn.instance.FlowNode;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 
@@ -101,7 +101,7 @@ public class ElementPropertyUtil {
         return result;
     }
 
-    public static Optional<String> getNodeProperty(FlowNode flowNode, String name) {
+    public static Optional<String> getNodeProperty(BaseElement flowNode, String name) {
         List<Pair<String, String>> list = getNodeProperty(flowNode, name, false, true);
         if (CollectionUtils.isEmpty(list)) {
             return Optional.empty();
@@ -110,7 +110,7 @@ public class ElementPropertyUtil {
         return Optional.ofNullable(pair.getRight()).filter(StringUtils::isNotBlank).map(String::trim);
     }
 
-    public static List<Pair<String, String>> getNodeProperty(FlowNode flowNode, String name, boolean isLike, boolean oneSize) {
+    public static List<Pair<String, String>> getNodeProperty(BaseElement flowNode, String name, boolean isLike, boolean oneSize) {
         AssertUtil.notBlank(name);
         if (flowNode == null) {
             return Lists.newArrayList();

@@ -17,15 +17,20 @@
  */
 package cn.kstry.framework.core.component.bpmn.builder;
 
+import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.impl.BasicElementIterable;
+import cn.kstry.framework.core.bpmn.impl.SequenceFlowExpression;
 import cn.kstry.framework.core.bpmn.impl.SubProcessImpl;
 import cn.kstry.framework.core.component.bpmn.lambda.LambdaParam;
 import cn.kstry.framework.core.component.bpmn.link.SubBpmnLink;
 import cn.kstry.framework.core.component.bpmn.link.SubDiagramBpmnLink;
+import cn.kstry.framework.core.component.expression.Expression;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.LambdaUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.function.Consumer;
 
@@ -40,6 +45,8 @@ public abstract class SubProcessLink {
     private final String startEventName;
 
     private Integer timeout;
+
+    private Expression expression;
 
     private Boolean strictMode;
 
@@ -62,6 +69,7 @@ public abstract class SubProcessLink {
         subProcess.setConfig(config);
         subProcess.setStrictMode(strictMode);
         subProcess.setTimeout(timeout);
+        subProcess.setExpression(expression);
         subProcess.mergeElementIterable(elementIterable);
         doBuild(subBpmnLink);
         this.subProcess = subProcess;
@@ -80,6 +88,16 @@ public abstract class SubProcessLink {
 
     public void setTimeout(Integer timeout) {
         this.timeout = timeout;
+    }
+
+    public void setNotSkipExp(String exp) {
+        if (StringUtils.isBlank(exp)) {
+            return;
+        }
+        SequenceFlowExpression sequenceFlowExpression = new SequenceFlowExpression(exp);
+        sequenceFlowExpression.setId(GlobalUtil.uuid(BpmnTypeEnum.EXPRESSION));
+        sequenceFlowExpression.setName(exp);
+        this.expression = sequenceFlowExpression;
     }
 
     public void setStrictMode(Boolean strictMode) {

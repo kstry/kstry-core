@@ -18,11 +18,11 @@
 package cn.kstry.framework.core.container.processor;
 
 import cn.kstry.framework.core.bpmn.FlowElement;
-import cn.kstry.framework.core.bpmn.SequenceFlow;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.SubProcess;
 import cn.kstry.framework.core.component.bpmn.DiagramTraverseSupport;
 import cn.kstry.framework.core.component.expression.ConditionExpression;
+import cn.kstry.framework.core.component.expression.Expression;
 import cn.kstry.framework.core.component.expression.ExpressionAliasParser;
 import cn.kstry.framework.core.util.GlobalUtil;
 
@@ -49,10 +49,10 @@ public class ExpressionParserProcessor extends DiagramTraverseSupport<Object> im
 
     @Override
     public void doPlainElement(Object course, FlowElement node, SubProcess subProcess) {
-        if (!(node instanceof SequenceFlow)) {
+        if (!(node instanceof Expression)) {
             return;
         }
-        ConditionExpression conditionExpression = GlobalUtil.transferNotEmpty(node, SequenceFlow.class).getConditionExpression().orElse(null);
+        ConditionExpression conditionExpression = GlobalUtil.transferNotEmpty(node, Expression.class).getConditionExpression().orElse(null);
         if (conditionExpression == null) {
             return;
         }

@@ -49,7 +49,7 @@ public class FlowElementImpl extends BpmnElementImpl implements FlowElement {
     /**
      * 不可变标识
      */
-    private boolean immutable = false;
+    protected boolean immutable = false;
 
     /**
      * 从 一个 AggregationFlowElement 到另一个 AggregationFlowElement 之间会经过一些普通节点

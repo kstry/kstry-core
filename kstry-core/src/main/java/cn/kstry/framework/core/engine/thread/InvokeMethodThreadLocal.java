@@ -17,10 +17,11 @@
  */
 package cn.kstry.framework.core.engine.thread;
 
-import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bus.IterDataItem;
+import cn.kstry.framework.core.container.component.TaskServiceDef;
 import cn.kstry.framework.core.kv.KvScope;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
@@ -38,6 +39,8 @@ public class InvokeMethodThreadLocal {
 
     private static final ThreadLocal<ServiceTask> SERVICE_TASK_THREAD_LOCAL = new ThreadLocal<>();
 
+    private static final ThreadLocal<ServiceNodeResource> SERVICE_NODE_RESOURCE_THREAD_LOCAL = new ThreadLocal<>();
+
     public static void setKvScope(KvScope kvScope) {
         KV_THREAD_LOCAL.set(kvScope);
     }
@@ -50,13 +53,23 @@ public class InvokeMethodThreadLocal {
         SERVICE_TASK_THREAD_LOCAL.set(serviceTask);
     }
 
-    public static Optional<FlowElement> getServiceTask() {
+    public static Optional<ServiceTask> getServiceTask() {
         return Optional.ofNullable(SERVICE_TASK_THREAD_LOCAL.get());
+    }
+
+    public static void setServiceNodeResource(ServiceNodeResource serviceNodeResource) {
+        SERVICE_NODE_RESOURCE_THREAD_LOCAL.set(serviceNodeResource);
+    }
+
+    public static Optional<ServiceNodeResource> getServiceNodeResource() {
+        return Optional.ofNullable(SERVICE_NODE_RESOURCE_THREAD_LOCAL.get());
     }
 
     public static void setDataItem(IterDataItem<?> iterDataItem) {
         if (iterDataItem != null) {
             ITERATOR_THREAD_LOCAL.set(iterDataItem);
+        } else {
+            ITERATOR_THREAD_LOCAL.remove();
         }
     }
 
@@ -67,6 +80,8 @@ public class InvokeMethodThreadLocal {
     public static void setTaskProperty(String property) {
         if (StringUtils.isNotBlank(property)) {
             TASK_PROPERTY_THREAD_LOCAL.set(property);
+        } else {
+            TASK_PROPERTY_THREAD_LOCAL.remove();
         }
     }
 
@@ -74,11 +89,27 @@ public class InvokeMethodThreadLocal {
         return Optional.ofNullable(TASK_PROPERTY_THREAD_LOCAL.get()).filter(StringUtils::isNotBlank);
     }
 
+    public static void whenServiceInvoke(TaskServiceDef taskServiceDef, ServiceTask serviceTask, String businessId) {
+        if (serviceTask != null) {
+            InvokeMethodThreadLocal.setServiceTask(serviceTask);
+            InvokeMethodThreadLocal.setTaskProperty(serviceTask.getTaskProperty());
+        }
+        if (taskServiceDef != null) {
+            InvokeMethodThreadLocal.setKvScope(new KvScope(taskServiceDef.getMethodWrapper().getKvScope(), businessId));
+            InvokeMethodThreadLocal.setServiceNodeResource(taskServiceDef.getServiceNodeResource());
+        }
+    }
+
     public static void clear() {
         ITERATOR_THREAD_LOCAL.remove();
         TASK_PROPERTY_THREAD_LOCAL.remove();
         KV_THREAD_LOCAL.remove();
         SERVICE_TASK_THREAD_LOCAL.remove();
+        SERVICE_NODE_RESOURCE_THREAD_LOCAL.remove();
+    }
+
+    public static void clearDataItem() {
+        ITERATOR_THREAD_LOCAL.remove();
     }
 
     public static void clearServiceTask() {

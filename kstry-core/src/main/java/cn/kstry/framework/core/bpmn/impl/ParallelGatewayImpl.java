@@ -19,6 +19,8 @@ package cn.kstry.framework.core.bpmn.impl;
 
 import cn.kstry.framework.core.bpmn.ParallelGateway;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.exception.ExceptionEnum;
+import cn.kstry.framework.core.util.AssertUtil;
 import org.apache.commons.lang3.BooleanUtils;
 
 /**
@@ -47,6 +49,7 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
     }
 
     public void setOpenAsync(boolean openAsync) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.asyncFlowElement.setOpenAsync(openAsync);
     }
 
@@ -66,6 +69,7 @@ public class ParallelGatewayImpl extends GatewayImpl implements ParallelGateway 
      * @param strictMode 严格模式是否开启
      */
     public void setStrictMode(Boolean strictMode) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.strictMode = strictMode;
     }
 }

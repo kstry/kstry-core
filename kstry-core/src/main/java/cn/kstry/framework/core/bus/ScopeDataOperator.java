@@ -19,6 +19,7 @@ package cn.kstry.framework.core.bus;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -47,6 +48,15 @@ public interface ScopeDataOperator extends ScopeDataQuery {
      * @return 是否设置成功，如果已经存在将会设置失败
      */
     boolean setData(String expression, Object target);
+
+    /**
+     * 删除数据
+     *
+     * @param expression 取值表达式
+     *
+     * @return 是否删除成功
+     */
+    boolean removeData(String expression);
 
     /**
      * 设置 Sta 域变量
@@ -82,4 +92,9 @@ public interface ScopeDataOperator extends ScopeDataQuery {
      * @return 写锁
      */
     ReentrantReadWriteLock.WriteLock writeLock();
+
+    /**
+     * 串行化写
+     */
+    <T> Optional<T> serialWrite(Function<ScopeDataQuery, T> writeFun);
 }

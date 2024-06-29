@@ -23,6 +23,7 @@ import cn.kstry.framework.core.util.GlobalUtil;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,6 +68,12 @@ public class NodeTracking {
 
     private DemotionInfo demotionInfo;
 
+    private ExpressionTracking expression;
+
+    private LimiterTracking limiter;
+
+    private CycleTracking cycleTracking;
+
     @JSONField(serialize = false)
     private Throwable taskException;
 
@@ -74,6 +81,9 @@ public class NodeTracking {
      * 超时时间
      */
     private Integer timeout;
+
+    @JSONField(serialize = false)
+    private Object taskResult;
 
     public String getNodeId() {
         return nodeId;
@@ -92,6 +102,9 @@ public class NodeTracking {
     }
 
     public Set<String> getToNodeIds() {
+        if (CollectionUtils.isEmpty(toNodeIds)) {
+            return null;
+        }
         return toNodeIds;
     }
 
@@ -150,9 +163,15 @@ public class NodeTracking {
 
     public void setSpendTime(Long spendTime) {
         this.spendTime = spendTime;
+        if (cycleTracking != null) {
+            cycleTracking.setTotalTime(cycleTracking.getTotalTime() + spendTime);
+        }
     }
 
     public List<FieldTracking> getParamTracking() {
+        if (CollectionUtils.isEmpty(paramTracking)) {
+            return null;
+        }
         return paramTracking;
     }
 
@@ -165,6 +184,9 @@ public class NodeTracking {
     }
 
     public List<FieldTracking> getNoticeTracking() {
+        if (CollectionUtils.isEmpty(noticeTracking)) {
+            return null;
+        }
         return noticeTracking;
     }
 
@@ -244,5 +266,37 @@ public class NodeTracking {
 
     public void setTimeout(Integer timeout) {
         this.timeout = timeout;
+    }
+
+    public ExpressionTracking getExpression() {
+        return expression;
+    }
+
+    public void setExpression(ExpressionTracking expression) {
+        this.expression = expression;
+    }
+
+    public LimiterTracking getLimiter() {
+        return limiter;
+    }
+
+    public void setLimiter(LimiterTracking limiter) {
+        this.limiter = limiter;
+    }
+
+    public Object getTaskResult() {
+        return taskResult;
+    }
+
+    public void setTaskResult(Object taskResult) {
+        this.taskResult = taskResult;
+    }
+
+    public CycleTracking getCycleTracking() {
+        return cycleTracking;
+    }
+
+    public void setCycleTracking(CycleTracking cycleTracking) {
+        this.cycleTracking = cycleTracking;
     }
 }

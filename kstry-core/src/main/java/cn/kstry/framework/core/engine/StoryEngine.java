@@ -40,8 +40,10 @@ import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.BusinessException;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.KstryException;
+import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.monitor.MonitorTracking;
 import cn.kstry.framework.core.monitor.RecallStory;
+import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.role.BusinessRoleRepository;
 import cn.kstry.framework.core.role.Role;
 import cn.kstry.framework.core.role.ServiceTaskRole;
@@ -57,6 +59,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 /**
  * 执行引擎
@@ -227,7 +230,7 @@ public class StoryEngine {
         Optional<StartEvent> startEventOptional = storyEngineModule.getStartEventContainer().getStartEventById(scopeDataQuery);
         StartEvent startEvent = startEventOptional.orElseThrow(() -> ExceptionUtil
                 .buildException(null, ExceptionEnum.PARAMS_ERROR, GlobalUtil.format("StartId did not match a valid StartEvent! startId: {}", startId)));
-        return new FlowRegister(startEvent, storyRequest, storyEngineModule.getSerializeTracking());
+        return new FlowRegister(storyEngineModule.getApplicationContext(), startEvent, storyRequest, storyEngineModule.getSerializeTracking());
     }
 
     private <T> void initRole(StoryRequest<T> storyRequest, ScopeDataQuery scopeDataQuery) {
@@ -356,7 +359,22 @@ public class StoryEngine {
             }
 
             @Override
+            public Optional<ServiceNodeResource> getServiceNodeResource() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+
+            @Override
+            public Optional<KvScope> getKvScope() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+
+            @Override
             public ReentrantReadWriteLock.ReadLock readLock() {
+                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
+            }
+
+            @Override
+            public <T> Optional<T> serialRead(Function<ScopeDataQuery, T> readFun) {
                 throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
             }
         };

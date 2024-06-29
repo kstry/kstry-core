@@ -20,11 +20,13 @@ package cn.kstry.framework.core.bpmn;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
 import cn.kstry.framework.core.bpmn.impl.TaskParamWrapper;
 import cn.kstry.framework.core.component.bpmn.builder.ServiceTaskBuilder;
+import cn.kstry.framework.core.component.limiter.RateLimiterConfig;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ServiceTask
@@ -103,6 +105,16 @@ public interface ServiceTask extends Task {
      * @return 服务节点重试次数
      */
     Integer getRetryTimes();
+
+    /**
+     * 限流相关配置
+     */
+    Optional<RateLimiterConfig> getRateLimiterConfig();
+
+    /**
+     * 获取任务异常降级配置
+     */
+    ServiceNodeResource getTaskDemotion();
 
     /**
      * 获取Service Task 构造器

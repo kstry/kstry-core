@@ -21,6 +21,7 @@ import cn.kstry.framework.core.bpmn.EndEvent;
 import cn.kstry.framework.core.bpmn.FlowElement;
 import cn.kstry.framework.core.bpmn.StartEvent;
 import cn.kstry.framework.core.bpmn.enums.BpmnTypeEnum;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.resource.config.ConfigResource;
 import cn.kstry.framework.core.util.AssertUtil;
 import com.google.common.collect.ImmutableMap;
@@ -73,6 +74,7 @@ public class StartEventImpl extends EventImpl implements StartEvent {
 
     @Override
     public void setEndEvent(EndEvent endEvent) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.endEvent = endEvent;
     }
 
@@ -83,6 +85,7 @@ public class StartEventImpl extends EventImpl implements StartEvent {
 
     @Override
     public void setProcessId(String processId) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.processId = processId;
     }
 
@@ -93,6 +96,7 @@ public class StartEventImpl extends EventImpl implements StartEvent {
 
     @Override
     public void setProcessName(String processName) {
+        AssertUtil.notTrue(immutable, ExceptionEnum.COMPONENT_IMMUTABLE_ERROR, "FlowElement is not modifiable.");
         this.processName = processName;
     }
 

@@ -240,6 +240,11 @@ public enum ExceptionEnum {
      */
     BUSINESS_INVOKE_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0007", "Business execution failure!"),
 
+    /**
+     * [K1050008] 限流异常
+     */
+    RATE_LIMITER_ERROR(ExceptionTypeEnum.NODE_INVOKE, "0008", "The service node is subject to rate limiting!"),
+
     ///////////////////////////////////////////////// NODE_INVOKE END /////////////////////////////////////////////////
 
     /**

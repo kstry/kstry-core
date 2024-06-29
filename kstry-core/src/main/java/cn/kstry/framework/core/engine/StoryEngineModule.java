@@ -19,6 +19,7 @@ package cn.kstry.framework.core.engine;
 
 import cn.kstry.framework.core.component.bpmn.SerializeProcessParser;
 import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
+import cn.kstry.framework.core.component.limiter.RateLimiterComponent;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
 import cn.kstry.framework.core.container.component.TaskContainer;
 import cn.kstry.framework.core.container.element.StartEventContainer;
@@ -105,10 +106,13 @@ public class StoryEngineModule {
      */
     private final TypeConverterProcessor typeConverterProcessor;
 
+    private final RateLimiterComponent rateLimiterComponent;
+
     public StoryEngineModule(List<TaskServiceExecutor> taskServiceExecutors, StartEventContainer startEventContainer, TaskContainer taskContainer,
                              Function<ParamInjectDef, Object> paramInitStrategy, SubProcessInterceptorRepository subInterceptorRepository,
                              TaskInterceptorRepository taskInterceptorRepository, ThreadSwitchHookProcessor threadSwitchHookProcessor, ApplicationContext applicationContext,
-                             SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor) {
+                             SerializeProcessParser<?> serializeProcessParser, SerializeTracking serializeTracking, TypeConverterProcessor typeConverterProcessor,
+                             RateLimiterComponent rateLimiterComponent) {
         AssertUtil.anyNotNull(taskServiceExecutors, taskContainer, paramInitStrategy, startEventContainer);
 
         List<TaskServiceExecutor> methodThreadPoolList = taskServiceExecutors.stream().filter(s -> s.getExecutorType() == ExecutorType.METHOD).collect(Collectors.toList());
@@ -130,6 +134,7 @@ public class StoryEngineModule {
         this.serializeProcessParser = serializeProcessParser;
         this.serializeTracking = serializeTracking;
         this.typeConverterProcessor = typeConverterProcessor;
+        this.rateLimiterComponent = rateLimiterComponent;
     }
 
     public TaskServiceExecutor getTaskThreadPool() {
@@ -182,5 +187,9 @@ public class StoryEngineModule {
 
     public TypeConverterProcessor getTypeConverterProcessor() {
         return typeConverterProcessor;
+    }
+
+    public RateLimiterComponent getRateLimiterComponent() {
+        return rateLimiterComponent;
     }
 }
