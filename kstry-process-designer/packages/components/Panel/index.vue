@@ -30,6 +30,7 @@ import ElementIterateProperties from "@packages/components/Panel/components/Elem
 import ElementRunProperties from "@packages/components/Panel/components/ElementRunProperties";
 import ElementPrevInstructions from "@packages/components/Panel/components/ElementPrevInstructions";
 import ElementPostInstructions from "@packages/components/Panel/components/ElementPostInstructions";
+import ElementRateLimitProperties from "@packages/components/Panel/components/ElementRateLimitProperties";
 import BpmnIcon from "@packages/components/common/BpmnIcon";
 import { is } from "bpmn-js/lib/util/ModelUtil";
 
@@ -42,7 +43,8 @@ export default {
     ElementServiceTaskNodeProperties,
     ElementRunProperties,
     ElementPrevInstructions,
-    ElementDocumentations
+    ElementDocumentations,
+    ElementRateLimitProperties
   },
   data() {
     return {
@@ -117,6 +119,7 @@ export default {
       is(element, "bpmn:CallActivity") && this.renderComponents.push(ActivityElementCalled);
       this.renderComponents.push(ElementServiceTaskNodeProperties);
       this.renderComponents.push(ElementRunProperties);
+      this.renderComponents.push(ElementRateLimitProperties);
       this.renderComponents.push(ElementIterateProperties);
       isInstructionsSource(element) && this.renderComponents.push(ElementPrevInstructions);
       isInstructionsSource(element) && this.renderComponents.push(ElementPostInstructions);
