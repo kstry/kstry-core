@@ -20,6 +20,7 @@ package cn.kstry.framework.core.kv;
 import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.enums.IdentityTypeEnum;
 import cn.kstry.framework.core.resource.identity.BasicIdentity;
+import cn.kstry.framework.core.util.GlobalUtil;
 import cn.kstry.framework.core.util.KValueUtil;
 import org.apache.commons.lang3.StringUtils;
 
@@ -66,12 +67,12 @@ public class BasicKValue extends BasicIdentity implements KValue {
             r = ((Map<Object, Object>) r).get(keySplit[i]);
         }
         if (r != null) {
-            return Optional.of(r);
+            return GlobalUtil.resOptional(r);
         }
         if (isContainsKey) {
             return Optional.of(KValue.KV_NULL);
         }
-        return Optional.ofNullable(getParent()).flatMap(parent -> parent.getValue(key));
+        return GlobalUtil.resOptional(getParent()).flatMap(parent -> parent.getValue(key));
     }
 
     /**

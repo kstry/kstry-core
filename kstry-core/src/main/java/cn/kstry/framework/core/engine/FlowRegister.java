@@ -23,8 +23,10 @@ import cn.kstry.framework.core.bus.StoryBus;
 import cn.kstry.framework.core.component.hook.AsyncFlowHook;
 import cn.kstry.framework.core.component.strategy.PeekStrategy;
 import cn.kstry.framework.core.component.strategy.PeekStrategyRepository;
+import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.engine.facade.StoryRequest;
 import cn.kstry.framework.core.engine.future.AdminFuture;
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
 import cn.kstry.framework.core.enums.ElementAllowNextEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.monitor.MonitorTracking;
@@ -120,6 +122,11 @@ public class FlowRegister {
      */
     private FlowElement midwayStartElement;
 
+    /**
+     * 循环次数
+     */
+    private long cycleTimes;
+
     private FlowRegister() {
 
     }
@@ -130,6 +137,7 @@ public class FlowRegister {
         startEventId = startEvent.getId();
         storyId = startEvent.getId();
         businessId = storyRequest.getBusinessId();
+        cycleTimes = 1L;
 
         // init requestId
         requestId = GlobalUtil.getOrSetRequestId(storyRequest);
@@ -162,6 +170,7 @@ public class FlowRegister {
         asyncFlowRegister.reentrantLock = this.reentrantLock;
         asyncFlowRegister.joinGatewayComingMap = this.joinGatewayComingMap;
         asyncFlowRegister.requestId = this.requestId;
+        asyncFlowRegister.cycleTimes = this.cycleTimes;
         asyncFlowRegister.businessId = this.businessId;
         asyncFlowRegister.adminFuture = this.adminFuture;
 
@@ -179,6 +188,7 @@ public class FlowRegister {
         subFlowRegister.startElement = startEvent;
         subFlowRegister.startEventId = startEvent.getId();
         subFlowRegister.storyId = storyId;
+        subFlowRegister.cycleTimes = 1L;
         subFlowRegister.monitorTracking = this.monitorTracking;
         subFlowRegister.requestId = this.requestId;
         subFlowRegister.businessId = this.businessId;
@@ -203,6 +213,10 @@ public class FlowRegister {
 
     public AdminFuture getAdminFuture() {
         return adminFuture;
+    }
+
+    public long getCycleTimes() {
+        return cycleTimes;
     }
 
     public FlowElement getStartElement() {
@@ -234,9 +248,12 @@ public class FlowRegister {
         }
 
         // 获取当前执行节点
+        String taskName = GlobalUtil.getTaskName(getStartElement(), getRequestId());
         FlowElement currentFlowElement = elementOptional.get();
         AssertUtil.notTrue(adminFuture.isCancelled(startEventId), ExceptionEnum.ASYNC_TASK_INTERRUPTED,
-                "Task interrupted. Story task was interrupted! taskName: {}, identity: {}", GlobalUtil.getTaskName(getStartElement(), getRequestId()), currentFlowElement.identity());
+                "Task interrupted. Story task was interrupted! taskName: {}, identity: {}", taskName, currentFlowElement.identity());
+        AssertUtil.isTrue(cycleTimes == 1L || cycleTimes <= GlobalProperties.KSTRY_STORY_MAX_CYCLE_COUNT, ExceptionEnum.CYCLE_TIMES_OVER_LIMIT,
+                "{} cycleTimes: {}, taskName: {}, identity: {}", ExceptionEnum.CYCLE_TIMES_OVER_LIMIT.getDesc(), cycleTimes, taskName, currentFlowElement.identity());
 
         // 处理回环流程
         if (currentFlowElement instanceof SequenceFlow) {
@@ -249,17 +266,19 @@ public class FlowRegister {
                     joinGatewayComingMap.remove(k);
                 });
                 flowElementStack.clear();
-                monitorTracking.buildFirstNodeTracking(cycleBeginElement);
+                cycleTimes++;
+                monitorTracking.buildFirstNodeTracking(cycleTimes, cycleBeginElement);
                 return Optional.of(cycleBeginElement);
             }
         }
 
         // 获取执行决策
-        monitorTracking.buildFirstNodeTracking(currentFlowElement);
+        monitorTracking.buildFirstNodeTracking(cycleTimes, currentFlowElement);
         PeekStrategy peekStrategy = getPeekStrategy(currentFlowElement);
 
         // 填充 ContextStoryBus
         contextStoryBus.setPrevElement(prevElement);
+        contextStoryBus.setCycleTimes(cycleTimes);
         contextStoryBus.setReentrantLock(reentrantLock);
         contextStoryBus.setJoinGatewayComingMap(joinGatewayComingMap);
         contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
@@ -275,6 +294,7 @@ public class FlowRegister {
     public Optional<AsyncFlowHook<List<FlowElement>>> predictNextElement(ContextStoryBus contextStoryBus, FlowElement currentFlowElement) {
         if (contextStoryBus.getEndTaskPedometer() == null) {
             contextStoryBus.setPrevElement(prevElement);
+            contextStoryBus.setCycleTimes(cycleTimes);
             contextStoryBus.setReentrantLock(reentrantLock);
             contextStoryBus.setJoinGatewayComingMap(joinGatewayComingMap);
             contextStoryBus.setEndTaskPedometer(adminFuture.getEndTaskPedometer(startEventId));
@@ -289,7 +309,12 @@ public class FlowRegister {
             flowList = contextStoryBus.getStoryBus().getScopeDataOperator().serialRead(opt -> {
                 List<SequenceFlow> sequenceFlowList = currentFlowElement.outingList().stream().map(f -> (SequenceFlow) f).collect(Collectors.toList());
                 OrderComparator.sort(sequenceFlowList);
-                return sequenceFlowList.stream().filter(flow -> peekStrategy.needPeek(monitorTracking, flow, contextStoryBus)).map(f -> (FlowElement) f).collect(Collectors.toList());
+                try {
+                    InvokeMethodThreadLocal.setCycleTimes(cycleTimes);
+                    return sequenceFlowList.stream().filter(flow -> peekStrategy.needPeek(monitorTracking, flow, contextStoryBus)).map(f -> (FlowElement) f).collect(Collectors.toList());
+                } finally {
+                    InvokeMethodThreadLocal.clearCycleTimes();
+                }
             }).orElse(Lists.newArrayList());
         }
         if (!peekStrategy.allowOutingEmpty(currentFlowElement)) {

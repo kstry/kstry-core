@@ -38,4 +38,11 @@ public interface ThreadLocalSwitch<T> {
      * 移除当前ThreadLocal的值
      */
     void remove();
+
+    /**
+     * 获取ThreadLocal名称
+     */
+    default String getName() {
+        return this.toString();
+    }
 }

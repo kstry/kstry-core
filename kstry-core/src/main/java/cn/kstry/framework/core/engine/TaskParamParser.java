@@ -22,7 +22,6 @@ import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bpmn.impl.TaskParamWrapper;
 import cn.kstry.framework.core.bus.*;
 import cn.kstry.framework.core.component.conversion.TypeConverterProcessor;
-import cn.kstry.framework.core.component.validator.RequestValidator;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.component.ParamInjectDef;
@@ -79,9 +78,6 @@ public class TaskParamParser {
             if (param instanceof ParamLifecycle) {
                 ((ParamLifecycle) param).after(storyBus.getScopeDataOperator());
             }
-            if (GlobalUtil.supportValidate()) {
-                RequestValidator.validate(param);
-            }
         }
         return params;
     }
@@ -119,7 +115,7 @@ public class TaskParamParser {
                 Object actualReq = storyBus.isSetReqScope() ? storyBus.getReq() : params[i];
                 params[i] = actualReq;
                 trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask, () -> ParamTracking.build(iDef.getFieldName(),
-                        ScopeTypeEnum.REQUEST.name().toLowerCase(), ScopeTypeEnum.REQUEST, actualReq, Optional.ofNullable(actualReq).map(Object::getClass).orElse(null), null)
+                        ScopeTypeEnum.REQUEST.name().toLowerCase(), ScopeTypeEnum.REQUEST, actualReq, GlobalUtil.resOptional(actualReq).map(Object::getClass).orElse(null), null)
                 ));
                 continue;
             }
@@ -166,7 +162,7 @@ public class TaskParamParser {
             }
 
             // 参数被 @TaskParam、@ReqTaskParam、@VarTaskParam、@StaTaskParam 注解修饰时，从 StoryBus 中直接获取变量并赋值给参数
-            if (iDef.getScopeDataEnum() != null && StringUtils.isNotBlank(iDef.getTargetName())) {
+            if (iDef.getScopeDataEnum() != null && (StringUtils.isNotBlank(iDef.getTargetName()) || iDef.getScopeDataEnum() == ScopeTypeEnum.RESULT)) {
                 Object r = storyBus.getValue(iDef.getScopeDataEnum(), iDef.getTargetName()).orElse(null);
                 if (r == PropertyUtil.GET_PROPERTY_ERROR_SIGN) {
                     trackingOptional.ifPresent(mt -> mt.trackingNodeParams(serviceTask,
@@ -330,7 +326,7 @@ public class TaskParamParser {
 
                 for (Field field : FieldUtils.getAllFieldsList(params[i].getClass())) {
                     String targetName = Optional.ofNullable(defMap.get(field.getName()))
-                            .filter(def -> field.getType() == def.getParamType()).map(ParamInjectDef::getTargetName).orElse(field.getName());
+                            .filter(def -> field.getType() == def.getParamType()).map(ParamInjectDef::getTargetName).filter(StringUtils::isNotBlank).orElse(field.getName());
                     if (!valMap.containsKey(targetName)) {
                         continue;
                     }

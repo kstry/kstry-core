@@ -117,6 +117,15 @@ public class ExpressionBus {
     }
 
     /**
+     * 获取 cycleTimes
+     *
+     * @return cycleTimes
+     */
+    public long getCycleTimes() {
+        return InvokeMethodThreadLocal.getCycleTimes().filter(t -> t > 0).orElse(1L);
+    }
+
+    /**
      * 获取 property
      *
      * @return property

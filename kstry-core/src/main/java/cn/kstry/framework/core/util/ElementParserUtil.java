@@ -106,7 +106,9 @@ public class ElementParserUtil {
 
         TaskParam taskParamAnn = p.getAnnotation(TaskParam.class);
         if (taskParamAnn != null) {
-            if (taskParamAnn.value() != null && taskParamAnn.value().length > 0) {
+            if (notNeedTargetName(taskParamAnn.scopeEnum(), taskParamAnn.value())) {
+                paramName = StringUtils.EMPTY;
+            } else if (taskParamAnn.value() != null && taskParamAnn.value().length > 0) {
                 paramName = Stream.of(taskParamAnn.value()).filter(StringUtils::isNotBlank).collect(Collectors.joining("."));
             }
             return Optional.of(new MethodWrapper.TaskFieldProperty(paramName, taskParamAnn.scopeEnum(), taskParamAnn.converter()));
@@ -160,6 +162,9 @@ public class ElementParserUtil {
                                 Stream.of(s).filter(StringUtils::isNotBlank).collect(Collectors.joining("."))
                         )
                         .filter(StringUtils::isNotBlank).orElse(field.getName());
+                if (notNeedTargetName(taskFieldAnn.scopeEnum(), taskFieldAnn.value())) {
+                    targetName = StringUtils.EMPTY;
+                }
                 MethodWrapper.TaskFieldProperty taskFieldProperty = new MethodWrapper.TaskFieldProperty(targetName, taskFieldAnn.scopeEnum(), taskFieldAnn.converter());
                 ParamInjectDef injectDef = new ParamInjectDef(GlobalConstant.STORY_DATA_SCOPE.contains(
                         taskFieldProperty.getScopeDataEnum()), field.getType(), ProxyUtil.getCollGenericType(field).orElse(null), field.getName(), taskFieldProperty
@@ -225,6 +230,16 @@ public class ElementParserUtil {
             });
         }
         return fieldInjectDefList;
+    }
+
+    private static boolean notNeedTargetName(ScopeTypeEnum scopeEnum, String[] value) {
+        if (scopeEnum != ScopeTypeEnum.RESULT) {
+            return false;
+        }
+        if (value == null || value.length == 0) {
+            return true;
+        }
+        return Stream.of(value).allMatch(StringUtils::isBlank);
     }
 
     public static boolean isAssignable(Class<?> left, Class<?> right) {

@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- *
  * @author lykan
  */
 public class ContextStoryBus {
@@ -60,6 +59,11 @@ public class ContextStoryBus {
      * 结束任务计步器
      */
     private EndTaskPedometer endTaskPedometer;
+
+    /**
+     * 循环次数
+     */
+    private long cycleTimes;
 
     public ContextStoryBus(StoryBus storyBus) {
         this.storyBus = storyBus;
@@ -105,6 +109,14 @@ public class ContextStoryBus {
         this.prevElement = prevElement;
     }
 
+    public void setCycleTimes(long cycleTimes) {
+        this.cycleTimes = cycleTimes;
+    }
+
+    public long getCycleTimes() {
+        return cycleTimes;
+    }
+
     public StoryBus getStoryBus() {
         return storyBus;
     }
@@ -130,6 +142,11 @@ public class ContextStoryBus {
         private final FlowElement flowElement;
 
         /**
+         * 循环次数
+         */
+        private final long cycleTimes;
+
+        /**
          * 是否达到
          */
         private boolean arrive;
@@ -139,8 +156,9 @@ public class ContextStoryBus {
          */
         private boolean actualArrive;
 
-        public ElementArriveRecord(FlowElement flowElement) {
+        public ElementArriveRecord(long cycleTimes, FlowElement flowElement) {
             AssertUtil.notNull(flowElement);
+            this.cycleTimes = cycleTimes;
             this.flowElement = flowElement;
             this.arrive = false;
         }
@@ -155,6 +173,10 @@ public class ContextStoryBus {
 
         public FlowElement getFlowElement() {
             return flowElement;
+        }
+
+        public long getCycleTimes() {
+            return cycleTimes;
         }
 
         public boolean elementArrive(FlowElement flowElement, boolean actualArrive) {

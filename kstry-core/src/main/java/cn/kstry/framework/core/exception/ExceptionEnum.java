@@ -203,6 +203,11 @@ public enum ExceptionEnum {
      */
     SCRIPT_EXECUTE_ERROR(ExceptionTypeEnum.STORY, "0012", "Script execution exception!"),
 
+    /**
+     * [K1040013] 环路流程循环次数超出最大限制
+     */
+    CYCLE_TIMES_OVER_LIMIT(ExceptionTypeEnum.STORY, "0013", "Maximum number of loop process cycles exceeded!"),
+
     ///////////////////////////////////////////////// STORY END /////////////////////////////////////////////////
 
     /**

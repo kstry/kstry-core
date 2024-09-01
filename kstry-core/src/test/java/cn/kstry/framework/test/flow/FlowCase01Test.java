@@ -171,7 +171,7 @@ public class FlowCase01Test {
     public void testFlow07() {
         StoryRequest<Void> fireRequest = ReqBuilder.returnType(Void.class).startId("story-def-test-flow-007").build();
         TaskResponse<Void> fire = storyEngine.fire(fireRequest);
-        System.out.println(JSON.toJSONString(fire));
+        fire.getResultException().printStackTrace();
         Assert.assertFalse(fire.isSuccess());
         Assert.assertEquals(fire.getResultCode(), ExceptionEnum.PARAM_VERIFICATION_ERROR.getExceptionCode());
     }

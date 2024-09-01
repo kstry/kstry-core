@@ -17,7 +17,10 @@
  */
 package cn.kstry.framework.core.engine.thread;
 
+import org.springframework.core.NamedThreadLocal;
+
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
@@ -25,7 +28,22 @@ import java.util.function.Supplier;
  * <p>
  * 注意：服务节点方法或拦截器等组件中，自定义的线程切换不会生效
  */
-public class KstryThreadLocal<T> extends ThreadLocal<T> implements ThreadLocalSwitch<T> {
+public class KstryThreadLocal<T> extends NamedThreadLocal<T> implements ThreadLocalSwitch<T> {
+
+    private static final AtomicLong createCounter = new AtomicLong(0);
+
+    public KstryThreadLocal() {
+        this("KstryThreadLocal-" + createCounter.getAndIncrement());
+    }
+
+    public KstryThreadLocal(String name) {
+        super(name);
+    }
+
+    @Override
+    public String getName() {
+        return super.toString();
+    }
 
     public static <S> KstryThreadLocal<S> withInitial(Supplier<? extends S> supplier) {
         return new KstrySuppliedThreadLocal<>(supplier);

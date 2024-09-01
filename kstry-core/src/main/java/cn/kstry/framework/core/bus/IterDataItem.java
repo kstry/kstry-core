@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.bus;
 
+import cn.kstry.framework.core.util.GlobalUtil;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +56,7 @@ public class IterDataItem<T> {
     }
 
     public Optional<T> getData() {
-        return Optional.ofNullable(data);
+        return GlobalUtil.resOptional(data);
     }
 
     public List<T> getDataList() {

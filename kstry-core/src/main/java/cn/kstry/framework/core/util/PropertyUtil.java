@@ -22,6 +22,7 @@ import cn.kstry.framework.core.constant.GlobalConstant;
 import cn.kstry.framework.core.constant.GlobalProperties;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import cn.kstry.framework.core.exception.ExceptionEnum;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONPath;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -33,6 +34,8 @@ import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * PropertyUtil
@@ -49,14 +52,15 @@ public class PropertyUtil {
     public static final Object GET_PROPERTY_ERROR_SIGN = new Object();
 
     public static Optional<Object> getProperty(Object bean, String propertyName) {
+        bean = (bean instanceof Optional) ? ((Optional<?>) bean).orElse(null) : bean;
         if (bean == null || StringUtils.isBlank(propertyName)) {
             return Optional.empty();
         }
         try {
             if (propertyName.startsWith("$")) {
-                return GlobalUtil.getResOptional(JSONPath.eval(bean, propertyName));
+                return GlobalUtil.resOptional(JSONPath.eval(bean, propertyName));
             }
-            return GlobalUtil.getResOptional(PropertyUtils.getProperty(bean, propertyName));
+            return GlobalUtil.resOptional(PropertyUtils.getProperty(bean, propertyName));
         } catch (NoSuchMethodException e) {
             LOGGER.warn("[{}] Error accessing a non-existent variable! propertyName: {}, class: {}",
                     ExceptionEnum.FAILED_GET_PROPERTY.getExceptionCode(), propertyName, bean.getClass());
@@ -86,6 +90,32 @@ public class PropertyUtil {
                     ExceptionEnum.FAILED_SET_PROPERTY.getExceptionCode(), target.getClass(), propertyName, value, e);
         }
         return false;
+    }
+
+    public static Optional<Object> getRawProperty(Object property, String key) {
+        if (property == null) {
+            return Optional.empty();
+        }
+        if (StringUtils.isBlank(key)) {
+            return GlobalUtil.resOptional(property);
+        }
+        Object p = property;
+        for (String k : key.split("\\.")) {
+            if (p == null) {
+                return Optional.empty();
+            }
+            if (p instanceof String) {
+                try {
+                    p = JSON.parse(String.valueOf(p));
+                } catch (Exception e) {
+                    LOGGER.info("When retrieving the RawProperty attribute, a JSON string parsing exception occurs. json: {}", p, e);
+                    return Optional.empty();
+                }
+            }
+            k = StringUtils.trim(k);
+            p = getProperty(p, (k.startsWith("[") ? "$" : "$.") + k).orElse(null);
+        }
+        return GlobalUtil.resOptional(p);
     }
 
     public static String switchPositionExpression(String expression) {
@@ -128,7 +158,14 @@ public class PropertyUtil {
         GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS = NumberUtils.toLong(
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_SHUTDOWN_NOW_AWAIT), GlobalProperties.ENGINE_SHUTDOWN_NOW_SLEEP_SECONDS
         );
+        GlobalProperties.KSTRY_STORY_MAX_CYCLE_COUNT = NumberUtils.toLong(
+                environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_MAX_CYCLE_COUNT), GlobalProperties.KSTRY_STORY_MAX_CYCLE_COUNT
+        );
         GlobalProperties.STORY_SUCCESS_CODE = environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_SUCCESS_CODE, GlobalProperties.STORY_SUCCESS_CODE);
+        String ignoreCopyPrefix = environment.getProperty(ConfigPropertyNameConstant.KSTRY_THREAD_IGNORE_COPY_PREFIX);
+        if (StringUtils.isNotBlank(ignoreCopyPrefix)) {
+            GlobalProperties.KSTRY_THREAD_IGNORE_COPY_PREFIX = Stream.of(ignoreCopyPrefix.split(",")).map(StringUtils::trim).collect(Collectors.toList());
+        }
         GlobalProperties.TYPE_CONVERTER_DATE_FORMAT = environment.getProperty(ConfigPropertyNameConstant.TYPE_CONVERTER_DATE_FORMAT, GlobalProperties.TYPE_CONVERTER_DATE_FORMAT);
         GlobalProperties.STORY_MONITOR_TRACKING_TYPE =
                 environment.getProperty(ConfigPropertyNameConstant.KSTRY_STORY_TRACKING_TYPE, GlobalProperties.STORY_MONITOR_TRACKING_TYPE);

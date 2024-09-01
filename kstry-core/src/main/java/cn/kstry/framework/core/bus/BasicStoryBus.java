@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -170,7 +171,7 @@ public abstract class BasicStoryBus implements StoryBus {
 
     @Override
     public Optional<Object> getResult() {
-        return GlobalUtil.getResOptional(returnResult);
+        return GlobalUtil.resOptional(returnResult);
     }
 
     @Override
@@ -182,17 +183,18 @@ public abstract class BasicStoryBus implements StoryBus {
         readLock.lock();
         try {
             if (scopeTypeEnum == ScopeTypeEnum.RESULT) {
-                return getResult();
+                return StringUtils.isBlank(key) ? getResult() : PropertyUtil.getProperty(getResult().orElse(null), key);
             }
             if (scopeTypeEnum == ScopeTypeEnum.STABLE) {
-                return PropertyUtil.getProperty(getSta(), key);
-            } else if (scopeTypeEnum == ScopeTypeEnum.VARIABLE) {
-                return PropertyUtil.getProperty(getVar(), key);
-            } else if (scopeTypeEnum == ScopeTypeEnum.REQUEST) {
-                return PropertyUtil.getProperty(getReq(), key);
-            } else {
-                throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_ERROR, null);
+                return StringUtils.isBlank(key) ? Optional.ofNullable(getSta()) : PropertyUtil.getProperty(getSta(), key);
             }
+            if (scopeTypeEnum == ScopeTypeEnum.VARIABLE) {
+                return StringUtils.isBlank(key) ? Optional.ofNullable(getVar()) : PropertyUtil.getProperty(getVar(), key);
+            }
+            if (scopeTypeEnum == ScopeTypeEnum.REQUEST) {
+                return StringUtils.isBlank(key) ? GlobalUtil.resOptional(getReq()) : PropertyUtil.getProperty(getReq(), key);
+            }
+            throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_ERROR, null);
         } finally {
             readLock.unlock();
         }
@@ -260,7 +262,7 @@ public abstract class BasicStoryBus implements StoryBus {
                 this.returnResult = r;
                 monitorTracking.trackingResult(serviceTask, this.returnResult);
                 monitorTracking.trackingNodeNotice(serviceTask, () -> NoticeTracking.build(
-                        null, null, ScopeTypeEnum.RESULT, this.returnResult, Optional.ofNullable(this.returnResult).map(Object::getClass).orElse(null), convertPair.getKey())
+                        null, null, ScopeTypeEnum.RESULT, this.returnResult, GlobalUtil.resOptional(this.returnResult).map(Object::getClass).orElse(null), convertPair.getKey())
                 );
             } else {
                 LOGGER.warn("[{}] returnResult has already been assigned once and is not allowed to be assigned repeatedly! taskName: {}, identity: {}",
@@ -329,7 +331,7 @@ public abstract class BasicStoryBus implements StoryBus {
 
             if (ScopeTypeEnum.STABLE == dataEnum) {
                 Optional<Object> oldResult = PropertyUtil.getProperty(t, fieldNameSplit[fieldNameSplit.length - 1]).filter(p -> p != PropertyUtil.GET_PROPERTY_ERROR_SIGN);
-                if (oldResult.isPresent()) {
+                if (oldResult.isPresent() && (!oldResult.get().getClass().isPrimitive() || !Objects.equals(oldResult.get(), ElementParserUtil.initPrimitive(oldResult.get().getClass())))) {
                     LOGGER.warn("[{}] Existing values in the immutable union are not allowed to be set repeatedly! k: {}, oldV: {}, identity: {}",
                             ExceptionEnum.IMMUTABLE_SET_UPDATE.getExceptionCode(), def.getTargetName(), oldResult.get(), flowElement.identity());
                     return;

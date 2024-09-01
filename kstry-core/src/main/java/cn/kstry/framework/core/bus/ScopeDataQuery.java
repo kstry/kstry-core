@@ -17,8 +17,16 @@
  */
 package cn.kstry.framework.core.bus;
 
+import cn.kstry.framework.core.engine.thread.InvokeMethodThreadLocal;
+import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
+import cn.kstry.framework.core.util.ElementParserUtil;
+import cn.kstry.framework.core.util.ExceptionUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
+import cn.kstry.framework.core.util.PropertyUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -113,11 +121,58 @@ public interface ScopeDataQuery {
     <T> Optional<T> getData(String expression);
 
     /**
+     * 逐级解析对象字段，可以获取JSON字符串中的数据
+     *
+     * @param expression 取值表达式
+     * @return 数据结果
+     */
+    @SuppressWarnings("unchecked")
+    default <T> Optional<T> getRawData(String expression) {
+        if (StringUtils.isBlank(expression)) {
+            return Optional.empty();
+        }
+        if (!ElementParserUtil.isValidDataExpression(expression)) {
+            return Optional.empty();
+        }
+        expression = StringUtils.replaceOnce(expression, "$.", StringUtils.EMPTY);
+        String[] expArr = expression.split("\\.", 2);
+        String key = (expArr.length == 2) ? expArr[1] : null;
+        ScopeTypeEnum scopeTypeEnum = ScopeTypeEnum.of(expArr[0]).orElse(null);
+        if (scopeTypeEnum == null) {
+            return Optional.empty();
+        }
+        return (Optional<T>) serialRead(query -> {
+            if (scopeTypeEnum == ScopeTypeEnum.RESULT) {
+                return PropertyUtil.getRawProperty(getResult().orElse(null), key).map(r -> (T) r);
+            }
+            if (scopeTypeEnum == ScopeTypeEnum.STABLE) {
+                return PropertyUtil.getRawProperty(getStaScope(), key).map(r -> (T) r);
+            }
+            if (scopeTypeEnum == ScopeTypeEnum.VARIABLE) {
+                return PropertyUtil.getRawProperty(getVarScope(), key).map(r -> (T) r);
+            }
+            if (scopeTypeEnum == ScopeTypeEnum.REQUEST) {
+                return PropertyUtil.getRawProperty(getReqScope(), key).map(r -> (T) r);
+            }
+            throw ExceptionUtil.buildException(null, ExceptionEnum.STORY_ERROR, null);
+        });
+    }
+
+    /**
      * 获取服务节点属性，服务节点属性在节点定义时指定
      *
      * @return 服务节点属性
      */
     Optional<String> getTaskProperty();
+
+    /**
+     * 获取当前循环次数，如果主流程循环3次，子流程循环2次，该方法在主流程的服务节点返回3，在子流程服务节点返回2
+     *
+     * @return 服务节点属性
+     */
+    default long getCycleTimes() {
+        return InvokeMethodThreadLocal.getCycleTimes().filter(t -> t > 0).orElse(1L);
+    }
 
     /**
      * 遍历执行迭代器的每一项数据时，获取当前项数据
@@ -150,5 +205,16 @@ public interface ScopeDataQuery {
     /**
      * 串行化读
      */
-    <T> Optional<T> serialRead(Function<ScopeDataQuery, T> readFun);
+    default <T> Optional<T> serialRead(Function<ScopeDataQuery, T> readFun) {
+        if (readFun == null) {
+            return Optional.empty();
+        }
+        ReentrantReadWriteLock.ReadLock readLock = readLock();
+        readLock.lock();
+        try {
+            return GlobalUtil.resOptional(readFun.apply(this));
+        } finally {
+            readLock.unlock();
+        }
+    }
 }

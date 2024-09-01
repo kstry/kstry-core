@@ -9,8 +9,10 @@ import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bus.IterDataItem;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
 import com.google.common.collect.Lists;
+import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Validated
 @TaskComponent
 @SuppressWarnings("unused")
 public class StudentScoreService {
@@ -63,7 +66,7 @@ public class StudentScoreService {
 
     @TaskService(desc = "获取学生学年列表")
     @NoticeVar(target = QueryScoreVarScope.F.studyExperienceList)
-    public List<StudyExperience> getStudyExperienceList(@ReqTaskParam(QueryScoreRequest.F.studentId) Long id) {
+    public List<StudyExperience> getStudyExperienceList(@Min(value = 10, message = "不能小于10") @ReqTaskParam(QueryScoreRequest.F.studentId) Long id) {
         // mock return result
         return Lists.newArrayList(
                 StudyExperience.builder().studentId(id).classId(1L).studyYear("2013-1-2").build(),

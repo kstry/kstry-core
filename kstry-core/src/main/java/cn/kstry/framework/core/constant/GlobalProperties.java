@@ -17,6 +17,10 @@
  */
 package cn.kstry.framework.core.constant;
 
+import com.google.common.collect.Lists;
+
+import java.util.List;
+
 /**
  *
  * @author lykan
@@ -59,6 +63,11 @@ public class GlobalProperties {
     public static int KSTRY_THREAD_POOL_QUEUE_SIZE = 2_000;
 
     /**
+     * ThreadLocal切换线程拷贝时需要忽略的前缀，可配置多个
+     */
+    public static List<String> KSTRY_THREAD_IGNORE_COPY_PREFIX = Lists.newArrayList();
+
+    /**
      * requestId 名字
      */
     public static String KSTRY_STORY_REQUEST_ID_NAME = "ks-request-id";
@@ -77,6 +86,11 @@ public class GlobalProperties {
      * 是否打印链路追踪日志
      */
     public static boolean KSTRY_STORY_TRACKING_LOG = false;
+
+    /**
+     * 限制环路流程循环的最大次数，默认：Long.MAX_VALUE
+     */
+    public static long KSTRY_STORY_MAX_CYCLE_COUNT = Long.MAX_VALUE;
 
     /**
      * 使用JDK21+时，是否开启虚拟线程

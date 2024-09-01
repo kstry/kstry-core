@@ -170,13 +170,17 @@ public class PeekStrategyRepository {
     public static ElementAllowNextEnum allowDoNext(FlowElement flowElement, FlowElement prevElement, ContextStoryBus contextStoryBus, boolean actualArrive) {
         ConcurrentHashMap<FlowElement, List<ContextStoryBus.ElementArriveRecord>> joinGatewayComingMap = contextStoryBus.getJoinGatewayComingMap();
         List<ContextStoryBus.ElementArriveRecord> expectedComingElement = joinGatewayComingMap.get(flowElement);
+        long cycleTimes = contextStoryBus.getCycleTimes();
         if (expectedComingElement == null) {
             List<ContextStoryBus.ElementArriveRecord> flowElementList =
-                    Lists.newArrayList(flowElement.comingList()).stream().map(ContextStoryBus.ElementArriveRecord::new).collect(Collectors.toList());
+                    Lists.newArrayList(flowElement.comingList()).stream().map(e -> new ContextStoryBus.ElementArriveRecord(cycleTimes, e)).collect(Collectors.toList());
             expectedComingElement = joinGatewayComingMap.putIfAbsent(flowElement, flowElementList);
             if (expectedComingElement == null) {
                 expectedComingElement = flowElementList;
             }
+        }
+        if (!(flowElement instanceof EndEvent) && CollectionUtils.isNotEmpty(expectedComingElement) && cycleTimes < expectedComingElement.get(0).getCycleTimes()) {
+            return ElementAllowNextEnum.NOT_ALLOW_NEX;
         }
         ReentrantLock reentrantLock = contextStoryBus.getReentrantLock();
         reentrantLock.lock();

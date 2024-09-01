@@ -119,7 +119,7 @@ public class ProcessConfig {
                                 asyncInclusive.nextService(StudentScoreService::getStudentPrivacy).build()
                         ).nextService(StudentScoreService::assembleStudentInfo).build()
                 )
-                .nextService(StudentScoreService::getQueryScoreResponse).build()
+                .nextService("cycleTimes > 0", StudentScoreService::getQueryScoreResponse).build()
                 .end();
         return processLink;
     }

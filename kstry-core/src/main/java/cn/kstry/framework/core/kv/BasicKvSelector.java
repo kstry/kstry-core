@@ -20,6 +20,7 @@ package cn.kstry.framework.core.kv;
 import java.util.Map;
 import java.util.Optional;
 
+import cn.kstry.framework.core.util.GlobalUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Maps;
@@ -37,7 +38,7 @@ public class BasicKvSelector implements KvSelector {
         if (StringUtils.isBlank(scope)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(kValueMap.get(scope));
+        return GlobalUtil.resOptional(kValueMap.get(scope));
     }
 
     public void addKValue(BasicKValue kValue) {

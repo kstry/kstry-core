@@ -17,8 +17,9 @@
  */
 package cn.kstry.framework.core.exception;
 
+import java.util.List;
+
 /**
- *
  * @author lykan
  */
 public class ViolationException extends KstryException {
@@ -26,6 +27,13 @@ public class ViolationException extends KstryException {
     private Object invalidValue;
 
     private String fieldName;
+
+    private List<String> fieldPath;
+
+    /**
+     * 受限的Bean
+     */
+    private Object leafBean;
 
     public ViolationException(String code, String desc, Throwable cause) {
         super(code, desc, cause);
@@ -45,5 +53,21 @@ public class ViolationException extends KstryException {
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+    public List<String> getFieldPath() {
+        return fieldPath;
+    }
+
+    public void setFieldPath(List<String> fieldPath) {
+        this.fieldPath = fieldPath;
+    }
+
+    public Object getLeafBean() {
+        return leafBean;
+    }
+
+    public void setLeafBean(Object leafBean) {
+        this.leafBean = leafBean;
     }
 }

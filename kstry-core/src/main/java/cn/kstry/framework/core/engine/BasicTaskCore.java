@@ -226,7 +226,7 @@ public abstract class BasicTaskCore<T> implements Task<T> {
         TaskComponentProxy targetProxy = taskServiceDef.getTaskComponentTarget();
         List<ParamInjectDef> paramInjectDefs = methodWrapper.getParamInjectDefs();
         InvokeMethodThreadLocal.setDataItem(iterDataItem);
-        InvokeMethodThreadLocal.whenServiceInvoke(taskServiceDef, serviceTask, storyBus.getBusinessId());
+        InvokeMethodThreadLocal.whenServiceInvoke(flowRegister, taskServiceDef, serviceTask, storyBus.getBusinessId());
         flowRegister.getMonitorTracking().getServiceNodeTracking(serviceTask).ifPresent(nodeTracking -> nodeTracking.setThreadId(Thread.currentThread().getName()));
         try {
             if (CollectionUtils.isEmpty(paramInjectDefs)) {

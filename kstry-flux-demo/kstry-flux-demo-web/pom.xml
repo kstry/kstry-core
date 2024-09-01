@@ -30,12 +30,16 @@
         <dependency>
             <groupId>cn.kstry.framework</groupId>
             <artifactId>kstry-core</artifactId>
-            <version>1.1.15</version>
+            <version>1.1.16</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
             <version>5.1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -20,6 +20,7 @@ package cn.kstry.framework.core.engine.thread;
 import cn.kstry.framework.core.bpmn.ServiceTask;
 import cn.kstry.framework.core.bus.IterDataItem;
 import cn.kstry.framework.core.container.component.TaskServiceDef;
+import cn.kstry.framework.core.engine.FlowRegister;
 import cn.kstry.framework.core.kv.KvScope;
 import cn.kstry.framework.core.resource.service.ServiceNodeResource;
 import org.apache.commons.lang3.StringUtils;
@@ -31,15 +32,17 @@ import java.util.Optional;
  */
 public class InvokeMethodThreadLocal {
 
-    private static final ThreadLocal<IterDataItem<?>> ITERATOR_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<IterDataItem<?>> ITERATOR_THREAD_LOCAL = new KstryThreadLocal<>("kstry iterate item");
 
-    private static final ThreadLocal<String> TASK_PROPERTY_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<String> TASK_PROPERTY_THREAD_LOCAL = new KstryThreadLocal<>("kstry task property");
 
-    private static final ThreadLocal<KvScope> KV_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<KvScope> KV_THREAD_LOCAL = new KstryThreadLocal<>("kstry kv scope");
 
-    private static final ThreadLocal<ServiceTask> SERVICE_TASK_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<ServiceTask> SERVICE_TASK_THREAD_LOCAL = new KstryThreadLocal<>("kstry service task");
 
-    private static final ThreadLocal<ServiceNodeResource> SERVICE_NODE_RESOURCE_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<ServiceNodeResource> SERVICE_NODE_RESOURCE_THREAD_LOCAL = new KstryThreadLocal<>("kstry service node resource");
+
+    private static final ThreadLocal<Long> CYCLE_TIMES_THREAD_LOCAL = new KstryThreadLocal<>("kstry cycle times");
 
     public static void setKvScope(KvScope kvScope) {
         KV_THREAD_LOCAL.set(kvScope);
@@ -47,6 +50,14 @@ public class InvokeMethodThreadLocal {
 
     public static Optional<KvScope> getKvScope() {
         return Optional.ofNullable(KV_THREAD_LOCAL.get());
+    }
+
+    public static void setCycleTimes(long cycleTimes) {
+        CYCLE_TIMES_THREAD_LOCAL.set(cycleTimes);
+    }
+
+    public static Optional<Long> getCycleTimes() {
+        return Optional.ofNullable(CYCLE_TIMES_THREAD_LOCAL.get());
     }
 
     public static void setServiceTask(ServiceTask serviceTask) {
@@ -89,7 +100,7 @@ public class InvokeMethodThreadLocal {
         return Optional.ofNullable(TASK_PROPERTY_THREAD_LOCAL.get()).filter(StringUtils::isNotBlank);
     }
 
-    public static void whenServiceInvoke(TaskServiceDef taskServiceDef, ServiceTask serviceTask, String businessId) {
+    public static void whenServiceInvoke(FlowRegister flowRegister, TaskServiceDef taskServiceDef, ServiceTask serviceTask, String businessId) {
         if (serviceTask != null) {
             InvokeMethodThreadLocal.setServiceTask(serviceTask);
             InvokeMethodThreadLocal.setTaskProperty(serviceTask.getTaskProperty());
@@ -98,6 +109,7 @@ public class InvokeMethodThreadLocal {
             InvokeMethodThreadLocal.setKvScope(new KvScope(taskServiceDef.getMethodWrapper().getKvScope(), businessId));
             InvokeMethodThreadLocal.setServiceNodeResource(taskServiceDef.getServiceNodeResource());
         }
+        InvokeMethodThreadLocal.setCycleTimes(flowRegister.getCycleTimes());
     }
 
     public static void clear() {
@@ -106,6 +118,7 @@ public class InvokeMethodThreadLocal {
         KV_THREAD_LOCAL.remove();
         SERVICE_TASK_THREAD_LOCAL.remove();
         SERVICE_NODE_RESOURCE_THREAD_LOCAL.remove();
+        CYCLE_TIMES_THREAD_LOCAL.remove();
     }
 
     public static void clearDataItem() {
@@ -114,5 +127,9 @@ public class InvokeMethodThreadLocal {
 
     public static void clearServiceTask() {
         SERVICE_TASK_THREAD_LOCAL.remove();
+    }
+
+    public static void clearCycleTimes() {
+        CYCLE_TIMES_THREAD_LOCAL.remove();
     }
 }

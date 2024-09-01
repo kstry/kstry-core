@@ -17,6 +17,8 @@
  */
 package cn.kstry.framework.core.bus;
 
+import cn.kstry.framework.core.util.GlobalUtil;
+
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -96,5 +98,16 @@ public interface ScopeDataOperator extends ScopeDataQuery {
     /**
      * 串行化写
      */
-    <T> Optional<T> serialWrite(Function<ScopeDataQuery, T> writeFun);
+    default <T> Optional<T> serialWrite(Function<ScopeDataQuery, T> writeFun) {
+        if (writeFun == null) {
+            return Optional.empty();
+        }
+        ReentrantReadWriteLock.WriteLock writeLock = writeLock();
+        writeLock.lock();
+        try {
+            return GlobalUtil.resOptional(writeFun.apply(this));
+        } finally {
+            writeLock.unlock();
+        }
+    }
 }

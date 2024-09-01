@@ -27,7 +27,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.slf4j.helpers.MessageFormatter;
-import org.springframework.util.ClassUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -40,8 +39,6 @@ import java.util.stream.Collectors;
  * @author lykan
  */
 public class GlobalUtil {
-
-    private static final boolean SUPPORT_VALIDATE = ClassUtils.isPresent("javax.validation.Validator", GlobalUtil.class.getClassLoader());
 
     @SuppressWarnings("all")
     public static <T> T notEmpty(Optional<T> optional) {
@@ -81,7 +78,7 @@ public class GlobalUtil {
         }
         AssertUtil.isTrue(ElementParserUtil.isAssignable(targetClass, source.getClass()), ExceptionEnum.TYPE_TRANSFER_ERROR,
                 "{} expect: {}, actual: {}", ExceptionEnum.TYPE_TRANSFER_ERROR.getDesc(), targetClass.getName(), source.getClass().getName());
-        return Optional.of((T) source);
+        return GlobalUtil.resOptional((T) source);
     }
 
     public static <T> T transferNotEmpty(Object source, Class<T> targetClass) {
@@ -156,10 +153,6 @@ public class GlobalUtil {
         return writer.toString();
     }
 
-    public static boolean supportValidate() {
-        return SUPPORT_VALIDATE;
-    }
-
     public static String uuid() {
         return UUID.randomUUID().toString().replace("-", StringUtils.EMPTY);
     }
@@ -179,7 +172,7 @@ public class GlobalUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> Optional<T> getResOptional(T res) {
+    public static <T> Optional<T> resOptional(T res) {
         return (res instanceof Optional) ? (Optional<T>) res : Optional.ofNullable(res);
     }
 

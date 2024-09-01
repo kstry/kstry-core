@@ -77,7 +77,7 @@ public class RoleRegister implements BusinessRoleRegister, DynamicRole {
 
     @Override
     public String getKey(ScopeDataQuery scopeDataQuery) {
-        Assert.assertEquals(scopeDataQuery.getData("req.number").orElse(null), 8);
+        Assert.assertEquals(scopeDataQuery.getRawData("req.number").orElse(null), 8);
         return DynamicRole.super.getKey(scopeDataQuery);
     }
 

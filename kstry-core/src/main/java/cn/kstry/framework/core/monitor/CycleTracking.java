@@ -25,17 +25,22 @@ package cn.kstry.framework.core.monitor;
 public class CycleTracking {
 
     /**
-     * 循环次数
+     * 子流程循环次数，主流程循环3次，子流程循环2次，子循环次数就是2次
      */
     private Long times;
+
+    /**
+     * 总循环次数，主流程循环3次，子流程循环2次，总循环次数就是3*2=6次
+     */
+    private Long allTimes;
 
     /**
      * 总花费时长
      */
     private Long totalTime;
 
-    public CycleTracking(Long times, Long totalTime) {
-        this.times = times;
+    public CycleTracking(Long allTimes, Long totalTime) {
+        this.allTimes = allTimes;
         this.totalTime = totalTime == null ? 0 : totalTime;
     }
 
@@ -53,5 +58,13 @@ public class CycleTracking {
 
     public void setTotalTime(Long totalTime) {
         this.totalTime = totalTime;
+    }
+
+    public Long getAllTimes() {
+        return allTimes;
+    }
+
+    public void setAllTimes(Long allTimes) {
+        this.allTimes = allTimes;
     }
 }

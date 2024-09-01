@@ -104,8 +104,13 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
     private boolean doInvoke(Role role, StoryBus storyBus, FlowRegister flowRegister, FlowElement flowElement) {
         if (flowElement.getElementType() == BpmnTypeEnum.SUB_PROCESS) {
             SubProcess subProcess = GlobalUtil.transferNotEmpty(flowElement, SubProcess.class);
-            if (!subProcess.getConditionExpression().map(e -> e.condition(storyBus)).orElse(true)) {
-                return true;
+            try {
+                InvokeMethodThreadLocal.setCycleTimes(flowRegister.getCycleTimes());
+                if (!subProcess.getConditionExpression().map(e -> e.condition(storyBus)).orElse(true)) {
+                    return true;
+                }
+            } finally {
+                InvokeMethodThreadLocal.clearCycleTimes();
             }
             SubProcessInterceptorRepository subInterceptorRepository = engineModule.getSubInterceptorRepository();
             if (!subInterceptorRepository.postBeforeProcessor(storyBus, subProcess.getStartEvent().getId(), flowRegister.getStoryId())) {
@@ -124,7 +129,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
         TaskServiceDef taskServiceDef;
         ServiceTask serviceTask = (ServiceTask) flowElement;
         try {
-            InvokeMethodThreadLocal.whenServiceInvoke(null, serviceTask, storyBus.getBusinessId());
+            InvokeMethodThreadLocal.whenServiceInvoke(flowRegister, null, serviceTask, storyBus.getBusinessId());
             if (!serviceTask.getConditionExpression().map(e -> e.condition(storyBus)).orElse(true)) {
                 flowRegister.getMonitorTracking().expressionTracking(storyBus.getScopeDataOperator(), serviceTask, false);
                 flowRegister.getMonitorTracking().finishTaskTracking(storyBus.getScopeDataOperator(), flowElement, null);
@@ -148,7 +153,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
             InvokeMethodThreadLocal.clear();
         }
         try {
-            InvokeMethodThreadLocal.whenServiceInvoke(taskServiceDef, serviceTask, storyBus.getBusinessId());
+            InvokeMethodThreadLocal.whenServiceInvoke(flowRegister, taskServiceDef, serviceTask, storyBus.getBusinessId());
             RateLimiterConfig rateLimiterConfig = serviceTask.getRateLimiterConfig().map(c -> c.merge(methodWrapper.getRateLimiterConfig())).orElse(methodWrapper.getRateLimiterConfig());
             Optional<FailAcquireStrategy> failStrategyOptional = engineModule.getRateLimiterComponent().tryAcquire(storyBus, taskServiceDef.getServiceNodeResource(), rateLimiterConfig);
             if (failStrategyOptional.isPresent()) {
@@ -240,7 +245,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     flowRegister.getMonitorTracking().demotionTaskTracking(serviceTask, demotionInfo);
                     Object res;
                     try {
-                        InvokeMethodThreadLocal.whenServiceInvoke(taskServiceDef, serviceTask, storyBus.getBusinessId());
+                        InvokeMethodThreadLocal.whenServiceInvoke(flowRegister, taskServiceDef, serviceTask, storyBus.getBusinessId());
                         TaskInterceptorRepository taskInterceptorRepository = engineModule.getTaskInterceptorRepository();
                         res = taskInterceptorRepository.process(() -> doInvokeMethod(true, null, taskServiceDef, serviceTask, storyBus, role), taskServiceDef.getServiceNodeResource(), storyBus.getScopeDataOperator(), role);
                     } finally {
@@ -270,7 +275,7 @@ public abstract class FlowTaskCore<T> extends BasicTaskCore<T> {
                     demotionInfo.setDemotionNodeId(demotionTaskServiceDef.getServiceNodeResource().getIdentityId());
                     demotionInfo.setDemotionSuccess(true);
                     try {
-                        InvokeMethodThreadLocal.whenServiceInvoke(taskServiceDef, serviceTask, storyBus.getBusinessId());
+                        InvokeMethodThreadLocal.whenServiceInvoke(flowRegister, taskServiceDef, serviceTask, storyBus.getBusinessId());
                         Object o = iterateInvokeMethod(serviceTask, demotionTaskServiceDef, storyBus, role);
                         if (o instanceof Mono) {
                             Mono<?> demotionResultMono = GlobalUtil.transferNotEmpty(o, Mono.class);

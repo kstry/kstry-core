@@ -18,6 +18,7 @@
 package cn.kstry.framework.core.component.utils;
 
 import cn.kstry.framework.core.util.AssertUtil;
+import cn.kstry.framework.core.util.GlobalUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 
@@ -65,7 +66,7 @@ public class BasicInStack<T> implements InStack<T> {
         if (stack.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(stack.pop());
+        return GlobalUtil.resOptional(stack.pop());
     }
 
     @Override
@@ -73,7 +74,7 @@ public class BasicInStack<T> implements InStack<T> {
         if (stack.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(stack.peekFirst());
+        return GlobalUtil.resOptional(stack.peekFirst());
     }
 
     @Override

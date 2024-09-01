@@ -15,6 +15,11 @@
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
     "description": "链路追踪类型，默认：none"
   }, {
+    "name": "kstry.story.max-cycle-count",
+    "type": "java.lang.String",
+    "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+    "description": "限制环路流程循环的最大次数，默认：Long.MAX_VALUE"
+  }, {
     "name": "kstry.story.tracking.log",
     "type": "java.lang.String",
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
@@ -44,6 +49,11 @@
     "type": "java.lang.String",
     "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
     "description": "Kstry 线程池最大线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2) * 2"
+  }, {
+      "name": "kstry.thread.ignore-copy-prefix",
+      "type": "java.lang.String",
+      "sourceType": "cn.kstry.framework.core.constant.ConfigPropertyNameConstant",
+      "description": "ThreadLocal切换线程拷贝时需要忽略的前缀，可逗号隔开配置多个"
   }, {
     "name": "kstry.thread.pool.keep-alive-time",
     "type": "java.lang.String",

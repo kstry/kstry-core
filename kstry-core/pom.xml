@@ -26,7 +26,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.kstry.framework</groupId>
     <artifactId>kstry-core</artifactId>
-    <version>1.1.15</version>
+    <version>1.1.16</version>
 
     <name>Kstry Core</name>
     <description>Kstry Core</description>
@@ -189,6 +189,7 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                    <parameters>true</parameters>
                 </configuration>
             </plugin>
             <plugin>

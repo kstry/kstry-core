@@ -155,7 +155,7 @@ public abstract class SpringDynamicComponent<Component> implements DynamicCompon
         }
         return CacheBuilder.newBuilder()
                 .concurrencyLevel(8).initialCapacity(1024).maximumSize(maxCacheSize).expireAfterWrite(1, TimeUnit.DAYS)
-                .removalListener(notification -> LOGGER.info("dynamic component cache lose efficacy. key: {}, value: {}, cause: {}",
+                .removalListener(notification -> LOGGER.debug("dynamic component cache lose efficacy. key: {}, value: {}, cause: {}",
                         notification.getKey(), notification.getValue(), notification.getCause())).build();
     }
 }

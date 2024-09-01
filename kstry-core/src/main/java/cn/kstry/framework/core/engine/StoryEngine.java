@@ -59,7 +59,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 
 /**
  * 执行引擎
@@ -349,6 +348,11 @@ public class StoryEngine {
             }
 
             @Override
+            public <T> Optional<T> getRawData(String expression) {
+                return getData(expression);
+            }
+
+            @Override
             public Optional<String> getTaskProperty() {
                 throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
             }
@@ -370,11 +374,6 @@ public class StoryEngine {
 
             @Override
             public ReentrantReadWriteLock.ReadLock readLock() {
-                throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
-            }
-
-            @Override
-            public <T> Optional<T> serialRead(Function<ScopeDataQuery, T> readFun) {
                 throw new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), "Method is not allowed to be called!");
             }
         };

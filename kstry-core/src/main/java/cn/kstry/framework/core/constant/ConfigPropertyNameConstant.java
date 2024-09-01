@@ -44,6 +44,11 @@ public interface ConfigPropertyNameConstant {
     String KSTRY_STORY_TRACKING_LOG = "kstry.story.tracking.log";
 
     /**
+     * 限制环路流程循环的最大次数，默认：Long.MAX_VALUE
+     */
+    String KSTRY_STORY_MAX_CYCLE_COUNT = "kstry.story.max-cycle-count";
+
+    /**
      * 监控中节点出入参快照最大长度，超出将进行截取。默认为 -1 代表不限制， 0 时不记录入参， >0 时会对节点出入参快照截取到该字段长度。仅在 TrackingTypeEnum == SERVICE_DETAIL 时生效
      */
     String KSTRY_STORY_TRACKING_PARAMS_LENGTH_LIMIT = "kstry.story.tracking.value-max-length";
@@ -62,6 +67,11 @@ public interface ConfigPropertyNameConstant {
      *  kstry 线程池核心线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2)
      */
     String KSTRY_THREAD_POOL_CORE_SIZE = "kstry.thread.pool.core-size";
+
+    /**
+     * ThreadLocal切换线程拷贝时需要忽略的前缀，可逗号隔开配置多个
+     */
+    String KSTRY_THREAD_IGNORE_COPY_PREFIX = "kstry.thread.ignore-copy-prefix";
 
     /**
      *  kstry 线程池最大线程数，默认：Math.max(Runtime.getRuntime().availableProcessors(), 2) * 2

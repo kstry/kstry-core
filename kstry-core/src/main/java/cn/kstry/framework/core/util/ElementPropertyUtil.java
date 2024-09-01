@@ -81,7 +81,7 @@ public class ElementPropertyUtil {
 
         for (Map.Entry<String, Object> entry : jsonNode.getProperties().entrySet()) {
             if (Objects.equals(entry.getKey().trim().toLowerCase(Locale.ROOT), name)) {
-                return Optional.ofNullable(entry.getValue()).map(prop -> (prop instanceof String) ? prop.toString() : JSON.toJSONString(prop, SerializerFeature.DisableCircularReferenceDetect));
+                return GlobalUtil.resOptional(entry.getValue()).map(prop -> (prop instanceof String) ? prop.toString() : JSON.toJSONString(prop, SerializerFeature.DisableCircularReferenceDetect));
             }
         }
         return Optional.empty();
@@ -107,7 +107,7 @@ public class ElementPropertyUtil {
             return Optional.empty();
         }
         Pair<String, String> pair = list.get(0);
-        return Optional.ofNullable(pair.getRight()).filter(StringUtils::isNotBlank).map(String::trim);
+        return GlobalUtil.resOptional(pair.getRight()).filter(StringUtils::isNotBlank).map(String::trim);
     }
 
     public static List<Pair<String, String>> getNodeProperty(BaseElement flowNode, String name, boolean isLike, boolean oneSize) {

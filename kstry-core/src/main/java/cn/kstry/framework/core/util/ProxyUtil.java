@@ -19,6 +19,7 @@ package cn.kstry.framework.core.util;
 
 import cn.kstry.framework.core.annotation.TaskComponent;
 import cn.kstry.framework.core.bpmn.ServiceTask;
+import cn.kstry.framework.core.component.validator.RequestValidator;
 import cn.kstry.framework.core.container.component.MethodWrapper;
 import cn.kstry.framework.core.container.task.TaskComponentRegister;
 import cn.kstry.framework.core.exception.BusinessException;
@@ -61,7 +62,7 @@ public class ProxyUtil {
 
     private static final Cache<String, Field> classFieldCache = CacheBuilder.newBuilder()
             .concurrencyLevel(8).initialCapacity(1024).maximumSize(20_000).expireAfterAccess(1, TimeUnit.HOURS)
-            .removalListener(notification -> LOGGER.info("Class field cache lose efficacy. key: {}, value: {}, cause: {}",
+            .removalListener(notification -> LOGGER.debug("Class field cache lose efficacy. key: {}, value: {}, cause: {}",
                     notification.getKey(), notification.getValue(), notification.getCause())).build();
 
     public static boolean isProxyObject(Object o) {
@@ -90,15 +91,15 @@ public class ProxyUtil {
             Object[] params = paramsSupplier.get();
             return ReflectionUtils.invokeMethod(methodWrapper.getMethod(), target, params);
         } catch (Throwable e) {
-            if ((e instanceof KstryException) && !(e instanceof BusinessException)) {
-                throw (KstryException) e;
+            Throwable throwable = RequestValidator.processViolationException(e);
+            if ((throwable instanceof KstryException) && !(throwable instanceof BusinessException)) {
+                throw (KstryException) throwable;
             }
-
             BusinessException businessException;
-            if (e instanceof BusinessException) {
-                businessException = GlobalUtil.transferNotEmpty(e, BusinessException.class);
+            if (throwable instanceof BusinessException) {
+                businessException = GlobalUtil.transferNotEmpty(throwable, BusinessException.class);
             } else {
-                businessException = new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), e.getMessage(), e);
+                businessException = new BusinessException(ExceptionEnum.BUSINESS_INVOKE_ERROR.getExceptionCode(), throwable.getMessage(), throwable);
             }
             businessException.setTaskIdentity(TaskServiceUtil.joinName(serviceTask.getTaskComponent(), serviceTask.getTaskService()));
             businessException.setMethodName(methodWrapper.getMethod().getName());

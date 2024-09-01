@@ -19,19 +19,20 @@ package cn.kstry.framework.core.component.validator;
 
 import cn.kstry.framework.core.exception.ExceptionEnum;
 import cn.kstry.framework.core.exception.ViolationException;
+import cn.kstry.framework.core.util.GlobalUtil;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Path;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
- *  校验参数
+ * 校验参数
  *
  * @author lykan
  */
@@ -39,24 +40,42 @@ public class RequestValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestValidator.class);
 
-    private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
+    private static final List<String> VIOLATION_EXCEPTION_CLASS_NAMES = Lists.newArrayList("jakarta.validation.ConstraintViolationException", "javax.validation.ConstraintViolationException");
 
-    public static void validate(Object request) {
-        if (request == null) {
-            return;
+    public static Throwable processViolationException(Throwable throwable) {
+        if (!VIOLATION_EXCEPTION_CLASS_NAMES.contains(throwable.getClass().getName())) {
+            return throwable;
         }
-        Set<ConstraintViolation<Object>> validateResultSet = new HashSet<>(VALIDATOR.validate(request));
-        if (CollectionUtils.isEmpty(validateResultSet)) {
-            return;
-        }
+        try {
+            Set<?> validateResultSet = (Set<?>) MethodUtils.invokeMethod(throwable, "getConstraintViolations");
+            if (CollectionUtils.isEmpty(validateResultSet)) {
+                return throwable;
+            }
+            Object vNode = validateResultSet.iterator().next();
+            Optional<Object> leafBeanOptional = GlobalUtil.resOptional(MethodUtils.invokeMethod(vNode, "getLeafBean"));
 
-        ConstraintViolation<Object> vNode = validateResultSet.iterator().next();
-        Path propertyPath = vNode.getPropertyPath();
-        ViolationException exception = new ViolationException(ExceptionEnum.PARAM_VERIFICATION_ERROR.getExceptionCode(), vNode.getMessage(), null);
-        exception.setFieldName(propertyPath.iterator().next().getName());
-        exception.setInvalidValue(vNode.getInvalidValue());
-        exception.log(e -> LOGGER.warn("{}, class: {}, fieldName: {}, invalidValue: {}",
-                e.getMessage(), request.getClass().getName(), exception.getFieldName(), exception.getInvalidValue()));
-        throw exception;
+            ViolationException exception = new ViolationException(ExceptionEnum.PARAM_VERIFICATION_ERROR.getExceptionCode(), String.valueOf(MethodUtils.invokeMethod(vNode, "getMessage")), throwable);
+            exception.setLeafBean(leafBeanOptional.orElse(null));
+
+            Object propertyPath = MethodUtils.invokeMethod(vNode, "getPropertyPath");
+            if (!(propertyPath instanceof Iterable)) {
+                return throwable;
+            }
+            List<String> fieldPath = Lists.newArrayList();
+            for (Object item : ((Iterable<?>) propertyPath)) {
+                fieldPath.add(String.valueOf(MethodUtils.invokeMethod(item, "getName")));
+            }
+            if (CollectionUtils.isNotEmpty(fieldPath)) {
+                exception.setFieldPath(fieldPath);
+                exception.setFieldName(fieldPath.get(fieldPath.size() - 1));
+            }
+            exception.setInvalidValue(MethodUtils.invokeMethod(vNode, "getInvalidValue"));
+            Object leafClass = leafBeanOptional.map(o -> o.getClass().getName()).orElse(StringUtils.EMPTY);
+            exception.log(e -> LOGGER.warn("{}, class: {}, fieldPath: {}, invalidValue: {}", e.getMessage(), leafClass, String.join(".", fieldPath), exception.getInvalidValue(), e));
+            return exception;
+        } catch (Throwable e) {
+            LOGGER.error("[{}] ProcessViolationException failure.", ExceptionEnum.SYSTEM_ERROR.getExceptionCode(), e);
+            return throwable;
+        }
     }
 }

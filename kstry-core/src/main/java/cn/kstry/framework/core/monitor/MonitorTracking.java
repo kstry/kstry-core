@@ -127,7 +127,7 @@ public class MonitorTracking {
         }));
     }
 
-    public void buildFirstNodeTracking(FlowElement prevElement) {
+    public void buildFirstNodeTracking(long cycleTimes, FlowElement prevElement) {
         NodeTracking oldTracking = nodeTrackingMap.remove(prevElement.getId());
         if (!(prevElement instanceof ServiceTask)) {
             buildNodeTracking(prevElement);
@@ -138,7 +138,8 @@ public class MonitorTracking {
                 return;
             }
             CycleTracking ct = oldTracking.getCycleTracking() == null ? new CycleTracking(1L, oldTracking.getSpendTime()) : oldTracking.getCycleTracking();
-            ct.setTimes(ct.getTimes() + 1);
+            ct.setAllTimes(ct.getAllTimes() + 1);
+            ct.setTimes(cycleTimes);
             nodeTracking.setCycleTracking(ct);
         });
     }

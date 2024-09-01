@@ -3,8 +3,10 @@ package cn.kstry.framework.test.demo.service;
 import cn.kstry.framework.core.annotation.*;
 import cn.kstry.framework.core.bpmn.enums.IterateStrategyEnum;
 import cn.kstry.framework.core.bus.IterDataItem;
+import cn.kstry.framework.core.bus.ScopeDataOperator;
 import cn.kstry.framework.core.engine.thread.KstryThreadLocal;
 import cn.kstry.framework.core.enums.ScopeTypeEnum;
+import cn.kstry.framework.core.util.AsyncTaskUtil;
 import cn.kstry.framework.test.demo.bo.*;
 import cn.kstry.framework.test.demo.facade.QueryScoreRequest;
 import cn.kstry.framework.test.demo.facade.QueryScoreResponse;
@@ -43,14 +45,18 @@ public class StudentScoreService {
 
     @TaskService(desc = "查询学生敏感信息")
     @NoticeVar(target = QueryScoreVarScope.F.studentPrivacy)
-    public StudentPrivacy getStudentPrivacy(@ReqTaskParam(QueryScoreRequest.F.studentId) Long id) {
+    public Mono<StudentPrivacy> getStudentPrivacy(ScopeDataOperator dataOperator, @ReqTaskParam(QueryScoreRequest.F.studentId) Long id) {
         // mock return result
-        StudentPrivacy studentPrivacy = new StudentPrivacy();
-        studentPrivacy.setId(id);
-        studentPrivacy.setBirthday("1994-01-01");
-        studentPrivacy.setIdCard("133133199401012345");
-        Assert.assertEquals(1, (int) kstryThreadLocal.get());
-        return studentPrivacy;
+        return Mono.fromFuture(CompletableFuture.supplyAsync(() -> {
+
+            StudentPrivacy studentPrivacy = new StudentPrivacy();
+            studentPrivacy.setId(id);
+            studentPrivacy.setBirthday("1994-01-01");
+            studentPrivacy.setIdCard("133133199401012345");
+            Assert.assertEquals(1, (int) kstryThreadLocal.get());
+            Assert.assertEquals(1L, dataOperator.getCycleTimes());
+            return studentPrivacy;
+        }, AsyncTaskUtil.proxyExecutor(Executors.newFixedThreadPool(3))));
     }
 
     @TaskService(desc = "装配学生信息")
